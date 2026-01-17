@@ -1,0 +1,47 @@
+// Replace with real API call later
+import type { Complaint } from '@/models/types';
+import { mockComplaints } from './mockData';
+
+// In-memory storage for mock data (simulates backend)
+let complaintsData: Complaint[] = [...mockComplaints];
+
+export const complaintsApi = {
+  getAll: async (): Promise<Complaint[]> => {
+    // Replace with real API call later
+    return Promise.resolve([...complaintsData]);
+  },
+  getById: async (id: number): Promise<Complaint> => {
+    // Replace with real API call later
+    const complaint = complaintsData.find((c) => c.id === id);
+    if (!complaint) throw new Error('Complaint not found');
+    return Promise.resolve(complaint);
+  },
+  create: async (complaint: Omit<Complaint, 'id' | 'createdAt'>): Promise<Complaint> => {
+    // Replace with real API call later
+    const newComplaint: Complaint = {
+      ...complaint,
+      id: Math.max(...complaintsData.map((c) => c.id), 0) + 1,
+      createdAt: new Date().toISOString(),
+    };
+    complaintsData.push(newComplaint);
+    return Promise.resolve(newComplaint);
+  },
+  update: async (id: number, complaint: Partial<Complaint>): Promise<Complaint> => {
+    // Replace with real API call later
+    const index = complaintsData.findIndex((c) => c.id === id);
+    if (index === -1) throw new Error('Complaint not found');
+    complaintsData[index] = { ...complaintsData[index], ...complaint };
+    return Promise.resolve(complaintsData[index]);
+  },
+  delete: async (id: number): Promise<void> => {
+    // Replace with real API call later
+    const index = complaintsData.findIndex((c) => c.id === id);
+    if (index === -1) throw new Error('Complaint not found');
+    complaintsData.splice(index, 1);
+    return Promise.resolve();
+  },
+  getActiveCount: async (): Promise<number> => {
+    // Replace with real API call later
+    return Promise.resolve(complaintsData.filter((c) => c.status === 'active').length);
+  },
+};
