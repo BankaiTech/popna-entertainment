@@ -16,7 +16,8 @@ interface CustomerSheetProps {
 
 const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps) => {
   const { role } = useAuthStore();
-  const isReadOnly = role === 'employee' && customer !== null; // Read-only for employees when editing
+  // Employees can only view customer details (read-only), cannot add or edit
+  const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'address'>('info');
   const [formData, setFormData] = useState({
     name: '',
@@ -71,9 +72,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Security check: Employees cannot edit customers
+    // Security check: Employees cannot add or edit customers
     if (isReadOnly) {
-      alert('You do not have permission to edit customer details.');
+      if (customer) {
+        alert('You do not have permission to edit customer details.');
+      } else {
+        alert('You do not have permission to add customers.');
+      }
       return;
     }
     if (customer) {
@@ -87,6 +92,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
   const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
 
+  // Security check: Employees cannot add customers - close modal if opened in add mode
+  useEffect(() => {
+    if (isOpen && isReadOnly && !customer) {
+      alert('You do not have permission to add customers.');
+      onClose();
+    }
+  }, [isOpen, isReadOnly, customer, onClose]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50" onClick={onClose}>
       <div
@@ -96,7 +109,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         {/* Compact Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-lg font-semibold">
-            {customer ? (isReadOnly ? 'Customer Details' : 'Edit Customer') : 'Add New Customer'}
+            {isReadOnly ? 'Customer Details' : customer ? 'Edit Customer' : 'Add New Customer'}
           </h2>
           <button
             onClick={onClose}

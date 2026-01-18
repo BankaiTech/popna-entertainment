@@ -162,6 +162,10 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   addCustomer: async (customer) => {
+    // Security check: Only admins can add customers
+    // TODO: In real implementation, check user role from auth store or API
+    // For now, this is handled at UI level, but adding comment for API integration
+    // In production, the API should enforce role-based permissions
     set({ loading: true, error: null });
     try {
       const newCustomer = await customersApi.create(customer);

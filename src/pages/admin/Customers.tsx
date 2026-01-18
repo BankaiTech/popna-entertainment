@@ -43,6 +43,11 @@ const AdminCustomers = () => {
   }, [customers, searchQuery, statusFilter, connectionFilter]);
 
   const handleAdd = () => {
+    // Security check: Employees cannot add customers
+    if (isEmployee) {
+      alert('You do not have permission to add customers.');
+      return;
+    }
     setEditingCustomer(null);
     setIsSheetOpen(true);
   };
@@ -53,9 +58,13 @@ const AdminCustomers = () => {
   };
 
   const handleSave = async (customerData: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => {
-    // Security check: Employees cannot edit customers
-    if (isEmployee && editingCustomer) {
-      alert('You do not have permission to edit customer details.');
+    // Security check: Employees cannot add or edit customers
+    if (isEmployee) {
+      if (editingCustomer) {
+        alert('You do not have permission to edit customer details.');
+      } else {
+        alert('You do not have permission to add customers.');
+      }
       return;
     }
     if (editingCustomer) {
@@ -88,10 +97,13 @@ const AdminCustomers = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Customers</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database</p>
         </div>
-        <Button onClick={handleAdd} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Customer
-        </Button>
+        {/* Only show Add Customer button for Admin role */}
+        {!isEmployee && (
+          <Button onClick={handleAdd} className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
