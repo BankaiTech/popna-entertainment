@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
 import { customersApi } from '@/api/api';
@@ -7,12 +8,14 @@ import type { Customer } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 
 const AdminDashboard = () => {
-  const { dashboardStats, loading, fetchDashboardStats, initialize, customers, complaints } = useStore();
+  const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, customers, complaints } = useStore();
+  const { role } = useAuthStore();
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchCustomers();
       await fetchDashboardStats();
       const allCustomers = await customersApi.getAll();
       const sorted = allCustomers
@@ -21,10 +24,15 @@ const AdminDashboard = () => {
       setLastCustomers(sorted);
     };
     loadData();
-  }, [fetchDashboardStats, initialize]);
+  }, [fetchDashboardStats, fetchCustomers, initialize]);
 
   // Calculate active complaints count
   const activeComplaintsCount = complaints.filter((c) => c.status === 'active').length;
+
+  // GTPL Payment Summary (Admin only). Counts from GTPL customers; updates when customers/paymentStatus change.
+  const gtplCustomers = customers.filter((c) => c.connectionType === 'GTPL');
+  const gtplPaidCount = gtplCustomers.filter((c) => c.paymentStatus === 'paid').length;
+  const gtplUnpaidCount = gtplCustomers.filter((c) => c.paymentStatus !== 'paid').length;
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
@@ -130,6 +138,27 @@ const AdminDashboard = () => {
           );
         })}
       </div>
+
+      {/* GTPL Payment Status — Admin only; hidden from Employee and Customer */}
+      {role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>GTPL Payment Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-green-50 border border-green-200">
+                <span className="text-sm font-medium text-green-800">Paid</span>
+                <span className="text-2xl font-bold text-green-700">{gtplPaidCount}</span>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-200">
+                <span className="text-sm font-medium text-red-800">Unpaid</span>
+                <span className="text-2xl font-bold text-red-700">{gtplUnpaidCount}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Provider Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

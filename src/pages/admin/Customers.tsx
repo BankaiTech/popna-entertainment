@@ -17,6 +17,7 @@ const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('All');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('All');
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -32,6 +33,13 @@ const AdminCustomers = () => {
     loadData();
   }, [fetchCustomers, initialize]);
 
+  // Reset Payment Status filter when Connection Type is not GTPL
+  useEffect(() => {
+    if (connectionFilter !== 'GTPL') {
+      setPaymentStatusFilter('All');
+    }
+  }, [connectionFilter]);
+
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
       const matchesSearch =
@@ -40,9 +48,17 @@ const AdminCustomers = () => {
       const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
       const matchesConnection =
         connectionFilter === 'All' || customer.connectionType === connectionFilter;
-      return matchesSearch && matchesStatus && matchesConnection;
+      const matchesPayment =
+        connectionFilter !== 'GTPL'
+          ? true
+          : paymentStatusFilter === 'All'
+            ? true
+            : paymentStatusFilter === 'paid'
+              ? customer.paymentStatus === 'paid'
+              : customer.paymentStatus === 'not_paid';
+      return matchesSearch && matchesStatus && matchesConnection && matchesPayment;
     });
-  }, [customers, searchQuery, statusFilter, connectionFilter]);
+  }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter]);
 
   const handleAdd = () => {
     // Security check: Only Admin can add customers; Employee must not see button
@@ -131,7 +147,9 @@ const AdminCustomers = () => {
       {/* Filters */}
       <Card>
         <CardContent className="pt-4 sm:pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${connectionFilter === 'GTPL' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+          >
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -163,6 +181,16 @@ const AdminCustomers = () => {
                 </option>
               ))}
             </Select>
+            {connectionFilter === 'GTPL' && (
+              <Select
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
+              >
+                <option value="All">All</option>
+                <option value="paid">Paid</option>
+                <option value="not_paid">Not Paid</option>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
