@@ -10,7 +10,7 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
 
 const CustomerDashboard = () => {
-  const { customerId, customerMobile, logout } = useAuthStore();
+  const { customerId, logout } = useAuthStore();
   const navigate = useNavigate();
   const { customers, complaints, initialize } = useStore();
   const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);

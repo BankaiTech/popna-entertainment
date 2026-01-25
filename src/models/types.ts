@@ -2,6 +2,9 @@ export type Provider = 'GTPL' | 'BSNL' | 'Railwire' | 'Krishiinet';
 
 export type CustomerStatus = 'Active' | 'Inactive';
 
+/** GTPL-only: payment status for cable network billing. */
+export type PaymentStatus = 'paid' | 'not_paid';
+
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
 export interface Plan {
@@ -28,12 +31,18 @@ export interface Customer {
   name: string;
   email: string;
   mobile: string;
+  /** Plain text for mock only. Replace with secure auth & hashing later. */
+  password?: string;
   connectionType: Provider;
   package: string;
   status: CustomerStatus;
   description?: string;
   address: Address;
   createdAt: string;
+  /** GTPL only. Values set by "Update Payment Status". */
+  paymentStatus?: PaymentStatus;
+  paymentDescription?: string;
+  paymentUpdatedAt?: string;
 }
 
 export interface DashboardStats {
@@ -68,5 +77,15 @@ export interface Complaint {
   customerDescription: string;
   internalDescription?: string;
   status: ComplaintStatus;
+  createdAt: string;
+}
+
+/** Admin/Employee user. password is plain text for mock only. */
+export interface User {
+  id: number;
+  name: string;
+  username: string;
+  password: string;
+  role: 'admin' | 'employee';
   createdAt: string;
 }

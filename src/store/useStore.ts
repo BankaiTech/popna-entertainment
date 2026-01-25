@@ -23,7 +23,7 @@ interface AppState {
   
   fetchCustomers: () => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
-  updateCustomer: (id: number, customer: Partial<Customer>) => Promise<void>;
+  updateCustomer: (id: number, customer: Partial<Customer>) => Promise<Customer | void>;
   deleteCustomer: (id: number) => Promise<void>;
   
   fetchComplaints: () => Promise<void>;
@@ -186,9 +186,8 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateCustomer: async (id, customer) => {
-    // Security check: Only admins can update customers
-    // TODO: In real implementation, check user role from auth store
-    // For now, this is handled at UI level, but adding comment for API integration
+    // UI enforces: only admins edit non-payment fields; both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt) for GTPL. Store/API do not block payment-only updates.
+    // TODO: In real implementation, validate role and allowed fields in API
     set({ loading: true, error: null });
     try {
       const updatedCustomer = await customersApi.update(id, customer);
@@ -206,6 +205,7 @@ export const useStore = create<AppState>((set, get) => ({
         };
       });
       await get().fetchDashboardStats();
+      return updatedCustomer;
     } catch (error) {
       set({ error: 'Failed to update customer', loading: false });
     }

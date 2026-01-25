@@ -7,6 +7,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminManagePlans from './pages/admin/ManagePlans';
 import AdminCustomers from './pages/admin/Customers';
 import AdminComplaints from './pages/admin/Complaints';
+import AdminUsers from './pages/admin/Users';
 import Login from './pages/admin/Login';
 import CustomerLogin from './pages/customer/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -83,6 +84,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'employee']}>
               <AdminComplaints />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminUsers />
             </ProtectedRoute>
           }
         />

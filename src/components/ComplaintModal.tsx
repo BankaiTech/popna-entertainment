@@ -216,8 +216,8 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
           </div>
           </div>
 
-          {/* Fixed Footer */}
-          <div className="flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card sticky bottom-0">
+          {/* Fixed Footer — buttons aligned right: Cancel (secondary) left, Save (primary) right */}
+          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card sticky bottom-0">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancel
             </Button>

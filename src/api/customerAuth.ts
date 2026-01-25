@@ -3,9 +3,8 @@ import type { Customer } from '@/models/types';
 
 /**
  * Mock Customer Authentication Service
- * 
- * TODO: Replace with OTP based authentication later
- * This is a temporary mock implementation for development
+ * Validate mobile + password against mockCustomers.
+ * Replace with secure auth & hashing later.
  */
 
 export interface CustomerAuthResponse {
@@ -16,12 +15,15 @@ export interface CustomerAuthResponse {
 }
 
 /**
- * Authenticate customer by mobile number
- * 
+ * Authenticate customer by mobile number and password.
+ *
  * @param mobile - 10-digit mobile number
+ * @param password - Customer password (plain text for mock only)
  * @returns CustomerAuthResponse with success status and customer data
  */
-export const loginCustomer = (mobile: string): CustomerAuthResponse => {
+export const loginCustomer = (mobile: string, password: string): CustomerAuthResponse => {
+  // Replace with secure auth & hashing later
+
   // Validate mobile format (10 digits)
   if (!/^\d{10}$/.test(mobile)) {
     return {
@@ -30,17 +32,25 @@ export const loginCustomer = (mobile: string): CustomerAuthResponse => {
     };
   }
 
-  // Find customer in mock data by mobile number
-  const customer = mockCustomers.find((c: Customer) => c.mobile === mobile);
+  if (!password || password.trim() === '') {
+    return {
+      success: false,
+      message: 'Invalid mobile number or password',
+    };
+  }
+
+  // Find customer in mock data by mobile and validate password
+  const customer = mockCustomers.find(
+    (c: Customer) => c.mobile === mobile && (c.password ?? '') === password
+  );
 
   if (!customer) {
     return {
       success: false,
-      message: 'Customer not found. Please check your mobile number.',
+      message: 'Invalid mobile number or password',
     };
   }
 
-  // Successful authentication
   return {
     success: true,
     customerId: customer.id,
@@ -50,7 +60,7 @@ export const loginCustomer = (mobile: string): CustomerAuthResponse => {
 
 /**
  * Get customer data by ID
- * 
+ *
  * @param customerId - Customer ID
  * @returns Customer object or null
  */
@@ -61,7 +71,7 @@ export const getCustomerById = (customerId: number): Customer | null => {
 
 /**
  * Get customer data by mobile number
- * 
+ *
  * @param mobile - Mobile number
  * @returns Customer object or null
  */

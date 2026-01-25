@@ -10,7 +10,7 @@ interface AuthState {
   customerId: number | null; // For customer role
   customerMobile: string | null; // For customer role
   login: (username: string, password: string) => boolean;
-  customerLogin: (mobile: string) => { success: boolean; message?: string }; // Customer login with mobile
+  customerLogin: (mobile: string, password: string) => { success: boolean; message?: string };
   logout: () => void;
   initialize: () => void;
 }
@@ -80,7 +80,7 @@ const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | n
   }
 };
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   ...loadAuthFromStorage(),
   login: (username: string, password: string) => {
     // Mock authentication for admin/employee
@@ -102,16 +102,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       role,
       username,
       customerId: null,
+      customerMobile: null,
     };
     set(newState);
     saveAuthToStorage(newState);
     return true;
   },
-  customerLogin: (mobile: string) => {
-    // Use customerAuth service for authentication
-    // TODO: Replace with OTP based authentication later
-    const result = loginCustomer(mobile);
-    
+  customerLogin: (mobile: string, password: string) => {
+    // Replace with secure auth & hashing later
+    const result = loginCustomer(mobile, password);
+
     if (result.success && result.customerId && result.customerMobile) {
       const newState = {
         isAuthenticated: true,
@@ -124,10 +124,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       saveAuthToStorage(newState);
       return { success: true };
     }
-    
+
     return {
       success: false,
-      message: result.message || 'Customer not found',
+      message: result.message || 'Invalid mobile number or password',
     };
   },
   logout: () => {

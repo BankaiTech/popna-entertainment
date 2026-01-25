@@ -8,6 +8,7 @@ import { User } from 'lucide-react';
 
 const CustomerLogin = () => {
   const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { customerLogin } = useAuthStore();
@@ -22,24 +23,27 @@ const CustomerLogin = () => {
       return;
     }
 
-    // Validate 10-digit mobile number
     if (!/^\d{10}$/.test(mobile)) {
       setError('Please enter a valid 10-digit mobile number');
       return;
     }
 
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
     setIsLoading(true);
-    
-    // Mock authentication using customerAuth service
-    // TODO: Replace with OTP based authentication later
-    const result = customerLogin(mobile);
-    
+
+    // Replace with secure auth & hashing later
+    const result = customerLogin(mobile, password);
+
     setIsLoading(false);
-    
+
     if (result.success) {
       navigate('/customer/dashboard');
     } else {
-      setError(result.message || 'Customer not found');
+      setError(result.message || 'Invalid mobile number or password');
     }
   };
 
@@ -54,7 +58,7 @@ const CustomerLogin = () => {
           </div>
           <CardTitle className="text-2xl">Customer Login</CardTitle>
           <p className="text-sm text-muted-foreground mt-2">
-            Enter your mobile number to access your account
+            Enter your mobile number and password to access your account
           </p>
         </CardHeader>
         <CardContent>
@@ -81,6 +85,24 @@ const CustomerLogin = () => {
               </p>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Password <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
+                className="text-lg"
+                required
+                disabled={isLoading}
+              />
+            </div>
+
             {error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
                 {error}
@@ -90,11 +112,6 @@ const CustomerLogin = () => {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
-
-            <p className="text-xs text-center text-muted-foreground">
-              {/* TODO: Replace with OTP based authentication later */}
-              Note: This is a mock login. In production, you'll receive an OTP for verification.
-            </p>
           </form>
         </CardContent>
       </Card>

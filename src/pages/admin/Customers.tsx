@@ -17,8 +17,10 @@ const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('All');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [customerIdToDelete, setCustomerIdToDelete] = useState<number | null>(null);
 
   const { initialize } = useStore();
 
@@ -43,16 +45,18 @@ const AdminCustomers = () => {
   }, [customers, searchQuery, statusFilter, connectionFilter]);
 
   const handleAdd = () => {
-    // Security check: Employees cannot add customers
+    // Security check: Only Admin can add customers; Employee must not see button
     if (isEmployee) {
       alert('You do not have permission to add customers.');
       return;
     }
+    setIsSheetOpen(false);
     setEditingCustomer(null);
-    setIsSheetOpen(true);
+    setIsAddCustomerOpen(true);
   };
 
   const handleEdit = (customer: Customer) => {
+    setIsAddCustomerOpen(false);
     setEditingCustomer(customer);
     setIsSheetOpen(true);
   };
@@ -72,19 +76,37 @@ const AdminCustomers = () => {
     } else {
       await addCustomer(customerData as Omit<Customer, 'id' | 'createdAt'>);
     }
+    setIsAddCustomerOpen(false);
     setIsSheetOpen(false);
     setEditingCustomer(null);
   };
 
-  const handleDelete = async (id: number) => {
-    // Security check: Employees cannot delete customers
-    if (isEmployee) {
-      alert('You do not have permission to delete customers.');
-      return;
-    }
-    if (confirm('Are you sure you want to delete this customer?')) {
-      await deleteCustomer(id);
-    }
+  const handleDeleteClick = (id: number) => {
+    if (isEmployee) return;
+    setCustomerIdToDelete(id);
+  };
+
+  const handleDeleteCancel = () => setCustomerIdToDelete(null);
+
+  const handleDeleteConfirm = async () => {
+    if (customerIdToDelete == null) return;
+    await deleteCustomer(customerIdToDelete);
+    setCustomerIdToDelete(null);
+  };
+
+  const handleCloseSheet = () => {
+    setIsAddCustomerOpen(false);
+    setIsSheetOpen(false);
+    setEditingCustomer(null);
+  };
+
+  /** GTPL only. Admin and Employee can update only payment fields (paymentStatus, paymentDescription, paymentUpdatedAt). No role check — payment-only updates are always allowed. */
+  const handleUpdatePayment = async (
+    customerId: number,
+    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string }
+  ) => {
+    const updated = await updateCustomer(customerId, data);
+    if (updated) setEditingCustomer(updated);
   };
 
   const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
@@ -181,16 +203,12 @@ const AdminCustomers = () => {
                       >
                         <div className="text-sm">{customer.id}</div>
                         <div>
-                          {isEmployee ? (
-                            <span className="text-sm font-medium">{customer.name}</span>
-                          ) : (
-                            <button
-                              onClick={() => handleEdit(customer)}
-                              className="text-sm font-medium text-primary hover:underline"
-                            >
-                              {customer.name}
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleEdit(customer)}
+                            className="text-sm font-medium text-primary hover:underline"
+                          >
+                            {customer.name}
+                          </button>
                         </div>
                         <div className="text-sm">{customer.mobile}</div>
                         <div className="text-sm">{getConnectionTypeLabel(customer.connectionType)}</div>
@@ -215,7 +233,7 @@ const AdminCustomers = () => {
                                 <Edit className="w-4 h-4 text-muted-foreground" />
                               </button>
                               <button
-                                onClick={() => handleDelete(customer.id)}
+                                onClick={() => handleDeleteClick(customer.id)}
                                 className="p-1 hover:bg-destructive/10 rounded transition-colors"
                                 title="Delete"
                               >
@@ -239,16 +257,12 @@ const AdminCustomers = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        {isEmployee ? (
-                          <h3 className="text-base font-semibold text-foreground">{customer.name}</h3>
-                        ) : (
-                          <button
-                            onClick={() => handleEdit(customer)}
-                            className="text-base font-semibold text-primary hover:underline text-left"
-                          >
-                            {customer.name}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleEdit(customer)}
+                          className="text-base font-semibold text-primary hover:underline text-left"
+                        >
+                          {customer.name}
+                        </button>
                         <p className="text-xs text-muted-foreground mt-1">ID: {customer.id}</p>
                       </div>
                       <span
@@ -287,7 +301,7 @@ const AdminCustomers = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(customer.id)}
+                          onClick={() => handleDeleteClick(customer.id)}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors text-sm font-medium"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -303,16 +317,38 @@ const AdminCustomers = () => {
         </CardContent>
       </Card>
 
-      {/* Customer Sheet Modal */}
-      <CustomerSheet
-        isOpen={isSheetOpen}
-        onClose={() => {
-          setIsSheetOpen(false);
-          setEditingCustomer(null);
-        }}
-        customer={editingCustomer}
-        onSave={handleSave}
-      />
+      {/* Customer Sheet: conditionally mounted when Add or Edit is open */}
+      {(isAddCustomerOpen || isSheetOpen) && (
+        <CustomerSheet
+          isOpen={isAddCustomerOpen || isSheetOpen}
+          onClose={handleCloseSheet}
+          customer={isAddCustomerOpen ? null : editingCustomer}
+          onSave={handleSave}
+          onUpdatePayment={handleUpdatePayment}
+        />
+      )}
+
+      {/* Delete Customer — confirmation alert dialog (Admin only) */}
+      {customerIdToDelete != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-card rounded-xl shadow-lg w-full max-w-md flex flex-col overflow-hidden" role="alertdialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-desc">
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
+              <h2 id="delete-dialog-title" className="text-lg font-semibold">Delete Customer</h2>
+            </div>
+            <p id="delete-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 text-sm text-muted-foreground">
+              Are you sure you want to delete this customer? This action cannot be undone.
+            </p>
+            <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
+              <Button variant="outline" onClick={handleDeleteCancel} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm} className="w-full sm:w-auto">
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
