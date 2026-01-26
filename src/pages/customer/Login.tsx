@@ -35,15 +35,19 @@ const CustomerLogin = () => {
 
     setIsLoading(true);
 
-    // Replace with secure auth & hashing later
-    const result = customerLogin(mobile, password);
+    try {
+      // Replace with secure auth & hashing later
+      const result = await customerLogin(mobile, password);
 
-    setIsLoading(false);
-
-    if (result.success) {
-      navigate('/customer/dashboard');
-    } else {
-      setError(result.message || 'Invalid mobile number or password');
+      if (result.success) {
+        navigate('/customer/dashboard');
+      } else {
+        setError(result.message || 'Invalid mobile number or password');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

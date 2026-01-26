@@ -9,6 +9,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
+import { generateCustomerPassword } from '@/lib/utils';
 
 const AdminCustomers = () => {
   const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer } = useStore();
@@ -22,6 +23,8 @@ const AdminCustomers = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [customerIdToDelete, setCustomerIdToDelete] = useState<number | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   const { initialize } = useStore();
 
@@ -89,12 +92,33 @@ const AdminCustomers = () => {
     }
     if (editingCustomer) {
       await updateCustomer(editingCustomer.id, customerData);
+      setIsAddCustomerOpen(false);
+      setIsSheetOpen(false);
+      setEditingCustomer(null);
     } else {
-      await addCustomer(customerData as Omit<Customer, 'id' | 'createdAt'>);
+      // Generate password for new customer
+      // Replace with secure password generation & hashing later
+      const password = generateCustomerPassword(
+        (customerData as Omit<Customer, 'id' | 'createdAt'>).name,
+        (customerData as Omit<Customer, 'id' | 'createdAt'>).mobile
+      );
+      
+      // Add password to customer data
+      const customerWithPassword = {
+        ...(customerData as Omit<Customer, 'id' | 'createdAt'>),
+        password,
+      };
+      
+      await addCustomer(customerWithPassword);
+      
+      // Show password dialog once after creation
+      setGeneratedPassword(password);
+      setShowPasswordDialog(true);
+      
+      setIsAddCustomerOpen(false);
+      setIsSheetOpen(false);
+      setEditingCustomer(null);
     }
-    setIsAddCustomerOpen(false);
-    setIsSheetOpen(false);
-    setEditingCustomer(null);
   };
 
   const handleDeleteClick = (id: number) => {
@@ -354,6 +378,40 @@ const AdminCustomers = () => {
           onSave={handleSave}
           onUpdatePayment={handleUpdatePayment}
         />
+      )}
+
+      {/* Password Success Dialog — shown once after customer creation */}
+      {showPasswordDialog && generatedPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-card rounded-xl shadow-lg w-full max-w-md flex flex-col overflow-hidden" role="alertdialog" aria-labelledby="password-dialog-title" aria-describedby="password-dialog-desc">
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
+              <h2 id="password-dialog-title" className="text-lg font-semibold">Customer Created Successfully</h2>
+            </div>
+            <div id="password-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                A password has been automatically generated for this customer.
+              </p>
+              <div className="bg-muted rounded-lg p-4 border border-border">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Generated Password:</p>
+                <p className="text-lg font-mono font-bold text-foreground break-all">{generatedPassword}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Please save this password. It will not be shown again. The customer can use their mobile number and this password to log in.
+              </p>
+            </div>
+            <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
+              <Button
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setGeneratedPassword(null);
+                }}
+                className="w-full sm:w-auto"
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Delete Customer — confirmation alert dialog (Admin only) */}

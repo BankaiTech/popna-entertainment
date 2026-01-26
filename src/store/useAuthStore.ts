@@ -10,7 +10,7 @@ interface AuthState {
   customerId: number | null; // For customer role
   customerMobile: string | null; // For customer role
   login: (username: string, password: string) => boolean;
-  customerLogin: (mobile: string, password: string) => { success: boolean; message?: string };
+  customerLogin: (mobile: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   initialize: () => void;
 }
@@ -108,9 +108,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     saveAuthToStorage(newState);
     return true;
   },
-  customerLogin: (mobile: string, password: string) => {
+  customerLogin: async (mobile: string, password: string) => {
     // Replace with secure auth & hashing later
-    const result = loginCustomer(mobile, password);
+    const result = await loginCustomer(mobile, password);
 
     if (result.success && result.customerId && result.customerMobile) {
       const newState = {

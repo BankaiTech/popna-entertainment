@@ -1,9 +1,10 @@
 import { mockCustomers } from './mockData';
+import { customersApi } from './api';
 import type { Customer } from '@/models/types';
 
 /**
  * Mock Customer Authentication Service
- * Validate mobile + password against mockCustomers.
+ * Validate mobile + password against customer data.
  * Replace with secure auth & hashing later.
  */
 
@@ -21,7 +22,7 @@ export interface CustomerAuthResponse {
  * @param password - Customer password (plain text for mock only)
  * @returns CustomerAuthResponse with success status and customer data
  */
-export const loginCustomer = (mobile: string, password: string): CustomerAuthResponse => {
+export const loginCustomer = async (mobile: string, password: string): Promise<CustomerAuthResponse> => {
   // Replace with secure auth & hashing later
 
   // Validate mobile format (10 digits)
@@ -39,8 +40,27 @@ export const loginCustomer = (mobile: string, password: string): CustomerAuthRes
     };
   }
 
-  // Find customer in mock data by mobile and validate password
-  const customer = mockCustomers.find(
+  // Get all customers from API (includes newly created ones)
+  // Fallback to localStorage if API fails, then to mockCustomers
+  let customers: Customer[] = [];
+  try {
+    customers = await customersApi.getAll();
+  } catch (error) {
+    // Fallback to localStorage
+    try {
+      const stored = localStorage.getItem('customers-data');
+      if (stored) {
+        customers = JSON.parse(stored);
+      } else {
+        customers = mockCustomers;
+      }
+    } catch (e) {
+      customers = mockCustomers;
+    }
+  }
+
+  // Find customer by mobile and validate password
+  const customer = customers.find(
     (c: Customer) => c.mobile === mobile && (c.password ?? '') === password
   );
 
