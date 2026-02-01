@@ -78,6 +78,10 @@ export interface Complaint {
   internalDescription?: string;
   status: ComplaintStatus;
   createdAt: string;
+  /** Closure photo: base64 or object URL (mock only). Replace with backend image upload later. */
+  closureImage?: string;
+  /** Date/time when complaint was closed (ISO string). */
+  closedAt?: string;
 }
 
 /** Admin/Employee user. password is plain text for mock only. */

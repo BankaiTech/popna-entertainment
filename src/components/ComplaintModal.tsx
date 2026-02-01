@@ -1,10 +1,21 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Camera } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import Select from './ui/Select';
 import type { Complaint, ComplaintStatus, Customer } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
+
+/** Convert File to base64 data URL (mock only). Replace with secure backend image upload later. */
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const ACCEPTED_IMAGE_TYPES = 'image/jpeg,image/jpg,image/png';
 
 interface ComplaintModalProps {
   isOpen: boolean;
@@ -15,6 +26,7 @@ interface ComplaintModalProps {
 
 const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModalProps) => {
   const { addComplaint, updateComplaint } = useStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     customerId: '',
     customerDescription: '',
@@ -22,6 +34,10 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     status: 'active' as ComplaintStatus,
   });
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  /** Closure image as base64 (mock only). Shown when status = Completed; required to save. */
+  const [closureImage, setClosureImage] = useState<string | null>(null);
+  /** Tap-to-preview: show full image overlay */
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   useEffect(() => {
     if (complaint) {
@@ -31,6 +47,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
         internalDescription: complaint.internalDescription || '',
         status: complaint.status,
       });
+      setClosureImage(complaint.closureImage ?? null);
       const customer = customers.find((c) => c.id === complaint.customerId);
       setSelectedCustomer(customer || null);
     } else {
@@ -40,8 +57,10 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
         internalDescription: '',
         status: 'active',
       });
+      setClosureImage(null);
       setSelectedCustomer(null);
     }
+    setImagePreviewOpen(false);
   }, [complaint, customers, isOpen]);
 
   const handleCustomerChange = (customerId: string) => {
@@ -50,22 +69,53 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     setFormData({ ...formData, customerId });
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      alert('Please upload a JPG, JPEG or PNG image.');
+      return;
+    }
+    try {
+      const base64 = await fileToBase64(file);
+      setClosureImage(base64);
+    } catch (err) {
+      alert('Failed to read image. Please try again.');
+    }
+    e.target.value = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedCustomer) {
       alert('Please select a customer');
       return;
     }
 
     if (complaint) {
-      // Update existing complaint - only update internalDescription and status
-      await updateComplaint(complaint.id, {
-        internalDescription: formData.internalDescription,
-        status: formData.status,
-      });
+      // When setting status to Completed, image is mandatory and closedAt is auto-filled
+      if (formData.status === 'completed') {
+        const imageToSave = closureImage ?? complaint.closureImage;
+        if (!imageToSave) {
+          alert('Please upload a closure photo. Image is required when status is Completed.');
+          return;
+        }
+        const closedAt = complaint.closedAt ?? new Date().toISOString();
+        await updateComplaint(complaint.id, {
+          internalDescription: formData.internalDescription,
+          status: formData.status,
+          closureImage: imageToSave,
+          closedAt,
+        });
+      } else {
+        await updateComplaint(complaint.id, {
+          internalDescription: formData.internalDescription,
+          status: formData.status,
+        });
+      }
     } else {
-      // Create new complaint
       await addComplaint({
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
@@ -213,6 +263,74 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                 ))}
               </Select>
             </div>
+
+            {/* Photo Upload — Admin/Employee only; shown ONLY when Status = Completed */}
+            {formData.status === 'completed' && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <label className="block text-sm font-medium">
+                  Closure Photo <span className="text-destructive">*</span>
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  One image required (JPG, PNG or JPEG). Upload from device or take a picture.
+                </p>
+                {complaint?.closedAt && (
+                  <p className="text-sm text-muted-foreground">
+                    Closed: {new Date(complaint.closedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+                {complaint?.closureImage || closureImage ? (
+                  <div className="space-y-2">
+                    <div
+                      className="relative w-full max-w-sm aspect-video rounded-lg border border-border overflow-hidden bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                      onClick={() => setImagePreviewOpen(true)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && setImagePreviewOpen(true)}
+                    >
+                      <img
+                        src={closureImage ?? complaint?.closureImage ?? ''}
+                        alt="Closure"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Tap image to preview</p>
+                    {!complaint?.closureImage && closureImage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setClosureImage(null);
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        Change photo
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-2 items-start">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={ACCEPTED_IMAGE_TYPES}
+                      capture="environment"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-[44px] touch-manipulation w-full sm:w-auto"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Photo
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           </div>
 
@@ -224,6 +342,31 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
             <Button type="submit" className="w-full sm:w-auto">{complaint ? 'Update' : 'Create'} Complaint</Button>
           </div>
         </form>
+
+        {/* Image preview overlay — tap to close */}
+        {imagePreviewOpen && (closureImage ?? complaint?.closureImage) && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setImagePreviewOpen(false)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Escape' && setImagePreviewOpen(false)}
+          >
+            <button
+              onClick={() => setImagePreviewOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+              aria-label="Close preview"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={closureImage ?? complaint?.closureImage ?? ''}
+              alt="Closure preview"
+              className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

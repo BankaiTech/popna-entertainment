@@ -650,6 +650,9 @@ export const mockComplaints: Complaint[] = [
     internalDescription: 'Issue resolved by resetting ONT. Customer satisfied.',
     status: 'completed',
     createdAt: getDateString(10),
+    closedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    // Mock closure image (base64 placeholder). Replace with real backend image URL later.
+    closureImage: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   },
   {
     id: 8,
@@ -705,6 +708,7 @@ export const mockComplaints: Complaint[] = [
     internalDescription: 'Fixed router settings. Connection stable now.',
     status: 'completed',
     createdAt: getDateString(8),
+    closedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 13,
@@ -749,6 +753,7 @@ export const mockComplaints: Complaint[] = [
     internalDescription: 'Network maintenance completed. All services restored.',
     status: 'completed',
     createdAt: getDateString(12),
+    closedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 17,
@@ -771,5 +776,6 @@ export const mockComplaints: Complaint[] = [
     internalDescription: 'All issues resolved. Customer feedback positive.',
     status: 'completed',
     createdAt: getDateString(15),
+    closedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ];

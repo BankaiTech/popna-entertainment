@@ -27,7 +27,7 @@ export const complaintsApi = {
     return Promise.resolve(newComplaint);
   },
   update: async (id: number, complaint: Partial<Complaint>): Promise<Complaint> => {
-    // Replace with real API call later
+    // Replace with real API call later. For closureImage, replace with backend image upload (e.g. presigned URL or multipart).
     const index = complaintsData.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Complaint not found');
     complaintsData[index] = { ...complaintsData[index], ...complaint };
