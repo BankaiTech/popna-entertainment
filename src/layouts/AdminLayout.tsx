@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { LayoutDashboard, Globe, Users, UserCog, LogOut, AlertCircle, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
+import FooterCredit from '@/components/FooterCredit';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -116,6 +117,11 @@ const AdminLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Footer credit — sticky at bottom */}
+      <footer className="shrink-0 border-t border-border bg-card py-3 px-4">
+        <FooterCredit />
+      </footer>
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { Plus, AlertCircle, LogOut } from 'lucide-react';
 import type { Complaint } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
+import FooterCredit from '@/components/FooterCredit';
 
 const CustomerDashboard = () => {
   const { customerId, logout } = useAuthStore();
@@ -75,7 +76,8 @@ const CustomerDashboard = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -189,6 +191,11 @@ const CustomerDashboard = () => {
         onClose={() => setIsComplaintModalOpen(false)}
         customer={currentCustomer}
       />
+      </div>
+      {/* Footer credit — sticky at bottom */}
+      <footer className="shrink-0 border-t border-border bg-muted/50 py-3 px-4 mt-auto">
+        <FooterCredit />
+      </footer>
     </div>
   );
 };
