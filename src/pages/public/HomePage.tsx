@@ -16,7 +16,7 @@ const HomePage = () => {
       {/* Hero Section */}
       <div className="text-center mb-8 sm:mb-16">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
-          Welcome to Popna Entertainment
+          Welcome to BankaiTech
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground mb-4 sm:mb-8">
           Your trusted Internet Service Provider

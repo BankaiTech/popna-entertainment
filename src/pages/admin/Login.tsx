@@ -102,8 +102,8 @@ const Login = () => {
               </Button>
               <div className="text-xs text-center text-muted-foreground mt-4">
                 <p>Demo Credentials:</p>
-                <p>Admin: popna / test123</p>
-                <p>Employee: popna-emp / test123</p>
+                <p>Admin: bankaitech / test123</p>
+                <p>Employee: bankaitech-emp / test123</p>
               </div>
             </form>
           </CardContent>

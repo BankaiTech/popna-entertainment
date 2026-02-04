@@ -568,8 +568,8 @@ export const mockCustomers: Customer[] = [
 
 // Mock Users (Admin/Employee). Password plain text for mock only. Replace with secure auth & hashing later.
 export const mockUsers: User[] = [
-  { id: 1, name: 'Admin User', username: 'popna', password: 'test123', role: 'admin', createdAt: getDateString(365) },
-  { id: 2, name: 'Employee User', username: 'popna-emp', password: 'test123', role: 'employee', createdAt: getDateString(180) },
+  { id: 1, name: 'Admin User', username: 'bankaitech', password: 'test123', role: 'admin', createdAt: getDateString(365) },
+  { id: 2, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', createdAt: getDateString(180) },
 ];
 
 // Mock Complaints - At least 15 complaints with mixed statuses and providers

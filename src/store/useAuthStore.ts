@@ -89,9 +89,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     let role: UserRole = 'employee';
-    if (username === 'popna') {
+    if (username === 'bankaitech') {
       role = 'admin';
-    } else if (username === 'popna-emp') {
+    } else if (username === 'bankaitech-emp') {
       role = 'employee';
     } else {
       return false;

@@ -24,7 +24,7 @@ const PublicLayout = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/" className="text-lg sm:text-xl font-bold text-primary">
-                Popna Entertainment
+                BankaiTech
               </Link>
             </div>
             
@@ -92,7 +92,7 @@ const PublicLayout = () => {
       <footer className="bg-card border-t border-border mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="text-center text-sm text-muted-foreground space-y-2">
-            <p>&copy; 2024 Popna Entertainment. All rights reserved.</p>
+            <p>&copy; 2024 BankaiTech. All rights reserved.</p>
             <FooterCredit />
           </div>
         </div>
