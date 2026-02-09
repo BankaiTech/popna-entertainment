@@ -1,4 +1,5 @@
 import type { User } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockUsers } from './mockData';
 
 /**
@@ -23,6 +24,7 @@ export const usersApi = {
     }
     const newUser: User = {
       ...user,
+      organizationId: user.organizationId ?? MOCK_ORGANIZATION_ID,
       id: Math.max(...usersData.map((u) => u.id), 0) + 1,
       createdAt: new Date().toISOString(),
     };

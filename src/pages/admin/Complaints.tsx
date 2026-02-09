@@ -83,7 +83,6 @@ const Complaints = () => {
     }
   };
 
-  const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
   const statuses: ComplaintStatus[] = ['active', 'on-hold', 'completed'];
 
   return (
@@ -141,9 +140,10 @@ const Complaints = () => {
                   onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
                 >
                   <option value="All">All Connections</option>
-                  {providers.map((provider) => (
+                  <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
+                  {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
                     <option key={provider} value={provider}>
-                      {getConnectionTypeLabel(provider)}
+                      {getConnectionTypeLabel(provider as Provider)} (Internet)
                     </option>
                   ))}
                 </Select>

@@ -9,7 +9,7 @@ import type { Plan, Provider } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 
-const ManagePlans = () => {
+const Catalog = () => {
   const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan } = useStore();
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -83,13 +83,15 @@ const ManagePlans = () => {
   const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Manage Front Website</h1>
-          <p className="text-muted-foreground">Create and manage price cards for provider pages</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Catalog</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Services, plans, pricing, GST, installation charges. Controlled from admin; front site reflects this catalog.
+          </p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Add Plan
         </Button>
@@ -104,7 +106,7 @@ const ManagePlans = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Provider</label>
+                  <label className="block text-sm font-medium mb-2">Service / Provider</label>
                   <Select
                     value={formData.provider}
                     onChange={(e) => setFormData({ ...formData, provider: e.target.value as Provider })}
@@ -239,4 +241,4 @@ const ManagePlans = () => {
   );
 };
 
-export default ManagePlans;
+export default Catalog;

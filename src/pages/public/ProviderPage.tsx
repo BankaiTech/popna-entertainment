@@ -33,13 +33,18 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
   }
 
   const providerDisplayName = getProviderDisplayName(provider);
+  const isCable = provider === 'GTPL';
+  const serviceLabel = isCable ? 'Cable Plans' : 'Internet Plans';
+  const serviceDescription = isCable
+    ? 'Choose the right cable plan for your home or business'
+    : 'Choose the perfect plan for your internet needs';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-4">{providerDisplayName} Internet Plans</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-4">{providerDisplayName} — {serviceLabel}</h1>
         <p className="text-lg text-muted-foreground">
-          Choose the perfect plan for your internet needs
+          {serviceDescription}
         </p>
       </div>
 

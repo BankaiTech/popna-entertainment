@@ -4,10 +4,13 @@ import AdminLayout from './layouts/AdminLayout';
 import HomePage from './pages/public/HomePage';
 import ProviderPage from './pages/public/ProviderPage';
 import AdminDashboard from './pages/admin/Dashboard';
-import AdminManagePlans from './pages/admin/ManagePlans';
+import AdminCatalog from './pages/admin/Catalog';
 import AdminCustomers from './pages/admin/Customers';
+import AdminInvoices from './pages/admin/Invoices';
+import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
+import AdminSettings from './pages/admin/Settings';
 import Login from './pages/admin/Login';
 import CustomerLogin from './pages/customer/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -20,10 +23,10 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="gtpl" element={<ProviderPage provider="GTPL" />} />
-        <Route path="bsnl" element={<ProviderPage provider="BSNL" />} />
-        <Route path="railwire" element={<ProviderPage provider="Railwire" />} />
-        <Route path="krishiinet" element={<ProviderPage provider="Krishiinet" />} />
+        <Route path="cable/gtpl" element={<ProviderPage provider="GTPL" />} />
+        <Route path="internet/bsnl" element={<ProviderPage provider="BSNL" />} />
+        <Route path="internet/railwire" element={<ProviderPage provider="Railwire" />} />
+        <Route path="internet/krishiinet" element={<ProviderPage provider="Krishiinet" />} />
       </Route>
 
       {/* Admin Login */}
@@ -58,16 +61,32 @@ function App() {
         <Route
           path="dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin', 'employee']}>
               <AdminDashboard />
             </ProtectedRoute>
           }
         />
         <Route
-          path="manage-plans"
+          path="catalog"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <AdminManagePlans />
+              <AdminCatalog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="invoices"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="purchase-invoices"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminPurchaseInvoices />
             </ProtectedRoute>
           }
         />
@@ -92,6 +111,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminSettings />
             </ProtectedRoute>
           }
         />

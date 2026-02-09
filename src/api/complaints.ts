@@ -1,8 +1,9 @@
 // Replace with real API call later
 import type { Complaint } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockComplaints } from './mockData';
 
-// In-memory storage for mock data (simulates backend)
+// Multi-tenant ready — backend will enforce org isolation
 let complaintsData: Complaint[] = [...mockComplaints];
 
 export const complaintsApi = {
@@ -17,9 +18,9 @@ export const complaintsApi = {
     return Promise.resolve(complaint);
   },
   create: async (complaint: Omit<Complaint, 'id' | 'createdAt'>): Promise<Complaint> => {
-    // Replace with real API call later
     const newComplaint: Complaint = {
       ...complaint,
+      organizationId: complaint.organizationId ?? MOCK_ORGANIZATION_ID,
       id: Math.max(...complaintsData.map((c) => c.id), 0) + 1,
       createdAt: new Date().toISOString(),
     };

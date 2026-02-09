@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
 import { customersApi } from '@/api/api';
-import type { Customer } from '@/models/types';
+import type { Customer, Provider } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 
 const AdminDashboard = () => {
@@ -43,6 +43,7 @@ const AdminDashboard = () => {
   if (!dashboardStats && !loading) {
     return null; // Will be handled by useEffect
   }
+  if (!dashboardStats) return null;
 
   const statCards = [
     {
@@ -53,28 +54,28 @@ const AdminDashboard = () => {
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'GTPL Cable Customers',
+      title: 'Cable (GTPL)',
       value: dashboardStats.gtplCustomers,
       icon: Wifi,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'BSNL Customers',
+      title: 'Internet — BSNL',
       value: dashboardStats.bsnlCustomers,
       icon: Wifi,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
     {
-      title: 'Railwire Customers',
+      title: 'Internet — Railwire',
       value: dashboardStats.railwireCustomers,
       icon: Wifi,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
-      title: 'Krishiinet Customers',
+      title: 'Internet — Krishiinet',
       value: dashboardStats.krishiinetCustomers,
       icon: Wifi,
       color: 'text-purple-600',
@@ -164,13 +165,13 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Active Customers by Provider</CardTitle>
+            <CardTitle>Active by Service (Cable vs Internet)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(dashboardStats.activeByProvider).map(([provider, count]) => (
                 <div key={provider} className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{provider}</span>
+                  <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
                   <span className="text-lg font-bold text-green-600">{count}</span>
                 </div>
               ))}
@@ -180,13 +181,13 @@ const AdminDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Inactive Customers by Provider</CardTitle>
+            <CardTitle>Inactive by Service (Cable vs Internet)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(dashboardStats.inactiveByProvider).map(([provider, count]) => (
                 <div key={provider} className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{provider}</span>
+                  <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
                   <span className="text-lg font-bold text-red-600">{count}</span>
                 </div>
               ))}

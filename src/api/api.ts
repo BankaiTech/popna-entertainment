@@ -1,7 +1,9 @@
 // Replace with real API call later
 import type { Plan, Customer, DashboardStats, Provider } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockPlans, mockCustomers } from './mockData';
 
+// Multi-tenant ready — backend will enforce org isolation. All data scoped by organizationId.
 // In-memory storage for mock data (simulates backend)
 let plansData: Plan[] = [...mockPlans];
 let customersData: Customer[] = [...mockCustomers];
@@ -23,9 +25,9 @@ export const plansApi = {
     return Promise.resolve(plan);
   },
   create: async (plan: Omit<Plan, 'id'>): Promise<Plan> => {
-    // Replace with real API call later
     const newPlan: Plan = {
       ...plan,
+      organizationId: plan.organizationId ?? MOCK_ORGANIZATION_ID,
       id: Math.max(...plansData.map((p) => p.id), 0) + 1,
     };
     plansData.push(newPlan);
@@ -60,9 +62,9 @@ export const customersApi = {
     return Promise.resolve(customer);
   },
   create: async (customer: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> => {
-    // Replace with real API call later
     const newCustomer: Customer = {
       ...customer,
+      organizationId: customer.organizationId ?? MOCK_ORGANIZATION_ID,
       id: Math.max(...customersData.map((c) => c.id), 0) + 1,
       createdAt: new Date().toISOString(),
     };

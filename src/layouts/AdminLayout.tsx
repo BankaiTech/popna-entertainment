@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Globe, Users, UserCog, LogOut, AlertCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
@@ -17,17 +17,20 @@ const AdminLayout = () => {
     navigate('/admin/login', { replace: true });
   };
 
-  // Admin menu items (Users visible only to Admin)
+  // Full product sidebar — enterprise SaaS structure. Admin sees all; Employee sees limited.
   const adminMenuItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/manage-plans', label: 'Manage Front Website', icon: Globe },
     { path: '/admin/customers', label: 'Customers', icon: Users },
+    { path: '/admin/catalog', label: 'Catalog', icon: Package },
+    { path: '/admin/invoices', label: 'Invoices', icon: FileText },
+    { path: '/admin/purchase-invoices', label: 'Purchase Invoices', icon: ShoppingCart },
     { path: '/admin/complaints', label: 'Complaints', icon: AlertCircle },
     { path: '/admin/users', label: 'Users', icon: UserCog },
+    { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
-  // Employee menu items (Customers and Complaints)
   const employeeMenuItems = [
+    { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/customers', label: 'Customers', icon: Users },
     { path: '/admin/complaints', label: 'Complaints', icon: AlertCircle },
   ];
@@ -77,7 +80,7 @@ const AdminLayout = () => {
           )}
         >
           <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0">
-            <h1 className="text-lg sm:text-xl font-bold text-primary">Popna ISP Admin</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-primary">Popna</h1>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="sm:hidden p-2 hover:bg-accent rounded-md"

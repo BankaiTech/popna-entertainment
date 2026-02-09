@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Plan, Customer, DashboardStats, Complaint } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { plansApi, customersApi, dashboardApi } from '@/api/api';
 import { complaintsApi } from '@/api/complaints';
 import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
@@ -22,12 +23,12 @@ interface AppState {
   deletePlan: (id: number) => Promise<void>;
   
   fetchCustomers: () => Promise<void>;
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<void>;
   updateCustomer: (id: number, customer: Partial<Customer>) => Promise<Customer | void>;
   deleteCustomer: (id: number) => Promise<void>;
   
   fetchComplaints: () => Promise<void>;
-  addComplaint: (complaint: Omit<Complaint, 'id' | 'createdAt'>) => Promise<void>;
+  addComplaint: (complaint: Omit<Complaint, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<void>;
   updateComplaint: (id: number, complaint: Partial<Complaint>) => Promise<void>;
   
   fetchDashboardStats: () => Promise<void>;
@@ -162,13 +163,13 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   addCustomer: async (customer) => {
-    // Security check: Only admins can add customers
-    // TODO: In real implementation, check user role from auth store or API
-    // For now, this is handled at UI level, but adding comment for API integration
-    // In production, the API should enforce role-based permissions
+    // Multi-tenant ready — backend will enforce org isolation
     set({ loading: true, error: null });
     try {
-      const newCustomer = await customersApi.create(customer);
+      const newCustomer = await customersApi.create({
+        ...customer,
+        organizationId: customer.organizationId ?? MOCK_ORGANIZATION_ID,
+      });
       set((state) => {
         const updatedCustomers = [...state.customers, newCustomer];
         // Sync to localStorage for customer login
@@ -254,7 +255,10 @@ export const useStore = create<AppState>((set, get) => ({
   addComplaint: async (complaint) => {
     set({ loading: true, error: null });
     try {
-      const newComplaint = await complaintsApi.create(complaint);
+      const newComplaint = await complaintsApi.create({
+        ...complaint,
+        organizationId: complaint.organizationId ?? MOCK_ORGANIZATION_ID,
+      });
       set((state) => ({ complaints: [...state.complaints, newComplaint], loading: false }));
     } catch (error) {
       set({ error: 'Failed to add complaint', loading: false });

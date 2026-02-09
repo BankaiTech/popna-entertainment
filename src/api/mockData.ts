@@ -1,10 +1,14 @@
 import type { Plan, Customer, Complaint, User } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
-// Mock Plans - At least 3 per provider
+// Multi-tenant ready — backend will enforce org isolation. All mock data scoped by organizationId.
+
+// Mock Plans - At least 3 per provider (Cable: GTPL; Internet: BSNL, Railwire, Krishiinet)
 export const mockPlans: Plan[] = [
-  // GTPL Plans (Cable Network)
+  // GTPL Cable
   {
     id: 1,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'GTPL',
     planName: 'GTPL Cable Basic 50 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=GTPL+Cable+Basic',
@@ -15,6 +19,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 2,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'GTPL',
     planName: 'GTPL Cable Premium 100 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=GTPL+Cable+Premium',
@@ -25,6 +30,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'GTPL',
     planName: 'GTPL Cable Ultra 200 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=GTPL+Cable+Ultra',
@@ -33,9 +39,10 @@ export const mockPlans: Plan[] = [
     installationAmount: 1000,
     description: 'Ultra-fast cable broadband connection with 200 Mbps download speed. Perfect for heavy users and businesses.',
   },
-  // BSNL Plans
+  // BSNL Internet
   {
     id: 4,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'BSNL',
     planName: 'BSNL Fiber Basic',
     imageUrl: 'https://via.placeholder.com/400x300?text=BSNL+Fiber',
@@ -46,6 +53,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 5,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'BSNL',
     planName: 'BSNL Fiber Plus',
     imageUrl: 'https://via.placeholder.com/400x300?text=BSNL+Plus',
@@ -56,6 +64,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 6,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'BSNL',
     planName: 'BSNL Fiber Premium',
     imageUrl: 'https://via.placeholder.com/400x300?text=BSNL+Premium',
@@ -64,9 +73,10 @@ export const mockPlans: Plan[] = [
     installationAmount: 1000,
     description: 'Premium BSNL fiber connection with high-speed internet for demanding users.',
   },
-  // Railwire Plans
+  // Railwire Internet
   {
     id: 7,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Railwire',
     planName: 'Railwire Express 75 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=Railwire+Express',
@@ -77,6 +87,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 8,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Railwire',
     planName: 'Railwire Speed 150 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=Railwire+Speed',
@@ -87,6 +98,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 9,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Railwire',
     planName: 'Railwire Turbo 300 Mbps',
     imageUrl: 'https://via.placeholder.com/400x300?text=Railwire+Turbo',
@@ -95,9 +107,10 @@ export const mockPlans: Plan[] = [
     installationAmount: 1000,
     description: 'Turbo-charged Railwire connection with blazing fast 300 Mbps speeds.',
   },
-  // Krishiinet Plans
+  // Krishiinet Internet
   {
     id: 10,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Krishiinet',
     planName: 'Krishiinet Rural Connect',
     imageUrl: 'https://via.placeholder.com/400x300?text=Krishiinet+Rural',
@@ -108,6 +121,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 11,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Krishiinet',
     planName: 'Krishiinet Home Plus',
     imageUrl: 'https://via.placeholder.com/400x300?text=Krishiinet+Home',
@@ -118,6 +132,7 @@ export const mockPlans: Plan[] = [
   },
   {
     id: 12,
+    organizationId: MOCK_ORGANIZATION_ID,
     provider: 'Krishiinet',
     planName: 'Krishiinet Business',
     imageUrl: 'https://via.placeholder.com/400x300?text=Krishiinet+Business',
@@ -135,10 +150,11 @@ const getDateString = (daysAgo: number): string => {
   return date.toISOString();
 };
 
-// Mock Customers - At least 20 customers with mixed providers, statuses, and dates
+// Mock Customers - Cable (GTPL) and Internet (BSNL, Railwire, Krishiinet) — do not mix
 export const mockCustomers: Customer[] = [
   {
     id: 1,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Rajesh Kumar',
     email: 'rajesh.kumar@example.com',
     mobile: '9876543210',
@@ -161,6 +177,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 2,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Priya Sharma',
     email: 'priya.sharma@example.com',
     mobile: '9876543211',
@@ -180,6 +197,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Amit Patel',
     email: 'amit.patel@example.com',
     mobile: '9876543212',
@@ -199,6 +217,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 4,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Sneha Reddy',
     email: 'sneha.reddy@example.com',
     mobile: '9876543213',
@@ -221,6 +240,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 5,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Vikram Singh',
     email: 'vikram.singh@example.com',
     mobile: '9876543214',
@@ -240,6 +260,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 6,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Anjali Mehta',
     email: 'anjali.mehta@example.com',
     mobile: '9876543215',
@@ -259,6 +280,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 7,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Rahul Verma',
     email: 'rahul.verma@example.com',
     mobile: '9876543216',
@@ -278,6 +300,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 8,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Kavita Nair',
     email: 'kavita.nair@example.com',
     mobile: '9876543217',
@@ -300,6 +323,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 9,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Mohit Agarwal',
     email: 'mohit.agarwal@example.com',
     mobile: '9876543218',
@@ -319,6 +343,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 10,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Divya Joshi',
     email: 'divya.joshi@example.com',
     mobile: '9876543219',
@@ -338,6 +363,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 11,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Arjun Malhotra',
     email: 'arjun.malhotra@example.com',
     mobile: '9876543220',
@@ -357,6 +383,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 12,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Pooja Desai',
     email: 'pooja.desai@example.com',
     mobile: '9876543221',
@@ -376,6 +403,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 13,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Suresh Iyer',
     email: 'suresh.iyer@example.com',
     mobile: '9876543222',
@@ -395,6 +423,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 14,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Meera Krishnan',
     email: 'meera.krishnan@example.com',
     mobile: '9876543223',
@@ -414,6 +443,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 15,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Nikhil Kapoor',
     email: 'nikhil.kapoor@example.com',
     mobile: '9876543224',
@@ -433,6 +463,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 16,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Riya Banerjee',
     email: 'riya.banerjee@example.com',
     mobile: '9876543225',
@@ -452,6 +483,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 17,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Karan Thakur',
     email: 'karan.thakur@example.com',
     mobile: '9876543226',
@@ -471,6 +503,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 18,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Shreya Menon',
     email: 'shreya.menon@example.com',
     mobile: '9876543227',
@@ -490,6 +523,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 19,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Aditya Rao',
     email: 'aditya.rao@example.com',
     mobile: '9876543228',
@@ -509,6 +543,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 20,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Neha Gupta',
     email: 'neha.gupta@example.com',
     mobile: '9876543229',
@@ -528,6 +563,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 21,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Rohit Sharma',
     email: 'rohit.sharma@example.com',
     mobile: '9876543230',
@@ -547,6 +583,7 @@ export const mockCustomers: Customer[] = [
   },
   {
     id: 22,
+    organizationId: MOCK_ORGANIZATION_ID,
     name: 'Ananya Das',
     email: 'ananya.das@example.com',
     mobile: '9876543231',
@@ -566,16 +603,17 @@ export const mockCustomers: Customer[] = [
   },
 ];
 
-// Mock Users (Admin/Employee). Password plain text for mock only. Replace with secure auth & hashing later.
+// Mock Users (Admin/Employee). Password plain text for mock only.
 export const mockUsers: User[] = [
-  { id: 1, name: 'Admin User', username: 'bankaitech', password: 'test123', role: 'admin', createdAt: getDateString(365) },
-  { id: 2, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', createdAt: getDateString(180) },
+  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Admin User', username: 'bankaitech', password: 'test123', role: 'admin', createdAt: getDateString(365) },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', createdAt: getDateString(180) },
 ];
 
-// Mock Complaints - At least 15 complaints with mixed statuses and providers
+// Mock Complaints - Cable (GTPL) and Internet (BSNL, Railwire, Krishiinet) — do not mix
 export const mockComplaints: Complaint[] = [
   {
     id: 1,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 1,
     customerName: 'Rajesh Kumar',
     mobile: '9876543210',
@@ -587,6 +625,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 2,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 2,
     customerName: 'Priya Sharma',
     mobile: '9876543211',
@@ -598,6 +637,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 3,
     customerName: 'Amit Patel',
     mobile: '9876543212',
@@ -609,6 +649,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 4,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 4,
     customerName: 'Sneha Reddy',
     mobile: '9876543213',
@@ -620,6 +661,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 5,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 5,
     customerName: 'Vikram Singh',
     mobile: '9876543214',
@@ -631,6 +673,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 6,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 6,
     customerName: 'Anjali Mehta',
     mobile: '9876543215',
@@ -642,6 +685,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 7,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 7,
     customerName: 'Rahul Verma',
     mobile: '9876543216',
@@ -656,6 +700,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 8,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 8,
     customerName: 'Kavita Nair',
     mobile: '9876543217',
@@ -667,6 +712,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 9,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 9,
     customerName: 'Mohit Agarwal',
     mobile: '9876543218',
@@ -678,6 +724,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 10,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 10,
     customerName: 'Divya Joshi',
     mobile: '9876543219',
@@ -689,6 +736,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 11,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 11,
     customerName: 'Arjun Malhotra',
     mobile: '9876543220',
@@ -700,6 +748,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 12,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 12,
     customerName: 'Pooja Desai',
     mobile: '9876543221',
@@ -712,6 +761,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 13,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 13,
     customerName: 'Suresh Iyer',
     mobile: '9876543222',
@@ -723,6 +773,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 14,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 14,
     customerName: 'Meera Krishnan',
     mobile: '9876543223',
@@ -734,6 +785,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 15,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 15,
     customerName: 'Nikhil Kapoor',
     mobile: '9876543224',
@@ -745,6 +797,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 16,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 16,
     customerName: 'Riya Banerjee',
     mobile: '9876543225',
@@ -757,6 +810,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 17,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 17,
     customerName: 'Karan Thakur',
     mobile: '9876543226',
@@ -768,6 +822,7 @@ export const mockComplaints: Complaint[] = [
   },
   {
     id: 18,
+    organizationId: MOCK_ORGANIZATION_ID,
     customerId: 18,
     customerName: 'Shreya Menon',
     mobile: '9876543227',

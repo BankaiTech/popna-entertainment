@@ -149,7 +149,6 @@ const AdminCustomers = () => {
     if (updated) setEditingCustomer(updated);
   };
 
-  const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
 
   return (
@@ -199,9 +198,10 @@ const AdminCustomers = () => {
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
             >
               <option value="All">All Connections</option>
-              {providers.map((provider) => (
+              <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
+              {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
                 <option key={provider} value={provider}>
-                  {provider}
+                  {getConnectionTypeLabel(provider as Provider)} (Internet)
                 </option>
               ))}
             </Select>

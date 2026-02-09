@@ -1,5 +1,14 @@
 export type Provider = 'GTPL' | 'BSNL' | 'Railwire' | 'Krishiinet';
 
+/** Service separation: Cable (GTPL only) vs Internet (BSNL, Railwire, Krishiinet). Do NOT mix GTPL with internet providers. */
+export type ServiceCategory = 'cable' | 'internet';
+
+/** Cable service: GTPL only. */
+export const CABLE_PROVIDER: Provider = 'GTPL';
+
+/** Internet services: BSNL, Railwire, Krishiinet. */
+export const INTERNET_PROVIDERS: Provider[] = ['BSNL', 'Railwire', 'Krishiinet'];
+
 export type CustomerStatus = 'Active' | 'Inactive';
 
 /** GTPL-only: payment status for cable network billing. */
@@ -7,8 +16,12 @@ export type PaymentStatus = 'paid' | 'not_paid';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
+// Multi-tenant ready — backend will enforce org isolation
+export const MOCK_ORGANIZATION_ID = 'org_001';
+
 export interface Plan {
   id: number;
+  organizationId: string;
   provider: Provider;
   planName: string;
   imageUrl: string;
@@ -28,6 +41,7 @@ export interface Address {
 
 export interface Customer {
   id: number;
+  organizationId: string;
   name: string;
   email: string;
   mobile: string;
@@ -70,6 +84,7 @@ export interface DashboardStats {
 
 export interface Complaint {
   id: number;
+  organizationId: string;
   customerId: number;
   customerName: string;
   mobile: string;
@@ -87,9 +102,55 @@ export interface Complaint {
 /** Admin/Employee user. password is plain text for mock only. */
 export interface User {
   id: number;
+  organizationId: string;
   name: string;
   username: string;
   password: string;
   role: 'admin' | 'employee';
+  createdAt: string;
+}
+
+/** Sales invoice (mock structure — PDF ready). */
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+
+export interface SalesInvoice {
+  id: number;
+  organizationId: string;
+  invoiceNumber: string;
+  customerId: number;
+  customerName: string;
+  serviceProvider: Provider;
+  planName: string;
+  amount: number;
+  gstRate: number;
+  gstAmount: number;
+  totalAmount: number;
+  status: InvoiceStatus;
+  issueDate: string;
+  dueDate: string;
+  createdAt: string;
+}
+
+/** Purchase invoice (vendor, GST breakup, reference). */
+export interface PurchaseInvoice {
+  id: number;
+  organizationId: string;
+  invoiceNumber: string;
+  vendorId: number;
+  vendorName: string;
+  reference?: string;
+  amount: number;
+  gstBreakup: { cgst?: number; sgst?: number; igst?: number };
+  totalAmount: number;
+  issueDate: string;
+  createdAt: string;
+}
+
+export interface Vendor {
+  id: number;
+  organizationId: string;
+  name: string;
+  contact?: string;
+  gstin?: string;
   createdAt: string;
 }

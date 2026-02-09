@@ -5,6 +5,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { usersApi } from '@/api/users';
 import type { User } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Plus } from 'lucide-react';
 
 const AdminUsers = () => {
@@ -70,7 +71,7 @@ const AdminUsers = () => {
 
     setAddSaving(true);
     try {
-      await usersApi.create({ name, username, password, role: addRole });
+      await usersApi.create({ organizationId: MOCK_ORGANIZATION_ID, name, username, password, role: addRole });
       await loadUsers();
       handleCloseAdd();
     } catch (err) {
