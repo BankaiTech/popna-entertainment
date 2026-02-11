@@ -7,6 +7,7 @@ import { usersApi } from '@/api/users';
 import type { User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -85,10 +86,10 @@ const AdminUsers = () => {
     new Date(s).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Users</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Users</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Manage admin and employee users</p>
         </div>
         <Button onClick={handleOpenAdd} className="w-full sm:w-auto">
@@ -98,10 +99,10 @@ const AdminUsers = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>User List ({users.length})</CardTitle>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">User List ({users.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12">Loading users...</div>
           ) : users.length === 0 ? (
@@ -109,32 +110,37 @@ const AdminUsers = () => {
           ) : (
             <>
               <div className="hidden md:block overflow-x-auto">
-                <div className="min-w-full">
-                  <div className="grid grid-cols-5 gap-4 p-4 bg-muted rounded-md mb-2 font-medium text-sm text-muted-foreground">
-                    <div>ID</div>
-                    <div>Name</div>
-                    <div>Username</div>
-                    <div>Role</div>
-                    <div>Created Date</div>
-                  </div>
-                  <div className="space-y-2">
-                    {users.map((u) => (
-                      <div
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-border bg-muted/30">
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Username</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Role</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Created Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u, idx) => (
+                      <tr
                         key={u.id}
-                        className="grid grid-cols-5 gap-4 p-4 bg-card border border-border rounded-md items-center"
+                        className={cn(
+                          "border-b border-border hover:bg-muted/50 transition-colors",
+                          idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                        )}
                       >
-                        <div className="text-sm">{u.id}</div>
-                        <div className="text-sm font-medium">{u.name}</div>
-                        <div className="text-sm">{u.username}</div>
-                        <div className="text-sm capitalize">{u.role}</div>
-                        <div className="text-sm text-muted-foreground">{formatDate(u.createdAt)}</div>
-                      </div>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{u.id}</td>
+                        <td className="px-3 py-2 text-sm font-medium text-foreground">{u.name}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{u.username}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground capitalize">{u.role}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{formatDate(u.createdAt)}</td>
+                      </tr>
                     ))}
-                  </div>
-                </div>
+                  </tbody>
+                </table>
               </div>
 
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-3 p-3">
                 {users.map((u) => (
                   <div
                     key={u.id}

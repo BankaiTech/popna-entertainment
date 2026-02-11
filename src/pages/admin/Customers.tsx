@@ -9,7 +9,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
-import { generateCustomerPassword } from '@/lib/utils';
+import { generateCustomerPassword, cn } from '@/lib/utils';
 
 const AdminCustomers = () => {
   const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer } = useStore();
@@ -152,11 +152,11 @@ const AdminCustomers = () => {
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Customers</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Customers</h1>
+          <p className="text-sm text-muted-foreground">Manage your customer database</p>
         </div>
         {/* Only show Add Customer button for Admin role */}
         {!isEmployee && (
@@ -167,24 +167,29 @@ const AdminCustomers = () => {
         )}
       </div>
 
-      {/* Filters */}
+      {/* Data Grid */}
       <Card>
-        <CardContent className="pt-4 sm:pt-6">
+        <CardHeader className="py-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
+            <CardTitle className="text-base">Customer List ({filteredCustomers.length})</CardTitle>
+          </div>
+          {/* Filters in Header */}
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${connectionFilter === 'GTPL' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${connectionFilter === 'GTPL' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
           >
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Search by name or mobile..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-9 text-sm w-50"
               />
             </div>
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
+              className="h-9 text-sm"
             >
               <option value="All">All Status</option>
               {statuses.map((status) => (
@@ -196,6 +201,7 @@ const AdminCustomers = () => {
             <Select
               value={connectionFilter}
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
+              className="h-9 text-sm"
             >
               <option value="All">All Connections</option>
               <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
@@ -209,6 +215,7 @@ const AdminCustomers = () => {
               <Select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
+                className="h-9 text-sm"
               >
                 <option value="All">All</option>
                 <option value="paid">Paid</option>
@@ -216,15 +223,8 @@ const AdminCustomers = () => {
               </Select>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer List ({filteredCustomers.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12">Loading customers...</div>
           ) : filteredCustomers.length === 0 ? (
@@ -237,66 +237,71 @@ const AdminCustomers = () => {
               <div className="hidden md:block overflow-x-auto">
                 <div className="min-w-full">
                   {/* Header */}
-                  <div className="grid grid-cols-6 gap-4 p-4 bg-muted rounded-md mb-2 font-medium text-sm text-muted-foreground">
-                    <div>ID</div>
-                    <div>Name</div>
-                    <div>Mobile</div>
-                    <div>Connection Type</div>
-                    <div>Package</div>
-                    <div>Status</div>
-                  </div>
-
-                  {/* Rows */}
-                  <div className="space-y-2">
-                    {filteredCustomers.map((customer) => (
-                      <div
-                        key={customer.id}
-                        className="grid grid-cols-6 gap-4 p-4 bg-card border border-border rounded-md hover:shadow-md transition-shadow items-center"
-                      >
-                        <div className="text-sm">{customer.id}</div>
-                        <div>
-                          <button
-                            onClick={() => handleEdit(customer)}
-                            className="text-sm font-medium text-primary hover:underline"
-                          >
-                            {customer.name}
-                          </button>
-                        </div>
-                        <div className="text-sm">{customer.mobile}</div>
-                        <div className="text-sm">{getConnectionTypeLabel(customer.connectionType)}</div>
-                        <div className="text-sm">{customer.package}</div>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              customer.status === 'Active'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {customer.status}
-                          </span>
-                          {!isEmployee && (
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => handleEdit(customer)}
-                                className="p-1 hover:bg-accent rounded transition-colors"
-                                title="Edit"
-                              >
-                                <Edit className="w-4 h-4 text-muted-foreground" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(customer.id)}
-                                className="p-1 hover:bg-destructive/10 rounded transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </button>
-                            </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-border bg-muted/30">
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection Type</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Package</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCustomers.map((customer, idx) => (
+                        <tr
+                          key={customer.id}
+                          className={cn(
+                            "border-b border-border hover:bg-muted/50 transition-colors",
+                            idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
                           )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        >
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.id}</td>
+                          <td className="px-3 py-2">
+                            <button
+                              onClick={() => handleEdit(customer)}
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              {customer.name}
+                            </button>
+                          </td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
+                          <td className="px-3 py-2 text-sm flex items-center gap-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                customer.status === 'Active'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {customer.status}
+                            </span>
+                            {!isEmployee && (
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => handleEdit(customer)}
+                                  className="p-1 hover:bg-accent rounded transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-3.5 h-3.5 text-muted-foreground" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(customer.id)}
+                                  className="p-1 hover:bg-destructive/10 rounded transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 

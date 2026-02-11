@@ -17,7 +17,7 @@ const Catalog = () => {
     organizationId: MOCK_ORGANIZATION_ID,
     provider: 'GTPL',
     planName: '',
-    imageUrl: '',
+    imageUrl: 'https://via.placeholder.com/400x300', // Default placeholder
     price: 0,
     gstRate: 18,
     installationAmount: 0,
@@ -49,7 +49,7 @@ const Catalog = () => {
       organizationId: MOCK_ORGANIZATION_ID,
       provider: 'GTPL',
       planName: '',
-      imageUrl: '',
+      imageUrl: 'https://via.placeholder.com/400x300',
       price: 0,
       gstRate: 18,
       installationAmount: 0,
@@ -83,8 +83,8 @@ const Catalog = () => {
   const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Catalog</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -128,14 +128,6 @@ const Catalog = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Image URL</label>
-                  <Input
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-2">Price (₹)</label>
                   <Input
                     type="number"
@@ -170,7 +162,7 @@ const Catalog = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Description</label>
                 <textarea
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
@@ -194,10 +186,7 @@ const Catalog = () => {
           {plans.map((plan) => {
             const finalPrice = plan.price + (plan.price * plan.gstRate) / 100;
             return (
-              <Card key={plan.id}>
-                <div className="w-full h-48 overflow-hidden rounded-t-xl">
-                  <img src={plan.imageUrl} alt={plan.planName} className="w-full h-full object-cover" />
-                </div>
+              <Card key={plan.id} className="hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <CardTitle>{plan.planName}</CardTitle>
                   <p className="text-sm text-muted-foreground">{getProviderDisplayName(plan.provider)}</p>
@@ -221,12 +210,13 @@ const Catalog = () => {
                       <span className="font-semibold">₹{plan.installationAmount}</span>
                     </div>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(plan)}>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(plan)} className="flex-1">
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)}>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} className="flex-1">
                       <Trash2 className="w-4 h-4 mr-1" />
                       Delete
                     </Button>

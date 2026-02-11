@@ -3,9 +3,9 @@ import { Settings as SettingsIcon } from 'lucide-react';
 
 const Settings = () => {
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div className="space-y-3">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Settings</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           Organization and product settings. Extend as needed (billing, branding, integrations).
         </p>

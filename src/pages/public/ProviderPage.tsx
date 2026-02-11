@@ -58,13 +58,6 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
             const finalPrice = calculateFinalPrice(plan.price, plan.gstRate);
             return (
               <Card key={plan.id} className="flex flex-col">
-                <div className="w-full h-48 overflow-hidden rounded-t-xl">
-                  <img
-                    src={plan.imageUrl}
-                    alt={plan.planName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
                 <CardHeader>
                   <CardTitle>{plan.planName}</CardTitle>
                   <CardDescription>{plan.description}</CardDescription>

@@ -42,22 +42,20 @@ const PublicLayout = () => {
                 Home
               </Link>
               <div className="relative group">
-                <Link
-                  to={cableService.path}
+                <button
                   className={cn(
-                    'flex items-center gap-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                    'flex items-center gap-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
                     isCableActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   )}
                 >
                   Cable Services
                   <ChevronDown className="w-4 h-4 opacity-70" />
-                </Link>
-                <div className="absolute left-0 top-full pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <div className="bg-card border border-border rounded-md shadow-lg py-1 min-w-[180px]">
+                </button>
+                <div className="absolute left-0 top-full mt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="bg-card border border-border rounded-lg shadow-xl py-2 min-w-[180px]">
                     <Link
                       to={cableService.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block px-4 py-2 text-sm font-medium hover:bg-accent"
+                      className="block px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
                     >
                       {cableService.label}
                     </Link>
@@ -65,23 +63,22 @@ const PublicLayout = () => {
                 </div>
               </div>
               <div className="relative group">
-                <span
+                <button
                   className={cn(
-                    'flex items-center gap-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-default',
+                    'flex items-center gap-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer whitespace-nowrap',
                     isInternetActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   )}
                 >
                   Internet Services
                   <ChevronDown className="w-4 h-4 opacity-70" />
-                </span>
-                <div className="absolute left-0 top-full pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <div className="bg-card border border-border rounded-md shadow-lg py-1 min-w-[200px]">
+                </button>
+                <div className="absolute left-0 top-full mt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="bg-card border border-border rounded-lg shadow-xl py-2 min-w-[200px]">
                     {internetServices.map((s) => (
                       <Link
                         key={s.path}
                         to={s.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="block px-4 py-2 text-sm font-medium hover:bg-accent"
+                        className="block px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
                       >
                         {s.label}
                       </Link>

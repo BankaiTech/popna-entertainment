@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
 import { customersApi } from '@/api/api';
 import type { Customer, Provider } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
+import { cn } from '@/lib/utils';
 
 const AdminDashboard = () => {
   const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, customers, complaints } = useStore();
@@ -112,65 +114,57 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div className="space-y-3 animate-fade-in">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Overview of your ISP management system</p>
+        <h1 className="text-2xl font-bold mb-1 gradient-text">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Overview of your ISP management system</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300 animate-scale-in border-l-4" style={{ 
+              animationDelay: `${index * 0.05}s`,
+              borderLeftColor: stat.color.replace('text-', '').includes('blue') ? '#3b82f6' :
+                               stat.color.replace('text-', '').includes('orange') ? '#f97316' :
+                               stat.color.replace('text-', '').includes('green') ? '#22c55e' :
+                               stat.color.replace('text-', '').includes('purple') ? '#a855f7' :
+                               stat.color.replace('text-', '').includes('red') ? '#ef4444' : '#6366f1'
+            }}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 py-3">
+                <CardTitle className="text-xs font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-md ${stat.bgColor}`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                <div className={`p-2 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className={`w-4 h-4 ${stat.color}`} />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+              <CardContent className="py-2">
+                <div className="text-2xl font-bold text-foreground">
+                  <AnimatedCounter value={stat.value} duration={1500} />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stat.value === 0 ? 'No records' : stat.value === 1 ? '1 record' : `${stat.value} records`}
+                </p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* GTPL Payment Status — Admin only; hidden from Employee and Customer */}
-      {role === 'admin' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>GTPL Payment Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-green-50 border border-green-200">
-                <span className="text-sm font-medium text-green-800">Paid</span>
-                <span className="text-2xl font-bold text-green-700">{gtplPaidCount}</span>
-              </div>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-200">
-                <span className="text-sm font-medium text-red-800">Unpaid</span>
-                <span className="text-2xl font-bold text-red-700">{gtplUnpaidCount}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Provider Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Active by Service (Cable vs Internet)</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="overflow-hidden animate-slide-up">
+          <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+          <CardHeader className="py-3">
+            <CardTitle className="text-base">Active by Service (Cable vs Internet)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="py-2">
+            <div className="space-y-2">
               {Object.entries(dashboardStats.activeByProvider).map(([provider, count]) => (
-                <div key={provider} className="flex justify-between items-center">
+                <div key={provider} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
                   <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
                   <span className="text-lg font-bold text-green-600">{count}</span>
                 </div>
@@ -179,14 +173,15 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inactive by Service (Cable vs Internet)</CardTitle>
+        <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+          <CardHeader className="py-3">
+            <CardTitle className="text-base">Inactive by Service (Cable vs Internet)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="py-2">
+            <div className="space-y-2">
               {Object.entries(dashboardStats.inactiveByProvider).map(([provider, count]) => (
-                <div key={provider} className="flex justify-between items-center">
+                <div key={provider} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:shadow-md transition-all duration-300">
                   <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
                   <span className="text-lg font-bold text-red-600">{count}</span>
                 </div>
@@ -197,44 +192,48 @@ const AdminDashboard = () => {
       </div>
 
       {/* Last 5 Customers Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Last 5 Customers</CardTitle>
+      <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">Last 5 Customers</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Mobile</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Connection Type</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Package Rate</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                <tr className="border-b-2 border-border bg-muted/30">
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection Type</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Package Rate</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {lastCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-4 text-muted-foreground">
+                    <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">
                       No customers found
                     </td>
                   </tr>
                 ) : (
-                  lastCustomers.map((customer) => (
-                    <tr key={customer.id} className="border-b border-border hover:bg-muted/50">
-                      <td className="p-3 text-sm">{customer.id}</td>
-                      <td className="p-3 text-sm font-medium">{customer.name}</td>
-                      <td className="p-3 text-sm">{customer.mobile}</td>
-                      <td className="p-3 text-sm">{getConnectionTypeLabel(customer.connectionType)}</td>
-                      <td className="p-3 text-sm">{customer.package}</td>
-                      <td className="p-3 text-sm">
+                  lastCustomers.map((customer, idx) => (
+                    <tr key={customer.id} className={cn(
+                      "border-b border-border hover:bg-muted/50 transition-colors",
+                      idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                    )}>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.id}</td>
+                      <td className="px-3 py-2 text-sm font-medium text-foreground">{customer.name}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
+                      <td className="px-3 py-2 text-sm">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
                             customer.status === 'Active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
+                              : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
                           }`}
                         >
                           {customer.status}

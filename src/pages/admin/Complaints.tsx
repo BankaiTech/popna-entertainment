@@ -8,6 +8,7 @@ import { Plus, AlertCircle, Search } from 'lucide-react';
 import type { Complaint, ComplaintStatus, Provider } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import ComplaintModal from '@/components/ComplaintModal';
+import { cn } from '@/lib/utils';
 
 const Complaints = () => {
   const { complaints, loading, fetchComplaints, initialize, customers } = useStore();
@@ -86,10 +87,10 @@ const Complaints = () => {
   const statuses: ComplaintStatus[] = ['active', 'on-hold', 'completed'];
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Complaints</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Complaints</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Manage and track customer complaints</p>
         </div>
         <Button onClick={handleAdd} className="w-full sm:w-auto">
@@ -98,107 +99,153 @@ const Complaints = () => {
         </Button>
       </div>
 
-      {/* Search and Filters */}
+      {/* Data Grid */}
       <Card>
-        <CardContent className="pt-4 sm:pt-6">
-          <div className="space-y-4">
-            {/* Search Box */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Search by Customer Name</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search complaints by customer name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full"
-                />
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Status Filter</label>
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'All')}
-                >
-                  <option value="All">All Status</option>
-                  {statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getStatusLabel(status)}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Connection Type Filter</label>
-                <Select
-                  value={connectionFilter}
-                  onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
-                >
-                  <option value="All">All Connections</option>
-                  <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
-                  {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
-                    <option key={provider} value={provider}>
-                      {getConnectionTypeLabel(provider as Provider)} (Internet)
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </div>
+        <CardHeader className="py-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
+            <CardTitle className="text-base">Complaints List ({filteredComplaints.length})</CardTitle>
           </div>
+          {/* Filters in Header */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Search by customer name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm w-50"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'All')}
+              className="h-9 text-sm"
+            >
+              <option value="All">All Status</option>
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {getStatusLabel(status)}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={connectionFilter}
+              onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
+              className="h-9 text-sm"
+            >
+              <option value="All">All Connections</option>
+              <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
+              {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
+                <option key={provider} value={provider}>
+                  {getConnectionTypeLabel(provider as Provider)} (Internet)
+                </option>
+              ))}
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="text-center py-12">Loading complaints...</div>
+          ) : filteredComplaints.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No complaints found matching your criteria.</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-border bg-muted/30">
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Customer</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Description</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
+                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredComplaints.map((complaint, idx) => (
+                      <tr
+                        key={complaint.id}
+                        onClick={() => handleEdit(complaint)}
+                        className={cn(
+                          "border-b border-border hover:bg-muted/50 transition-colors cursor-pointer",
+                          idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                        )}
+                      >
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.id}</td>
+                        <td className="px-3 py-2 text-sm font-medium text-primary hover:underline">{complaint.customerName}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.mobile}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(complaint.connectionType)}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground max-w-xs truncate">{complaint.customerDescription}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              complaint.status
+                            )}`}
+                          >
+                            {getStatusLabel(complaint.status)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{new Date(complaint.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-3">
+                {filteredComplaints.map((complaint) => (
+                  <div
+                    key={complaint.id}
+                    className="bg-card border border-border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleEdit(complaint)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-primary">{complaint.customerName}</p>
+                        <p className="text-xs text-muted-foreground mt-1">ID: {complaint.id}</p>
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                          complaint.status
+                        )}`}
+                      >
+                        {getStatusLabel(complaint.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Mobile: </span>
+                        <span className="font-medium">{complaint.mobile}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Connection: </span>
+                        <span className="font-medium">{getConnectionTypeLabel(complaint.connectionType)}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Description: </span>
+                        <span className="font-medium">{complaint.customerDescription}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Created: </span>
+                        <span className="font-medium">{new Date(complaint.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
-
-      {/* Complaints Grid */}
-      {loading ? (
-        <div className="text-center py-12">Loading complaints...</div>
-      ) : filteredComplaints.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No complaints found matching your criteria.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredComplaints.map((complaint) => (
-            <Card
-              key={complaint.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => handleEdit(complaint)}
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <CardTitle className="text-lg">{complaint.customerName}</CardTitle>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      complaint.status
-                    )}`}
-                  >
-                    {getStatusLabel(complaint.status)}
-                  </span>
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>📱 {complaint.mobile}</p>
-                  <p>🔌 {getConnectionTypeLabel(complaint.connectionType)}</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-foreground line-clamp-3 mb-4">
-                  {complaint.customerDescription}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Created: {new Date(complaint.createdAt).toLocaleDateString()}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {/* Complaint Modal */}
       <ComplaintModal
