@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { X } from 'lucide-react';
+import { useStore } from '@/store/useStore';
 import type { Customer, Plan, Provider } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -17,6 +18,14 @@ interface InvoiceModalProps {
 }
 
 const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceModalProps) => {
+  const { companyProfile, fetchCompanyProfile } = useStore();
+  
+  useEffect(() => {
+    if (isOpen) {
+      fetchCompanyProfile();
+    }
+  }, [isOpen, fetchCompanyProfile]);
+  
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>('');
   const [selectedPlanId, setSelectedPlanId] = useState<number | ''>('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -24,6 +33,12 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   const [status, setStatus] = useState<'draft' | 'sent' | 'paid' | 'overdue'>('draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCompanyProfile();
+    }
+  }, [isOpen, fetchCompanyProfile]);
 
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);

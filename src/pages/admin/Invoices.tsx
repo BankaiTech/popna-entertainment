@@ -8,9 +8,8 @@ import type { SalesInvoice, InvoiceStatus, Provider } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
-import { CABLE_PROVIDER, INTERNET_PROVIDERS } from '@/models/types';
 import InvoiceModal from '@/components/InvoiceModal';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR, formatDateDMY } from '@/lib/utils';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
@@ -19,7 +18,7 @@ const Invoices = () => {
   const [serviceFilter, setServiceFilter] = useState<Provider | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { initialize, fetchCustomers, fetchPlans, customers, plans } = useStore();
+  const { initialize, fetchCustomers, fetchPlans, fetchProducts, customers, plans, products } = useStore();
 
   const loadInvoices = async () => {
     setLoading(true);
@@ -31,12 +30,13 @@ const Invoices = () => {
   useEffect(() => {
     const load = async () => {
       await initialize();
+      await fetchProducts();
       await fetchCustomers();
       await fetchPlans();
       await loadInvoices();
     };
     load();
-  }, [initialize, fetchCustomers, fetchPlans]);
+  }, [initialize, fetchProducts, fetchCustomers, fetchPlans]);
 
   const filtered = invoices.filter((inv) => {
     const byStatus = statusFilter === 'All' || inv.status === statusFilter;
@@ -112,10 +112,20 @@ const Invoices = () => {
               className="h-9 text-sm"
             >
               <option value="All">All Services</option>
-              <option value={CABLE_PROVIDER}>{getProviderDisplayName(CABLE_PROVIDER)}</option>
-              {INTERNET_PROVIDERS.map((p) => (
-                <option key={p} value={p}>{getProviderDisplayName(p)}</option>
-              ))}
+              {Array.isArray(products) && products.length > 0 ? (
+                products.map((product) => (
+                  <option key={product.id} value={product.name}>
+                    {getProviderDisplayName(product.name as Provider, products)}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="GTPL">GTPL Cable</option>
+                  <option value="BSNL">BSNL</option>
+                  <option value="Railwire">Railwire</option>
+                  <option value="Krishiinet">Krishiinet</option>
+                </>
+              )}
             </Select>
           </div>
         </CardHeader>

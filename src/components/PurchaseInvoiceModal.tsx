@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { X } from 'lucide-react';
+import { useStore } from '@/store/useStore';
 import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -14,6 +15,14 @@ interface PurchaseInvoiceModalProps {
 }
 
 const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceModalProps) => {
+  const { companyProfile, fetchCompanyProfile } = useStore();
+  
+  useEffect(() => {
+    if (isOpen) {
+      fetchCompanyProfile();
+    }
+  }, [isOpen, fetchCompanyProfile]);
+  
   const [vendorName, setVendorName] = useState('');
   const [reference, setReference] = useState('');
   const [amount, setAmount] = useState<number>(0);
@@ -22,6 +31,12 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCompanyProfile();
+    }
+  }, [isOpen, fetchCompanyProfile]);
 
   // Calculate GST breakdown based on type
   const calculateGST = () => {

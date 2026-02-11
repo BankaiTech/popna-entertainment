@@ -154,3 +154,51 @@ export interface Vendor {
   gstin?: string;
   createdAt: string;
 }
+
+/** Dynamic Product - Multi-tenant ready — backend will isolate by organization */
+export interface Product {
+  id: number;
+  organizationId: string;
+  name: string;
+  productType: 'cable' | 'internet';
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Company Profile - Multi-tenant ready — backend will isolate by organization */
+export interface CompanyProfile {
+  id: number;
+  organizationId: string;
+  companyName: string;
+  gstin: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  country: string;
+  pincode: string;
+  contactNumber: string;
+  email: string;
+  updatedAt: string;
+}
+
+/** Website Settings - Multi-tenant ready — backend will isolate by organization */
+export interface HighlightCard {
+  title: string;
+  description: string;
+  icon: string; // Icon name from lucide-react
+}
+
+export interface WebsiteSettings {
+  id: number;
+  organizationId: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroDescription: string;
+  heroImage?: string;
+  highlightSectionTitle: string;
+  highlightCards: HighlightCard[];
+  ctaButtonText: string;
+  ctaButtonLink: string;
+  updatedAt: string;
+}

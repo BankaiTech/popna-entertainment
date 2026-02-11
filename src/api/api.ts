@@ -88,9 +88,13 @@ export const customersApi = {
 };
 
 // Dashboard API
+// Note: DashboardStats type is kept for backward compatibility.
+// The Dashboard UI component now calculates stats dynamically from products.
+// Multi-tenant ready — backend will calculate stats per organization.
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
     // Replace with real API call later
+    // Multi-tenant ready — backend will isolate by organization
     const customers = await customersApi.getAll();
     const now = new Date();
     const currentMonth = now.getMonth();

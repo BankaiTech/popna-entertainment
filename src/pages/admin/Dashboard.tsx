@@ -10,13 +10,14 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 
 const AdminDashboard = () => {
-  const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, customers, complaints } = useStore();
+  const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, fetchProducts, customers, complaints, products } = useStore();
   const { role } = useAuthStore();
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       await fetchCustomers();
       await fetchDashboardStats();
       const allCustomers = await customersApi.getAll();
@@ -26,15 +27,19 @@ const AdminDashboard = () => {
       setLastCustomers(sorted);
     };
     loadData();
-  }, [fetchDashboardStats, fetchCustomers, initialize]);
+  }, [fetchDashboardStats, fetchProducts, fetchCustomers, initialize]);
 
   // Calculate active complaints count
   const activeComplaintsCount = complaints.filter((c) => c.status === 'active').length;
 
-  // GTPL Payment Summary (Admin only). Counts from GTPL customers; updates when customers/paymentStatus change.
-  const gtplCustomers = customers.filter((c) => c.connectionType === 'GTPL');
-  const gtplPaidCount = gtplCustomers.filter((c) => c.paymentStatus === 'paid').length;
-  const gtplUnpaidCount = gtplCustomers.filter((c) => c.paymentStatus !== 'paid').length;
+  // Multi-tenant ready — Payment Summary for cable products only (Admin only)
+  const cableProducts = Array.isArray(products) ? products.filter((p) => p.productType === 'cable') : [];
+  const cableProductStats = cableProducts.map((product) => {
+    const productCustomers = customers.filter((c) => c.connectionType === product.name);
+    const paidCount = productCustomers.filter((c) => c.paymentStatus === 'paid').length;
+    const unpaidCount = productCustomers.filter((c) => c.paymentStatus !== 'paid').length;
+    return { product, customers: productCustomers, paidCount, unpaidCount };
+  });
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
@@ -47,6 +52,27 @@ const AdminDashboard = () => {
   }
   if (!dashboardStats) return null;
 
+  // Multi-tenant ready — generate product stat cards dynamically
+  const productStatCards = Array.isArray(products) && products.length > 0 ? products.map((product) => {
+    const productCustomers = customers.filter((c) => c.connectionType === product.name);
+    const colors = [
+      { text: 'text-blue-600', bg: 'bg-blue-50' },
+      { text: 'text-orange-600', bg: 'bg-orange-50' },
+      { text: 'text-green-600', bg: 'bg-green-50' },
+      { text: 'text-purple-600', bg: 'bg-purple-50' },
+      { text: 'text-pink-600', bg: 'bg-pink-50' },
+      { text: 'text-indigo-600', bg: 'bg-indigo-50' },
+    ];
+    const colorIndex = product.id % colors.length;
+    return {
+      title: `${product.productType === 'cable' ? 'Cable' : 'Internet'} — ${product.name}`,
+      value: productCustomers.length,
+      icon: Wifi,
+      color: colors[colorIndex].text,
+      bgColor: colors[colorIndex].bg,
+    };
+  }) : [];
+
   const statCards = [
     {
       title: 'Total Customers',
@@ -55,34 +81,7 @@ const AdminDashboard = () => {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
-    {
-      title: 'Cable (GTPL)',
-      value: dashboardStats.gtplCustomers,
-      icon: Wifi,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      title: 'Internet — BSNL',
-      value: dashboardStats.bsnlCustomers,
-      icon: Wifi,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-    {
-      title: 'Internet — Railwire',
-      value: dashboardStats.railwireCustomers,
-      icon: Wifi,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-    },
-    {
-      title: 'Internet — Krishiinet',
-      value: dashboardStats.krishiinetCustomers,
-      icon: Wifi,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-    },
+    ...productStatCards,
     {
       title: 'New This Month',
       value: dashboardStats.newCustomersThisMonth,
@@ -163,12 +162,17 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
-              {Object.entries(dashboardStats.activeByProvider).map(([provider, count]) => (
-                <div key={provider} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
-                  <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
-                  <span className="text-lg font-bold text-green-600">{count}</span>
-                </div>
-              ))}
+              {products.map((product) => {
+                const count = customers.filter(
+                  (c) => c.connectionType === product.name && c.status === 'Active'
+                ).length;
+                return (
+                  <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
+                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name as Provider, products)}</span>
+                    <span className="text-lg font-bold text-green-600">{count}</span>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -180,12 +184,17 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
-              {Object.entries(dashboardStats.inactiveByProvider).map(([provider, count]) => (
-                <div key={provider} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:shadow-md transition-all duration-300">
-                  <span className="text-sm font-medium">{getConnectionTypeLabel(provider as Provider)}</span>
-                  <span className="text-lg font-bold text-red-600">{count}</span>
-                </div>
-              ))}
+              {products.map((product) => {
+                const count = customers.filter(
+                  (c) => c.connectionType === product.name && c.status === 'Inactive'
+                ).length;
+                return (
+                  <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:shadow-md transition-all duration-300">
+                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name as Provider, products)}</span>
+                    <span className="text-lg font-bold text-red-600">{count}</span>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -220,14 +229,14 @@ const AdminDashboard = () => {
                 ) : (
                   lastCustomers.map((customer, idx) => (
                     <tr key={customer.id} className={cn(
-                      "border-b border-border hover:bg-muted/50 transition-colors",
-                      idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                      "border-b border-gray-200 hover:bg-gray-50 transition-colors",
+                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                     )}>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.id}</td>
-                      <td className="px-3 py-2 text-sm font-medium text-foreground">{customer.name}</td>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.id}</td>
+                      <td className="px-3 py-2 text-sm font-medium text-gray-900">{customer.name}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.connectionType}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
                       <td className="px-3 py-2 text-sm">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${

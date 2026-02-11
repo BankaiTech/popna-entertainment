@@ -4,14 +4,26 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './styles/index.css';
 import { useAuthStore } from './store/useAuthStore';
+import { useStore } from './store/useStore';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Initialize auth store on app start
+// Initialize auth synchronously (reads from localStorage only)
 useAuthStore.getState().initialize();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+// Defer app store init so first paint is not blocked; run after mount
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  ReactDOM.createRoot(rootEl).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
+  // Run store init after React has mounted (app already has mock data in initial state)
+  Promise.resolve()
+    .then(() => useStore.getState().initialize())
+    .catch((err) => console.error('Store init failed:', err));
+}

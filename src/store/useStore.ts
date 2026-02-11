@@ -1,15 +1,104 @@
 import { create } from 'zustand';
-import type { Plan, Customer, DashboardStats, Complaint } from '@/models/types';
+import type { Plan, Customer, DashboardStats, Complaint, Product, CompanyProfile, WebsiteSettings } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { plansApi, customersApi, dashboardApi } from '@/api/api';
 import { complaintsApi } from '@/api/complaints';
+import { productsApi } from '@/api/products';
+import { companyProfileApi } from '@/api/companyProfile';
+import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
+
+// Mock data for immediate initialization (API-ready structure)
+const mockProducts: Product[] = [
+  {
+    id: 1,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'GTPL',
+    productType: 'cable',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'BSNL',
+    productType: 'internet',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'Railwire',
+    productType: 'internet',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 4,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'Krishiinet',
+    productType: 'internet',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+const mockCompanyProfile: CompanyProfile = {
+  id: 1,
+  organizationId: MOCK_ORGANIZATION_ID,
+  companyName: 'BankaiTech',
+  gstin: '29ABCDE1234F1Z5',
+  addressLine1: '123 Business Street',
+  addressLine2: 'Suite 100',
+  city: 'Bangalore',
+  state: 'Karnataka',
+  country: 'India',
+  pincode: '560001',
+  contactNumber: '+91 9876543210',
+  email: 'info@bankaitech.com',
+  updatedAt: new Date().toISOString(),
+};
+
+const mockWebsiteSettings: WebsiteSettings = {
+  id: 1,
+  organizationId: MOCK_ORGANIZATION_ID,
+  heroTitle: 'Welcome to BankaiTech',
+  heroSubtitle: 'Cable & Internet Services',
+  heroDescription: 'Choose the right plan for your home or business.',
+  heroImage: undefined,
+  highlightSectionTitle: 'Our Services',
+  highlightCards: [
+    {
+      title: 'High Speed',
+      description: 'Experience blazing fast internet speeds with our premium plans',
+      icon: 'Zap',
+    },
+    {
+      title: '24/7 Support',
+      description: 'Our dedicated support team is available round the clock to assist you',
+      icon: 'Clock',
+    },
+    {
+      title: 'Easy Installation',
+      description: 'Quick and hassle-free installation process with minimal downtime',
+      icon: 'Shield',
+    },
+  ],
+  ctaButtonText: 'Get Started',
+  ctaButtonLink: '/contact',
+  updatedAt: new Date().toISOString(),
+};
 
 interface AppState {
   plans: Plan[];
   customers: Customer[];
   complaints: Complaint[];
   dashboardStats: DashboardStats | null;
+  // Multi-tenant ready — backend will isolate by organization
+  products: Product[];
+  companyProfile: CompanyProfile | null;
+  websiteSettings: WebsiteSettings | null;
   loading: boolean;
   error: string | null;
   initialized: boolean;
@@ -32,6 +121,21 @@ interface AppState {
   updateComplaint: (id: number, complaint: Partial<Complaint>) => Promise<void>;
   
   fetchDashboardStats: () => Promise<void>;
+  
+  // Product Management - Multi-tenant ready
+  fetchProducts: () => Promise<void>;
+  fetchActiveProducts: () => Promise<void>;
+  addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
+  updateProduct: (id: number, product: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: number) => Promise<void>;
+  
+  // Company Profile - Multi-tenant ready
+  fetchCompanyProfile: () => Promise<void>;
+  updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
+  
+  // Website Settings - Multi-tenant ready
+  fetchWebsiteSettings: () => Promise<void>;
+  updateWebsiteSettings: (settings: Partial<WebsiteSettings>) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -39,6 +143,9 @@ export const useStore = create<AppState>((set, get) => ({
   customers: [],
   complaints: [],
   dashboardStats: null,
+  products: mockProducts, // Initialize with mock data immediately
+  companyProfile: mockCompanyProfile, // Initialize with mock data immediately
+  websiteSettings: mockWebsiteSettings, // Initialize with mock data immediately
   loading: false,
   error: null,
   initialized: false,
@@ -52,6 +159,9 @@ export const useStore = create<AppState>((set, get) => ({
         plans: [...mockPlans], 
         customers: [...mockCustomers],
         complaints: [...mockComplaints],
+        products: [...mockProducts], // Initialize with mock products
+        companyProfile: { ...mockCompanyProfile }, // Initialize with mock company profile
+        websiteSettings: { ...mockWebsiteSettings }, // Initialize with mock website settings
         initialized: true,
         loading: false 
       });
@@ -62,15 +172,37 @@ export const useStore = create<AppState>((set, get) => ({
         // Ignore localStorage errors
       }
       // Sync with API (which has the same mock data initially, but will have updates)
-      const [apiPlans, apiCustomers, apiComplaints] = await Promise.all([
-        plansApi.getAll(),
-        customersApi.getAll(),
-        complaintsApi.getAll(),
-      ]);
-      set({ plans: apiPlans, customers: apiCustomers, complaints: apiComplaints });
+      // Multi-tenant ready — backend will isolate by organization
+      try {
+        const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile, apiWebsiteSettings] = await Promise.all([
+          plansApi.getAll(),
+          customersApi.getAll(),
+          complaintsApi.getAll(),
+          productsApi.getAll().catch(() => mockProducts),
+          companyProfileApi.get().catch(() => mockCompanyProfile),
+          websiteSettingsApi.get().catch(() => mockWebsiteSettings),
+        ]);
+        set({ 
+          plans: apiPlans, 
+          customers: apiCustomers, 
+          complaints: apiComplaints,
+          products: apiProducts || mockProducts,
+          companyProfile: apiCompanyProfile || mockCompanyProfile,
+          websiteSettings: apiWebsiteSettings || mockWebsiteSettings,
+        });
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Keep mock data if API fails
+        set({ 
+          products: mockProducts,
+          companyProfile: mockCompanyProfile,
+          websiteSettings: mockWebsiteSettings,
+        });
+      }
       // Sync updated customers to localStorage
       try {
-        localStorage.setItem('customers-data', JSON.stringify(apiCustomers));
+        const currentCustomers = get().customers;
+        localStorage.setItem('customers-data', JSON.stringify(currentCustomers));
       } catch (e) {
         // Ignore localStorage errors
       }
@@ -289,6 +421,112 @@ export const useStore = create<AppState>((set, get) => ({
       set({ dashboardStats: stats, loading: false });
     } catch (error) {
       set({ error: 'Failed to fetch dashboard stats', loading: false });
+    }
+  },
+
+  // Product Management - Multi-tenant ready — backend will isolate by organization
+  fetchProducts: async () => {
+    set({ loading: true, error: null });
+    try {
+      const apiProducts = await productsApi.getAll();
+      set({ products: apiProducts || mockProducts, loading: false });
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      set({ error: 'Failed to fetch products', loading: false, products: mockProducts });
+    }
+  },
+
+  fetchActiveProducts: async () => {
+    set({ loading: true, error: null });
+    try {
+      const apiProducts = await productsApi.getActive();
+      set({ products: apiProducts || mockProducts.filter(p => p.isActive), loading: false });
+    } catch (error) {
+      console.error('Failed to fetch active products:', error);
+      set({ error: 'Failed to fetch active products', loading: false, products: mockProducts.filter(p => p.isActive) });
+    }
+  },
+
+  addProduct: async (product) => {
+    set({ loading: true, error: null });
+    try {
+      const newProduct = await productsApi.create({
+        ...product,
+        organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
+      });
+      set((state) => ({ products: [...state.products, newProduct], loading: false }));
+    } catch (error) {
+      set({ error: 'Failed to add product', loading: false });
+    }
+  },
+
+  updateProduct: async (id, product) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedProduct = await productsApi.update(id, product);
+      set((state) => ({
+        products: state.products.map((p) => (p.id === id ? updatedProduct : p)),
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: 'Failed to update product', loading: false });
+    }
+  },
+
+  deleteProduct: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await productsApi.delete(id);
+      set((state) => ({
+        products: state.products.filter((p) => p.id !== id),
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: 'Failed to delete product', loading: false });
+    }
+  },
+
+  // Company Profile - Multi-tenant ready — backend will isolate by organization
+  fetchCompanyProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      const profile = await companyProfileApi.get();
+      set({ companyProfile: profile || mockCompanyProfile, loading: false });
+    } catch (error) {
+      console.error('Failed to fetch company profile:', error);
+      set({ error: 'Failed to fetch company profile', loading: false, companyProfile: mockCompanyProfile });
+    }
+  },
+
+  updateCompanyProfile: async (profile) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedProfile = await companyProfileApi.update(profile);
+      set({ companyProfile: updatedProfile, loading: false });
+    } catch (error) {
+      set({ error: 'Failed to update company profile', loading: false });
+    }
+  },
+
+  // Website Settings - Multi-tenant ready — backend will isolate by organization
+  fetchWebsiteSettings: async () => {
+    set({ loading: true, error: null });
+    try {
+      const settings = await websiteSettingsApi.get();
+      set({ websiteSettings: settings || mockWebsiteSettings, loading: false });
+    } catch (error) {
+      console.error('Failed to fetch website settings:', error);
+      set({ error: 'Failed to fetch website settings', loading: false, websiteSettings: mockWebsiteSettings });
+    }
+  },
+
+  updateWebsiteSettings: async (settings) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedSettings = await websiteSettingsApi.update(settings);
+      set({ websiteSettings: updatedSettings, loading: false });
+    } catch (error) {
+      set({ error: 'Failed to update website settings', loading: false });
     }
   },
 }));

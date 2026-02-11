@@ -11,7 +11,7 @@ import ComplaintModal from '@/components/ComplaintModal';
 import { cn } from '@/lib/utils';
 
 const Complaints = () => {
-  const { complaints, loading, fetchComplaints, initialize, customers } = useStore();
+  const { complaints, loading, fetchComplaints, initialize, customers, products, fetchProducts } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | 'All'>('All');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
@@ -21,10 +21,11 @@ const Complaints = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       await fetchComplaints();
     };
     loadData();
-  }, [fetchComplaints, initialize]);
+  }, [fetchComplaints, fetchProducts, initialize]);
 
   const filteredComplaints = useMemo(() => {
     return complaints.filter((complaint) => {
@@ -135,12 +136,20 @@ const Complaints = () => {
               className="h-9 text-sm"
             >
               <option value="All">All Connections</option>
-              <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
-              {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
-                <option key={provider} value={provider}>
-                  {getConnectionTypeLabel(provider as Provider)} (Internet)
-                </option>
-              ))}
+              {Array.isArray(products) && products.length > 0 ? (
+                products.map((product) => (
+                  <option key={product.id} value={product.name}>
+                    {getConnectionTypeLabel(product.name as Provider, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="GTPL">GTPL Cable</option>
+                  <option value="BSNL">BSNL Internet</option>
+                  <option value="Railwire">Railwire Internet</option>
+                  <option value="Krishiinet">Krishiinet Internet</option>
+                </>
+              )}
             </Select>
           </div>
         </CardHeader>

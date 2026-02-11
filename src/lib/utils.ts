@@ -6,6 +6,20 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
+ * Format number as Indian Rupee currency
+ * @param amount Amount to format
+ * @returns Formatted currency string (e.g., ₹1,234.56)
+ */
+export function formatCurrencyINR(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/**
  * Generate automatic password for new customers.
  * Format: <first 4 letters of customer name><last 5 digits of mobile number>
  * 

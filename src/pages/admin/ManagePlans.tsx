@@ -10,7 +10,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 
 const ManagePlans = () => {
-  const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan } = useStore();
+  const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan, products, fetchProducts } = useStore();
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<Omit<Plan, 'id'>>({
@@ -29,10 +29,11 @@ const ManagePlans = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       await fetchPlans();
     };
     loadData();
-  }, [fetchPlans, initialize]);
+  }, [fetchPlans, fetchProducts, initialize]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +81,10 @@ const ManagePlans = () => {
     }
   };
 
-  const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
+  // Multi-tenant ready — get providers from products dynamically
+  const providers = Array.isArray(products) && products.length > 0
+    ? products.map((p) => p.name as Provider)
+    : ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'] as Provider[]; // Fallback
 
   return (
     <div className="space-y-8">

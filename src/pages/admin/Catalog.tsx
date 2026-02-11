@@ -8,9 +8,10 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import type { Plan, Provider } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
+import { formatCurrencyINR } from '@/lib/utils';
 
 const Catalog = () => {
-  const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan } = useStore();
+  const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan, products, fetchProducts } = useStore();
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<Omit<Plan, 'id'>>({
@@ -29,10 +30,11 @@ const Catalog = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       await fetchPlans();
     };
     loadData();
-  }, [fetchPlans, initialize]);
+  }, [fetchPlans, fetchProducts, initialize]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +47,11 @@ const Catalog = () => {
   };
 
   const resetForm = () => {
+    // Multi-tenant ready — use first available product as default
+    const defaultProvider = Array.isArray(products) && products.length > 0 ? products[0].name : 'GTPL' as Provider;
     setFormData({
       organizationId: MOCK_ORGANIZATION_ID,
-      provider: 'GTPL',
+      provider: defaultProvider,
       planName: '',
       imageUrl: 'https://via.placeholder.com/400x300',
       price: 0,
@@ -80,7 +84,10 @@ const Catalog = () => {
     }
   };
 
-  const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
+  // Multi-tenant ready — get providers from products dynamically
+  const providers = Array.isArray(products) && products.length > 0
+    ? products.map((p) => p.name as Provider)
+    : ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'] as Provider[]; // Fallback
 
   return (
     <div className="space-y-3">
@@ -114,7 +121,7 @@ const Catalog = () => {
                   >
                     {providers.map((provider) => (
                       <option key={provider} value={provider}>
-                        {getProviderDisplayName(provider)}
+                        {getProviderDisplayName(provider, products)}
                       </option>
                     ))}
                   </Select>
@@ -189,13 +196,13 @@ const Catalog = () => {
               <Card key={plan.id} className="hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <CardTitle>{plan.planName}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{getProviderDisplayName(plan.provider)}</p>
+                  <p className="text-sm text-muted-foreground">{getProviderDisplayName(plan.provider, products)}</p>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Price:</span>
-                      <span className="font-semibold">₹{plan.price}/month</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.price)}/month</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">GST:</span>
@@ -203,11 +210,11 @@ const Catalog = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Final Price:</span>
-                      <span className="font-bold text-primary">₹{finalPrice.toFixed(2)}/month</span>
+                      <span className="font-bold text-primary">{formatCurrencyINR(finalPrice)}/month</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Installation:</span>
-                      <span className="font-semibold">₹{plan.installationAmount}</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.installationAmount)}</span>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>

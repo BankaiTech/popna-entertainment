@@ -12,7 +12,7 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
 
 const AdminCustomers = () => {
-  const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer } = useStore();
+  const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, products, fetchProducts } = useStore();
   const { role } = useAuthStore();
   const isEmployee = role === 'employee';
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,17 +31,22 @@ const AdminCustomers = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       await fetchCustomers();
     };
     loadData();
-  }, [fetchCustomers, initialize]);
+  }, [fetchCustomers, fetchProducts, initialize]);
 
-  // Reset Payment Status filter when Connection Type is not GTPL
+  // Reset Payment Status filter when Connection Type is not a cable product
   useEffect(() => {
-    if (connectionFilter !== 'GTPL') {
+    if (!Array.isArray(products) || products.length === 0) return;
+    const selectedProduct = connectionFilter !== 'All' 
+      ? products.find((p) => p.name === connectionFilter)
+      : null;
+    if (selectedProduct?.productType !== 'cable' && connectionFilter !== 'GTPL') {
       setPaymentStatusFilter('All');
     }
-  }, [connectionFilter]);
+  }, [connectionFilter, products]);
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
@@ -51,8 +56,13 @@ const AdminCustomers = () => {
       const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
       const matchesConnection =
         connectionFilter === 'All' || customer.connectionType === connectionFilter;
+      // Multi-tenant ready — check if connection filter is a cable product
+      const selectedProduct = connectionFilter !== 'All' && Array.isArray(products)
+        ? products.find((p) => p.name === connectionFilter)
+        : null;
+      const isCableFilter = selectedProduct?.productType === 'cable' || connectionFilter === 'GTPL'; // Fallback
       const matchesPayment =
-        connectionFilter !== 'GTPL'
+        !isCableFilter
           ? true
           : paymentStatusFilter === 'All'
             ? true
@@ -61,7 +71,7 @@ const AdminCustomers = () => {
               : customer.paymentStatus === 'not_paid';
       return matchesSearch && matchesStatus && matchesConnection && matchesPayment;
     });
-  }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter]);
+  }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter, products]);
 
   const handleAdd = () => {
     // Security check: Only Admin can add customers; Employee must not see button
@@ -175,7 +185,14 @@ const AdminCustomers = () => {
           </div>
           {/* Filters in Header */}
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${connectionFilter === 'GTPL' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${
+              connectionFilter !== 'All' && (
+                (Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable') ||
+                connectionFilter === 'GTPL'
+              )
+                ? 'lg:grid-cols-4'
+                : 'lg:grid-cols-3'
+            }`}
           >
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -204,14 +221,25 @@ const AdminCustomers = () => {
               className="h-9 text-sm"
             >
               <option value="All">All Connections</option>
-              <option value="GTPL">{getConnectionTypeLabel('GTPL')} (Cable)</option>
-              {['BSNL', 'Railwire', 'Krishiinet'].map((provider) => (
-                <option key={provider} value={provider}>
-                  {getConnectionTypeLabel(provider as Provider)} (Internet)
-                </option>
-              ))}
+              {Array.isArray(products) && products.length > 0 ? (
+                products.map((product) => (
+                  <option key={product.id} value={product.name}>
+                    {getConnectionTypeLabel(product.name as Provider, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="GTPL">GTPL Cable</option>
+                  <option value="BSNL">BSNL Internet</option>
+                  <option value="Railwire">Railwire Internet</option>
+                  <option value="Krishiinet">Krishiinet Internet</option>
+                </>
+              )}
             </Select>
-            {connectionFilter === 'GTPL' && (
+            {connectionFilter !== 'All' && (
+              (Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable') ||
+              connectionFilter === 'GTPL'
+            ) && (
               <Select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}

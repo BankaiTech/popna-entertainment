@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
@@ -20,11 +21,23 @@ interface CustomerSheetProps {
 
 const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: CustomerSheetProps) => {
   const { role } = useAuthStore();
+  const { products, fetchActiveProducts } = useStore();
+  
+  // Fetch products when component mounts
+  useEffect(() => {
+    fetchActiveProducts();
+  }, [fetchActiveProducts]);
+  
   // Employees can only view customer details (read-only), cannot add or edit. Payment update is allowed for both Admin and Employee.
   const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'address'>('info');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentForm, setPaymentForm] = useState<PaymentFormData>({ paymentStatus: 'not_paid', paymentDescription: '', dateTimeLocal: '' });
+  
+  // Multi-tenant ready — get providers from products dynamically
+  const availableProviders = Array.isArray(products) && products.length > 0 
+    ? products.map((p) => p.name as Provider)
+    : ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'] as Provider[]; // Fallback for backward compatibility
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -55,11 +68,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         address: customer.address,
       });
     } else {
+      // Multi-tenant ready — use first available product as default
+      const defaultProvider = availableProviders.length > 0 ? availableProviders[0] : 'GTPL' as Provider;
       setFormData({
         name: '',
         email: '',
         mobile: '',
-        connectionType: 'GTPL',
+        connectionType: defaultProvider,
         package: '',
         status: 'Active',
         description: '',
@@ -72,7 +87,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         },
       });
     }
-  }, [customer, isOpen]);
+  }, [customer, isOpen, availableProviders]);
 
   if (!isOpen) return null;
 
@@ -95,8 +110,12 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
     onClose();
   };
 
-  const providers: Provider[] = ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'];
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
+  
+  // Check if customer's connection type is cable (for payment tracking)
+  const isCableProduct = customer && Array.isArray(products)
+    ? products.find((p) => p.name === customer.connectionType)?.productType === 'cable'
+    : customer?.connectionType === 'GTPL'; // Fallback for backward compatibility
 
   // Security check: Employees cannot add customers - close modal if opened in add mode
   useEffect(() => {
@@ -219,11 +238,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                     onChange={(e) => setFormData({ ...formData, connectionType: e.target.value as Provider })}
                     disabled={isReadOnly}
                   >
-                    {providers.map((provider) => (
-                      <option key={provider} value={provider}>
-                        {getConnectionTypeLabel(provider)}
-                      </option>
-                    ))}
+                    {availableProviders.map((provider) => {
+                      const product = products.find((p) => p.name === provider);
+                      return (
+                        <option key={provider} value={provider}>
+                          {getConnectionTypeLabel(provider, products)}
+                        </option>
+                      );
+                    })}
                   </Select>
                 </div>
                 <div>
@@ -261,19 +283,19 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                 </div>
               </div>
 
-              {/* GTPL only: Payment status. Admin and Employee can update. */}
-              {customer?.connectionType === 'GTPL' && (
-                <div className="mt-4 pt-4 border-t border-border space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">GTPL Payment Status</h3>
+              {/* Cable products only: Payment status. Admin and Employee can update. */}
+              {isCableProduct && (
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-900">Cable Payment Status</h3>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Current payment status:</span>
+                    <span className="text-sm text-gray-600">Current payment status:</span>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         customer.paymentStatus === 'paid'
-                          ? 'bg-green-500 text-white dark:bg-green-600 dark:text-white'
+                          ? 'bg-green-500 text-white'
                           : customer.paymentStatus === 'not_paid'
-                            ? 'bg-red-500 text-white dark:bg-red-600 dark:text-white'
-                            : 'bg-muted text-muted-foreground'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-gray-200 text-gray-700'
                       }`}
                     >
                       {customer.paymentStatus === 'paid' ? 'Paid' : customer.paymentStatus === 'not_paid' ? 'Not Paid' : '—'}
@@ -381,8 +403,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         </form>
       </div>
 
-      {/* Update Payment modal — GTPL only; shown when isPaymentModalOpen */}
-      {isPaymentModalOpen && customer?.connectionType === 'GTPL' && (
+      {/* Update Payment modal — Cable products only; shown when isPaymentModalOpen */}
+      {isPaymentModalOpen && isCableProduct && customer && (
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
           onClick={() => setIsPaymentModalOpen(false)}

@@ -25,7 +25,14 @@ interface ComplaintModalProps {
 }
 
 const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModalProps) => {
-  const { addComplaint, updateComplaint } = useStore();
+  const { addComplaint, updateComplaint, products, fetchActiveProducts } = useStore();
+  
+  useEffect(() => {
+    if (isOpen) {
+      fetchActiveProducts();
+    }
+  }, [isOpen, fetchActiveProducts]);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     customerId: '',
@@ -208,7 +215,8 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                 <p className="text-sm">
                   <span className="font-medium">Connection Type:</span>{' '}
                   {getConnectionTypeLabel(
-                    complaint ? complaint.connectionType : (selectedCustomer?.connectionType || 'GTPL')
+                    complaint ? complaint.connectionType : (selectedCustomer?.connectionType || (Array.isArray(products) && products.length > 0 ? products[0].name : 'GTPL') as any),
+                    products
                   )}
                 </p>
               </div>

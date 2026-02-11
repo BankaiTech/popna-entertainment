@@ -4,17 +4,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Button from '@/components/ui/Button';
 import type { Provider } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
+import { formatCurrencyINR } from '@/lib/utils';
 
 interface ProviderPageProps {
   provider: Provider;
 }
 
 const ProviderPage = ({ provider }: ProviderPageProps) => {
-  const { plans, loading, fetchPlansByProvider } = useStore();
+  const { plans, products, loading, fetchPlansByProvider, fetchActiveProducts, companyProfile, fetchCompanyProfile } = useStore();
 
   useEffect(() => {
-    fetchPlansByProvider(provider);
-  }, [provider, fetchPlansByProvider]);
+    const loadData = async () => {
+      try {
+        await fetchCompanyProfile();
+        await fetchActiveProducts();
+        await fetchPlansByProvider(provider);
+      } catch (error) {
+        console.error('Error loading provider page:', error);
+      }
+    };
+    loadData();
+  }, [provider, fetchPlansByProvider, fetchActiveProducts, fetchCompanyProfile]);
 
   const calculateFinalPrice = (price: number, gstRate: number) => {
     return price + (price * gstRate) / 100;
@@ -32,12 +42,17 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
     );
   }
 
-  const providerDisplayName = getProviderDisplayName(provider);
-  const isCable = provider === 'GTPL';
+  // Multi-tenant ready — get product info dynamically
+  const product = (products || []).find((p) => p.name === provider);
+  const providerDisplayName = product?.name || provider;
+  const isCable = product?.productType === 'cable';
   const serviceLabel = isCable ? 'Cable Plans' : 'Internet Plans';
   const serviceDescription = isCable
     ? 'Choose the right cable plan for your home or business'
     : 'Choose the perfect plan for your internet needs';
+  
+  // Multi-tenant ready — company name from settings
+  const companyName = companyProfile?.companyName || 'BankaiTech';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -66,21 +81,21 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Base Price:</span>
-                      <span className="font-semibold">₹{plan.price}/month</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.price)}/month</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">GST ({plan.gstRate}%):</span>
                       <span className="font-semibold">
-                        ₹{((plan.price * plan.gstRate) / 100).toFixed(2)}
+                        {formatCurrencyINR((plan.price * plan.gstRate) / 100)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center border-t border-border pt-2">
                       <span className="text-sm font-semibold">Final Price:</span>
-                      <span className="text-lg font-bold text-primary">₹{finalPrice.toFixed(2)}/month</span>
+                      <span className="text-lg font-bold text-primary">{formatCurrencyINR(finalPrice)}/month</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Installation:</span>
-                      <span className="font-semibold">₹{plan.installationAmount}</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.installationAmount)}</span>
                     </div>
                   </div>
                   <Button

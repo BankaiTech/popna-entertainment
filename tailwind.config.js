@@ -20,8 +20,14 @@ export default {
           foreground: '#a1a5b7',
         },
         border: '#e4e6ef',
+        background: '#ffffff',
+        foreground: '#181c32',
         card: {
           DEFAULT: '#ffffff',
+          foreground: '#181c32',
+        },
+        accent: {
+          DEFAULT: '#f5f8fa',
           foreground: '#181c32',
         },
         destructive: {
