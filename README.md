@@ -70,8 +70,14 @@ popna-react/
 │   │   │   └── ProviderPage.tsx
 │   │   └── admin/        # Admin pages
 │   │       ├── Dashboard.tsx
-│   │       ├── ManagePlans.tsx
-│   │       └── Customers.tsx
+│   │       ├── Catalog.tsx
+│   │       ├── Customers.tsx
+│   │       ├── Complaints.tsx
+│   │       ├── Invoices.tsx
+│   │       ├── PurchaseInvoices.tsx
+│   │       ├── Users.tsx
+│   │       ├── Settings.tsx
+│   │       └── Login.tsx
 │   ├── store/            # Zustand store
 │   │   └── useStore.ts
 │   ├── styles/           # Global styles

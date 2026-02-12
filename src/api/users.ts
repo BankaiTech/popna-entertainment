@@ -25,10 +25,21 @@ export const usersApi = {
     const newUser: User = {
       ...user,
       organizationId: user.organizationId ?? MOCK_ORGANIZATION_ID,
+      status: user.status ?? 'active', // Default to active
       id: Math.max(...usersData.map((u) => u.id), 0) + 1,
       createdAt: new Date().toISOString(),
     };
     usersData.push(newUser);
     return Promise.resolve(newUser);
+  },
+
+  update: async (id: number, updates: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<User> => {
+    // Replace with real API call later
+    const index = usersData.findIndex((u) => u.id === id);
+    if (index === -1) {
+      throw new Error('User not found');
+    }
+    usersData[index] = { ...usersData[index], ...updates };
+    return Promise.resolve(usersData[index]);
   },
 };

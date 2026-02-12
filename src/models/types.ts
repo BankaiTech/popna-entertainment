@@ -107,6 +107,7 @@ export interface User {
   username: string;
   password: string;
   role: 'admin' | 'employee';
+  status: 'active' | 'inactive';
   createdAt: string;
 }
 

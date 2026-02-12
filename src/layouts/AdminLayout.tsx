@@ -29,8 +29,8 @@ const AdminLayout = () => {
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
+  // Employee sidebar — Dashboard hidden, only Customers and Complaints visible
   const employeeMenuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/customers', label: 'Customers', icon: Users },
     { path: '/admin/complaints', label: 'Complaints', icon: AlertCircle },
   ];
