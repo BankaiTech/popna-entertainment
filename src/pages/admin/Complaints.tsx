@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { Pagination } from '@/components/ui/Pagination';
 import { Plus, AlertCircle, Search } from 'lucide-react';
 import type { Complaint, ComplaintStatus, Provider } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
@@ -17,6 +18,8 @@ const Complaints = () => {
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,6 +46,18 @@ const Complaints = () => {
       return matchesSearch && matchesStatus && matchesConnection;
     });
   }, [complaints, searchQuery, statusFilter, connectionFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+  const paginatedComplaints = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredComplaints.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredComplaints, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, connectionFilter]);
 
   const handleAdd = () => {
     setEditingComplaint(null);
@@ -103,9 +118,6 @@ const Complaints = () => {
       {/* Data Grid */}
       <Card>
         <CardHeader className="py-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-            <CardTitle className="text-base">Complaints List ({filteredComplaints.length})</CardTitle>
-          </div>
           {/* Filters in Header */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             <div className="relative">
@@ -168,17 +180,17 @@ const Complaints = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Customer</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Description</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Created</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Customer</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Connection</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Description</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Created</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredComplaints.map((complaint, idx) => (
+                    {paginatedComplaints.map((complaint, idx) => (
                       <tr
                         key={complaint.id}
                         onClick={() => handleEdit(complaint)}
@@ -210,7 +222,7 @@ const Complaints = () => {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3 p-3">
-                {filteredComplaints.map((complaint) => (
+                {paginatedComplaints.map((complaint) => (
                   <div
                     key={complaint.id}
                     className="bg-card border border-border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer"
@@ -254,6 +266,15 @@ const Complaints = () => {
             </>
           )}
         </CardContent>
+        {filteredComplaints.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredComplaints.length}
+          />
+        )}
       </Card>
 
       {/* Complaint Modal */}

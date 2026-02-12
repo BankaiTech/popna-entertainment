@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import CustomerSheet from '@/components/CustomerSheet';
+import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
@@ -25,6 +26,8 @@ const AdminCustomers = () => {
   const [customerIdToDelete, setCustomerIdToDelete] = useState<number | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { initialize } = useStore();
 
@@ -72,6 +75,18 @@ const AdminCustomers = () => {
       return matchesSearch && matchesStatus && matchesConnection && matchesPayment;
     });
   }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter, products]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCustomers, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, connectionFilter, paymentStatusFilter]);
 
   const handleAdd = () => {
     // Security check: Only Admin can add customers; Employee must not see button
@@ -180,9 +195,6 @@ const AdminCustomers = () => {
       {/* Data Grid */}
       <Card>
         <CardHeader className="py-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-            <CardTitle className="text-base">Customer List ({filteredCustomers.length})</CardTitle>
-          </div>
           {/* Filters in Header */}
           <div
             className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${
@@ -268,16 +280,16 @@ const AdminCustomers = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-border bg-muted/30">
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection Type</th>
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Package</th>
-                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Name</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Connection Type</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Package</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCustomers.map((customer, idx) => (
+                      {paginatedCustomers.map((customer, idx) => (
                         <tr
                           key={customer.id}
                           className={cn(
@@ -335,7 +347,7 @@ const AdminCustomers = () => {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3">
-                {filteredCustomers.map((customer) => (
+                {paginatedCustomers.map((customer) => (
                   <div
                     key={customer.id}
                     className="bg-card border border-border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow"
@@ -400,6 +412,15 @@ const AdminCustomers = () => {
             </>
           )}
         </CardContent>
+        {filteredCustomers.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredCustomers.length}
+          />
+        )}
       </Card>
 
       {/* Customer Sheet: conditionally mounted when Add or Edit is open */}
@@ -416,7 +437,7 @@ const AdminCustomers = () => {
       {/* Password Success Dialog — shown once after customer creation */}
       {showPasswordDialog && generatedPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card rounded-xl shadow-lg w-full max-w-md flex flex-col overflow-hidden" role="alertdialog" aria-labelledby="password-dialog-title" aria-describedby="password-dialog-desc">
+          <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="password-dialog-title" aria-describedby="password-dialog-desc">
             <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
               <h2 id="password-dialog-title" className="text-lg font-semibold">Customer Created Successfully</h2>
             </div>
@@ -450,7 +471,7 @@ const AdminCustomers = () => {
       {/* Delete Customer — confirmation alert dialog (Admin only) */}
       {customerIdToDelete != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card rounded-xl shadow-lg w-full max-w-md flex flex-col overflow-hidden" role="alertdialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-desc">
+          <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-desc">
             <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
               <h2 id="delete-dialog-title" className="text-lg font-semibold">Delete Customer</h2>
             </div>

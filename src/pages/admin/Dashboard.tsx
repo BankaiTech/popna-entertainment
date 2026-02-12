@@ -120,31 +120,24 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300 animate-scale-in border-l-4" style={{ 
-              animationDelay: `${index * 0.05}s`,
-              borderLeftColor: stat.color.replace('text-', '').includes('blue') ? '#3b82f6' :
-                               stat.color.replace('text-', '').includes('orange') ? '#f97316' :
-                               stat.color.replace('text-', '').includes('green') ? '#22c55e' :
-                               stat.color.replace('text-', '').includes('purple') ? '#a855f7' :
-                               stat.color.replace('text-', '').includes('red') ? '#ef4444' : '#6366f1'
-            }}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 py-3">
-                <CardTitle className="text-xs font-medium text-muted-foreground">
+            <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-4 h-4 ${stat.color}`} />
+                <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
               </CardHeader>
-              <CardContent className="py-2">
-                <div className="text-2xl font-bold text-foreground">
+              <CardContent className="pb-4 px-4">
+                <div className="text-3xl font-bold text-foreground mb-1">
                   <AnimatedCounter value={stat.value} duration={1500} />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground">
                   {stat.value === 0 ? 'No records' : stat.value === 1 ? '1 record' : `${stat.value} records`}
                 </p>
               </CardContent>

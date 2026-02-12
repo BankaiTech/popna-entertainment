@@ -15,6 +15,7 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
   className?: string;
+  stickyHeader?: boolean;
 }
 
 export function DataTable<T extends { id: number | string }>({
@@ -23,6 +24,7 @@ export function DataTable<T extends { id: number | string }>({
   onRowClick,
   emptyMessage = 'No data available',
   className,
+  stickyHeader = false,
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -33,15 +35,15 @@ export function DataTable<T extends { id: number | string }>({
   }
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <div className={cn('overflow-x-auto rounded-card border border-border bg-card', className)}>
       <table className="w-full">
-        <thead>
-          <tr className="border-b-2 border-border bg-muted/30">
+        <thead className={cn('bg-muted/30', stickyHeader && 'sticky top-0 z-10')}>
+          <tr className="border-b-2 border-border">
             {columns.map((column) => (
               <th
                 key={column.key}
                 className={cn(
-                  'text-left p-3 text-sm font-medium text-foreground',
+                  'text-left p-3 text-xs font-semibold uppercase tracking-wider text-foreground',
                   column.headerClassName
                 )}
               >
@@ -57,15 +59,15 @@ export function DataTable<T extends { id: number | string }>({
               onClick={() => onRowClick?.(item)}
               className={cn(
                 'border-b border-border transition-colors',
-                onRowClick && 'cursor-pointer hover:bg-muted/50',
-                index % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                onRowClick && 'cursor-pointer hover:bg-accent/50',
+                index % 2 === 0 ? 'bg-card' : 'bg-muted/10'
               )}
             >
               {columns.map((column) => (
                 <td
                   key={column.key}
                   className={cn(
-                    'p-3 text-sm font-normal text-gray-600 dark:text-foreground',
+                    'p-3 text-sm font-normal text-muted-foreground',
                     column.className
                   )}
                 >

@@ -1,18 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { Pagination } from '@/components/ui/Pagination';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { usersApi } from '@/api/users';
 import type { User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { Plus } from 'lucide-react';
+import { Plus, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [addError, setAddError] = useState('');
   const [addSaving, setAddSaving] = useState(false);
   const [addName, setAddName] = useState('');
@@ -85,23 +89,92 @@ const AdminUsers = () => {
   const formatDate = (s: string) =>
     new Date(s).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 
+  // Pagination logic
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return users.slice(startIndex, startIndex + itemsPerPage);
+  }, [users, currentPage, itemsPerPage]);
+
+  // Calculate user counts
+  const adminCount = users.filter((u) => u.role === 'admin').length;
+  const employeeCount = users.filter((u) => u.role === 'employee').length;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Users</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage admin and employee users</p>
+          <h1 className="text-xl font-bold text-foreground mb-0.5">Users</h1>
+          <p className="text-xs text-muted-foreground">Manage admin and employee users</p>
         </div>
-        <Button onClick={handleOpenAdd} className="w-full sm:w-auto">
+        <Button onClick={handleOpenAdd} className="w-full sm:w-auto" size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Add User
         </Button>
       </div>
 
+      {/* User Count Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
+            <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Total Users
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-blue-50 group-hover:scale-110 transition-transform duration-300">
+              <UserCog className="w-4 h-4 text-blue-600" />
+            </div>
+          </CardHeader>
+          <CardContent className="pb-3 px-3">
+            <div className="text-2xl font-bold text-foreground mb-0.5">
+              <AnimatedCounter value={users.length} duration={1500} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {users.length === 0 ? 'No users' : users.length === 1 ? '1 user' : `${users.length} users`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
+            <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Admins
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-purple-50 group-hover:scale-110 transition-transform duration-300">
+              <UserCog className="w-4 h-4 text-purple-600" />
+            </div>
+          </CardHeader>
+          <CardContent className="pb-3 px-3">
+            <div className="text-2xl font-bold text-foreground mb-0.5">
+              <AnimatedCounter value={adminCount} duration={1500} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {adminCount === 0 ? '0 Admin' : adminCount === 1 ? '1 Admin' : `${adminCount} Admins`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
+            <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Employees
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-green-50 group-hover:scale-110 transition-transform duration-300">
+              <UserCog className="w-4 h-4 text-green-600" />
+            </div>
+          </CardHeader>
+          <CardContent className="pb-3 px-3">
+            <div className="text-2xl font-bold text-foreground mb-0.5">
+              <AnimatedCounter value={employeeCount} duration={1500} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {employeeCount === 0 ? '0 Employee' : employeeCount === 1 ? '1 Employee' : `${employeeCount} Employees`}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
-        <CardHeader className="py-3">
-          <CardTitle className="text-base">User List ({users.length})</CardTitle>
-        </CardHeader>
+        
         <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12">Loading users...</div>
@@ -113,15 +186,15 @@ const AdminUsers = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Username</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Role</th>
-                      <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Created Date</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Name</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Username</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Role</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Created Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u, idx) => (
+                    {paginatedUsers.map((u, idx) => (
                       <tr
                         key={u.id}
                         className={cn(
@@ -141,7 +214,7 @@ const AdminUsers = () => {
               </div>
 
               <div className="md:hidden space-y-3 p-3">
-                {users.map((u) => (
+                {paginatedUsers.map((u) => (
                   <div
                     key={u.id}
                     className="bg-card border border-border rounded-lg p-4 space-y-2"
@@ -165,13 +238,22 @@ const AdminUsers = () => {
             </>
           )}
         </CardContent>
+        {users.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={users.length}
+          />
+        )}
       </Card>
 
       {/* Add User Dialog - mobile-friendly */}
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50">
           <div
-            className="w-full sm:max-w-md bg-card rounded-t-2xl sm:rounded-xl shadow-lg flex flex-col max-h-[90vh] sm:max-h-[85vh]"
+            className="w-full sm:max-w-md bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl flex flex-col max-h-[90vh] sm:max-h-[85vh] border border-border"
             role="dialog"
             aria-labelledby="add-user-title"
             aria-modal="true"

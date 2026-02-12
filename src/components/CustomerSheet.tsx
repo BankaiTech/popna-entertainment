@@ -156,7 +156,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="bg-card rounded-t-xl sm:rounded-xl shadow-lg w-full sm:w-[600px] max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:w-[600px] max-h-[90vh] overflow-hidden flex flex-col border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Compact Header */}
@@ -410,7 +410,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
           onClick={() => setIsPaymentModalOpen(false)}
         >
           <div
-            className="bg-card rounded-t-xl sm:rounded-xl shadow-lg w-full sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">

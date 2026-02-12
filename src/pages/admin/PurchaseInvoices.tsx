@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { Pagination } from '@/components/ui/Pagination';
 import { Plus, ShoppingCart, Search } from 'lucide-react';
 import type { PurchaseInvoice } from '@/models/types';
 import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
@@ -13,6 +14,8 @@ const PurchaseInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const loadInvoices = async () => {
     setLoading(true);
@@ -25,13 +28,27 @@ const PurchaseInvoices = () => {
     loadInvoices();
   }, []);
 
-  const filtered = invoices.filter((inv) => {
-    const bySearch = searchQuery.trim() === '' ||
-      inv.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (inv.reference && inv.reference.toLowerCase().includes(searchQuery.toLowerCase()));
-    return bySearch;
-  });
+  const filtered = useMemo(() => {
+    return invoices.filter((inv) => {
+      const bySearch = searchQuery.trim() === '' ||
+        inv.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (inv.reference && inv.reference.toLowerCase().includes(searchQuery.toLowerCase()));
+      return bySearch;
+    });
+  }, [invoices, searchQuery]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedInvoices = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const gstBreakupStr = (g: PurchaseInvoice['gstBreakup']) => {
     const parts: string[] = [];
@@ -58,9 +75,6 @@ const PurchaseInvoices = () => {
 
       <Card>
         <CardHeader className="py-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-            <CardTitle className="text-base">Purchase Invoice List ({filtered.length})</CardTitle>
-          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -81,17 +95,17 @@ const PurchaseInvoices = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Number</th>
-                    <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Vendor</th>
-                    <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Reference</th>
-                    <th className="text-right px-3 py-2 text-sm font-medium text-foreground">Amount</th>
-                    <th className="text-left px-3 py-2 text-sm font-medium text-foreground">GST Breakup</th>
-                    <th className="text-right px-3 py-2 text-sm font-medium text-foreground">Total</th>
-                    <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Date</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Number</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Vendor</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Reference</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Amount</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">GST Breakup</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Total</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inv, idx) => (
+                  {paginatedInvoices.map((inv, idx) => (
                     <tr key={inv.id} className={cn(
                       "border-b border-border hover:bg-muted/50 transition-colors",
                       idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
@@ -110,6 +124,15 @@ const PurchaseInvoices = () => {
             </div>
           )}
         </CardContent>
+        {filtered.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filtered.length}
+          />
+        )}
       </Card>
 
       <PurchaseInvoiceModal

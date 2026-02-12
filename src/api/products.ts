@@ -40,11 +40,11 @@ let productsData: Product[] = [
 
 export const productsApi = {
   getAll: async (): Promise<Product[]> => {
-    // Replace with real API call later
+    // API ready — replace mock with real backend
     return Promise.resolve([...productsData]);
   },
   getActive: async (): Promise<Product[]> => {
-    // Replace with real API call later
+    // API ready — replace mock with real backend
     return Promise.resolve(productsData.filter((p) => p.isActive));
   },
   getById: async (id: number): Promise<Product> => {

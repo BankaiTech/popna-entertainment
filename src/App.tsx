@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import HomePage from './pages/public/HomePage';
+import PlansPage from './pages/public/PlansPage';
 import ProviderPage from './pages/public/ProviderPage';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminCatalog from './pages/admin/Catalog';
@@ -23,6 +24,7 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="plans" element={<PlansPage />} />
         <Route path="cable/gtpl" element={<ProviderPage provider="GTPL" />} />
         <Route path="internet/bsnl" element={<ProviderPage provider="BSNL" />} />
         <Route path="internet/railwire" element={<ProviderPage provider="Railwire" />} />

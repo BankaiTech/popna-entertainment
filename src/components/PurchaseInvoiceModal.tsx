@@ -117,7 +117,7 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-2xl font-bold gradient-text">Create Purchase Invoice</h2>
           <button

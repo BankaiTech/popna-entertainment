@@ -28,6 +28,19 @@ body {
   min-height: 100vh;
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  html.dark {
+    color: #f5f8fa;
+    background-color: #181c32;
+  }
+  
+  html.dark body {
+    background: #181c32;
+    color: #f5f8fa;
+  }
+}
+
 @layer utilities {
   .glass-effect {
     background: rgba(255, 255, 255, 0.7);
@@ -40,6 +53,41 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .animate-infinite-scroll {
+    animation: infinite-scroll linear infinite;
+    animation-duration: var(--carousel-duration, 30s);
+  }
+
+  @keyframes infinite-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(-1 * var(--carousel-width, 0px) / 2));
+    }
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 

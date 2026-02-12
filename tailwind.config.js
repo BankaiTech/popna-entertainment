@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -34,6 +35,19 @@ export default {
           DEFAULT: '#f1416c',
           foreground: '#ffffff',
         },
+      },
+      boxShadow: {
+        'soft': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)',
+        'soft-lg': '0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.08)',
+        'soft-xl': '0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.1)',
+      },
+      borderRadius: {
+        'card': '0.75rem',
+        'modal': '1rem',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
       },
     },
   },

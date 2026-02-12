@@ -56,7 +56,7 @@ const CustomerComplaintModal = ({ isOpen, onClose, customer }: CustomerComplaint
       onClick={onClose}
     >
       <div
-        className="bg-card rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Compact Header */}

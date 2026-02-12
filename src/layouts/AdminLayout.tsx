@@ -39,7 +39,7 @@ const AdminLayout = () => {
 
   // Header height: h-14 (3.5rem). Sidebar uses top-14 to sit below it.
   return (
-    <div className="min-h-screen bg-muted flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Mobile overlay — z-40; header z-50 stays above so drawer does not overlap header */}
       {isMobileMenuOpen && (
         <div
@@ -49,7 +49,7 @@ const AdminLayout = () => {
       )}
 
       {/* Sticky header — full width, compact, stays above content */}
-      <header className="sticky top-0 z-50 h-14 shrink-0 flex items-center justify-between px-4 sm:px-8 border-b border-border bg-card">
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-4 sm:px-8 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -69,27 +69,36 @@ const AdminLayout = () => {
         </Button>
       </header>
 
-      <div className="flex flex-1 flex-col sm:flex-row min-h-0">
-        {/* Sidebar — desktop: sticky below header, scrolls independently; mobile: drawer below header */}
+      <div className="flex pt-14">
+        {/* Sidebar — desktop: sticky full height; mobile: drawer */}
         <aside
           className={cn(
-            'fixed sm:sticky left-0 top-14 bottom-0 sm:bottom-auto sm:top-14 sm:self-start sm:max-h-[calc(100vh-3.5rem)]',
-            'z-50 w-64 bg-card border-r border-border flex flex-col shrink-0',
+            'fixed top-14 bottom-0 left-0',
+            'z-40 w-56 bg-gray-50 border-r border-gray-200 flex flex-col',
             'transform transition-transform duration-300 ease-in-out',
-            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
+            'sm:translate-x-0',
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
-          <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0">
-            <h1 className="text-lg sm:text-xl font-bold text-primary">Popna</h1>
+          {/* Logo Header */}
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-gray-50">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">P</span>
+              </div>
+              <h1 className="text-base font-bold text-gray-900">Popna</h1>
+            </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="sm:hidden p-2 hover:bg-accent rounded-md"
+              className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"
               aria-label="Close menu"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 text-gray-600" />
             </button>
           </div>
-          <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
+          
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -99,32 +108,47 @@ const AdminLayout = () => {
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    'flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium transition-colors',
+                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                   )}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-600')} />
                   <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
+          
+          {/* Profile Section */}
+          {/* <div className="p-3 border-t border-gray-200 shrink-0 bg-gray-50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-semibold">
+                  {username?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{username || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate">{username ? `${username}@popna.com` : 'user@popna.com'}</p>
+              </div>
+            </div>
+          </div> */}
         </aside>
 
-        {/* Main content — scrolls vertically, padding to avoid overlap */}
-        <main className="flex-1 min-h-0 overflow-auto w-full">
-          <div className="p-4 sm:p-8">
+        {/* Main content — scrolls vertically */}
+        <main className="flex-1 overflow-auto w-full bg-white flex flex-col sm:ml-56">
+          <div className="flex-1 p-4 sm:p-6">
             <Outlet />
           </div>
+          
+          {/* Footer credit — at bottom of content */}
+          <footer className="shrink-0 border-t border-gray-200 bg-white py-2 px-4">
+            <FooterCredit />
+          </footer>
         </main>
       </div>
-
-      {/* Footer credit — sticky at bottom */}
-      <footer className="shrink-0 border-t border-border bg-card py-3 px-4">
-        <FooterCredit />
-      </footer>
     </div>
   );
 };
