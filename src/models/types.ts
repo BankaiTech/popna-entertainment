@@ -16,6 +16,8 @@ export type PaymentStatus = 'paid' | 'not_paid';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
+export type ConnectionRequestStatus = 'New' | 'Contacted' | 'Converted';
+
 // Multi-tenant ready — backend will enforce org isolation
 export const MOCK_ORGANIZATION_ID = 'org_001';
 
@@ -201,4 +203,19 @@ export interface WebsiteSettings {
   ctaButtonText: string;
   ctaButtonLink: string;
   updatedAt: string;
+}
+
+/** Connection Request - Frontend plan request from customers */
+export interface ConnectionRequest {
+  id: number;
+  organizationId: string;
+  name: string;
+  mobile: string;
+  email?: string;
+  packageId: number; // Plan ID
+  productId: number; // Product ID
+  planName: string; // Denormalized for display
+  productName: string; // Denormalized for display
+  status: ConnectionRequestStatus;
+  createdAt: string;
 }

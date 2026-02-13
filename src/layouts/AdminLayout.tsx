@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
@@ -21,6 +21,7 @@ const AdminLayout = () => {
   const adminMenuItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/customers', label: 'Customers', icon: Users },
+    { path: '/admin/connection-requests', label: 'New Connection', icon: PhoneCall },
     { path: '/admin/catalog', label: 'Catalog', icon: Package },
     { path: '/admin/invoices', label: 'Invoices', icon: FileText },
     { path: '/admin/purchase-invoices', label: 'Purchase Invoices', icon: ShoppingCart },

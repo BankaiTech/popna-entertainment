@@ -3,7 +3,6 @@ import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import HomePage from './pages/public/HomePage';
 import PlansPage from './pages/public/PlansPage';
-import ProviderPage from './pages/public/ProviderPage';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminCatalog from './pages/admin/Catalog';
 import AdminCustomers from './pages/admin/Customers';
@@ -12,6 +11,7 @@ import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
+import ConnectionRequests from './pages/admin/ConnectionRequests';
 import Login from './pages/admin/Login';
 import CustomerLogin from './pages/customer/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -25,10 +25,6 @@ function App() {
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<HomePage />} />
         <Route path="plans" element={<PlansPage />} />
-        <Route path="cable/gtpl" element={<ProviderPage provider="GTPL" />} />
-        <Route path="internet/bsnl" element={<ProviderPage provider="BSNL" />} />
-        <Route path="internet/railwire" element={<ProviderPage provider="Railwire" />} />
-        <Route path="internet/krishiinet" element={<ProviderPage provider="Krishiinet" />} />
       </Route>
 
       {/* Admin Login */}
@@ -121,6 +117,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="connection-requests"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ConnectionRequests />
             </ProtectedRoute>
           }
         />

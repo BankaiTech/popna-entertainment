@@ -116,12 +116,12 @@ const HomePage = () => {
                                 <Icon className="w-10 h-10 text-white" />
                               </div>
                             </div>
-                            <CardTitle className="text-center text-xl text-gray-900 h-12 flex items-center justify-center">
+                            <CardTitle className="text-center text-xl text-gray-900 h-12 flex items-center justify-center line-clamp-2 px-2">
                               {product.name} {product.productType === 'cable' ? 'Cable' : 'Internet'}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
-                            <CardDescription className="text-center text-sm text-gray-600 line-clamp-3 mb-4 flex-shrink-0 min-h-[60px]">
+                            <CardDescription className="text-center text-sm text-gray-600 line-clamp-3 mb-4 flex-shrink-0 min-h-[60px] px-2">
                               View plans and pricing for {product.name}. Choose the perfect plan for your needs.
                             </CardDescription>
                             <div className="mt-auto pt-4 text-center">
