@@ -70,7 +70,7 @@ const AdminLayout = () => {
         </Button>
       </header>
 
-      <div className="flex pt-14">
+      <div className="flex flex-1 pt-14">
         {/* Sidebar — desktop: sticky full height; mobile: drawer */}
         <aside
           className={cn(
@@ -138,14 +138,14 @@ const AdminLayout = () => {
           </div> */}
         </aside>
 
-        {/* Main content — scrolls vertically */}
-        <main className="flex-1 overflow-auto w-full bg-white flex flex-col sm:ml-56">
-          <div className="flex-1 p-4 sm:p-6">
+        {/* Main content — flex column to push footer to bottom */}
+        <main className="flex-1 flex flex-col w-full bg-white sm:ml-56">
+          <div className="flex-1 overflow-auto p-4 sm:p-6">
             <Outlet />
           </div>
           
-          {/* Footer credit — at bottom of content */}
-          <footer className="shrink-0 border-t border-gray-200 bg-white py-2 px-4">
+          {/* Footer credit — sticks to bottom using margin-top: auto */}
+          <footer className="shrink-0 mt-auto border-t border-gray-200 bg-white py-2 px-4">
             <FooterCredit />
           </footer>
         </main>

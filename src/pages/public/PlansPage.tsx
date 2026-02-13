@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useStore } from '@/store/useStore';
 import { plansApi } from '@/api/plans';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -14,10 +14,20 @@ const PlansPage = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const productNameParam = searchParams.get('productName');
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [selectedPlan, setSelectedPlan] = useState<{ plan: Plan; productId: number; productName: string } | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Scroll to top on mount and when location/search params change
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth',
+    });
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (productNameParam) {

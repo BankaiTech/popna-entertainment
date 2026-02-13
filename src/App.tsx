@@ -18,11 +18,14 @@ import Login from './pages/admin/Login';
 import CustomerLogin from './pages/customer/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<HomePage />} />
@@ -133,6 +136,7 @@ function App() {
         <Route index element={<AdminRedirect />} />
       </Route>
     </Routes>
+    </>
   );
 }
 

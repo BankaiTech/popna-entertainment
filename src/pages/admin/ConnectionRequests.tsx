@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
 import { cn } from '@/lib/utils';
+import { Search } from 'lucide-react';
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 
 const ConnectionRequests = () => {
@@ -12,6 +14,7 @@ const ConnectionRequests = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<ConnectionRequestStatus | 'All'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -40,15 +43,29 @@ const ConnectionRequests = () => {
     }
   };
 
-  // Filter requests by status
-  const filteredRequests = statusFilter === 'All' 
-    ? requests 
-    : requests.filter((r) => r.status === statusFilter);
+  // Filter requests by status and search query
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request) => {
+      const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
+      const matchesSearch =
+        searchQuery === '' ||
+        request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.mobile.includes(searchQuery);
+      return matchesStatus && matchesSearch;
+    });
+  }, [requests, statusFilter, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRequests = filteredRequests.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedRequests = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredRequests.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredRequests, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   const getStatusBadgeColor = (status: ConnectionRequestStatus) => {
     switch (status) {
@@ -64,11 +81,11 @@ const ConnectionRequests = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   return (
@@ -78,121 +95,167 @@ const ConnectionRequests = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">New Connection Requests</h1>
           <p className="text-sm text-gray-600 mt-1">Manage customer plan requests</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as ConnectionRequestStatus | 'All');
-              setCurrentPage(1);
-            }}
-            className="w-full sm:w-48"
-          >
-            <option value="All">All Status</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Converted">Converted</option>
-          </Select>
-        </div>
       </div>
 
-      <Card className="border border-border bg-card shadow-soft">
+      <Card className="border border-border bg-card shadow-soft rounded-card">
         <CardHeader className="border-b border-border bg-gray-50">
-          <CardTitle className="text-lg font-semibold text-foreground">Connection Requests</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Total: {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''}
-          </CardDescription>
+          
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <div className="relative w-full sm:w-auto sm:max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search by name or mobile..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs w-full sm:w-64"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ConnectionRequestStatus | 'All')}
+              className="h-8 text-xs w-full sm:w-auto sm:min-w-[140px]"
+            >
+              <option value="All">All Status</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Converted">Converted</option>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center text-gray-600">Loading requests...</div>
-          ) : paginatedRequests.length === 0 ? (
+          ) : filteredRequests.length === 0 ? (
             <div className="p-8 text-center text-gray-600">No connection requests found.</div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 sticky top-0 z-10">
-                    <tr>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        ID
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Customer Name
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Mobile
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Email
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Plan Name
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Product Name
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Requested Date
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Status
-                      </th>
-                      <th className="text-xs font-semibold uppercase tracking-wider text-foreground px-4 py-3 text-left">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {paginatedRequests.map((request) => (
-                      <tr
-                        key={request.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-4 py-3 text-sm text-gray-900">{request.id}</td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{request.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{request.mobile}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{request.email || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{request.planName}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{request.productName}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{formatDate(request.createdAt)}</td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-                              getStatusBadgeColor(request.status)
-                            )}
-                          >
-                            {request.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {request.status !== 'Contacted' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleStatusUpdate(request.id, 'Contacted')}
-                                className="text-xs"
-                              >
-                                Mark Contacted
-                              </Button>
-                            )}
-                            {request.status !== 'Converted' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleStatusUpdate(request.id, 'Converted')}
-                                className="text-xs"
-                              >
-                                Mark Converted
-                              </Button>
-                            )}
-                          </div>
-                        </td>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <div className="min-w-full">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-border bg-muted/30 sticky top-0 z-10">
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Customer Name</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Email</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Plan Name</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Product Name</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Requested Date</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {paginatedRequests.map((request, idx) => (
+                        <tr
+                          key={request.id}
+                          className={cn(
+                            "border-b border-border hover:bg-muted/50 transition-colors",
+                            idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                          )}
+                        >
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.id}</td>
+                          <td className="px-3 py-2 text-sm font-medium text-gray-900">{request.name}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.mobile}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.email || '-'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.planName}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.productName}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(request.createdAt)}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={cn(
+                                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+                                getStatusBadgeColor(request.status)
+                              )}
+                            >
+                              {request.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              {request.status !== 'Contacted' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleStatusUpdate(request.id, 'Contacted')}
+                                  className="text-xs"
+                                >
+                                  Mark Contacted
+                                </Button>
+                              )}
+                              {request.status !== 'Converted' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleStatusUpdate(request.id, 'Converted')}
+                                  className="text-xs"
+                                >
+                                  Mark Converted
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {paginatedRequests.map((request) => (
+                  <Card key={request.id} className="border border-border">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">{request.name}</p>
+                          <p className="text-sm text-gray-600">ID: {request.id}</p>
+                        </div>
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+                            getStatusBadgeColor(request.status)
+                          )}
+                        >
+                          {request.status}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-gray-600">Mobile:</span> {request.mobile}</p>
+                        <p><span className="text-gray-600">Email:</span> {request.email || '-'}</p>
+                        <p><span className="text-gray-600">Plan:</span> {request.planName}</p>
+                        <p><span className="text-gray-600">Product:</span> {request.productName}</p>
+                        <p><span className="text-gray-600">Date:</span> {formatDate(request.createdAt)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        {request.status !== 'Contacted' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusUpdate(request.id, 'Contacted')}
+                            className="text-xs flex-1"
+                          >
+                            Mark Contacted
+                          </Button>
+                        )}
+                        {request.status !== 'Converted' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleStatusUpdate(request.id, 'Converted')}
+                            className="text-xs flex-1"
+                          >
+                            Mark Converted
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="border-t border-border p-4">
                   <Pagination
