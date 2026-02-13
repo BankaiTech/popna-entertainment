@@ -31,9 +31,9 @@ const PublicLayout = () => {
   // Multi-tenant ready — company name from settings
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar — Dynamic based on active products */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Navbar — Dynamic based on active products — Sticky header */}
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -104,12 +104,12 @@ const PublicLayout = () => {
       </nav>
 
       {/* Main Content */}
-      <main>
+      <main className="flex-grow">
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 mt-auto">
+      {/* Footer — Sticky at bottom */}
+      <footer className="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 mt-auto shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>

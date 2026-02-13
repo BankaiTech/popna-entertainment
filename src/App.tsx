@@ -1,3 +1,5 @@
+// Project cleaned — unused files & dead code removed
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';

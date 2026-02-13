@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InfiniteCarousel } from '@/components/ui/InfiniteCarousel';
 import Button from '@/components/ui/Button';
 import { Wifi, Radio, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import popnaHomeImage from '@/assets/images/popna-home.png';
 
 const HomePage = () => {
-  const { websiteSettings, products, companyProfile, fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile, loading } = useStore();
+  const { websiteSettings, products, companyProfile, fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile } = useStore();
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -26,7 +27,6 @@ const HomePage = () => {
   const heroSubtitle = websiteSettings?.heroSubtitle || 'Cable & Internet Services';
   const heroDescription = websiteSettings?.heroDescription || 'Choose the right plan for your home or business.';
   const ctaButtonText = websiteSettings?.ctaButtonText || 'Get Started';
-  const ctaButtonLink = websiteSettings?.ctaButtonLink || '#services';
 
   // API ready — replace mock with real backend
   // Get all active products (for infinite carousel)
@@ -49,7 +49,6 @@ const HomePage = () => {
   };
 
   // Company info for contact section
-  const companyName = companyProfile?.companyName || 'BankaiTech';
   const companyPhone = companyProfile?.contactNumber || '+91 9876543210';
   const companyEmail = companyProfile?.email || 'info@bankaitech.com';
   const companyAddress = companyProfile
@@ -140,10 +139,11 @@ const HomePage = () => {
       )}
 
       {/* About Section */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-white to-gray-50">
+      <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
+            {/* Left: About Text */}
+            <div className="order-2 lg:order-1">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">About Us</h2>
               <p className="text-lg text-gray-600 mb-4">
                 We are a leading provider of cable and internet services, committed to delivering reliable and
@@ -160,10 +160,17 @@ const HomePage = () => {
                 </Button>
               </a>
             </div>
-            <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl p-8 h-64 sm:h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-5xl sm:text-6xl font-bold text-gray-800 mb-2">10+</div>
-                <div className="text-xl text-gray-700">Years of Experience</div>
+            
+            {/* Right: Image (Desktop) / Top (Mobile) */}
+            <div className="order-1 lg:order-2">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <img
+                  src={popnaHomeImage}
+                  alt="Popna Entertainment Home"
+                  className="w-full h-auto object-cover aspect-[4/3]"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
             </div>
           </div>

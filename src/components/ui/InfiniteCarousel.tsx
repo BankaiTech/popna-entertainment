@@ -21,6 +21,10 @@ export function InfiniteCarousel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [duplicatedItems, setDuplicatedItems] = useState<React.ReactNode[]>([]);
+  const [translateX, setTranslateX] = useState(0);
+  const animationRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+  const [cardWidth, setCardWidth] = useState(0);
 
   // Duplicate items to create seamless loop
   useEffect(() => {
@@ -34,63 +38,88 @@ export function InfiniteCarousel({
       itemsToShow = Array(multiplier).fill(children).flat();
     }
     
-    // Create 2 copies for seamless infinite loop
-    const duplicates = [...itemsToShow, ...itemsToShow];
+    // Create 3 copies for seamless infinite loop
+    const duplicates = [...itemsToShow, ...itemsToShow, ...itemsToShow];
     setDuplicatedItems(duplicates);
   }, [children]);
 
+  // Calculate card width
   useEffect(() => {
     if (!trackRef.current || duplicatedItems.length === 0) return;
 
-    const track = trackRef.current;
-    
     const calculateWidth = () => {
-      const firstItem = track.children[0] as HTMLElement;
+      const firstItem = trackRef.current?.children[0] as HTMLElement;
       if (!firstItem) return;
       
       const itemWidth = firstItem.offsetWidth;
       const gap = 24; // gap-6 = 1.5rem = 24px
-      const itemsPerSet = duplicatedItems.length / 2;
-      const singleSetWidth = (itemWidth + gap) * itemsPerSet;
-      
-      // Calculate animation duration based on speed
-      const duration = (singleSetWidth / speed) * 1000; // Convert to milliseconds
-      
-      // Set CSS custom properties for animation
-      track.style.setProperty('--carousel-width', `${singleSetWidth}px`);
-      track.style.setProperty('--carousel-duration', `${duration}ms`);
+      setCardWidth(itemWidth + gap);
     };
 
-    // Calculate on mount and resize
     calculateWidth();
     
     const resizeObserver = new ResizeObserver(calculateWidth);
-    resizeObserver.observe(track);
-
-    if (isPaused) {
-      track.style.animationPlayState = 'paused';
-    } else {
-      track.style.animationPlayState = 'running';
+    if (trackRef.current) {
+      resizeObserver.observe(trackRef.current);
     }
 
     return () => {
       resizeObserver.disconnect();
     };
-  }, [speed, duplicatedItems.length, isPaused]);
+  }, [duplicatedItems.length]);
 
-  // Manual scroll handlers (for arrow buttons)
+  // Carousel control logic fixed — UI only
+  // Transform-based animation for smooth infinite scroll with working arrow buttons
+  useEffect(() => {
+    if (duplicatedItems.length === 0 || cardWidth === 0) return;
+
+    const itemsPerSet = duplicatedItems.length / 3;
+    const singleSetWidth = cardWidth * itemsPerSet;
+
+    const animate = (currentTime: number) => {
+      if (!lastTimeRef.current) {
+        lastTimeRef.current = currentTime;
+      }
+
+      const deltaTime = currentTime - lastTimeRef.current;
+      lastTimeRef.current = currentTime;
+
+      if (!isPaused) {
+        setTranslateX((prev) => {
+          const newTranslate = prev - (speed * deltaTime) / 1000;
+          
+          // Reset when we've scrolled through one complete set
+          if (Math.abs(newTranslate) >= singleSetWidth) {
+            return newTranslate + singleSetWidth;
+          }
+          
+          return newTranslate;
+        });
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [speed, duplicatedItems.length, isPaused, cardWidth]);
+
+  // Manual scroll handlers (for arrow buttons) - transform-based
   const scrollLeft = () => {
-    if (!trackRef.current) return;
-    const itemWidth = (trackRef.current.children[0] as HTMLElement)?.offsetWidth || 300;
-    const gap = 24;
-    trackRef.current.scrollBy({ left: -(itemWidth + gap) * 3, behavior: 'smooth' });
+    setTranslateX((prev) => prev + cardWidth);
+    // Resume auto-play after manual interaction
+    setIsPaused(false);
   };
 
   const scrollRight = () => {
-    if (!trackRef.current) return;
-    const itemWidth = (trackRef.current.children[0] as HTMLElement)?.offsetWidth || 300;
-    const gap = 24;
-    trackRef.current.scrollBy({ left: (itemWidth + gap) * 3, behavior: 'smooth' });
+    setTranslateX((prev) => prev - cardWidth);
+    // Resume auto-play after manual interaction
+    setIsPaused(false);
   };
 
   // Touch/swipe support for mobile
@@ -99,6 +128,7 @@ export function InfiniteCarousel({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
+    setIsPaused(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -106,7 +136,6 @@ export function InfiniteCarousel({
   };
 
   const handleTouchEnd = () => {
-    if (!trackRef.current) return;
     const swipeDistance = touchStart - touchEnd;
     const minSwipeDistance = 50;
     
@@ -120,6 +149,7 @@ export function InfiniteCarousel({
     
     setTouchStart(0);
     setTouchEnd(0);
+    setIsPaused(false);
   };
 
   if (children.length === 0) return null;
@@ -134,23 +164,25 @@ export function InfiniteCarousel({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Left Arrow */}
+      {/* Left Arrow - properly bound with pointer-events and z-index */}
       {showArrows && (
         <button
           onClick={scrollLeft}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto"
           aria-label="Scroll left"
+          type="button"
         >
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
       )}
 
-      {/* Right Arrow */}
+      {/* Right Arrow - properly bound with pointer-events and z-index */}
       {showArrows && (
         <button
           onClick={scrollRight}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto"
           aria-label="Scroll right"
+          type="button"
         >
           <ChevronRight className="w-5 h-5 text-gray-700" />
         </button>
@@ -158,9 +190,10 @@ export function InfiniteCarousel({
 
       <div
         ref={trackRef}
-        className="flex gap-6 animate-infinite-scroll"
+        className="flex gap-6 transition-transform duration-300 ease-out"
         style={{
           width: 'max-content',
+          transform: `translateX(${translateX}px)`,
         }}
       >
         {duplicatedItems.map((child, index) => (
