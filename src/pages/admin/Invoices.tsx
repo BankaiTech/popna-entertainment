@@ -11,6 +11,7 @@ import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
 import { cn, formatCurrencyINR, formatDateDMY } from '@/lib/utils';
+import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
@@ -78,8 +79,15 @@ const Invoices = () => {
     );
   };
 
-  const handleDownloadPdf = (inv: SalesInvoice) => {
-    alert(`PDF download for ${inv.invoiceNumber} (mock — structure ready for PDF generation).`);
+  const handleDownloadPdf = async (inv: SalesInvoice) => {
+    try {
+      const customer = customers.find((c) => c.id === inv.customerId);
+      const companyProfile = useStore.getState().companyProfile;
+      await generateSalesInvoicePdf(inv, customer || null, companyProfile);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (

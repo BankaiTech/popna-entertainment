@@ -3,11 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, ShoppingCart, Search } from 'lucide-react';
+import { Plus, ShoppingCart, Search, Download } from 'lucide-react';
 import type { PurchaseInvoice } from '@/models/types';
 import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
 import PurchaseInvoiceModal from '@/components/PurchaseInvoiceModal';
 import { cn } from '@/lib/utils';
+import { generatePurchaseInvoicePdf } from '@/lib/pdfUtils';
+import { useStore } from '@/store/useStore';
 
 const PurchaseInvoices = () => {
   const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
@@ -16,6 +18,7 @@ const PurchaseInvoices = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const { companyProfile } = useStore();
 
   const loadInvoices = async () => {
     setLoading(true);
@@ -56,6 +59,15 @@ const PurchaseInvoices = () => {
     if (g.sgst != null) parts.push(`SGST: ₹${g.sgst.toFixed(2)}`);
     if (g.igst != null) parts.push(`IGST: ₹${g.igst.toFixed(2)}`);
     return parts.length ? parts.join(', ') : '—';
+  };
+
+  const handleDownloadPdf = async (inv: PurchaseInvoice) => {
+    try {
+      await generatePurchaseInvoicePdf(inv, companyProfile);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
@@ -102,6 +114,7 @@ const PurchaseInvoices = () => {
                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">GST Breakup</th>
                     <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Total</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Date</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">PDF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +130,11 @@ const PurchaseInvoices = () => {
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{gstBreakupStr(inv.gstBreakup)}</td>
                       <td className="px-3 py-2 text-right text-sm font-medium text-foreground">₹{inv.totalAmount.toFixed(2)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.issueDate}</td>
+                      <td className="px-3 py-2">
+                        <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(inv)}>
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

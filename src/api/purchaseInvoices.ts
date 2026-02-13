@@ -60,6 +60,17 @@ export const purchaseInvoicesApi = {
     purchaseInvoicesData.push(newInv);
     return newInv;
   },
+  /**
+   * Download purchase invoice PDF
+   * Replace with backend PDF generation later
+   */
+  downloadPdf: async (id: number): Promise<void> => {
+    // This will be handled by the frontend using generatePurchaseInvoicePdf
+    // Backend replacement: return PDF blob/stream
+    const inv = purchaseInvoicesData.find((i) => i.id === id);
+    if (!inv) throw new Error('Purchase invoice not found');
+    // Frontend will call generatePurchaseInvoicePdf with invoice data
+  },
 };
 
 export const vendorsApi = {

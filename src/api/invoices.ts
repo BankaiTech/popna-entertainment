@@ -85,4 +85,15 @@ export const salesInvoicesApi = {
     invoicesData[idx] = { ...invoicesData[idx], ...data };
     return invoicesData[idx];
   },
+  /**
+   * Download invoice PDF
+   * Replace with backend PDF generation later
+   */
+  downloadPdf: async (id: number): Promise<void> => {
+    // This will be handled by the frontend using generateSalesInvoicePdf
+    // Backend replacement: return PDF blob/stream
+    const inv = invoicesData.find((i) => i.id === id);
+    if (!inv) throw new Error('Invoice not found');
+    // Frontend will call generateSalesInvoicePdf with invoice data
+  },
 };

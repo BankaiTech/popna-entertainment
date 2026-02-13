@@ -1,9 +1,94 @@
 // API ready — replace mock with real backend
+// Replace with real backend API later
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
+// Mock data initialization - API ready structure
+const generateMockConnectionRequests = (): ConnectionRequest[] => {
+  const now = new Date();
+  const requests: ConnectionRequest[] = [];
+  
+  // Generate 20+ realistic mock entries
+  const names = [
+    'Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
+    'Anjali Mehta', 'Rahul Gupta', 'Kavita Desai', 'Suresh Iyer', 'Meera Nair',
+    'Arjun Menon', 'Divya Krishnan', 'Kiran Pillai', 'Lakshmi Nair', 'Gopal Rao',
+    'Sunita Devi', 'Mohan Das', 'Sarita Joshi', 'Naveen Kumar', 'Rekha Agarwal',
+    'Deepak Malhotra', 'Shilpa Bansal', 'Ravi Verma', 'Neha Kapoor', 'Ajay Tiwari'
+  ];
+  
+  const mobiles = [
+    '9876543210', '9876543211', '9876543212', '9876543213', '9876543214',
+    '9876543215', '9876543216', '9876543217', '9876543218', '9876543219',
+    '9876543220', '9876543221', '9876543222', '9876543223', '9876543224',
+    '9876543225', '9876543226', '9876543227', '9876543228', '9876543229',
+    '9876543230', '9876543231', '9876543232', '9876543233', '9876543234'
+  ];
+  
+  const emails = [
+    'rajesh.kumar@email.com', 'priya.sharma@email.com', 'amit.patel@email.com',
+    'sneha.reddy@email.com', 'vikram.singh@email.com', 'anjali.mehta@email.com',
+    'rahul.gupta@email.com', 'kavita.desai@email.com', 'suresh.iyer@email.com',
+    'meera.nair@email.com', 'arjun.menon@email.com', 'divya.krishnan@email.com',
+    'kiran.pillai@email.com', 'lakshmi.nair@email.com', 'gopal.rao@email.com',
+    'sunita.devi@email.com', 'mohan.das@email.com', 'sarita.joshi@email.com',
+    'naveen.kumar@email.com', 'rekha.agarwal@email.com', 'deepak.malhotra@email.com',
+    'shilpa.bansal@email.com', 'ravi.verma@email.com', 'neha.kapoor@email.com', 'ajay.tiwari@email.com'
+  ];
+  
+  const plans = [
+    { id: 1, name: 'GTPL Cable Basic 50 Mbps', productId: 1, productName: 'GTPL' },
+    { id: 2, name: 'GTPL Cable Premium 100 Mbps', productId: 1, productName: 'GTPL' },
+    { id: 3, name: 'GTPL Cable Ultra 200 Mbps', productId: 1, productName: 'GTPL' },
+    { id: 4, name: 'BSNL Fiber Basic', productId: 2, productName: 'BSNL' },
+    { id: 5, name: 'BSNL Fiber Premium', productId: 2, productName: 'BSNL' },
+    { id: 6, name: 'BSNL Fiber Ultra', productId: 2, productName: 'BSNL' },
+    { id: 7, name: 'Railwire Basic Plan', productId: 3, productName: 'Railwire' },
+    { id: 8, name: 'Railwire Premium Plan', productId: 3, productName: 'Railwire' },
+    { id: 9, name: 'Krishiinet Basic', productId: 4, productName: 'Krishiinet' },
+    { id: 10, name: 'Krishiinet Premium', productId: 4, productName: 'Krishiinet' },
+  ];
+  
+  const statuses: ConnectionRequestStatus[] = ['New', 'Contacted', 'Converted'];
+  
+  for (let i = 0; i < 25; i++) {
+    const plan = plans[i % plans.length];
+    const daysAgo = Math.floor(Math.random() * 30); // Random date within last 30 days
+    const requestedAt = new Date(now);
+    requestedAt.setDate(requestedAt.getDate() - daysAgo);
+    
+    // Weight statuses: 40% New, 35% Contacted, 25% Converted
+    let status: ConnectionRequestStatus;
+    const rand = Math.random();
+    if (rand < 0.4) {
+      status = 'New';
+    } else if (rand < 0.75) {
+      status = 'Contacted';
+    } else {
+      status = 'Converted';
+    }
+    
+    requests.push({
+      id: i + 1,
+      organizationId: MOCK_ORGANIZATION_ID,
+      name: names[i],
+      mobile: mobiles[i],
+      email: emails[i],
+      packageId: plan.id,
+      productId: plan.productId,
+      planName: plan.name,
+      productName: plan.productName,
+      status: status,
+      createdAt: requestedAt.toISOString(),
+    });
+  }
+  
+  // Sort by date (newest first)
+  return requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
 // In-memory storage for mock data (simulates backend)
-let connectionRequestsData: ConnectionRequest[] = [];
+let connectionRequestsData: ConnectionRequest[] = generateMockConnectionRequests();
 
 export interface CreateConnectionRequestPayload {
   name: string;
@@ -27,7 +112,9 @@ export const connectionRequestsApi = {
    */
   create: async (payload: CreateConnectionRequestPayload): Promise<ConnectionRequest> => {
     const newRequest: ConnectionRequest = {
-      id: Math.max(...connectionRequestsData.map((r) => r.id), 0) + 1,
+      id: connectionRequestsData.length > 0 
+        ? Math.max(...connectionRequestsData.map((r) => r.id), 0) + 1
+        : 1,
       organizationId: MOCK_ORGANIZATION_ID,
       name: payload.name,
       mobile: payload.mobile,

@@ -20,6 +20,27 @@ export function formatCurrencyINR(amount: number): string {
 }
 
 /**
+ * Format date as dd-mm-yyyy
+ * @param date Date to format (Date, string, or number)
+ * @returns Formatted date string (e.g., 05-02-2026)
+ */
+export function formatDateDMY(date: Date | string | number): string {
+  const dateObj = typeof date === 'string' || typeof date === 'number'
+    ? new Date(date)
+    : date;
+
+  if (isNaN(dateObj.getTime())) {
+    return '—';
+  }
+
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
+
+  return `${day}-${month}-${year}`;
+}
+
+/**
  * Generate automatic password for new customers.
  * Format: <first 4 letters of customer name><last 5 digits of mobile number>
  * 

@@ -109,17 +109,40 @@ export function InfiniteCarousel({
     };
   }, [speed, duplicatedItems.length, isPaused, cardWidth]);
 
+  // Carousel control logic fixed — UI only
   // Manual scroll handlers (for arrow buttons) - transform-based
   const scrollLeft = () => {
-    setTranslateX((prev) => prev + cardWidth);
+    if (cardWidth === 0) return;
+    setIsPaused(true);
+    setTranslateX((prev) => {
+      const newTranslate = prev + cardWidth;
+      const itemsPerSet = duplicatedItems.length / 3;
+      const singleSetWidth = cardWidth * itemsPerSet;
+      // Handle loop reset
+      if (newTranslate > 0) {
+        return newTranslate - singleSetWidth;
+      }
+      return newTranslate;
+    });
     // Resume auto-play after manual interaction
-    setIsPaused(false);
+    setTimeout(() => setIsPaused(false), 2000);
   };
 
   const scrollRight = () => {
-    setTranslateX((prev) => prev - cardWidth);
+    if (cardWidth === 0) return;
+    setIsPaused(true);
+    setTranslateX((prev) => {
+      const newTranslate = prev - cardWidth;
+      const itemsPerSet = duplicatedItems.length / 3;
+      const singleSetWidth = cardWidth * itemsPerSet;
+      // Handle loop reset
+      if (Math.abs(newTranslate) >= singleSetWidth) {
+        return newTranslate + singleSetWidth;
+      }
+      return newTranslate;
+    });
     // Resume auto-play after manual interaction
-    setIsPaused(false);
+    setTimeout(() => setIsPaused(false), 2000);
   };
 
   // Touch/swipe support for mobile
@@ -165,10 +188,15 @@ export function InfiniteCarousel({
       onTouchEnd={handleTouchEnd}
     >
       {/* Left Arrow - properly bound with pointer-events and z-index */}
-      {showArrows && (
+      {/* Carousel control logic fixed — UI only */}
+      {showArrows && cardWidth > 0 && (
         <button
-          onClick={scrollLeft}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            scrollLeft();
+          }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto cursor-pointer"
           aria-label="Scroll left"
           type="button"
         >
@@ -177,10 +205,15 @@ export function InfiniteCarousel({
       )}
 
       {/* Right Arrow - properly bound with pointer-events and z-index */}
-      {showArrows && (
+      {/* Carousel control logic fixed — UI only */}
+      {showArrows && cardWidth > 0 && (
         <button
-          onClick={scrollRight}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            scrollRight();
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto cursor-pointer"
           aria-label="Scroll right"
           type="button"
         >

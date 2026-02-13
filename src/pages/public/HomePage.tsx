@@ -166,11 +166,10 @@ const HomePage = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <img
                   src={popnaHomeImage}
-                  alt="Popna Entertainment Home"
-                  className="w-full h-auto object-cover aspect-[4/3]"
+                  alt="Popna Entertainment Home Image"
+                  className="w-full h-auto object-cover aspect-[4/3] rounded-2xl"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
             </div>
           </div>

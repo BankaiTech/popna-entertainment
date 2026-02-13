@@ -46,6 +46,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
     package: '',
     status: 'Active' as CustomerStatus,
     description: '',
+    gstin: '' as string | undefined,
     address: {
       line1: '',
       line2: '',
@@ -65,6 +66,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         package: customer.package,
         status: customer.status,
         description: customer.description || '',
+        gstin: customer.gstin || undefined,
         address: customer.address,
       });
     } else {
@@ -78,6 +80,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         package: '',
         status: 'Active',
         description: '',
+        gstin: undefined,
         address: {
           line1: '',
           line2: '',
@@ -102,6 +105,23 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
       }
       return;
     }
+    
+    // Optional GSTIN field for GST invoice support - validation
+    if (formData.gstin && formData.gstin.trim() !== '') {
+      const gstinValue = formData.gstin.trim().toUpperCase();
+      if (gstinValue.length !== 15) {
+        alert('GSTIN must be exactly 15 characters');
+        return;
+      }
+      if (!/^[A-Z0-9]{15}$/.test(gstinValue)) {
+        alert('GSTIN must contain only alphanumeric characters');
+        return;
+      }
+      formData.gstin = gstinValue;
+    } else {
+      formData.gstin = undefined;
+    }
+    
     if (customer) {
       onSave(formData);
     } else {
@@ -230,6 +250,28 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                     disabled={isReadOnly}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    GSTIN <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                  </label>
+                  <Input
+                    value={formData.gstin || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                      setFormData({
+                        ...formData,
+                        gstin: value || undefined,
+                      });
+                    }}
+                    placeholder="15-character GSTIN"
+                    maxLength={15}
+                    disabled={isReadOnly}
+                    className="uppercase"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.gstin && formData.gstin.length !== 15 ? 'GSTIN must be 15 characters' : 'Optional GSTIN field for GST invoice support'}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Connection Type</label>
@@ -372,6 +414,28 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                   }
                   disabled={isReadOnly}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  GSTIN <span className="text-xs text-muted-foreground">(Optional)</span>
+                </label>
+                <Input
+                  value={formData.gstin || ''}
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                    setFormData({
+                      ...formData,
+                      gstin: value || undefined,
+                    });
+                  }}
+                  placeholder="15-character GSTIN"
+                  maxLength={15}
+                  disabled={isReadOnly}
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.gstin && formData.gstin.length !== 15 ? 'GSTIN must be 15 characters' : 'Optional GSTIN field for GST invoice support'}
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Country</label>

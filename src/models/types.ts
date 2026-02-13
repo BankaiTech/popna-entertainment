@@ -59,6 +59,8 @@ export interface Customer {
   paymentStatus?: PaymentStatus;
   paymentDescription?: string;
   paymentUpdatedAt?: string;
+  /** Optional GSTIN field for GST invoice support */
+  gstin?: string | null;
 }
 
 export interface DashboardStats {
