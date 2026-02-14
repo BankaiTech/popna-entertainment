@@ -58,10 +58,8 @@ const Catalog = () => {
     }
   };
 
-  // Multi-tenant ready — get providers from products dynamically
-  const providers = Array.isArray(products) && products.length > 0
-    ? products.map((p) => p.name as Provider)
-    : ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'] as Provider[]; // Fallback
+  // Products fully dynamic — no hardcoded service names. Options from Admin → Settings → Products only.
+  const providers = Array.isArray(products) ? products.map((p) => p.name) : [];
 
   return (
     <div className="space-y-3">

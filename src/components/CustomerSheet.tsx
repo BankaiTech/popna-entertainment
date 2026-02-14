@@ -15,7 +15,7 @@ interface CustomerSheetProps {
   onClose: () => void;
   customer?: Customer | null;
   onSave: (customer: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => void;
-  /** GTPL only. Admin and Employee can update. */
+  /** Cable product only. Admin and Employee can update. */
   onUpdatePayment?: (customerId: number, data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string }) => Promise<void>;
 }
 
@@ -34,15 +34,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentForm, setPaymentForm] = useState<PaymentFormData>({ paymentStatus: 'not_paid', paymentDescription: '', dateTimeLocal: '' });
   
-  // Multi-tenant ready — get providers from products dynamically
-  const availableProviders = Array.isArray(products) && products.length > 0 
-    ? products.map((p) => p.name as Provider)
-    : ['GTPL', 'BSNL', 'Railwire', 'Krishiinet'] as Provider[]; // Fallback for backward compatibility
+  // Products fully dynamic — no hardcoded service names. Options from Admin → Settings → Products only.
+  const availableProviders = Array.isArray(products) ? products.map((p) => p.name) : [];
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     mobile: '',
-    connectionType: 'GTPL' as Provider,
+    connectionType: '' as Provider,
     package: '',
     status: 'Active' as CustomerStatus,
     description: '',
@@ -71,7 +69,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
       });
     } else {
       // Multi-tenant ready — use first available product as default
-      const defaultProvider = availableProviders.length > 0 ? availableProviders[0] : 'GTPL' as Provider;
+      const defaultProvider = availableProviders.length > 0 ? availableProviders[0] : '';
       setFormData({
         name: '',
         email: '',
@@ -132,10 +130,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
 
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
   
-  // Check if customer's connection type is cable (for payment tracking)
-  const isCableProduct = customer && Array.isArray(products)
+  // Check if customer's connection type is cable (for payment tracking). Uses product data only.
+  const isCableProduct = customer && Array.isArray(products) && products.length > 0
     ? products.find((p) => p.name === customer.connectionType)?.productType === 'cable'
-    : customer?.connectionType === 'GTPL'; // Fallback for backward compatibility
+    : false;
 
   // Security check: Employees cannot add customers - close modal if opened in add mode
   useEffect(() => {
@@ -163,8 +161,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
     const paymentUpdatedAt = new Date(paymentForm.dateTimeLocal).toISOString();
     if (!onUpdatePayment || !customer) return;
     try {
-      // TODO: Replace with direct GTPL billing API when available; parent uses updateCustomer for now.
-      // Allowed for both admin and employee when customer.connectionType === 'GTPL'; only payment fields are sent.
+      // TODO: Replace with direct cable billing API when available; parent uses updateCustomer for now.
+      // Allowed for both admin and employee when customer has cable product; only payment fields are sent.
       await onUpdatePayment(customer.id, { paymentStatus: paymentForm.paymentStatus, paymentDescription: desc, paymentUpdatedAt });
       setIsPaymentModalOpen(false);
       alert('Payment status updated successfully.');
@@ -280,14 +278,15 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                     onChange={(e) => setFormData({ ...formData, connectionType: e.target.value as Provider })}
                     disabled={isReadOnly}
                   >
-                    {availableProviders.map((provider) => {
-                      const product = products.find((p) => p.name === provider);
-                      return (
+                    {availableProviders.length === 0 ? (
+                      <option value="">No products — add in Settings → Products</option>
+                    ) : (
+                      availableProviders.map((provider) => (
                         <option key={provider} value={provider}>
                           {getConnectionTypeLabel(provider, products)}
                         </option>
-                      );
-                    })}
+                      ))
+                    )}
                   </Select>
                 </div>
                 <div>

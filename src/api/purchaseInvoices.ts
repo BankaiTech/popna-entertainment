@@ -1,4 +1,5 @@
 // Multi-tenant ready — backend will enforce org isolation
+// Product display names updated to generic labels (vendor id unchanged)
 import type { PurchaseInvoice, Vendor } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -9,9 +10,40 @@ const getDate = (daysAgo: number) => {
 };
 
 export const mockVendors: Vendor[] = [
-  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'GTPL Ltd', contact: '9876500001', gstin: '27AABCU9603R1ZM', createdAt: getDate(365) },
-  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'BSNL Supply', contact: '9876500002', gstin: '27AABCU9603R2ZM', createdAt: getDate(365) },
-  { id: 3, organizationId: MOCK_ORGANIZATION_ID, name: 'Fiber Optics Inc', contact: '9876500003', createdAt: getDate(180) },
+  {
+    id: 1,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'Cable',
+    contact: '9876500001',
+    gstin: '27AABCU9603R1ZM',
+    addressLine1: '12 Cable Tower',
+    addressLine2: 'MG Road',
+    city: 'Bangalore',
+    state: 'Karnataka',
+    country: 'India',
+    pincode: '560001',
+    createdAt: getDate(365),
+  },
+  {
+    id: 2,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'Internet 1',
+    contact: '9876500002',
+    gstin: '27AABCU9603R2ZM',
+    addressLine1: '45 Fiber Hub',
+    city: 'Chennai',
+    state: 'Tamil Nadu',
+    country: 'India',
+    pincode: '600001',
+    createdAt: getDate(365),
+  },
+  {
+    id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
+    name: 'Fiber Optics Inc',
+    contact: '9876500003',
+    createdAt: getDate(180),
+  },
 ];
 
 let purchaseInvoicesData: PurchaseInvoice[] = [
@@ -20,7 +52,7 @@ let purchaseInvoicesData: PurchaseInvoice[] = [
     organizationId: MOCK_ORGANIZATION_ID,
     invoiceNumber: 'PINV-2024-001',
     vendorId: 1,
-    vendorName: 'GTPL Ltd',
+    vendorName: 'Cable',
     reference: 'PO-101',
     amount: 10000,
     gstBreakup: { cgst: 900, sgst: 900 },
@@ -33,7 +65,7 @@ let purchaseInvoicesData: PurchaseInvoice[] = [
     organizationId: MOCK_ORGANIZATION_ID,
     invoiceNumber: 'PINV-2024-002',
     vendorId: 2,
-    vendorName: 'BSNL Supply',
+    vendorName: 'Internet 1',
     reference: 'GRN-205',
     amount: 5000,
     gstBreakup: { igst: 900 },
@@ -73,6 +105,28 @@ export const purchaseInvoicesApi = {
   },
 };
 
+let vendorsData: Vendor[] = [...mockVendors];
+
 export const vendorsApi = {
-  getAll: async (): Promise<Vendor[]> => Promise.resolve([...mockVendors]),
+  getAll: async (): Promise<Vendor[]> => Promise.resolve([...vendorsData]),
+  getById: async (id: number): Promise<Vendor | null> => {
+    const v = vendorsData.find((x) => x.id === id);
+    return v ? Promise.resolve({ ...v }) : Promise.resolve(null);
+  },
+  create: async (vendor: Omit<Vendor, 'id' | 'createdAt'>): Promise<Vendor> => {
+    const newVendor: Vendor = {
+      ...vendor,
+      organizationId: vendor.organizationId ?? MOCK_ORGANIZATION_ID,
+      id: Math.max(0, ...vendorsData.map((x) => x.id)) + 1,
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+    vendorsData.push(newVendor);
+    return newVendor;
+  },
+  update: async (id: number, data: Partial<Omit<Vendor, 'id' | 'organizationId' | 'createdAt'>>): Promise<Vendor | null> => {
+    const idx = vendorsData.findIndex((x) => x.id === id);
+    if (idx === -1) return Promise.resolve(null);
+    vendorsData[idx] = { ...vendorsData[idx], ...data };
+    return Promise.resolve({ ...vendorsData[idx] });
+  },
 };

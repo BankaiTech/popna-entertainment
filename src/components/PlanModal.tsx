@@ -18,7 +18,7 @@ interface PlanModalProps {
 const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }: PlanModalProps) => {
   const [formData, setFormData] = useState<Omit<Plan, 'id'>>({
     organizationId: MOCK_ORGANIZATION_ID,
-    provider: 'GTPL',
+    provider: providers[0] ?? '',
     planName: '',
     imageUrl: '',
     price: 0,
@@ -44,7 +44,7 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
     } else {
       setFormData({
         organizationId: MOCK_ORGANIZATION_ID,
-        provider: providers[0] || 'GTPL',
+        provider: providers[0] ?? '',
         planName: '',
         imageUrl: '',
         price: 0,

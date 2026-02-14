@@ -5,7 +5,7 @@ import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import { Plus, ShoppingCart, Search, Download } from 'lucide-react';
 import type { PurchaseInvoice } from '@/models/types';
-import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
+import { purchaseInvoicesApi, vendorsApi } from '@/api/purchaseInvoices';
 import PurchaseInvoiceModal from '@/components/PurchaseInvoiceModal';
 import { cn } from '@/lib/utils';
 import { generatePurchaseInvoicePdf } from '@/lib/pdfUtils';
@@ -63,7 +63,8 @@ const PurchaseInvoices = () => {
 
   const handleDownloadPdf = async (inv: PurchaseInvoice) => {
     try {
-      await generatePurchaseInvoicePdf(inv, companyProfile);
+      const vendor = await vendorsApi.getById(inv.vendorId);
+      await generatePurchaseInvoicePdf(inv, companyProfile, vendor ?? undefined);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');

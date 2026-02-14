@@ -215,7 +215,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                 <p className="text-sm">
                   <span className="font-medium">Connection Type:</span>{' '}
                   {getConnectionTypeLabel(
-                    complaint ? complaint.connectionType : (selectedCustomer?.connectionType || (Array.isArray(products) && products.length > 0 ? products[0].name : 'GTPL') as any),
+                    complaint ? complaint.connectionType : (selectedCustomer?.connectionType ?? (Array.isArray(products) && products.length > 0 ? products[0].name : '')),
                     products
                   )}
                 </p>

@@ -42,9 +42,9 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
     );
   }
 
-  // Multi-tenant ready — get product info dynamically
+  // Multi-tenant ready — get product info dynamically; display name via getProviderDisplayName
   const product = (products || []).find((p) => p.name === provider);
-  const providerDisplayName = product?.name || provider;
+  const providerDisplayName = getProviderDisplayName(provider);
   const isCable = product?.productType === 'cable';
   const serviceLabel = isCable ? 'Cable Plans' : 'Internet Plans';
   const serviceDescription = isCable

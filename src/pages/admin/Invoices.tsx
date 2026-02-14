@@ -137,17 +137,10 @@ const Invoices = () => {
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
-                    {getProviderDisplayName(product.name as Provider, products)}
+                    {getProviderDisplayName(product.name, products)}
                   </option>
                 ))
-              ) : (
-                <>
-                  <option value="GTPL">GTPL Cable</option>
-                  <option value="BSNL">BSNL</option>
-                  <option value="Railwire">Railwire</option>
-                  <option value="Krishiinet">Krishiinet</option>
-                </>
-              )}
+              ) : null}
             </Select>
           </div>
         </CardHeader>

@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
+import { getProviderDisplayName } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
@@ -161,7 +162,7 @@ const ConnectionRequests = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.mobile}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.email || '-'}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.planName}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.productName}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{getProviderDisplayName(request.productName)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(request.createdAt)}</td>
                           <td className="px-3 py-2">
                             <span
@@ -226,7 +227,7 @@ const ConnectionRequests = () => {
                         <p><span className="text-gray-600">Mobile:</span> {request.mobile}</p>
                         <p><span className="text-gray-600">Email:</span> {request.email || '-'}</p>
                         <p><span className="text-gray-600">Plan:</span> {request.planName}</p>
-                        <p><span className="text-gray-600">Product:</span> {request.productName}</p>
+                        <p><span className="text-gray-600">Product:</span> {getProviderDisplayName(request.productName)}</p>
                         <p><span className="text-gray-600">Date:</span> {formatDate(request.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-2 pt-2">

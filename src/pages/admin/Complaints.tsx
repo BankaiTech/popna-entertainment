@@ -151,17 +151,10 @@ const Complaints = () => {
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
-                    {getConnectionTypeLabel(product.name as Provider, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
+                    {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
                   </option>
                 ))
-              ) : (
-                <>
-                  <option value="GTPL">GTPL Cable</option>
-                  <option value="BSNL">BSNL Internet</option>
-                  <option value="Railwire">Railwire Internet</option>
-                  <option value="Krishiinet">Krishiinet Internet</option>
-                </>
-              )}
+              ) : null}
             </Select>
           </div>
         </CardHeader>

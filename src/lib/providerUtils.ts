@@ -1,65 +1,45 @@
-import type { Provider, ServiceCategory, Product } from '@/models/types';
+import type { ServiceCategory, Product } from '@/models/types';
 
 /**
  * Get service category from product type.
- * Multi-tenant ready — uses product data dynamically.
  */
 export const getServiceCategory = (productType: 'cable' | 'internet'): ServiceCategory => productType;
 
 /**
- * Check if provider is cable type (deprecated - use product data instead).
- * Kept for backward compatibility.
+ * Check if provider is cable type. Uses product data only — no hardcoded names.
  */
-export const isCableProvider = (provider: Provider, products?: Product[]): boolean => {
-  if (products) {
-    const product = products.find((p) => p.name === provider);
-    return product?.productType === 'cable';
-  }
-  // Fallback for backward compatibility
-  return provider === 'GTPL';
+export const isCableProvider = (provider: string, products?: Product[]): boolean => {
+  if (!products?.length) return false;
+  const product = products.find((p) => p.name === provider);
+  return product?.productType === 'cable';
 };
 
 /**
- * Check if provider is internet type (deprecated - use product data instead).
- * Kept for backward compatibility.
+ * Check if provider is internet type. Uses product data only — no hardcoded names.
  */
-export const isInternetProvider = (provider: Provider, products?: Product[]): boolean => {
-  if (products) {
-    const product = products.find((p) => p.name === provider);
-    return product?.productType === 'internet';
-  }
-  // Fallback for backward compatibility
-  return ['BSNL', 'Railwire', 'Krishiinet'].includes(provider);
+export const isInternetProvider = (provider: string, products?: Product[]): boolean => {
+  if (!products?.length) return false;
+  const product = products.find((p) => p.name === provider);
+  return product?.productType === 'internet';
 };
 
 /**
- * Get display name for provider.
- * Multi-tenant ready — uses product data dynamically.
+ * Get display name for provider. Uses product name from API/store; no static map.
  */
-export const getProviderDisplayName = (provider: Provider, products?: Product[]): string => {
-  if (products) {
-    const product = products.find((p) => p.name === provider);
-    if (product) {
-      return product.productType === 'cable' ? `${product.name} Cable` : product.name;
-    }
-  }
-  // Fallback for backward compatibility
-  if (provider === 'GTPL') return 'GTPL Cable';
-  return provider;
+export const getProviderDisplayName = (provider: string, _products?: Product[]): string => {
+  return provider || '';
 };
 
 /**
  * Get short display name for provider.
- * Multi-tenant ready — uses product data dynamically.
  */
-export const getProviderShortName = (provider: Provider, products?: Product[]): string => {
+export const getProviderShortName = (provider: string, products?: Product[]): string => {
   return getProviderDisplayName(provider, products);
 };
 
 /**
- * Get connection type label for display (Cable vs Internet separation).
- * Multi-tenant ready — uses product data dynamically.
+ * Get connection type label for display. Product name from API is the label.
  */
-export const getConnectionTypeLabel = (provider: Provider, products?: Product[]): string => {
-  return getProviderDisplayName(provider, products);
+export const getConnectionTypeLabel = (provider: string, _products?: Product[]): string => {
+  return provider || '';
 };

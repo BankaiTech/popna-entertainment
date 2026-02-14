@@ -46,7 +46,7 @@ const AdminCustomers = () => {
     const selectedProduct = connectionFilter !== 'All' 
       ? products.find((p) => p.name === connectionFilter)
       : null;
-    if (selectedProduct?.productType !== 'cable' && connectionFilter !== 'GTPL') {
+    if (selectedProduct?.productType !== 'cable') {
       setPaymentStatusFilter('All');
     }
   }, [connectionFilter, products]);
@@ -63,7 +63,7 @@ const AdminCustomers = () => {
       const selectedProduct = connectionFilter !== 'All' && Array.isArray(products)
         ? products.find((p) => p.name === connectionFilter)
         : null;
-      const isCableFilter = selectedProduct?.productType === 'cable' || connectionFilter === 'GTPL'; // Fallback
+      const isCableFilter = selectedProduct?.productType === 'cable';
       const matchesPayment =
         !isCableFilter
           ? true
@@ -165,7 +165,7 @@ const AdminCustomers = () => {
     setEditingCustomer(null);
   };
 
-  /** GTPL only. Admin and Employee can update only payment fields (paymentStatus, paymentDescription, paymentUpdatedAt). No role check — payment-only updates are always allowed. */
+  /** Cable product only. Admin and Employee can update only payment fields (paymentStatus, paymentDescription, paymentUpdatedAt). No role check — payment-only updates are always allowed. */
   const handleUpdatePayment = async (
     customerId: number,
     data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string }
@@ -198,10 +198,7 @@ const AdminCustomers = () => {
           {/* Filters in Header */}
           <div
             className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${
-              connectionFilter !== 'All' && (
-                (Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable') ||
-                connectionFilter === 'GTPL'
-              )
+              connectionFilter !== 'All' && Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable'
                 ? 'lg:grid-cols-4'
                 : 'lg:grid-cols-3'
             }`}
@@ -236,22 +233,12 @@ const AdminCustomers = () => {
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
-                    {getConnectionTypeLabel(product.name as Provider, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
+                    {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
                   </option>
                 ))
-              ) : (
-                <>
-                  <option value="GTPL">GTPL Cable</option>
-                  <option value="BSNL">BSNL Internet</option>
-                  <option value="Railwire">Railwire Internet</option>
-                  <option value="Krishiinet">Krishiinet Internet</option>
-                </>
-              )}
+              ) : null}
             </Select>
-            {connectionFilter !== 'All' && (
-              (Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable') ||
-              connectionFilter === 'GTPL'
-            ) && (
+            {connectionFilter !== 'All' && Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable' && (
               <Select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}

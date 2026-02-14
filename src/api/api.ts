@@ -72,7 +72,7 @@ export const customersApi = {
     return Promise.resolve(newCustomer);
   },
   update: async (id: number, customer: Partial<Customer>): Promise<Customer> => {
-    // Replace with real API call later. TODO: GTPL payment fields — integrate with real billing API when available.
+    // Replace with real API call later. TODO: Cable payment fields — integrate with real billing API when available.
     const index = customersData.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     customersData[index] = { ...customersData[index], ...customer };
@@ -105,34 +105,20 @@ export const dashboardApi = {
       return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
     }).length;
 
-    const activeByProvider: Record<Provider, number> = {
-      GTPL: 0,
-      BSNL: 0,
-      Railwire: 0,
-      Krishiinet: 0,
-    };
-
-    const inactiveByProvider: Record<Provider, number> = {
-      GTPL: 0,
-      BSNL: 0,
-      Railwire: 0,
-      Krishiinet: 0,
-    };
+    const activeByProvider: Record<string, number> = {};
+    const inactiveByProvider: Record<string, number> = {};
 
     customers.forEach((customer) => {
+      const key = customer.connectionType || '';
       if (customer.status === 'Active') {
-        activeByProvider[customer.connectionType]++;
+        activeByProvider[key] = (activeByProvider[key] ?? 0) + 1;
       } else {
-        inactiveByProvider[customer.connectionType]++;
+        inactiveByProvider[key] = (inactiveByProvider[key] ?? 0) + 1;
       }
     });
 
     return {
       totalCustomers: customers.length,
-      gtplCustomers: customers.filter((c) => c.connectionType === 'GTPL').length,
-      bsnlCustomers: customers.filter((c) => c.connectionType === 'BSNL').length,
-      railwireCustomers: customers.filter((c) => c.connectionType === 'Railwire').length,
-      krishiinetCustomers: customers.filter((c) => c.connectionType === 'Krishiinet').length,
       newCustomersThisMonth,
       activeCustomers: customers.filter((c) => c.status === 'Active').length,
       inactiveCustomers: customers.filter((c) => c.status === 'Inactive').length,

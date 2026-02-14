@@ -1,4 +1,5 @@
 // Multi-tenant ready — backend will enforce org isolation
+// Product display names updated to generic labels (serviceProvider id unchanged)
 import type { SalesInvoice } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -15,8 +16,8 @@ let invoicesData: SalesInvoice[] = [
     invoiceNumber: 'INV-2024-001',
     customerId: 1,
     customerName: 'Rajesh Kumar',
-    serviceProvider: 'GTPL',
-    planName: 'GTPL Cable Basic 50 Mbps',
+    serviceProvider: 'Cable',
+    planName: 'Cable Basic 50 Mbps',
     amount: 499,
     gstRate: 18,
     gstAmount: 89.82,
@@ -32,8 +33,8 @@ let invoicesData: SalesInvoice[] = [
     invoiceNumber: 'INV-2024-002',
     customerId: 2,
     customerName: 'Priya Sharma',
-    serviceProvider: 'BSNL',
-    planName: 'BSNL Fiber Basic',
+    serviceProvider: 'Internet 1',
+    planName: 'Internet 1 Fiber Basic',
     amount: 449,
     gstRate: 18,
     gstAmount: 80.82,
@@ -49,8 +50,8 @@ let invoicesData: SalesInvoice[] = [
     invoiceNumber: 'INV-2024-003',
     customerId: 3,
     customerName: 'Amit Patel',
-    serviceProvider: 'Railwire',
-    planName: 'Railwire Express 75 Mbps',
+    serviceProvider: 'Internet 2',
+    planName: 'Internet 2 Express 75 Mbps',
     amount: 599,
     gstRate: 18,
     gstAmount: 107.82,

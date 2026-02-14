@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
 import { customersApi } from '@/api/api';
-import type { Customer, Provider } from '@/models/types';
+import type { Customer } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
     ];
     const colorIndex = product.id % colors.length;
     return {
-      title: `${product.productType === 'cable' ? 'Cable' : 'Internet'} — ${product.name}`,
+      title: `${product.productType === 'cable' ? 'Cable' : 'Internet'} — ${getConnectionTypeLabel(product.name)}`,
       value: productCustomers.length,
       icon: Wifi,
       color: colors[colorIndex].text,
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
           return (
             <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider ">
                   {stat.title}
                 </CardTitle>
                 <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
@@ -137,9 +137,6 @@ const AdminDashboard = () => {
                 <div className="text-3xl font-bold text-foreground mb-1">
                   <AnimatedCounter value={stat.value} duration={1500} />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.value === 0 ? 'No records' : stat.value === 1 ? '1 record' : `${stat.value} records`}
-                </p>
               </CardContent>
             </Card>
           );
@@ -161,7 +158,7 @@ const AdminDashboard = () => {
                 ).length;
                 return (
                   <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
-                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name as Provider, products)}</span>
+                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name, products)}</span>
                     <span className="text-lg font-bold text-green-600">{count}</span>
                   </div>
                 );
@@ -183,7 +180,7 @@ const AdminDashboard = () => {
                 ).length;
                 return (
                   <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:shadow-md transition-all duration-300">
-                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name as Provider, products)}</span>
+                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name, products)}</span>
                     <span className="text-lg font-bold text-red-600">{count}</span>
                   </div>
                 );

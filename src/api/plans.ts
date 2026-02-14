@@ -19,7 +19,7 @@ export const plansApi = {
   /**
    * Get plans filtered by product/service name
    * API ready — replace mock with real backend
-   * @param productName - Name of the product/service (e.g., 'GTPL', 'BSNL')
+   * @param productName - Name of the product/service (e.g., Cable, Internet 1)
    */
   getByProductName: async (productName: string): Promise<Plan[]> => {
     const allPlans = await basePlansApi.getAll();

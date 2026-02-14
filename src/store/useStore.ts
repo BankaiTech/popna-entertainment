@@ -8,41 +8,8 @@ import { companyProfileApi } from '@/api/companyProfile';
 import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
 
-// Mock data for immediate initialization (API-ready structure)
-const mockProducts: Product[] = [
-  {
-    id: 1,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'GTPL',
-    productType: 'cable',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'BSNL',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'Railwire',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'Krishiinet',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Products fully dynamic — no hardcoded service names. Initial state from API; no legacy fallback list.
+const mockProducts: Product[] = [];
 
 const mockCompanyProfile: CompanyProfile = {
   id: 1,
@@ -319,7 +286,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateCustomer: async (id, customer) => {
-    // UI enforces: only admins edit non-payment fields; both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt) for GTPL. Store/API do not block payment-only updates.
+    // UI enforces: only admins edit non-payment fields; both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt) for cable product. Store/API do not block payment-only updates.
     // TODO: In real implementation, validate role and allowed fields in API
     set({ loading: true, error: null });
     try {

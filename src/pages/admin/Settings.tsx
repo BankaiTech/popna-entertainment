@@ -6,15 +6,16 @@ import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings
 import WebsiteSettings from '@/components/settings/WebsiteSettings';
 import { cn } from '@/lib/utils';
 
-type SettingsTab = 'products' | 'company' | 'website';
+type SettingsTab = 'company' | 'website' | 'products';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('products');
+  // Display order: 1 Company Details, 2 Website Settings, 3 Products
+  const [activeTab, setActiveTab] = useState<SettingsTab>('company');
 
-  const tabs = [
-    { id: 'products' as SettingsTab, label: 'Products', icon: Package },
-    { id: 'company' as SettingsTab, label: 'Company Profile', icon: Building2 },
-    { id: 'website' as SettingsTab, label: 'Website Settings', icon: Globe },
+  const tabs: { id: SettingsTab; label: string; icon: typeof Building2 }[] = [
+    { id: 'company', label: 'Company Details', icon: Building2 },
+    { id: 'website', label: 'Website Settings', icon: Globe },
+    { id: 'products', label: 'Products', icon: Package },
   ];
 
   return (
@@ -51,9 +52,9 @@ const Settings = () => {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          {activeTab === 'products' && <ProductManagement />}
           {activeTab === 'company' && <CompanyProfileSettings />}
           {activeTab === 'website' && <WebsiteSettings />}
+          {activeTab === 'products' && <ProductManagement />}
         </CardContent>
       </Card>
     </div>

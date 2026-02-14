@@ -81,28 +81,31 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Services Infinite Carousel Section */}
-      {allActiveProducts.length > 0 && (
-        <section id="services" className="py-16 sm:py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Our Services</h2>
-              <p className="text-lg text-gray-600">Explore our range of services</p>
-            </div>
+      {/* Services Section — reads only from active Products (Admin → Settings → Products). No fallback list. */}
+      <section id="services" className="py-16 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Our Services</h2>
+            <p className="text-lg text-gray-600">Explore our range of services</p>
+          </div>
 
-            {/* Infinite Carousel */}
+          {allActiveProducts.length === 0 ? (
+            <div className="text-center py-12 px-4 rounded-xl bg-gray-50 border border-gray-200">
+              <p className="text-gray-600">No services available. Add products in Admin → Settings → Products.</p>
+            </div>
+          ) : (
             <div className="overflow-hidden">
               <InfiniteCarousel speed={30} pauseOnHover={true} showArrows={true}>
                 {allActiveProducts.map((product, index) => {
                   const Icon = getProductIcon(product.productType);
                   const gradient = getProductGradient(index);
                   return (
-                    <div 
-                      key={`${product.id}-${index}`} 
+                    <div
+                      key={`${product.id}-${index}`}
                       className="w-[280px] sm:w-[300px] lg:w-[320px] h-[380px] flex-shrink-0"
                     >
                       <Link
-                        to={`/plans?productName=${product.name}`}
+                        to={`/plans?productName=${encodeURIComponent(product.name)}`}
                         className="group block h-full"
                       >
                         <Card className="hover:shadow-xl transition-all duration-300 h-full overflow-hidden hover:-translate-y-1 border border-gray-200 flex flex-col">
@@ -116,7 +119,7 @@ const HomePage = () => {
                               </div>
                             </div>
                             <CardTitle className="text-center text-xl text-gray-900 h-12 flex items-center justify-center line-clamp-2 px-2">
-                              {product.name} {product.productType === 'cable' ? 'Cable' : 'Internet'}
+                              {product.name}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
@@ -134,9 +137,9 @@ const HomePage = () => {
                 })}
               </InfiniteCarousel>
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* About Section */}
       <section className="py-16 sm:py-20 bg-white">

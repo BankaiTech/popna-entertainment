@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import PlanRequestModal from '@/components/PlanRequestModal';
 import { formatCurrencyINR } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { getProviderDisplayName } from '@/lib/providerUtils';
 import type { Plan } from '@/models/types';
 
 const PlansPage = () => {
@@ -118,7 +119,7 @@ const PlansPage = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 )}
               >
-                {filter}
+                {getProviderDisplayName(filter)}
               </button>
             ))}
           </div>
@@ -145,7 +146,7 @@ const PlansPage = () => {
                         {plan.planName}
                       </CardTitle>
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 whitespace-nowrap flex-shrink-0">
-                        {plan.provider}
+                        {getProviderDisplayName(plan.provider)}
                       </span>
                     </div>
                     <CardDescription className="text-sm text-gray-600 line-clamp-2 min-h-[2.5rem]">
@@ -156,7 +157,7 @@ const PlansPage = () => {
                     <div className="space-y-2 mb-4 flex-1">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Service:</span>
-                        <span className="font-semibold text-gray-900">{plan.provider}</span>
+                        <span className="font-semibold text-gray-900">{getProviderDisplayName(plan.provider)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Base Price:</span>

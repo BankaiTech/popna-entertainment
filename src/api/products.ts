@@ -1,41 +1,14 @@
 // Multi-tenant ready — backend will isolate by organization
+// Products fully dynamic — no hardcoded service names. All product references come from Admin → Settings → Products.
 import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
-// In-memory storage for mock data (simulates backend)
+// In-memory storage for mock data (simulates backend). Seed uses generic display names; real backend returns org products.
 let productsData: Product[] = [
-  {
-    id: 1,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'GTPL',
-    productType: 'cable',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'BSNL',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'Railwire',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    organizationId: MOCK_ORGANIZATION_ID,
-    name: 'Krishiinet',
-    productType: 'internet',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
+  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Cable', productType: 'cable', isActive: true, createdAt: new Date().toISOString() },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 1', productType: 'internet', isActive: true, createdAt: new Date().toISOString() },
+  { id: 3, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 2', productType: 'internet', isActive: true, createdAt: new Date().toISOString() },
+  { id: 4, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 3', productType: 'internet', isActive: true, createdAt: new Date().toISOString() },
 ];
 
 export const productsApi = {

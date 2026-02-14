@@ -1,17 +1,12 @@
-export type Provider = 'GTPL' | 'BSNL' | 'Railwire' | 'Krishiinet';
+/** Connection type = product name from Admin → Settings → Products. Products fully dynamic — no hardcoded service names. */
+export type Provider = string;
 
-/** Service separation: Cable (GTPL only) vs Internet (BSNL, Railwire, Krishiinet). Do NOT mix GTPL with internet providers. */
+/** Service separation: Cable vs Internet. Do NOT mix cable with internet providers. */
 export type ServiceCategory = 'cable' | 'internet';
-
-/** Cable service: GTPL only. */
-export const CABLE_PROVIDER: Provider = 'GTPL';
-
-/** Internet services: BSNL, Railwire, Krishiinet. */
-export const INTERNET_PROVIDERS: Provider[] = ['BSNL', 'Railwire', 'Krishiinet'];
 
 export type CustomerStatus = 'Active' | 'Inactive';
 
-/** GTPL-only: payment status for cable network billing. */
+/** Cable-only: payment status for cable network billing. */
 export type PaymentStatus = 'paid' | 'not_paid';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
@@ -55,7 +50,7 @@ export interface Customer {
   description?: string;
   address: Address;
   createdAt: string;
-  /** GTPL only. Values set by "Update Payment Status". */
+  /** Cable product only. Values set by "Update Payment Status". */
   paymentStatus?: PaymentStatus;
   paymentDescription?: string;
   paymentUpdatedAt?: string;
@@ -65,25 +60,13 @@ export interface Customer {
 
 export interface DashboardStats {
   totalCustomers: number;
-  gtplCustomers: number;
-  bsnlCustomers: number;
-  railwireCustomers: number;
-  krishiinetCustomers: number;
   newCustomersThisMonth: number;
   activeCustomers: number;
   inactiveCustomers: number;
-  activeByProvider: {
-    GTPL: number;
-    BSNL: number;
-    Railwire: number;
-    Krishiinet: number;
-  };
-  inactiveByProvider: {
-    GTPL: number;
-    BSNL: number;
-    Railwire: number;
-    Krishiinet: number;
-  };
+  /** Built from customer connectionType; keys = product names from Products API. */
+  activeByProvider: Record<string, number>;
+  /** Built from customer connectionType; keys = product names from Products API. */
+  inactiveByProvider: Record<string, number>;
 }
 
 export interface Complaint {
@@ -151,12 +134,19 @@ export interface PurchaseInvoice {
   createdAt: string;
 }
 
+// Vendor address fields added for purchase invoice display
 export interface Vendor {
   id: number;
   organizationId: string;
   name: string;
   contact?: string;
   gstin?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pincode?: string;
   createdAt: string;
 }
 

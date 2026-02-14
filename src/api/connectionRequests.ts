@@ -36,17 +36,18 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     'shilpa.bansal@email.com', 'ravi.verma@email.com', 'neha.kapoor@email.com', 'ajay.tiwari@email.com'
   ];
   
+  // Product display names updated to generic labels (productId unchanged)
   const plans = [
-    { id: 1, name: 'GTPL Cable Basic 50 Mbps', productId: 1, productName: 'GTPL' },
-    { id: 2, name: 'GTPL Cable Premium 100 Mbps', productId: 1, productName: 'GTPL' },
-    { id: 3, name: 'GTPL Cable Ultra 200 Mbps', productId: 1, productName: 'GTPL' },
-    { id: 4, name: 'BSNL Fiber Basic', productId: 2, productName: 'BSNL' },
-    { id: 5, name: 'BSNL Fiber Premium', productId: 2, productName: 'BSNL' },
-    { id: 6, name: 'BSNL Fiber Ultra', productId: 2, productName: 'BSNL' },
-    { id: 7, name: 'Railwire Basic Plan', productId: 3, productName: 'Railwire' },
-    { id: 8, name: 'Railwire Premium Plan', productId: 3, productName: 'Railwire' },
-    { id: 9, name: 'Krishiinet Basic', productId: 4, productName: 'Krishiinet' },
-    { id: 10, name: 'Krishiinet Premium', productId: 4, productName: 'Krishiinet' },
+    { id: 1, name: 'Cable Basic 50 Mbps', productId: 1, productName: 'Cable' },
+    { id: 2, name: 'Cable Premium 100 Mbps', productId: 1, productName: 'Cable' },
+    { id: 3, name: 'Cable Ultra 200 Mbps', productId: 1, productName: 'Cable' },
+    { id: 4, name: 'Internet 1 Fiber Basic', productId: 2, productName: 'Internet 1' },
+    { id: 5, name: 'Internet 1 Fiber Premium', productId: 2, productName: 'Internet 1' },
+    { id: 6, name: 'Internet 1 Fiber Ultra', productId: 2, productName: 'Internet 1' },
+    { id: 7, name: 'Internet 2 Basic Plan', productId: 3, productName: 'Internet 2' },
+    { id: 8, name: 'Internet 2 Premium Plan', productId: 3, productName: 'Internet 2' },
+    { id: 9, name: 'Internet 3 Basic', productId: 4, productName: 'Internet 3' },
+    { id: 10, name: 'Internet 3 Premium', productId: 4, productName: 'Internet 3' },
   ];
   
   const statuses: ConnectionRequestStatus[] = ['New', 'Contacted', 'Converted'];

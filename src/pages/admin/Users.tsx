@@ -169,7 +169,7 @@ const AdminUsers = () => {
     return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredUsers, currentPage, itemsPerPage]);
 
-  // Calculate user counts
+  // Summary card counts (analytics only; filters are separate data control)
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const employeeCount = users.filter((u) => u.role === 'employee').length;
   const activeCount = users.filter((u) => u.status === 'active').length;
@@ -188,8 +188,8 @@ const AdminUsers = () => {
         </Button>
       </div>
 
-      {/* User Count Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Summary cards = analytics only; filters below = data control. Removed duplicate user count display for cleaner UX */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -200,12 +200,9 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground mb-0.5">
+            <div className="text-2xl font-bold text-foreground">
               <AnimatedCounter value={users.length} duration={1500} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {users.length === 0 ? 'No users' : users.length === 1 ? '1 user' : `${users.length} users`}
-            </p>
           </CardContent>
         </Card>
 
@@ -219,12 +216,9 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground mb-0.5">
+            <div className="text-2xl font-bold text-foreground">
               <AnimatedCounter value={adminCount} duration={1500} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {adminCount === 0 ? '0 Admin' : adminCount === 1 ? '1 Admin' : `${adminCount} Admins`}
-            </p>
           </CardContent>
         </Card>
 
@@ -238,12 +232,9 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground mb-0.5">
+            <div className="text-2xl font-bold text-foreground">
               <AnimatedCounter value={employeeCount} duration={1500} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {employeeCount === 0 ? '0 Employee' : employeeCount === 1 ? '1 Employee' : `${employeeCount} Employees`}
-            </p>
           </CardContent>
         </Card>
 
@@ -257,48 +248,67 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground mb-0.5">
+            <div className="text-2xl font-bold text-foreground">
               <AnimatedCounter value={activeCount} duration={1500} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {inactiveCount} Inactive
-            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
+            <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Inactive
+            </CardTitle>
+            <div className="p-2 rounded-lg bg-slate-50 group-hover:scale-110 transition-transform duration-300">
+              <UserCog className="w-4 h-4 text-slate-600" />
+            </div>
+          </CardHeader>
+          <CardContent className="pb-3 px-3">
+            <div className="text-2xl font-bold text-foreground">
+              <AnimatedCounter value={inactiveCount} duration={1500} />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Status Filter */}
-      <div className="flex gap-2">
-        <Button
-          variant={statusFilter === 'all' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => {
-            setStatusFilter('all');
-            setCurrentPage(1);
-          }}
+      {/* Status filter — simple tabs, no counts; data control only */}
+      <div className="flex gap-2 border-b border-border pb-2">
+        <button
+          type="button"
+          onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
+          className={cn(
+            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+            statusFilter === 'all'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
         >
-          All ({users.length})
-        </Button>
-        <Button
-          variant={statusFilter === 'active' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => {
-            setStatusFilter('active');
-            setCurrentPage(1);
-          }}
+          All
+        </button>
+        <button
+          type="button"
+          onClick={() => { setStatusFilter('active'); setCurrentPage(1); }}
+          className={cn(
+            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+            statusFilter === 'active'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
         >
-          Active ({activeCount})
-        </Button>
-        <Button
-          variant={statusFilter === 'inactive' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => {
-            setStatusFilter('inactive');
-            setCurrentPage(1);
-          }}
+          Active
+        </button>
+        <button
+          type="button"
+          onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); }}
+          className={cn(
+            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+            statusFilter === 'inactive'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
         >
-          Inactive ({inactiveCount})
-        </Button>
+          Inactive
+        </button>
       </div>
 
       <Card>

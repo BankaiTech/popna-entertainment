@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select';
 import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { getProviderDisplayName } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 
 const ProductManagement = () => {
@@ -96,7 +97,7 @@ const ProductManagement = () => {
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., GTPL, BSNL"
+                    placeholder="e.g., Cable, Internet 1"
                     required
                   />
                 </div>
@@ -149,7 +150,7 @@ const ProductManagement = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
+                    <CardTitle className="text-lg">{getProviderDisplayName(product.name)}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1 capitalize">
                       {product.productType}
                     </p>
