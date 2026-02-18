@@ -53,7 +53,7 @@ const PublicLayout = () => {
               >
                 Home
               </Link>
-              
+
               <Link
                 to="/plans"
                 className={cn(
@@ -62,6 +62,16 @@ const PublicLayout = () => {
                 )}
               >
                 Plans
+              </Link>
+
+              <Link
+                to="/customer/login"
+                className={cn(
+                  'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                  location.pathname === '/customer/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                )}
+              >
+                Login
               </Link>
             </div>
 
@@ -87,7 +97,7 @@ const PublicLayout = () => {
               >
                 Home
               </Link>
-              
+
               <Link
                 to="/plans"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -97,6 +107,17 @@ const PublicLayout = () => {
                 )}
               >
                 Plans
+              </Link>
+
+              <Link
+                to="/customer/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  'block px-4 py-2 text-sm font-medium',
+                  location.pathname === '/customer/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                )}
+              >
+                Login
               </Link>
             </div>
           )}
