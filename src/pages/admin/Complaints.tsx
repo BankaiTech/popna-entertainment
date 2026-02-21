@@ -1,5 +1,8 @@
+// SaaS Ready — Fully Dynamic Product
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,6 +15,9 @@ import ComplaintModal from '@/components/ComplaintModal';
 import { cn } from '@/lib/utils';
 
 const Complaints = () => {
+  const { t } = useTranslation();
+  const { role } = useAuthStore();
+  const isEmployee = role === 'employee';
   const { complaints, loading, fetchComplaints, initialize, customers, products, fetchProducts } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | 'All'>('All');
@@ -32,20 +38,20 @@ const Complaints = () => {
 
   const filteredComplaints = useMemo(() => {
     return complaints.filter((complaint) => {
-      // Search filter - case-insensitive partial match on customer name
+      // Employee view: show ONLY active & on-hold complaints (UI-level filter)
+      if (isEmployee && complaint.status === 'completed') return false;
+
       const matchesSearch = searchQuery.trim() === '' || 
         complaint.customerName.toLowerCase().includes(searchQuery.toLowerCase().trim());
       
-      // Status filter
       const matchesStatus = statusFilter === 'All' || complaint.status === statusFilter;
       
-      // Connection type filter
       const matchesConnection =
         connectionFilter === 'All' || complaint.connectionType === connectionFilter;
       
       return matchesSearch && matchesStatus && matchesConnection;
     });
-  }, [complaints, searchQuery, statusFilter, connectionFilter]);
+  }, [complaints, searchQuery, statusFilter, connectionFilter, isEmployee]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
@@ -106,12 +112,12 @@ const Complaints = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Complaints</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage and track customer complaints</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('complaints.title', 'Complaints')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{t('complaints.subtitle', 'Manage and track customer complaints')}</p>
         </div>
         <Button onClick={handleAdd} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
-          Add Complaint
+          {t('complaints.addComplaint', 'Add Complaint')}
         </Button>
       </div>
 
@@ -124,7 +130,7 @@ const Complaints = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
-                placeholder="Search by customer name..."
+                placeholder={t('complaints.searchPlaceholder', 'Search by customer name...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9 text-sm w-50"
@@ -135,7 +141,7 @@ const Complaints = () => {
               onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Status</option>
+              <option value="All">{t('complaints.allStatus', 'All Status')}</option>
               {statuses.map((status) => (
                 <option key={status} value={status}>
                   {getStatusLabel(status)}
@@ -147,7 +153,7 @@ const Complaints = () => {
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Connections</option>
+              <option value="All">{t('complaints.allConnections', 'All Connections')}</option>
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
@@ -160,11 +166,11 @@ const Complaints = () => {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-12">Loading complaints...</div>
+            <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
           ) : filteredComplaints.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No complaints found matching your criteria.</p>
+              <p>{t('complaints.noResults', 'No complaints found matching your criteria.')}</p>
             </div>
           ) : (
             <>
@@ -173,13 +179,13 @@ const Complaints = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Customer</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Connection</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Description</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Created</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.id', 'ID')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.customer', 'Customer')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.mobile', 'Mobile')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.connection', 'Connection')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.description', 'Description')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.status', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.created', 'Created')}</th>
                     </tr>
                   </thead>
                   <tbody>

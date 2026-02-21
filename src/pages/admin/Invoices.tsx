@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -14,6 +15,7 @@ import { cn, formatCurrencyINR, formatDateDMY } from '@/lib/utils';
 import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
 
 const Invoices = () => {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'All'>('All');
@@ -86,7 +88,7 @@ const Invoices = () => {
       await generateSalesInvoicePdf(inv, customer || null, companyProfile);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
     }
   };
 
@@ -94,14 +96,14 @@ const Invoices = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Sales Invoices</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('invoices.title', 'Sales Invoices')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            GST-compliant sales invoices for customer billing
+            {t('invoices.subtitle', 'GST-compliant sales invoices for customer billing')}
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
-          New Invoice
+          {t('invoices.newInvoice', 'New Invoice')}
         </Button>
       </div>
 
@@ -111,7 +113,7 @@ const Invoices = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by customer or invoice..."
+                placeholder={t('invoices.searchPlaceholder', 'Search by customer or invoice...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9 text-sm w-50"
@@ -122,18 +124,18 @@ const Invoices = () => {
               onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="sent">Sent</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
+              <option value="All">{t('invoices.allStatus', 'All Status')}</option>
+              <option value="draft">{t('invoices.statusDraft', 'Draft')}</option>
+              <option value="sent">{t('invoices.statusSent', 'Sent')}</option>
+              <option value="paid">{t('invoices.statusPaid', 'Paid')}</option>
+              <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
             </Select>
             <Select
               value={serviceFilter}
               onChange={(e) => setServiceFilter(e.target.value as Provider | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Services</option>
+              <option value="All">{t('invoices.allServices', 'All Services')}</option>
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
@@ -146,22 +148,22 @@ const Invoices = () => {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No invoices match filters.</div>
+            <div className="text-center py-12 text-muted-foreground">{t('invoices.noResults', 'No invoices match filters.')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Number</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Customer</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Service</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Plan</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Total</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Due</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">PDF</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colNumber', 'Number')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colCustomer', 'Customer')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colService', 'Service')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colPlan', 'Plan')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colTotal', 'Total')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colStatus', 'Status')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colDue', 'Due')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colPdf', 'PDF')}</th>
                   </tr>
                 </thead>
                 <tbody>

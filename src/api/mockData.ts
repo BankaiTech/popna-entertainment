@@ -1,8 +1,9 @@
+// SaaS Ready — Fully Dynamic Product
 import type { Plan, Customer, Complaint, User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
-// Multi-tenant ready — backend will enforce org isolation. All mock data scoped by organizationId.
-// Products fully dynamic — no hardcoded service names. Mock uses product names from Products API (Cable, Internet 1, 2, 3).
+// Multi-tenant SaaS Isolation — All mock data scoped by organizationId.
+// Products fully dynamic — no hardcoded service names. Mock uses product names from Products API.
 
 // Mock Plans — provider = product name from Admin → Settings → Products
 export const mockPlans: Plan[] = [
@@ -150,7 +151,7 @@ const getDateString = (daysAgo: number): string => {
   return date.toISOString();
 };
 
-// Mock Customers - Cable and Internet (product ids unchanged; do not mix)
+// Mock Customers — Payment Collection System applies to ALL product types (SaaS Ready)
 export const mockCustomers: Customer[] = [
   {
     id: 1,
@@ -194,6 +195,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(25),
+    paymentStatus: 'not_paid',
   },
   {
     id: 3,
@@ -214,6 +216,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(60),
+    paymentStatus: 'not_paid',
   },
   {
     id: 4,
@@ -257,6 +260,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(5),
+    paymentStatus: 'not_paid',
   },
   {
     id: 6,
@@ -277,6 +281,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(30),
+    paymentStatus: 'not_paid',
   },
   {
     id: 7,
@@ -297,6 +302,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(8),
+    paymentStatus: 'not_paid',
   },
   {
     id: 8,
@@ -340,6 +346,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(90),
+    paymentStatus: 'not_paid',
   },
   {
     id: 10,
@@ -360,6 +367,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(20),
+    paymentStatus: 'not_paid',
   },
   {
     id: 11,
@@ -380,6 +388,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(3),
+    paymentStatus: 'not_paid',
   },
   {
     id: 12,
@@ -400,6 +409,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(18),
+    paymentStatus: 'not_paid',
   },
   {
     id: 13,
@@ -420,6 +430,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(75),
+    paymentStatus: 'not_paid',
   },
   {
     id: 14,
@@ -440,6 +451,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(10),
+    paymentStatus: 'not_paid',
   },
   {
     id: 15,
@@ -460,6 +472,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(7),
+    paymentStatus: 'not_paid',
   },
   {
     id: 16,
@@ -480,6 +493,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(22),
+    paymentStatus: 'not_paid',
   },
   {
     id: 17,
@@ -500,6 +514,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(14),
+    paymentStatus: 'not_paid',
   },
   {
     id: 18,
@@ -520,6 +535,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(50),
+    paymentStatus: 'not_paid',
   },
   {
     id: 19,
@@ -540,6 +556,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(2),
+    paymentStatus: 'not_paid',
   },
   {
     id: 20,
@@ -560,6 +577,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(1),
+    paymentStatus: 'not_paid',
   },
   {
     id: 21,
@@ -580,6 +598,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(6),
+    paymentStatus: 'not_paid',
   },
   {
     id: 22,
@@ -600,6 +619,7 @@ export const mockCustomers: Customer[] = [
       country: 'India',
     },
     createdAt: getDateString(4),
+    paymentStatus: 'not_paid',
   },
 ];
 

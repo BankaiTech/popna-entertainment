@@ -72,7 +72,7 @@ export const customersApi = {
     return Promise.resolve(newCustomer);
   },
   update: async (id: number, customer: Partial<Customer>): Promise<Customer> => {
-    // Replace with real API call later. TODO: Cable payment fields — integrate with real billing API when available.
+    // SaaS Ready — Payment Collection System: collectedAmount, balanceAmount, paymentStatus apply to ALL product types.
     const index = customersData.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     customersData[index] = { ...customersData[index], ...customer };

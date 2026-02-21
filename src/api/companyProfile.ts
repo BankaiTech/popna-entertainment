@@ -1,4 +1,4 @@
-// Multi-tenant ready — backend will isolate by organization
+// Multi-tenant SaaS Isolation — backend will isolate by organization
 import type { CompanyProfile } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 

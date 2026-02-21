@@ -1,4 +1,5 @@
-// Project cleaned — unused files & dead code removed
+// SaaS Ready — Fully Dynamic Product
+// Multi-tenant SaaS Isolation
 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';

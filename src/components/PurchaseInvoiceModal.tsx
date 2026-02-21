@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +18,7 @@ interface PurchaseInvoiceModalProps {
 }
 
 const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceModalProps) => {
+  const { t } = useTranslation();
   const { companyProfile, fetchCompanyProfile } = useStore();
 
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -79,11 +81,11 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
     e.preventDefault();
     setError('');
     if (vendorId === '' || !selectedVendor) {
-      setError('Please select a vendor');
+      setError(t('purchaseInvoiceModal.selectVendorError', 'Please select a vendor'));
       return;
     }
     if (amount <= 0) {
-      setError('Amount must be greater than 0');
+      setError(t('purchaseInvoiceModal.amountError', 'Amount must be greater than 0'));
       return;
     }
     setSaving(true);
@@ -104,7 +106,7 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
       onClose();
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create purchase invoice');
+      setError(err instanceof Error ? err.message : t('purchaseInvoiceModal.createFailed', 'Failed to create purchase invoice'));
     } finally {
       setSaving(false);
     }
@@ -135,23 +137,22 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
         <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
           <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-2xl font-bold gradient-text">Create Purchase Invoice</h2>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label="Close">
+            <h2 className="text-2xl font-bold gradient-text">{t('purchaseInvoiceModal.title', 'Create Purchase Invoice')}</h2>
+            <button type="button" onClick={onClose} className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label={t('common.close', 'Close')}>
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Vendor selection */}
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
               <div className="flex-1">
-                <label className="block text-sm font-semibold mb-2">Vendor <span className="text-destructive">*</span></label>
+                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.vendor', 'Vendor')} <span className="text-destructive">*</span></label>
                 <Select
                   value={vendorId === '' ? '' : String(vendorId)}
                   onChange={(e) => setVendorId(e.target.value === '' ? '' : Number(e.target.value))}
                   required
                 >
-                  <option value="">Select vendor</option>
+                  <option value="">{t('purchaseInvoiceModal.selectVendor', 'Select vendor')}</option>
                   {vendors.map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.name}
@@ -161,14 +162,13 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
               </div>
               <Button type="button" variant="outline" onClick={() => setVendorFormOpen(true)} className="whitespace-nowrap">
                 <Plus className="w-4 h-4 mr-1" />
-                Add vendor
+                {t('purchaseInvoiceModal.addVendor', 'Add vendor')}
               </Button>
             </div>
 
-            {/* Vendor address preview (read-only, only if vendor has address) */}
             {hasVendorAddress && selectedVendor && (
               <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Vendor details (for invoice)</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t('purchaseInvoiceModal.vendorDetails', 'Vendor details (for invoice)')}</p>
                 <p className="font-medium text-foreground">{selectedVendor.name}</p>
                 {vendorAddressLines.length > 0 && (
                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
@@ -176,22 +176,22 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
                   </p>
                 )}
                 {selectedVendor.gstin && (
-                  <p className="text-sm text-muted-foreground mt-1">GSTIN: {selectedVendor.gstin}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('purchaseInvoiceModal.gstin', 'GSTIN')}: {selectedVendor.gstin}</p>
                 )}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Reference / Invoice Number</label>
+              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.reference', 'Reference / Invoice Number')}</label>
               <Input
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                placeholder="Vendor's invoice number (optional)"
+                placeholder={t('purchaseInvoiceModal.referencePlaceholder', "Vendor's invoice number (optional)")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Base Amount (₹) <span className="text-destructive">*</span></label>
+              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.baseAmountLabel', 'Base Amount (\u20b9)')} <span className="text-destructive">*</span></label>
               <Input
                 type="number"
                 value={amount}
@@ -205,19 +205,19 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">GST Type <span className="text-destructive">*</span></label>
+                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.gstType', 'GST Type')} <span className="text-destructive">*</span></label>
                 <Select value={gstType} onChange={(e) => setGstType(e.target.value as 'intrastate' | 'interstate')}>
-                  <option value="intrastate">Intrastate (CGST + SGST)</option>
-                  <option value="interstate">Interstate (IGST)</option>
+                  <option value="intrastate">{t('purchaseInvoiceModal.intrastate', 'Intrastate (CGST + SGST)')}</option>
+                  <option value="interstate">{t('purchaseInvoiceModal.interstate', 'Interstate (IGST)')}</option>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {gstType === 'intrastate' ? 'Within same state - CGST & SGST apply' : 'Across states - IGST applies'}
+                  {gstType === 'intrastate' ? t('purchaseInvoiceModal.intrastateHint', 'Within same state - CGST & SGST apply') : t('purchaseInvoiceModal.interstateHint', 'Across states - IGST applies')}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">GST Rate (%) <span className="text-destructive">*</span></label>
+                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.gstRate', 'GST Rate (%)')} <span className="text-destructive">*</span></label>
                 <Select value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))}>
-                  <option value="0">0% (Exempt)</option>
+                  <option value="0">{t('purchaseInvoiceModal.gstExempt', '0% (Exempt)')}</option>
                   <option value="5">5%</option>
                   <option value="12">12%</option>
                   <option value="18">18%</option>
@@ -228,39 +228,39 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
 
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">GST Breakdown (As per GoI Guidelines)</CardTitle>
+                <CardTitle className="text-lg">{t('purchaseInvoiceModal.gstBreakdown', 'GST Breakdown (As per GoI Guidelines)')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Base Amount:</span>
+                  <span className="text-sm font-medium">{t('purchaseInvoiceModal.baseAmount', 'Base Amount')}:</span>
                   <span className="font-semibold">₹{amount.toFixed(2)}</span>
                 </div>
                 {gstType === 'intrastate' ? (
                   <>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">CGST ({gstRate / 2}%):</span>
-                      <span className="font-semibold">₹{(gstBreakup.cgst || 0).toFixed(2)}</span>
+                      <span className="text-sm font-medium">{t('purchaseInvoiceModal.cgst', 'CGST')} ({gstRate / 2}%):</span>
+                      <span className="font-semibold">\u20b9{(gstBreakup.cgst || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">SGST ({gstRate / 2}%):</span>
-                      <span className="font-semibold">₹{(gstBreakup.sgst || 0).toFixed(2)}</span>
+                      <span className="text-sm font-medium">{t('purchaseInvoiceModal.sgst', 'SGST')} ({gstRate / 2}%):</span>
+                      <span className="font-semibold">\u20b9{(gstBreakup.sgst || 0).toFixed(2)}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">IGST ({gstRate}%):</span>
-                    <span className="font-semibold">₹{(gstBreakup.igst || 0).toFixed(2)}</span>
+                    <span className="text-sm font-medium">{t('purchaseInvoiceModal.igst', 'IGST')} ({gstRate}%):</span>
+                    <span className="font-semibold">\u20b9{(gstBreakup.igst || 0).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="border-t-2 border-primary/20 pt-3 flex justify-between items-center">
-                  <span className="text-base font-bold">Total Amount:</span>
-                  <span className="text-xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
+                  <span className="text-base font-bold">{t('purchaseInvoiceModal.totalAmount', 'Total Amount')}:</span>
+                  <span className="text-xl font-bold text-primary">\u20b9{totalAmount.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Issue Date <span className="text-destructive">*</span></label>
+              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.issueDate', 'Issue Date')} <span className="text-destructive">*</span></label>
               <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
             </div>
 
@@ -273,10 +273,10 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
 
           <div className="flex justify-end gap-3 p-6 border-t border-border bg-muted/30">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button onClick={handleSubmit} disabled={saving || amount <= 0 || vendorId === ''}>
-              {saving ? 'Creating...' : 'Create Purchase Invoice'}
+              {saving ? t('purchaseInvoiceModal.creating', 'Creating...') : t('purchaseInvoiceModal.createPurchaseInvoice', 'Create Purchase Invoice')}
             </Button>
           </div>
         </div>

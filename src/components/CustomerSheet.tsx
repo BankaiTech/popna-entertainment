@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+// Payment Collection System — SaaS Ready
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
@@ -8,20 +10,21 @@ import Select from './ui/Select';
 import type { Customer, Provider, CustomerStatus } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 
-type PaymentFormData = { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; dateTimeLocal: string };
+type PaymentFormData = { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; dateTimeLocal: string; collectedAmount: number };
 
 interface CustomerSheetProps {
   isOpen: boolean;
   onClose: () => void;
   customer?: Customer | null;
   onSave: (customer: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => void;
-  /** Cable product only. Admin and Employee can update. */
-  onUpdatePayment?: (customerId: number, data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string }) => Promise<void>;
+  // SaaS Ready — payment applies to ALL product types
+  onUpdatePayment?: (customerId: number, data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; collectedAmount?: number; balanceAmount?: number }) => Promise<void>;
 }
 
 const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: CustomerSheetProps) => {
+  const { t } = useTranslation();
   const { role } = useAuthStore();
-  const { products, fetchActiveProducts } = useStore();
+  const { products, fetchActiveProducts, plans } = useStore();
   
   // Fetch products when component mounts
   useEffect(() => {
@@ -32,7 +35,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
   const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'address'>('info');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentForm, setPaymentForm] = useState<PaymentFormData>({ paymentStatus: 'not_paid', paymentDescription: '', dateTimeLocal: '' });
+  const [paymentForm, setPaymentForm] = useState<PaymentFormData>({ paymentStatus: 'not_paid', paymentDescription: '', dateTimeLocal: '', collectedAmount: 0 });
   
   // Products fully dynamic — no hardcoded service names. Options from Admin → Settings → Products only.
   const availableProviders = Array.isArray(products) ? products.map((p) => p.name) : [];
@@ -130,10 +133,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
 
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
   
-  // Check if customer's connection type is cable (for payment tracking). Uses product data only.
-  const isCableProduct = customer && Array.isArray(products) && products.length > 0
-    ? products.find((p) => p.name === customer.connectionType)?.productType === 'cable'
-    : false;
+  // SaaS Ready — Payment applies to ALL product types (no cable-only restriction)
+  const customerPlan = useMemo(() => {
+    if (!customer || !Array.isArray(plans)) return null;
+    return plans.find((p) => p.planName === customer.package && p.provider === customer.connectionType) || null;
+  }, [customer, plans]);
 
   // Security check: Employees cannot add customers - close modal if opened in add mode
   useEffect(() => {
@@ -143,31 +147,46 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
     }
   }, [isOpen, isReadOnly, customer, onClose]);
 
+  const planAmount = customerPlan?.price ?? 0;
+  const gstRate = customerPlan?.gstRate ?? 0;
+  const gstAmount = planAmount * (gstRate / 100);
+  const totalAmount = planAmount + gstAmount;
+
   const openPaymentModal = () => {
     if (!customer) return;
     setPaymentForm({
       paymentStatus: (customer.paymentStatus ?? 'not_paid') as 'paid' | 'not_paid',
       paymentDescription: customer.paymentDescription ?? '',
       dateTimeLocal: customer.paymentUpdatedAt ? new Date(customer.paymentUpdatedAt).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      collectedAmount: customer.collectedAmount ?? 0,
     });
     setIsPaymentModalOpen(true);
   };
 
+  const balanceAmount = Math.max(0, totalAmount - (paymentForm.collectedAmount || 0));
+  const isFullyPaid = paymentForm.collectedAmount >= totalAmount;
+
   const handlePaymentSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const desc = paymentForm.paymentDescription.trim();
-    if (!desc) { alert('Description is required.'); return; }
-    if (!paymentForm.dateTimeLocal) { alert('Date & Time is required.'); return; }
+    if (!desc) { alert(t('payment.descriptionRequired', 'Description is required.')); return; }
+    if (!paymentForm.dateTimeLocal) { alert(t('payment.dateRequired', 'Date & Time is required.')); return; }
+    if (paymentForm.collectedAmount < 0) { alert(t('payment.invalidAmount', 'Collected amount cannot be negative.')); return; }
     const paymentUpdatedAt = new Date(paymentForm.dateTimeLocal).toISOString();
+    const computedStatus: 'paid' | 'not_paid' = isFullyPaid ? 'paid' : 'not_paid';
     if (!onUpdatePayment || !customer) return;
     try {
-      // TODO: Replace with direct cable billing API when available; parent uses updateCustomer for now.
-      // Allowed for both admin and employee when customer has cable product; only payment fields are sent.
-      await onUpdatePayment(customer.id, { paymentStatus: paymentForm.paymentStatus, paymentDescription: desc, paymentUpdatedAt });
+      await onUpdatePayment(customer.id, {
+        paymentStatus: computedStatus,
+        paymentDescription: desc,
+        paymentUpdatedAt,
+        collectedAmount: paymentForm.collectedAmount,
+        balanceAmount: isFullyPaid ? 0 : balanceAmount,
+      });
       setIsPaymentModalOpen(false);
-      alert('Payment status updated successfully.');
+      alert(t('payment.updateSuccess', 'Payment status updated successfully.'));
     } catch (err) {
-      alert('Failed to update payment status. Please try again.');
+      alert(t('payment.updateFailed', 'Failed to update payment status. Please try again.'));
     }
   };
 
@@ -180,7 +199,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
         {/* Compact Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-lg font-semibold">
-            {isReadOnly ? 'Customer Details' : customer ? 'Edit Customer' : 'Add New Customer'}
+            {isReadOnly ? t('customerSheet.details', 'Customer Details') : customer ? t('customerSheet.edit', 'Edit Customer') : t('customerSheet.add', 'Add New Customer')}
           </h2>
           <button
             onClick={onClose}
@@ -201,7 +220,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Information
+            {t('customerSheet.information', 'Information')}
           </button>
           <button
             onClick={() => setActiveTab('address')}
@@ -211,7 +230,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Address
+            {t('customerSheet.address', 'Address')}
           </button>
         </div>
 
@@ -324,36 +343,45 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
                 </div>
               </div>
 
-              {/* Cable products only: Payment status. Admin and Employee can update. */}
-              {isCableProduct && (
+              {/* Payment Collection System — SaaS Ready (ALL product types) */}
+              {customer && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900">Cable Payment Status</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{t('payment.title', 'Payment Status')}</h3>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-gray-600">Current payment status:</span>
+                    <span className="text-sm text-gray-600">{t('payment.currentStatus', 'Current payment status')}:</span>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         customer.paymentStatus === 'paid'
                           ? 'bg-green-500 text-white'
-                          : customer.paymentStatus === 'not_paid'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-200 text-gray-700'
+                          : 'bg-red-500 text-white'
                       }`}
                     >
-                      {customer.paymentStatus === 'paid' ? 'Paid' : customer.paymentStatus === 'not_paid' ? 'Not Paid' : '—'}
+                      {customer.paymentStatus === 'paid' ? t('customers.paid', 'Paid') : t('customers.unpaid', 'Unpaid')}
                     </span>
                   </div>
+                  {customer.collectedAmount != null && customer.collectedAmount > 0 && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">{t('payment.collected', 'Collected')}: </span>
+                      <span className="font-medium">₹{customer.collectedAmount.toFixed(2)}</span>
+                      {customer.balanceAmount != null && customer.balanceAmount > 0 && (
+                        <span className="ml-3 text-red-600">
+                          {t('payment.balance', 'Balance')}: ₹{customer.balanceAmount.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Last updated: </span>
+                    <span className="text-muted-foreground">{t('payment.lastUpdated', 'Last updated')}: </span>
                     {customer.paymentUpdatedAt
                       ? new Date(customer.paymentUpdatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
                       : '—'}
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Payment description: </span>
+                    <span className="text-muted-foreground">{t('payment.description', 'Payment description')}: </span>
                     {customer.paymentDescription || '—'}
                   </div>
                   <Button type="button" onClick={openPaymentModal} className="min-h-[44px] touch-manipulation">
-                    Update Payment Status
+                    {t('payment.collectPayment', 'Collect Payment')}
                   </Button>
                 </div>
               )}
@@ -457,27 +485,27 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
           {/* Footer — shrink-0 so always visible; body scrolls above it (pb-24 on mobile for clearance) */}
           <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              {isReadOnly ? 'Close' : 'Cancel'}
+              {isReadOnly ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
             </Button>
             {!isReadOnly && (
-              <Button type="submit" className="w-full sm:w-auto">{customer ? 'Update' : 'Create'} Customer</Button>
+              <Button type="submit" className="w-full sm:w-auto">{customer ? t('common.update', 'Update') : t('common.create', 'Create')} {t('customers.customer', 'Customer')}</Button>
             )}
           </div>
         </form>
       </div>
 
-      {/* Update Payment modal — Cable products only; shown when isPaymentModalOpen */}
-      {isPaymentModalOpen && isCableProduct && customer && (
+      {/* Payment Collection Dialog — SaaS Ready (ALL product types) */}
+      {isPaymentModalOpen && customer && (
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
           onClick={() => setIsPaymentModalOpen(false)}
         >
           <div
-            className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col border border-border"
+            className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="text-lg font-semibold">Update Payment Status</h3>
+              <h3 className="text-lg font-semibold">{t('payment.collectPayment', 'Collect Payment')}</h3>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}
                 className="p-1.5 hover:bg-accent rounded-md transition-colors min-h-[44px] touch-manipulation"
@@ -487,33 +515,68 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
               </button>
             </div>
             <form onSubmit={handlePaymentSave} className="flex flex-col flex-1 min-h-0">
-              {/* Body scrolls; Save/Cancel footer is always visible on mobile */}
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="p-4 sm:p-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Payment Status <span className="text-destructive">*</span></label>
-                    <Select
-                      value={paymentForm.paymentStatus}
-                      onChange={(e) => setPaymentForm({ ...paymentForm, paymentStatus: e.target.value as 'paid' | 'not_paid' })}
-                      required
-                    >
-                      <option value="paid">Paid</option>
-                      <option value="not_paid">Not Paid</option>
-                    </Select>
+                  {/* Read-only plan & amount details */}
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2 border border-border">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t('payment.planName', 'Plan Name')}</span>
+                      <span className="font-medium">{customer.package || '—'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t('payment.planAmount', 'Plan Amount')}</span>
+                      <span className="font-medium">₹{planAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t('payment.gstAmount', 'GST Amount')} ({gstRate}%)</span>
+                      <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-bold border-t border-border pt-2">
+                      <span>{t('payment.totalAmount', 'Total Amount')}</span>
+                      <span>₹{totalAmount.toFixed(2)}</span>
+                    </div>
                   </div>
+
+                  {/* Collected Amount input */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Description <span className="text-destructive">*</span></label>
+                    <label className="block text-sm font-medium mb-2">{t('payment.collectedAmount', 'Collected Amount')} <span className="text-destructive">*</span></label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={paymentForm.collectedAmount || ''}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, collectedAmount: parseFloat(e.target.value) || 0 })}
+                      required
+                    />
+                  </div>
+
+                  {/* Auto-calculated balance — hidden if fully paid */}
+                  {!isFullyPaid && paymentForm.collectedAmount > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex justify-between items-center">
+                      <span className="text-sm font-medium text-red-700">{t('payment.balanceAmount', 'Balance Amount')}</span>
+                      <span className="text-lg font-bold text-red-700">₹{balanceAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  {isFullyPaid && paymentForm.collectedAmount > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                      <span className="text-sm font-medium text-green-700">{t('payment.fullyPaid', 'Fully Paid')}</span>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">{t('payment.description', 'Description')} <span className="text-destructive">*</span></label>
                     <textarea
                       value={paymentForm.paymentDescription}
                       onChange={(e) => setPaymentForm({ ...paymentForm, paymentDescription: e.target.value })}
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                       rows={3}
-                      placeholder="Enter payment details..."
+                      placeholder={t('payment.descriptionPlaceholder', 'Enter payment details...')}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Date & Time <span className="text-destructive">*</span></label>
+                    <label className="block text-sm font-medium mb-2">{t('payment.dateTime', 'Date & Time')} <span className="text-destructive">*</span></label>
                     <input
                       type="datetime-local"
                       value={paymentForm.dateTimeLocal}
@@ -526,9 +589,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, onUpdatePayment }: C
               </div>
               <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card">
                 <Button type="button" variant="outline" onClick={() => setIsPaymentModalOpen(false)} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </Button>
-                <Button type="submit" className="w-full sm:w-auto min-h-[44px] touch-manipulation">Save</Button>
+                <Button type="submit" className="w-full sm:w-auto min-h-[44px] touch-manipulation">{t('common.submit', 'Submit')}</Button>
               </div>
             </form>
           </div>

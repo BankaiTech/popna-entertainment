@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Package, Building2, Globe } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
@@ -9,21 +10,22 @@ import { cn } from '@/lib/utils';
 type SettingsTab = 'company' | 'website' | 'products';
 
 const Settings = () => {
+  const { t } = useTranslation();
   // Display order: 1 Company Details, 2 Website Settings, 3 Products
   const [activeTab, setActiveTab] = useState<SettingsTab>('company');
 
   const tabs: { id: SettingsTab; label: string; icon: typeof Building2 }[] = [
-    { id: 'company', label: 'Company Details', icon: Building2 },
-    { id: 'website', label: 'Website Settings', icon: Globe },
-    { id: 'products', label: 'Products', icon: Package },
+    { id: 'company', label: t('settings.tabCompany', 'Company Details'), icon: Building2 },
+    { id: 'website', label: t('settings.tabWebsite', 'Website Settings'), icon: Globe },
+    { id: 'products', label: t('settings.tabProducts', 'Products'), icon: Package },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('settings.title', 'Settings')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Configure products, company information, and website settings. Multi-tenant ready — backend will enforce org isolation.
+          {t('settings.subtitle', 'Configure products, company information, and website settings. Multi-tenant ready — backend will enforce org isolation.')}
         </p>
       </div>
 

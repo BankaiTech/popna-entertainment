@@ -1,3 +1,4 @@
+// SaaS Ready — Fully Dynamic Product
 /** Connection type = product name from Admin → Settings → Products. Products fully dynamic — no hardcoded service names. */
 export type Provider = string;
 
@@ -6,14 +7,14 @@ export type ServiceCategory = 'cable' | 'internet';
 
 export type CustomerStatus = 'Active' | 'Inactive';
 
-/** Cable-only: payment status for cable network billing. */
+// SaaS Ready — Payment applies to ALL product types (cable, internet, future products)
 export type PaymentStatus = 'paid' | 'not_paid';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
 export type ConnectionRequestStatus = 'New' | 'Contacted' | 'Converted';
 
-// Multi-tenant ready — backend will enforce org isolation
+// Multi-tenant SaaS Isolation — backend will enforce org isolation
 export const MOCK_ORGANIZATION_ID = 'org_001';
 
 export interface Plan {
@@ -50,10 +51,14 @@ export interface Customer {
   description?: string;
   address: Address;
   createdAt: string;
-  /** Cable product only. Values set by "Update Payment Status". */
+  // Payment Collection System — SaaS Ready (applies to ALL product types)
   paymentStatus?: PaymentStatus;
   paymentDescription?: string;
   paymentUpdatedAt?: string;
+  /** Amount collected (supports partial payment) */
+  collectedAmount?: number;
+  /** Remaining balance after partial payment */
+  balanceAmount?: number;
   /** Optional GSTIN field for GST invoice support */
   gstin?: string | null;
 }

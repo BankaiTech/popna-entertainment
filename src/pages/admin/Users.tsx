@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,6 +13,7 @@ import { Plus, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const AdminUsers = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -74,15 +76,15 @@ const AdminUsers = () => {
     const password = addPassword;
 
     if (!name) {
-      setAddError('Name is required');
+      setAddError(t('users.validation.nameRequired', 'Name is required'));
       return;
     }
     if (!username) {
-      setAddError('Username is required');
+      setAddError(t('users.validation.usernameRequired', 'Username is required'));
       return;
     }
     if (!password) {
-      setAddError('Password is required');
+      setAddError(t('users.validation.passwordRequired', 'Password is required'));
       return;
     }
 
@@ -92,7 +94,7 @@ const AdminUsers = () => {
       await loadUsers();
       handleCloseAdd();
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Failed to add user');
+      setAddError(err instanceof Error ? err.message : t('users.errors.addFailed', 'Failed to add user'));
     } finally {
       setAddSaving(false);
     }
@@ -124,11 +126,11 @@ const AdminUsers = () => {
     const username = editUsername.trim();
 
     if (!name) {
-      setEditError('Name is required');
+      setEditError(t('users.validation.nameRequired', 'Name is required'));
       return;
     }
     if (!username) {
-      setEditError('Username is required');
+      setEditError(t('users.validation.usernameRequired', 'Username is required'));
       return;
     }
 
@@ -147,7 +149,7 @@ const AdminUsers = () => {
       await loadUsers();
       handleCloseEdit();
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Failed to update user');
+      setEditError(err instanceof Error ? err.message : t('users.errors.updateFailed', 'Failed to update user'));
     } finally {
       setEditSaving(false);
     }
@@ -179,12 +181,12 @@ const AdminUsers = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-xl font-bold text-foreground mb-0.5">Users</h1>
-          <p className="text-xs text-muted-foreground">Manage admin and employee users</p>
+          <h1 className="text-xl font-bold text-foreground mb-0.5">{t('users.title', 'Users')}</h1>
+          <p className="text-xs text-muted-foreground">{t('users.subtitle', 'Manage admin and employee users')}</p>
         </div>
         <Button onClick={handleOpenAdd} className="w-full sm:w-auto" size="sm">
           <Plus className="w-4 h-4 mr-2" />
-          Add User
+          {t('users.addUser', 'Add User')}
         </Button>
       </div>
 
@@ -193,7 +195,7 @@ const AdminUsers = () => {
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Total Users
+              {t('users.stats.totalUsers', 'Total Users')}
             </CardTitle>
             <div className="p-2 rounded-lg bg-blue-50 group-hover:scale-110 transition-transform duration-300">
               <UserCog className="w-4 h-4 text-blue-600" />
@@ -209,7 +211,7 @@ const AdminUsers = () => {
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Admins
+              {t('users.stats.admins', 'Admins')}
             </CardTitle>
             <div className="p-2 rounded-lg bg-purple-50 group-hover:scale-110 transition-transform duration-300">
               <UserCog className="w-4 h-4 text-purple-600" />
@@ -225,7 +227,7 @@ const AdminUsers = () => {
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Employees
+              {t('users.stats.employees', 'Employees')}
             </CardTitle>
             <div className="p-2 rounded-lg bg-green-50 group-hover:scale-110 transition-transform duration-300">
               <UserCog className="w-4 h-4 text-green-600" />
@@ -241,7 +243,7 @@ const AdminUsers = () => {
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Active
+              {t('users.stats.active', 'Active')}
             </CardTitle>
             <div className="p-2 rounded-lg bg-emerald-50 group-hover:scale-110 transition-transform duration-300">
               <UserCog className="w-4 h-4 text-emerald-600" />
@@ -257,7 +259,7 @@ const AdminUsers = () => {
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Inactive
+              {t('users.stats.inactive', 'Inactive')}
             </CardTitle>
             <div className="p-2 rounded-lg bg-slate-50 group-hover:scale-110 transition-transform duration-300">
               <UserCog className="w-4 h-4 text-slate-600" />
@@ -283,7 +285,7 @@ const AdminUsers = () => {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
           )}
         >
-          All
+          {t('common.all', 'All')}
         </button>
         <button
           type="button"
@@ -295,7 +297,7 @@ const AdminUsers = () => {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
           )}
         >
-          Active
+          {t('common.active', 'Active')}
         </button>
         <button
           type="button"
@@ -307,29 +309,29 @@ const AdminUsers = () => {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
           )}
         >
-          Inactive
+          {t('common.inactive', 'Inactive')}
         </button>
       </div>
 
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-12">Loading users...</div>
+            <div className="text-center py-12">{t('users.loading', 'Loading users...')}</div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No users found.</div>
+            <div className="text-center py-12 text-muted-foreground">{t('users.noResults', 'No users found.')}</div>
           ) : (
             <>
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Name</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Username</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Role</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Created Date</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Actions</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colId', 'ID')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colName', 'Name')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colUsername', 'Username')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colRole', 'Role')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colStatus', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colCreatedDate', 'Created Date')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colActions', 'Actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -350,13 +352,13 @@ const AdminUsers = () => {
                             "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
                             u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           )}>
-                            {u.status === 'active' ? 'Active' : 'Inactive'}
+                            {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(u.createdAt)}</td>
                         <td className="px-3 py-2">
                           <Button variant="outline" size="sm" onClick={() => handleOpenEdit(u)}>
-                            Edit
+                            {t('common.edit', 'Edit')}
                           </Button>
                         </td>
                       </tr>
@@ -377,20 +379,20 @@ const AdminUsers = () => {
                         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
                         u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       )}>
-                        {u.status === 'active' ? 'Active' : 'Inactive'}
+                        {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                       </span>
                     </div>
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Username: </span>
+                      <span className="text-muted-foreground">{t('users.colUsername', 'Username')}: </span>
                       <span className="font-medium">{u.username}</span>
                     </div>
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Role: </span>
+                      <span className="text-muted-foreground">{t('users.colRole', 'Role')}: </span>
                       <span className="capitalize">{u.role}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">Created: {formatDate(u.createdAt)}</div>
+                    <div className="text-xs text-muted-foreground">{t('users.created', 'Created')}: {formatDate(u.createdAt)}</div>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(u)} className="w-full">
-                      Edit
+                      {t('common.edit', 'Edit')}
                     </Button>
                   </div>
                 ))}
@@ -419,32 +421,32 @@ const AdminUsers = () => {
             aria-modal="true"
           >
             <div className="shrink-0 px-4 sm:px-6 py-4 border-b border-border">
-              <h2 id="add-user-title" className="text-lg font-semibold">Add User</h2>
+              <h2 id="add-user-title" className="text-lg font-semibold">{t('users.addUser', 'Add User')}</h2>
             </div>
             <form onSubmit={handleAddSave} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Name <span className="text-destructive">*</span></label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.name', 'Name')} <span className="text-destructive">*</span></label>
                   <Input
                     value={addName}
                     onChange={(e) => setAddName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder={t('users.placeholders.fullName', 'Full name')}
                     required
                     disabled={addSaving}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Username <span className="text-destructive">*</span></label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
                   <Input
                     value={addUsername}
                     onChange={(e) => setAddUsername(e.target.value)}
-                    placeholder="Unique username"
+                    placeholder={t('users.placeholders.uniqueUsername', 'Unique username')}
                     required
                     disabled={addSaving}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Password <span className="text-destructive">*</span></label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')} <span className="text-destructive">*</span></label>
                   <Input
                     type="password"
                     value={addPassword}
@@ -455,25 +457,25 @@ const AdminUsers = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Role</label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select
                     value={addRole}
                     onChange={(e) => setAddRole(e.target.value as 'admin' | 'employee')}
                     disabled={addSaving}
                   >
-                    <option value="admin">Admin</option>
-                    <option value="employee">Employee</option>
+                    <option value="admin">{t('users.roles.admin', 'Admin')}</option>
+                    <option value="employee">{t('users.roles.employee', 'Employee')}</option>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
                   <Select
                     value={addStatus}
                     onChange={(e) => setAddStatus(e.target.value as 'active' | 'inactive')}
                     disabled={addSaving}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active">{t('common.active', 'Active')}</option>
+                    <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                   </Select>
                 </div>
                 {addError && (
@@ -484,10 +486,10 @@ const AdminUsers = () => {
               </div>
               <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border">
                 <Button type="button" variant="outline" onClick={handleCloseAdd} className="w-full sm:w-auto" disabled={addSaving}>
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </Button>
                 <Button type="submit" className="w-full sm:w-auto" disabled={addSaving}>
-                  {addSaving ? 'Saving...' : 'Save'}
+                  {addSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
                 </Button>
               </div>
             </form>
@@ -505,65 +507,64 @@ const AdminUsers = () => {
             aria-modal="true"
           >
             <div className="shrink-0 px-4 sm:px-6 py-4 border-b border-border">
-              <h2 id="edit-user-title" className="text-lg font-semibold">Edit User</h2>
+              <h2 id="edit-user-title" className="text-lg font-semibold">{t('users.editUser', 'Edit User')}</h2>
             </div>
             <form onSubmit={handleEditSave} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Name <span className="text-destructive">*</span></label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.name', 'Name')} <span className="text-destructive">*</span></label>
                   <Input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder={t('users.placeholders.fullName', 'Full name')}
                     required
                     disabled={editSaving}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Username <span className="text-destructive">*</span></label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
                   <Input
                     value={editUsername}
                     onChange={(e) => setEditUsername(e.target.value)}
-                    placeholder="Unique username"
+                    placeholder={t('users.placeholders.uniqueUsername', 'Unique username')}
                     required
                     disabled={editSaving}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Password</label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')}</label>
                   <Input
                     type="password"
                     value={editPassword}
                     onChange={(e) => setEditPassword(e.target.value)}
-                    placeholder="Leave blank to keep current"
+                    placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')}
                     disabled={editSaving}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Leave blank to keep current password</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('users.hints.keepPassword', 'Leave blank to keep current password')}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Role</label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as 'admin' | 'employee')}
                     disabled={editSaving}
                   >
-                    <option value="admin">Admin</option>
-                    <option value="employee">Employee</option>
+                    <option value="admin">{t('users.roles.admin', 'Admin')}</option>
+                    <option value="employee">{t('users.roles.employee', 'Employee')}</option>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
                   <Select
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value as 'active' | 'inactive')}
                     disabled={editSaving}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active">{t('common.active', 'Active')}</option>
+                    <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {/* Replace with backend enforcement later */}
-                    Inactive users cannot login
+                    {t('users.hints.inactiveLogin', 'Inactive users cannot login')}
                   </p>
                 </div>
                 {editError && (
@@ -574,10 +575,10 @@ const AdminUsers = () => {
               </div>
               <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border">
                 <Button type="button" variant="outline" onClick={handleCloseEdit} className="w-full sm:w-auto" disabled={editSaving}>
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </Button>
                 <Button type="submit" className="w-full sm:w-auto" disabled={editSaving}>
-                  {editSaving ? 'Saving...' : 'Update'}
+                  {editSaving ? t('common.saving', 'Saving...') : t('common.update', 'Update')}
                 </Button>
               </div>
             </form>

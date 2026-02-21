@@ -33,14 +33,13 @@ const AdminDashboard = () => {
   // Calculate active complaints count
   const activeComplaintsCount = complaints.filter((c) => c.status === 'active').length;
 
-  // Multi-tenant ready — Payment Summary for cable products only (Admin only)
-  const cableProducts = Array.isArray(products) ? products.filter((p) => p.productType === 'cable') : [];
-  const cableProductStats = cableProducts.map((product) => {
+  // SaaS Ready — Payment Summary for ALL products (universal, no cable-only restriction)
+  const allProductStats = Array.isArray(products) ? products.map((product) => {
     const productCustomers = customers.filter((c) => c.connectionType === product.name);
     const paidCount = productCustomers.filter((c) => c.paymentStatus === 'paid').length;
     const unpaidCount = productCustomers.filter((c) => c.paymentStatus !== 'paid').length;
     return { product, customers: productCustomers, paidCount, unpaidCount };
-  });
+  }) : [];
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
@@ -76,7 +75,7 @@ const AdminDashboard = () => {
 
   const statCards = [
     {
-      title: 'Total Customers',
+      title: t('dashboard.totalCustomers'),
       value: dashboardStats.totalCustomers,
       icon: Users,
       color: 'text-blue-600',
@@ -84,28 +83,28 @@ const AdminDashboard = () => {
     },
     ...productStatCards,
     {
-      title: 'New This Month',
+      title: t('dashboard.newThisMonth'),
       value: dashboardStats.newCustomersThisMonth,
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
-      title: 'Active Customers',
+      title: t('dashboard.activeCustomers'),
       value: dashboardStats.activeCustomers,
       icon: UserCheck,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
     },
     {
-      title: 'Inactive Customers',
+      title: t('dashboard.inactiveCustomers'),
       value: dashboardStats.inactiveCustomers,
       icon: UserX,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
     },
     {
-      title: 'Active Complaints',
+      title: t('dashboard.activeComplaints'),
       value: activeComplaintsCount,
       icon: AlertCircle,
       color: 'text-orange-600',

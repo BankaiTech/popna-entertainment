@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -7,6 +8,7 @@ import { Building2, Save } from 'lucide-react';
 import type { CompanyProfile } from '@/models/types';
 
 const CompanyProfileSettings = () => {
+  const { t } = useTranslation();
   const { companyProfile, loading, fetchCompanyProfile, updateCompanyProfile } = useStore();
   const [formData, setFormData] = useState<Partial<CompanyProfile>>({
     companyName: '',
@@ -46,7 +48,6 @@ const CompanyProfileSettings = () => {
   }, [companyProfile]);
 
   const validateGSTIN = (gstin: string): boolean => {
-    // GSTIN format: 15 characters, alphanumeric
     const gstinRegex = /^[0-9A-Z]{15}$/;
     return gstinRegex.test(gstin);
   };
@@ -56,9 +57,8 @@ const CompanyProfileSettings = () => {
     setError('');
     setSuccess(false);
 
-    // Validate GSTIN
     if (formData.gstin && !validateGSTIN(formData.gstin)) {
-      setError('GSTIN must be exactly 15 alphanumeric characters');
+      setError(t('companyProfile.validation.gstinInvalid', 'GSTIN must be exactly 15 alphanumeric characters'));
       return;
     }
 
@@ -68,7 +68,7 @@ const CompanyProfileSettings = () => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update company profile');
+      setError(err instanceof Error ? err.message : t('companyProfile.saveFailed', 'Failed to update company profile'));
     } finally {
       setSaving(false);
     }
@@ -77,9 +77,9 @@ const CompanyProfileSettings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-foreground">Company Profile</h2>
+        <h2 className="text-xl font-bold text-foreground">{t('companyProfile.title', 'Company Profile')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure company information for invoices and documents. Multi-tenant ready — backend will isolate by organization.
+          {t('companyProfile.description', 'Configure company information for invoices and documents.')}
         </p>
       </div>
 
@@ -87,7 +87,7 @@ const CompanyProfileSettings = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5" />
-            Company Information
+            {t('companyProfile.companyInformation', 'Company Information')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -100,26 +100,26 @@ const CompanyProfileSettings = () => {
 
             {success && (
               <div className="p-3 bg-green-100 border border-green-200 rounded-md text-sm text-green-800">
-                Company profile updated successfully!
+                {t('companyProfile.saveSuccess', 'Company profile updated successfully!')}
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Company Name <span className="text-destructive">*</span>
+                  {t('companyProfile.companyName', 'Company Name')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  placeholder="Enter company name"
+                  placeholder={t('companyProfile.companyNamePlaceholder', 'Enter company name')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  GSTIN <span className="text-destructive">*</span>
+                  {t('companyProfile.gstin', 'GSTIN')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.gstin}
@@ -129,102 +129,102 @@ const CompanyProfileSettings = () => {
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  15 characters, alphanumeric
+                  {t('companyProfile.gstinHint', '15 characters, alphanumeric')}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Email <span className="text-destructive">*</span>
+                  {t('companyProfile.email', 'Email')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="info@company.com"
+                  placeholder={t('companyProfile.emailPlaceholder', 'info@company.com')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Contact Number <span className="text-destructive">*</span>
+                  {t('companyProfile.contactNumber', 'Contact Number')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.contactNumber}
                   onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  placeholder="+91 9876543210"
+                  placeholder={t('companyProfile.contactNumberPlaceholder', '+91 9876543210')}
                   required
                 />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Address Line 1 <span className="text-destructive">*</span>
+                  {t('companyProfile.addressLine1', 'Address Line 1')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.addressLine1}
                   onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                  placeholder="Street address"
+                  placeholder={t('companyProfile.addressLine1Placeholder', 'Street address')}
                   required
                 />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Address Line 2
+                  {t('companyProfile.addressLine2', 'Address Line 2')}
                 </label>
                 <Input
                   value={formData.addressLine2}
                   onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                  placeholder="Suite, unit, building, floor, etc."
+                  placeholder={t('companyProfile.addressLine2Placeholder', 'Suite, unit, building, floor, etc.')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  City <span className="text-destructive">*</span>
+                  {t('companyProfile.city', 'City')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="City"
+                  placeholder={t('companyProfile.cityPlaceholder', 'City')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  State <span className="text-destructive">*</span>
+                  {t('companyProfile.state', 'State')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  placeholder="State"
+                  placeholder={t('companyProfile.statePlaceholder', 'State')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Country <span className="text-destructive">*</span>
+                  {t('companyProfile.country', 'Country')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  placeholder="Country"
+                  placeholder={t('companyProfile.countryPlaceholder', 'Country')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  Pincode <span className="text-destructive">*</span>
+                  {t('companyProfile.pincode', 'Pincode')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.pincode}
                   onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  placeholder="123456"
+                  placeholder={t('companyProfile.pincodePlaceholder', '123456')}
                   required
                 />
               </div>
@@ -233,7 +233,7 @@ const CompanyProfileSettings = () => {
             <div className="flex justify-end pt-4 border-t border-border">
               <Button type="submit" disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Saving...' : 'Save Company Profile'}
+                {saving ? t('common.saving', 'Saving...') : t('companyProfile.save', 'Save Company Profile')}
               </Button>
             </div>
           </form>

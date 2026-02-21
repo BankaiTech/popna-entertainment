@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import PlanModal from '@/components/PlanModal';
 // Plan add/edit converted fully to dialog-based UI
 
 const Catalog = () => {
+  const { t } = useTranslation();
   const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan, products, fetchProducts } = useStore();
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -52,7 +54,7 @@ const Catalog = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this plan?')) {
+    if (confirm(t('catalog.confirmDelete', 'Are you sure you want to delete this plan?'))) {
       await deletePlan(id);
       await fetchPlans();
     }
@@ -65,19 +67,19 @@ const Catalog = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Catalog</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t('catalog.title', 'Catalog')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Services, plans, pricing, GST, installation charges. Controlled from admin; front site reflects this catalog.
+            {t('catalog.subtitle', 'Services, plans, pricing, GST, installation charges. Controlled from admin; front site reflects this catalog.')}
           </p>
         </div>
         <Button onClick={handleOpenAdd} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
-          Add Plan
+          {t('catalog.addPlan', 'Add Plan')}
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading plans...</div>
+        <div className="text-center py-12">{t('catalog.loading', 'Loading plans...')}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((plan) => {
@@ -91,19 +93,19 @@ const Catalog = () => {
                 <CardContent>
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Price:</span>
-                      <span className="font-semibold">{formatCurrencyINR(plan.price)}/month</span>
+                      <span className="text-sm text-muted-foreground">{t('catalog.price', 'Price')}:</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.price)}/{t('catalog.month', 'month')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">GST:</span>
+                      <span className="text-sm text-muted-foreground">{t('catalog.gst', 'GST')}:</span>
                       <span className="font-semibold">{plan.gstRate}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Final Price:</span>
-                      <span className="font-bold text-primary">{formatCurrencyINR(finalPrice)}/month</span>
+                      <span className="text-sm text-muted-foreground">{t('catalog.finalPrice', 'Final Price')}:</span>
+                      <span className="font-bold text-primary">{formatCurrencyINR(finalPrice)}/{t('catalog.month', 'month')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Installation:</span>
+                      <span className="text-sm text-muted-foreground">{t('catalog.installation', 'Installation')}:</span>
                       <span className="font-semibold">{formatCurrencyINR(plan.installationAmount)}</span>
                     </div>
                   </div>
@@ -111,11 +113,11 @@ const Catalog = () => {
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(plan)} className="flex-1">
                       <Edit className="w-4 h-4 mr-1" />
-                      Edit
+                      {t('common.edit', 'Edit')}
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} className="flex-1">
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
+                      {t('common.delete', 'Delete')}
                     </Button>
                   </div>
                 </CardContent>

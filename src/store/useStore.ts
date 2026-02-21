@@ -11,49 +11,35 @@ import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
 // Products fully dynamic — no hardcoded service names. Initial state from API; no legacy fallback list.
 const mockProducts: Product[] = [];
 
+// SaaS Ready — Admin Full Control: company profile loaded from API, no static defaults in production
 const mockCompanyProfile: CompanyProfile = {
   id: 1,
   organizationId: MOCK_ORGANIZATION_ID,
-  companyName: 'BankaiTech',
-  gstin: '29ABCDE1234F1Z5',
-  addressLine1: '123 Business Street',
-  addressLine2: 'Suite 100',
-  city: 'Bangalore',
-  state: 'Karnataka',
-  country: 'India',
-  pincode: '560001',
-  contactNumber: '+91 9876543210',
-  email: 'info@bankaitech.com',
+  companyName: '',
+  gstin: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  country: '',
+  pincode: '',
+  contactNumber: '',
+  email: '',
   updatedAt: new Date().toISOString(),
 };
 
+// SaaS Ready — Admin Full Control: website settings loaded from API, no static defaults in production
 const mockWebsiteSettings: WebsiteSettings = {
   id: 1,
   organizationId: MOCK_ORGANIZATION_ID,
-  heroTitle: 'Welcome to BankaiTech',
-  heroSubtitle: 'Cable & Internet Services',
-  heroDescription: 'Choose the right plan for your home or business.',
+  heroTitle: '',
+  heroSubtitle: '',
+  heroDescription: '',
   heroImage: undefined,
-  highlightSectionTitle: 'Our Services',
-  highlightCards: [
-    {
-      title: 'High Speed',
-      description: 'Experience blazing fast internet speeds with our premium plans',
-      icon: 'Zap',
-    },
-    {
-      title: '24/7 Support',
-      description: 'Our dedicated support team is available round the clock to assist you',
-      icon: 'Clock',
-    },
-    {
-      title: 'Easy Installation',
-      description: 'Quick and hassle-free installation process with minimal downtime',
-      icon: 'Shield',
-    },
-  ],
-  ctaButtonText: 'Get Started',
-  ctaButtonLink: '/contact',
+  highlightSectionTitle: '',
+  highlightCards: [],
+  ctaButtonText: '',
+  ctaButtonLink: '',
   updatedAt: new Date().toISOString(),
 };
 
@@ -286,7 +272,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateCustomer: async (id, customer) => {
-    // UI enforces: only admins edit non-payment fields; both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt) for cable product. Store/API do not block payment-only updates.
+    // SaaS Ready — Payment Collection System: both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt, collectedAmount, balanceAmount) for ALL product types.
     // TODO: In real implementation, validate role and allowed fields in API
     set({ loading: true, error: null });
     try {

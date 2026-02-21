@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ interface ProviderPageProps {
 }
 
 const ProviderPage = ({ provider }: ProviderPageProps) => {
+  const { t } = useTranslation();
   const { plans, products, loading, fetchPlansByProvider, fetchActiveProducts, companyProfile, fetchCompanyProfile } = useStore();
 
   useEffect(() => {
@@ -31,33 +33,31 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
   };
 
   const handleRequestConnection = (planName: string) => {
-    alert(`Connection request for ${planName} has been submitted! We will contact you soon.`);
+    alert(t('providerPage.connectionRequestSubmitted', 'Connection request for {{planName}} has been submitted! We will contact you soon.', { planName }));
   };
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">Loading plans...</div>
+        <div className="text-center">{t('providerPage.loading', 'Loading plans...')}</div>
       </div>
     );
   }
 
-  // Multi-tenant ready — get product info dynamically; display name via getProviderDisplayName
   const product = (products || []).find((p) => p.name === provider);
   const providerDisplayName = getProviderDisplayName(provider);
   const isCable = product?.productType === 'cable';
-  const serviceLabel = isCable ? 'Cable Plans' : 'Internet Plans';
+  const serviceLabel = isCable ? t('providerPage.cablePlans', 'Cable Plans') : t('providerPage.internetPlans', 'Internet Plans');
   const serviceDescription = isCable
-    ? 'Choose the right cable plan for your home or business'
-    : 'Choose the perfect plan for your internet needs';
-  
-  // Multi-tenant ready — company name from settings
+    ? t('providerPage.cableDescription', 'Choose the right cable plan for your home or business')
+    : t('providerPage.internetDescription', 'Choose the perfect plan for your internet needs');
+
   const companyName = companyProfile?.companyName || 'BankaiTech';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-4">{providerDisplayName} — {serviceLabel}</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-4">{providerDisplayName} &mdash; {serviceLabel}</h1>
         <p className="text-lg text-muted-foreground">
           {serviceDescription}
         </p>
@@ -65,7 +65,7 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
 
       {plans.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No plans available for {provider} at the moment.</p>
+          <p className="text-muted-foreground">{t('providerPage.noPlans', 'No plans available for {{provider}} at the moment.', { provider })}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -80,21 +80,21 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
                 <CardContent className="flex-1 flex flex-col">
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Base Price:</span>
-                      <span className="font-semibold">{formatCurrencyINR(plan.price)}/month</span>
+                      <span className="text-sm text-muted-foreground">{t('providerPage.basePrice', 'Base Price:')}</span>
+                      <span className="font-semibold">{formatCurrencyINR(plan.price)}{t('providerPage.perMonth', '/month')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">GST ({plan.gstRate}%):</span>
+                      <span className="text-sm text-muted-foreground">{t('providerPage.gst', 'GST ({{rate}}%):', { rate: plan.gstRate })}</span>
                       <span className="font-semibold">
                         {formatCurrencyINR((plan.price * plan.gstRate) / 100)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center border-t border-border pt-2">
-                      <span className="text-sm font-semibold">Final Price:</span>
-                      <span className="text-lg font-bold text-primary">{formatCurrencyINR(finalPrice)}/month</span>
+                      <span className="text-sm font-semibold">{t('providerPage.finalPrice', 'Final Price:')}</span>
+                      <span className="text-lg font-bold text-primary">{formatCurrencyINR(finalPrice)}{t('providerPage.perMonth', '/month')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Installation:</span>
+                      <span className="text-sm text-muted-foreground">{t('providerPage.installation', 'Installation:')}</span>
                       <span className="font-semibold">{formatCurrencyINR(plan.installationAmount)}</span>
                     </div>
                   </div>
@@ -102,7 +102,7 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
                     className="w-full mt-auto"
                     onClick={() => handleRequestConnection(plan.planName)}
                   >
-                    Request Connection
+                    {t('providerPage.requestConnection', 'Request Connection')}
                   </Button>
                 </CardContent>
               </Card>

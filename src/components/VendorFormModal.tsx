@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -27,6 +28,7 @@ const emptyForm = {
 };
 
 const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFormModalProps) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -55,7 +57,7 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
     e.preventDefault();
     setError('');
     if (!form.name.trim()) {
-      setError('Vendor name is required');
+      setError(t('vendorFormModal.nameRequired', 'Vendor name is required'));
       return;
     }
     setSaving(true);
@@ -93,7 +95,7 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
         onClose();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save vendor');
+      setError(err instanceof Error ? err.message : t('vendorFormModal.saveFailed', 'Failed to save vendor'));
     } finally {
       setSaving(false);
     }
@@ -106,13 +108,13 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
       <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-xl font-bold text-foreground">
-            {editingVendor ? 'Edit Vendor' : 'Add Vendor'}
+            {editingVendor ? t('vendorFormModal.editTitle', 'Edit Vendor') : t('vendorFormModal.addTitle', 'Add Vendor')}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition-colors"
-            aria-label="Close"
+            aria-label={t('common.close', 'Close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -121,83 +123,83 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Vendor Name <span className="text-destructive">*</span></label>
+              <label className="block text-sm font-medium mb-1">{t('vendorFormModal.vendorName', 'Vendor Name')} <span className="text-destructive">*</span></label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Vendor name"
+                placeholder={t('vendorFormModal.vendorNamePlaceholder', 'Vendor name')}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Contact</label>
+              <label className="block text-sm font-medium mb-1">{t('vendorFormModal.contact', 'Contact')}</label>
               <Input
                 value={form.contact}
                 onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                placeholder="Phone / mobile"
+                placeholder={t('vendorFormModal.contactPlaceholder', 'Phone / mobile')}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">GSTIN</label>
+            <label className="block text-sm font-medium mb-1">{t('vendorFormModal.gstin', 'GSTIN')}</label>
             <Input
               value={form.gstin}
               onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase() })}
-              placeholder="15-character GSTIN (optional)"
+              placeholder={t('vendorFormModal.gstinPlaceholder', '15-character GSTIN (optional)')}
               maxLength={15}
             />
           </div>
 
           <div className="border-t border-border pt-4 mt-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Address (optional)</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">{t('vendorFormModal.addressSection', 'Address (optional)')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Address Line 1</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.addressLine1', 'Address Line 1')}</label>
                 <Input
                   value={form.addressLine1}
                   onChange={(e) => setForm({ ...form, addressLine1: e.target.value })}
-                  placeholder="Street, building"
+                  placeholder={t('vendorFormModal.addressLine1Placeholder', 'Street, building')}
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Address Line 2</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.addressLine2', 'Address Line 2')}</label>
                 <Input
                   value={form.addressLine2}
                   onChange={(e) => setForm({ ...form, addressLine2: e.target.value })}
-                  placeholder="Area, landmark"
+                  placeholder={t('vendorFormModal.addressLine2Placeholder', 'Area, landmark')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">City</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.city', 'City')}</label>
                 <Input
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="City"
+                  placeholder={t('vendorFormModal.city', 'City')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">State</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.state', 'State')}</label>
                 <Input
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  placeholder="State"
+                  placeholder={t('vendorFormModal.state', 'State')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Country</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.country', 'Country')}</label>
                 <Input
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  placeholder="Country"
+                  placeholder={t('vendorFormModal.country', 'Country')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Pincode</label>
+                <label className="block text-sm font-medium mb-1">{t('vendorFormModal.pincode', 'Pincode')}</label>
                 <Input
                   value={form.pincode}
                   onChange={(e) => setForm({ ...form, pincode: e.target.value })}
-                  placeholder="Pincode"
+                  placeholder={t('vendorFormModal.pincode', 'Pincode')}
                 />
               </div>
             </div>
@@ -212,10 +214,10 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
 
         <div className="flex justify-end gap-3 p-4 border-t border-border bg-muted/30">
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? 'Saving...' : editingVendor ? 'Update Vendor' : 'Add Vendor'}
+            {saving ? t('vendorFormModal.saving', 'Saving...') : editingVendor ? t('vendorFormModal.updateVendor', 'Update Vendor') : t('vendorFormModal.addVendor', 'Add Vendor')}
           </Button>
         </div>
       </div>

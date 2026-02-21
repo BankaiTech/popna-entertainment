@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
@@ -16,6 +17,7 @@ interface PlanModalProps {
 }
 
 const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }: PlanModalProps) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Omit<Plan, 'id'>>({
     organizationId: MOCK_ORGANIZATION_ID,
     provider: providers[0] ?? '',
@@ -61,19 +63,19 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
     setError('');
 
     if (!formData.planName.trim()) {
-      setError('Plan name is required');
+      setError(t('planModal.validation.planNameRequired', 'Plan name is required'));
       return;
     }
     if (!formData.imageUrl.trim()) {
-      setError('Image URL is required');
+      setError(t('planModal.validation.imageUrlRequired', 'Image URL is required'));
       return;
     }
     if (formData.price <= 0) {
-      setError('Price must be greater than 0');
+      setError(t('planModal.validation.priceRequired', 'Price must be greater than 0'));
       return;
     }
     if (!formData.description.trim()) {
-      setError('Description is required');
+      setError(t('planModal.validation.descriptionRequired', 'Description is required'));
       return;
     }
 
@@ -86,7 +88,7 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
       }
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save plan');
+      setError(err instanceof Error ? err.message : t('planModal.validation.failedToSave', 'Failed to save plan'));
     } finally {
       setSaving(false);
     }
@@ -104,7 +106,7 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
       >
         <div className="shrink-0 px-4 sm:px-6 py-4 border-b border-border">
           <h2 id="plan-modal-title" className="text-lg font-semibold">
-            {editingPlan ? 'Edit Plan' : 'Add New Plan'}
+            {editingPlan ? t('planModal.editPlan', 'Edit Plan') : t('planModal.addNewPlan', 'Add New Plan')}
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
@@ -112,7 +114,7 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Product <span className="text-destructive">*</span>
+                  {t('planModal.product', 'Product')} <span className="text-destructive">*</span>
                 </label>
                 <Select
                   value={formData.provider}
@@ -129,37 +131,37 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Plan Name <span className="text-destructive">*</span>
+                  {t('planModal.planName', 'Plan Name')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.planName}
                   onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
-                  placeholder="e.g., Basic 50 Mbps"
+                  placeholder={t('planModal.planNamePlaceholder', 'e.g., Basic 50 Mbps')}
                   required
                   disabled={saving}
                 />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2">
-                  Image URL <span className="text-destructive">*</span>
+                  {t('planModal.imageUrl', 'Image URL')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
+                  placeholder={t('planModal.imageUrlPlaceholder', 'https://example.com/image.jpg')}
                   required
                   disabled={saving}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Price (₹) <span className="text-destructive">*</span>
+                  {t('planModal.price', 'Price (₹)')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="number"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                  placeholder="499"
+                  placeholder={t('planModal.pricePlaceholder', '499')}
                   required
                   min="0"
                   step="0.01"
@@ -168,13 +170,13 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  GST Rate (%) <span className="text-destructive">*</span>
+                  {t('planModal.gstRate', 'GST Rate (%)')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="number"
                   value={formData.gstRate}
                   onChange={(e) => setFormData({ ...formData, gstRate: Number(e.target.value) })}
-                  placeholder="18"
+                  placeholder={t('planModal.gstRatePlaceholder', '18')}
                   required
                   min="0"
                   max="100"
@@ -184,13 +186,13 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Installation Charge (₹) <span className="text-destructive">*</span>
+                  {t('planModal.installationCharge', 'Installation Charge (₹)')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="number"
                   value={formData.installationAmount}
                   onChange={(e) => setFormData({ ...formData, installationAmount: Number(e.target.value) })}
-                  placeholder="500"
+                  placeholder={t('planModal.installationChargePlaceholder', '500')}
                   required
                   min="0"
                   step="0.01"
@@ -199,13 +201,13 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2">
-                  Description <span className="text-destructive">*</span>
+                  {t('planModal.description', 'Description')} <span className="text-destructive">*</span>
                 </label>
                 <textarea
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the plan features..."
+                  placeholder={t('planModal.descriptionPlaceholder', 'Describe the plan features...')}
                   required
                   disabled={saving}
                 />
@@ -219,10 +221,10 @@ const PlanModal = ({ isOpen, onClose, onSave, onUpdate, editingPlan, providers }
           </div>
           <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto" disabled={saving}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
-              {saving ? 'Saving...' : editingPlan ? 'Update Plan' : 'Create Plan'}
+              {saving ? t('common.saving', 'Saving...') : editingPlan ? t('planModal.updatePlan', 'Update Plan') : t('planModal.createPlan', 'Create Plan')}
             </Button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -18,6 +19,7 @@ interface InvoiceModalProps {
 }
 
 const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceModalProps) => {
+  const { t } = useTranslation();
   const { companyProfile, fetchCompanyProfile } = useStore();
   
   useEffect(() => {
@@ -43,18 +45,15 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
 
-  // Filter plans based on selected customer's connection type
   const filteredPlans = selectedCustomer
     ? plans.filter((p) => p.provider === selectedCustomer.connectionType)
     : [];
 
-  // Calculate amounts
   const baseAmount = selectedPlan?.price || 0;
   const gstRate = selectedPlan?.gstRate || 0;
   const gstAmount = (baseAmount * gstRate) / 100;
   const totalAmount = baseAmount + gstAmount;
 
-  // Auto-set due date to 30 days from issue date
   useEffect(() => {
     if (issueDate) {
       const issue = new Date(issueDate);
@@ -68,7 +67,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     setError('');
 
     if (!selectedCustomer || !selectedPlan) {
-      setError('Please select both customer and plan');
+      setError(t('invoiceModal.selectBothError', 'Please select both customer and plan'));
       return;
     }
 
@@ -96,7 +95,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
       onClose();
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create invoice');
+      setError(err instanceof Error ? err.message : t('invoiceModal.createFailed', 'Failed to create invoice'));
     } finally {
       setSaving(false);
     }
@@ -117,31 +116,30 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-2xl font-bold gradient-text">Create Sales Invoice</h2>
+          <h2 className="text-2xl font-bold gradient-text">{t('invoiceModal.title', 'Create Sales Invoice')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition-colors"
-            aria-label="Close"
+            aria-label={t('common.close', 'Close')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Customer Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">
-              Customer <span className="text-destructive">*</span>
+              {t('common.customer', 'Customer')} <span className="text-destructive">*</span>
             </label>
             <Select
               value={selectedCustomerId}
               onChange={(e) => {
                 setSelectedCustomerId(Number(e.target.value) || '');
-                setSelectedPlanId(''); // Reset plan when customer changes
+                setSelectedPlanId('');
               }}
               required
             >
-              <option value="">Select Customer</option>
+              <option value="">{t('invoiceModal.selectCustomer', 'Select Customer')}</option>
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.name} - {customer.mobile} ({customer.connectionType})
@@ -150,10 +148,9 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
             </Select>
           </div>
 
-          {/* Plan Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">
-              Plan / Service <span className="text-destructive">*</span>
+              {t('invoiceModal.planService', 'Plan / Service')} <span className="text-destructive">*</span>
             </label>
             <Select
               value={selectedPlanId}
@@ -161,7 +158,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
               required
               disabled={!selectedCustomer}
             >
-              <option value="">Select Plan</option>
+              <option value="">{t('invoiceModal.selectPlan', 'Select Plan')}</option>
               {filteredPlans.map((plan) => (
                 <option key={plan.id} value={plan.id}>
                   {plan.planName} - ₹{plan.price}/month
@@ -170,39 +167,37 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
             </Select>
             {selectedCustomer && filteredPlans.length === 0 && (
               <p className="text-sm text-muted-foreground mt-1">
-                No plans available for {selectedCustomer.connectionType}
+                {t('invoiceModal.noPlansAvailable', 'No plans available for {{connectionType}}', { connectionType: selectedCustomer.connectionType })}
               </p>
             )}
           </div>
 
-          {/* Amount Breakdown */}
           {selectedPlan && (
             <Card className="bg-gradient-to-br from-blue-50 to-cyan-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Amount Breakdown (GST Compliant)</CardTitle>
+                <CardTitle className="text-lg">{t('invoiceModal.amountBreakdown', 'Amount Breakdown (GST Compliant)')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Base Amount:</span>
+                  <span className="text-sm font-medium">{t('invoiceModal.baseAmount', 'Base Amount')}:</span>
                   <span className="font-semibold">₹{baseAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">GST ({gstRate}%):</span>
+                  <span className="text-sm font-medium">{t('invoiceModal.gst', 'GST')} ({gstRate}%):</span>
                   <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
                 </div>
                 <div className="border-t-2 border-primary/20 pt-3 flex justify-between items-center">
-                  <span className="text-base font-bold">Total Amount:</span>
+                  <span className="text-base font-bold">{t('invoiceModal.totalAmount', 'Total Amount')}:</span>
                   <span className="text-xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-2">
-                Issue Date <span className="text-destructive">*</span>
+                {t('invoiceModal.issueDate', 'Issue Date')} <span className="text-destructive">*</span>
               </label>
               <Input
                 type="date"
@@ -213,7 +208,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
             </div>
             <div>
               <label className="block text-sm font-semibold mb-2">
-                Due Date <span className="text-destructive">*</span>
+                {t('invoiceModal.dueDate', 'Due Date')} <span className="text-destructive">*</span>
               </label>
               <Input
                 type="date"
@@ -224,14 +219,13 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
             </div>
           </div>
 
-          {/* Status */}
           <div>
-            <label className="block text-sm font-semibold mb-2">Status</label>
+            <label className="block text-sm font-semibold mb-2">{t('common.status', 'Status')}</label>
             <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
-              <option value="draft">Draft</option>
-              <option value="sent">Sent</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
+              <option value="draft">{t('invoiceModal.statusDraft', 'Draft')}</option>
+              <option value="sent">{t('invoiceModal.statusSent', 'Sent')}</option>
+              <option value="paid">{t('invoiceModal.statusPaid', 'Paid')}</option>
+              <option value="overdue">{t('invoiceModal.statusOverdue', 'Overdue')}</option>
             </Select>
           </div>
 
@@ -244,10 +238,10 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
 
         <div className="flex justify-end gap-3 p-6 border-t border-border bg-muted/30">
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={saving || !selectedCustomer || !selectedPlan}>
-            {saving ? 'Creating...' : 'Create Invoice'}
+            {saving ? t('invoiceModal.creating', 'Creating...') : t('invoiceModal.createInvoice', 'Create Invoice')}
           </Button>
         </div>
       </div>

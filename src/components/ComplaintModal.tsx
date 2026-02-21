@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Camera } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
@@ -25,6 +26,7 @@ interface ComplaintModalProps {
 }
 
 const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModalProps) => {
+  const { t } = useTranslation();
   const { addComplaint, updateComplaint, products, fetchActiveProducts } = useStore();
   
   useEffect(() => {
@@ -81,14 +83,14 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     if (!file) return;
     const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
     if (!allowed.includes(file.type)) {
-      alert('Please upload a JPG, JPEG or PNG image.');
+      alert(t('complaintModal.invalidImageType', 'Please upload a JPG, JPEG or PNG image.'));
       return;
     }
     try {
       const base64 = await fileToBase64(file);
       setClosureImage(base64);
     } catch (err) {
-      alert('Failed to read image. Please try again.');
+      alert(t('complaintModal.imageReadFailed', 'Failed to read image. Please try again.'));
     }
     e.target.value = '';
   };
@@ -97,16 +99,15 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     e.preventDefault();
 
     if (!selectedCustomer) {
-      alert('Please select a customer');
+      alert(t('complaintModal.selectCustomerAlert', 'Please select a customer'));
       return;
     }
 
     if (complaint) {
-      // When setting status to Completed, image is mandatory and closedAt is auto-filled
       if (formData.status === 'completed') {
         const imageToSave = closureImage ?? complaint.closureImage;
         if (!imageToSave) {
-          alert('Please upload a closure photo. Image is required when status is Completed.');
+          alert(t('complaintModal.closurePhotoRequired', 'Please upload a closure photo. Image is required when status is Completed.'));
           return;
         }
         const closedAt = complaint.closedAt ?? new Date().toISOString();
@@ -143,11 +144,11 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
   const getStatusLabel = (status: ComplaintStatus) => {
     switch (status) {
       case 'active':
-        return 'Active';
+        return t('complaintModal.statusActive', 'Active');
       case 'on-hold':
-        return 'On Hold';
+        return t('complaintModal.statusOnHold', 'On Hold');
       case 'completed':
-        return 'Completed';
+        return t('complaintModal.statusCompleted', 'Completed');
       default:
         return status;
     }
@@ -162,36 +163,33 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
         className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col border border-border"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Compact Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-lg font-semibold">
-            {complaint ? 'Edit Complaint' : 'Add New Complaint'}
+            {complaint ? t('complaintModal.editTitle', 'Edit Complaint') : t('complaintModal.addTitle', 'Add New Complaint')}
           </h2>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-accent rounded-md transition-colors"
-            aria-label="Close"
+            aria-label={t('common.close', 'Close')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 pb-20 sm:pb-6">
           <div className="space-y-4">
-            {/* Customer Selection (Add mode only) */}
             {!complaint && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Customer <span className="text-destructive">*</span>
+                  {t('common.customer', 'Customer')} <span className="text-destructive">*</span>
                 </label>
                 <Select
                   value={formData.customerId}
                   onChange={(e) => handleCustomerChange(e.target.value)}
                   required
                 >
-                  <option value="">Select a customer</option>
+                  <option value="">{t('complaintModal.selectCustomer', 'Select a customer')}</option>
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name} - {customer.mobile}
@@ -201,19 +199,18 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
               </div>
             )}
 
-            {/* Customer Information Card (Single block for both Add and Edit) */}
             {(selectedCustomer || complaint) && (
               <div className="bg-muted p-4 rounded-md space-y-2 border border-border">
                 <p className="text-sm">
-                  <span className="font-medium">Customer:</span>{' '}
+                  <span className="font-medium">{t('common.customer', 'Customer')}:</span>{' '}
                   {complaint ? complaint.customerName : selectedCustomer?.name}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium">Mobile:</span>{' '}
+                  <span className="font-medium">{t('common.mobile', 'Mobile')}:</span>{' '}
                   {complaint ? complaint.mobile : selectedCustomer?.mobile}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium">Connection Type:</span>{' '}
+                  <span className="font-medium">{t('common.connectionType', 'Connection Type')}:</span>{' '}
                   {getConnectionTypeLabel(
                     complaint ? complaint.connectionType : (selectedCustomer?.connectionType ?? (Array.isArray(products) && products.length > 0 ? products[0].name : '')),
                     products
@@ -222,10 +219,9 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
               </div>
             )}
 
-            {/* Customer Complaint Description - Read-only in Edit mode, Editable in Add mode */}
             {complaint ? (
               <div>
-                <label className="block text-sm font-medium mb-2">Customer Complaint</label>
+                <label className="block text-sm font-medium mb-2">{t('complaintModal.customerComplaint', 'Customer Complaint')}</label>
                 <div className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground resize-none min-h-[100px] flex items-start pt-3">
                   <p className="text-sm whitespace-pre-wrap">{complaint.customerDescription}</p>
                 </div>
@@ -233,33 +229,32 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
             ) : (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Customer Complaint <span className="text-destructive">*</span>
+                  {t('complaintModal.customerComplaint', 'Customer Complaint')} <span className="text-destructive">*</span>
                 </label>
                 <textarea
                   value={formData.customerDescription}
                   onChange={(e) => setFormData({ ...formData, customerDescription: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                   rows={4}
-                  placeholder="Enter customer complaint description..."
+                  placeholder={t('complaintModal.complaintPlaceholder', 'Enter customer complaint description...')}
                   required
                 />
               </div>
             )}
 
-            {/* Internal Notes / Resolution - Always editable */}
             <div>
-              <label className="block text-sm font-medium mb-2">Our Notes / Resolution</label>
+              <label className="block text-sm font-medium mb-2">{t('complaintModal.internalNotes', 'Our Notes / Resolution')}</label>
               <textarea
                 value={formData.internalDescription}
                 onChange={(e) => setFormData({ ...formData, internalDescription: e.target.value })}
                 className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                 rows={4}
-                placeholder="Enter internal notes, resolution steps, or updates..."
+                placeholder={t('complaintModal.internalNotesPlaceholder', 'Enter internal notes, resolution steps, or updates...')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+              <label className="block text-sm font-medium mb-2">{t('common.status', 'Status')}</label>
               <Select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as ComplaintStatus })}
@@ -272,18 +267,17 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
               </Select>
             </div>
 
-            {/* Photo Upload — Admin/Employee only; shown ONLY when Status = Completed */}
             {formData.status === 'completed' && (
               <div className="space-y-2 pt-2 border-t border-border">
                 <label className="block text-sm font-medium">
-                  Closure Photo <span className="text-destructive">*</span>
+                  {t('complaintModal.closurePhoto', 'Closure Photo')} <span className="text-destructive">*</span>
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  One image required (JPG, PNG or JPEG). Upload from device or take a picture.
+                  {t('complaintModal.closurePhotoHint', 'One image required (JPG, PNG or JPEG). Upload from device or take a picture.')}
                 </p>
                 {complaint?.closedAt && (
                   <p className="text-sm text-muted-foreground">
-                    Closed: {new Date(complaint.closedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    {t('complaintModal.closed', 'Closed')}: {new Date(complaint.closedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
                 )}
                 {complaint?.closureImage || closureImage ? (
@@ -297,11 +291,11 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                     >
                       <img
                         src={closureImage ?? complaint?.closureImage ?? ''}
-                        alt="Closure"
+                        alt={t('complaintModal.closureAlt', 'Closure')}
                         className="w-full h-full object-contain"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Tap image to preview</p>
+                    <p className="text-xs text-muted-foreground">{t('complaintModal.tapToPreview', 'Tap image to preview')}</p>
                     {!complaint?.closureImage && closureImage && (
                       <Button
                         type="button"
@@ -312,7 +306,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                           fileInputRef.current?.click();
                         }}
                       >
-                        Change photo
+                        {t('complaintModal.changePhoto', 'Change photo')}
                       </Button>
                     )}
                   </div>
@@ -333,7 +327,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <Camera className="w-4 h-4 mr-2" />
-                      Photo
+                      {t('complaintModal.photo', 'Photo')}
                     </Button>
                   </div>
                 )}
@@ -342,16 +336,14 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
           </div>
           </div>
 
-          {/* Fixed Footer — buttons aligned right: Cancel (secondary) left, Save (primary) right */}
           <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card sticky bottom-0">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">{complaint ? 'Update' : 'Create'} Complaint</Button>
+            <Button type="submit" className="w-full sm:w-auto">{complaint ? t('complaintModal.updateComplaint', 'Update Complaint') : t('complaintModal.createComplaint', 'Create Complaint')}</Button>
           </div>
         </form>
 
-        {/* Image preview overlay — tap to close */}
         {imagePreviewOpen && (closureImage ?? complaint?.closureImage) && (
           <div
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
@@ -363,13 +355,13 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
             <button
               onClick={() => setImagePreviewOpen(false)}
               className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
-              aria-label="Close preview"
+              aria-label={t('complaintModal.closePreview', 'Close preview')}
             >
               <X className="w-6 h-6" />
             </button>
             <img
               src={closureImage ?? complaint?.closureImage ?? ''}
-              alt="Closure preview"
+              alt={t('complaintModal.closurePreviewAlt', 'Closure preview')}
               className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
               onClick={(e) => e.stopPropagation()}
             />

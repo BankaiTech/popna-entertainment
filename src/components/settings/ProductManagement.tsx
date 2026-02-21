@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import { getProviderDisplayName } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 
 const ProductManagement = () => {
+  const { t } = useTranslation();
   const { products, loading, fetchProducts, addProduct, updateProduct, deleteProduct } = useStore();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -58,7 +60,7 @@ const ProductManagement = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this product? This will affect all related customers and plans.')) {
+    if (confirm(t('productManagement.confirmDelete', 'Are you sure you want to delete this product? This will affect all related customers and plans.'))) {
       await deleteProduct(id);
     }
   };
@@ -71,50 +73,50 @@ const ProductManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Product Management</h2>
+          <h2 className="text-xl font-bold text-foreground">{t('productManagement.title', 'Product Management')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage products (cable/internet). Multi-tenant ready — backend will isolate by organization.
+            {t('productManagement.description', 'Manage products (cable/internet). Multi-tenant ready \u2014 backend will isolate by organization.')}
           </p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Product
+          {t('productManagement.addProduct', 'Add Product')}
         </Button>
       </div>
 
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</CardTitle>
+            <CardTitle>{editingProduct ? t('productManagement.editProduct', 'Edit Product') : t('productManagement.addNewProduct', 'Add New Product')}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
-                    Product Name <span className="text-destructive">*</span>
+                    {t('productManagement.productName', 'Product Name')} <span className="text-destructive">*</span>
                   </label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., Cable, Internet 1"
+                    placeholder={t('productManagement.productNamePlaceholder', 'e.g., Cable, Internet 1')}
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
-                    Product Type <span className="text-destructive">*</span>
+                    {t('productManagement.productType', 'Product Type')} <span className="text-destructive">*</span>
                   </label>
                   <Select
                     value={formData.productType}
                     onChange={(e) => setFormData({ ...formData, productType: e.target.value as 'cable' | 'internet' })}
                     required
                   >
-                    <option value="cable">Cable</option>
-                    <option value="internet">Internet</option>
+                    <option value="cable">{t('productManagement.cable', 'Cable')}</option>
+                    <option value="internet">{t('productManagement.internet', 'Internet')}</option>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Cable products enable payment tracking. Internet products do not.
+                    {t('productManagement.productTypeHint', 'Categorize your product type. Payment applies to all products.')}
                   </p>
                 </div>
               </div>
@@ -127,13 +129,13 @@ const ProductManagement = () => {
                   className="w-4 h-4 rounded border-border"
                 />
                 <label htmlFor="isActive" className="text-sm font-medium text-foreground">
-                  Active (visible in front site)
+                  {t('productManagement.activeLabel', 'Active (visible in front site)')}
                 </label>
               </div>
               <div className="flex space-x-2">
-                <Button type="submit">{editingProduct ? 'Update' : 'Create'} Product</Button>
+                <Button type="submit">{editingProduct ? t('productManagement.updateProduct', 'Update Product') : t('productManagement.createProduct', 'Create Product')}</Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </Button>
               </div>
             </form>
@@ -142,7 +144,7 @@ const ProductManagement = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-12">Loading products...</div>
+        <div className="text-center py-12">{t('productManagement.loading', 'Loading products...')}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((product) => (
@@ -163,7 +165,7 @@ const ProductManagement = () => {
                         ? 'text-green-600 hover:bg-green-50'
                         : 'text-gray-400 hover:bg-gray-50'
                     )}
-                    title={product.isActive ? 'Deactivate' : 'Activate'}
+                    title={product.isActive ? t('productManagement.deactivate', 'Deactivate') : t('productManagement.activate', 'Activate')}
                   >
                     {product.isActive ? (
                       <Check className="w-5 h-5" />
@@ -183,7 +185,7 @@ const ProductManagement = () => {
                         : 'bg-gray-100 text-gray-800'
                     )}
                   >
-                    {product.isActive ? 'Active' : 'Inactive'}
+                    {product.isActive ? t('productManagement.active', 'Active') : t('productManagement.inactive', 'Inactive')}
                   </span>
                   <span
                     className={cn(
@@ -193,7 +195,7 @@ const ProductManagement = () => {
                         : 'bg-purple-100 text-purple-800'
                     )}
                   >
-                    {product.productType === 'cable' ? 'Payment Enabled' : 'No Payment'}
+                    {product.productType === 'cable' ? t('productManagement.cable', 'Cable') : t('productManagement.internet', 'Internet')}
                   </span>
                 </div>
                 <div className="flex space-x-2">
@@ -204,7 +206,7 @@ const ProductManagement = () => {
                     className="flex-1"
                   >
                     <Edit className="w-4 h-4 mr-1" />
-                    Edit
+                    {t('common.edit', 'Edit')}
                   </Button>
                   <Button
                     variant="danger"
@@ -213,7 +215,7 @@ const ProductManagement = () => {
                     className="flex-1"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
+                    {t('common.delete', 'Delete')}
                   </Button>
                 </div>
               </CardContent>
@@ -225,7 +227,7 @@ const ProductManagement = () => {
       {products.length === 0 && !loading && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No products found. Add your first product to get started.</p>
+            <p className="text-muted-foreground">{t('productManagement.emptyState', 'No products found. Add your first product to get started.')}</p>
           </CardContent>
         </Card>
       )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import { Search } from 'lucide-react';
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 
 const ConnectionRequests = () => {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,7 +42,7 @@ const ConnectionRequests = () => {
       await loadRequests();
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update status. Please try again.');
+      alert(t('connectionRequests.updateError', 'Failed to update status. Please try again.'));
     }
   };
 
@@ -93,8 +95,8 @@ const ConnectionRequests = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">New Connection Requests</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage customer plan requests</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('connectionRequests.title', 'New Connection Requests')}</h1>
+          <p className="text-sm text-gray-600 mt-1">{t('connectionRequests.subtitle', 'Manage customer plan requests')}</p>
         </div>
       </div>
 
@@ -106,7 +108,7 @@ const ConnectionRequests = () => {
             <div className="relative w-full sm:w-auto sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by name or mobile..."
+                placeholder={t('connectionRequests.searchPlaceholder', 'Search by name or mobile...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs w-full sm:w-64"
@@ -117,18 +119,18 @@ const ConnectionRequests = () => {
               onChange={(e) => setStatusFilter(e.target.value as ConnectionRequestStatus | 'All')}
               className="h-8 text-xs w-full sm:w-auto sm:min-w-[140px]"
             >
-              <option value="All">All Status</option>
-              <option value="New">New</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Converted">Converted</option>
+              <option value="All">{t('connectionRequests.allStatus', 'All Status')}</option>
+              <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
+              <option value="Contacted">{t('connectionRequests.statusContacted', 'Contacted')}</option>
+              <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
             </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-gray-600">Loading requests...</div>
+            <div className="p-8 text-center text-gray-600">{t('connectionRequests.loading', 'Loading requests...')}</div>
           ) : filteredRequests.length === 0 ? (
-            <div className="p-8 text-center text-gray-600">No connection requests found.</div>
+            <div className="p-8 text-center text-gray-600">{t('connectionRequests.empty', 'No connection requests found.')}</div>
           ) : (
             <>
               {/* Desktop Table View */}
@@ -137,15 +139,15 @@ const ConnectionRequests = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-border bg-muted/30 sticky top-0 z-10">
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Customer Name</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Email</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Plan Name</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Product Name</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Requested Date</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Actions</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colId', 'ID')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colCustomerName', 'Customer Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colMobile', 'Mobile')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colEmail', 'Email')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colProductName', 'Product Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colStatus', 'Status')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colActions', 'Actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -183,7 +185,7 @@ const ConnectionRequests = () => {
                                   onClick={() => handleStatusUpdate(request.id, 'Contacted')}
                                   className="text-xs"
                                 >
-                                  Mark Contacted
+                                  {t('connectionRequests.markContacted', 'Mark Contacted')}
                                 </Button>
                               )}
                               {request.status !== 'Converted' && (
@@ -192,7 +194,7 @@ const ConnectionRequests = () => {
                                   onClick={() => handleStatusUpdate(request.id, 'Converted')}
                                   className="text-xs"
                                 >
-                                  Mark Converted
+                                  {t('connectionRequests.markConverted', 'Mark Converted')}
                                 </Button>
                               )}
                             </div>
@@ -212,7 +214,7 @@ const ConnectionRequests = () => {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-semibold text-gray-900">{request.name}</p>
-                          <p className="text-sm text-gray-600">ID: {request.id}</p>
+                          <p className="text-sm text-gray-600">{t('connectionRequests.colId', 'ID')}: {request.id}</p>
                         </div>
                         <span
                           className={cn(
@@ -224,11 +226,11 @@ const ConnectionRequests = () => {
                         </span>
                       </div>
                       <div className="space-y-1 text-sm">
-                        <p><span className="text-gray-600">Mobile:</span> {request.mobile}</p>
-                        <p><span className="text-gray-600">Email:</span> {request.email || '-'}</p>
-                        <p><span className="text-gray-600">Plan:</span> {request.planName}</p>
-                        <p><span className="text-gray-600">Product:</span> {getProviderDisplayName(request.productName)}</p>
-                        <p><span className="text-gray-600">Date:</span> {formatDate(request.createdAt)}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colMobile', 'Mobile')}:</span> {request.mobile}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colEmail', 'Email')}:</span> {request.email || '-'}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colPlanName', 'Plan')}:</span> {request.planName}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colProductName', 'Product')}:</span> {getProviderDisplayName(request.productName)}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colRequestedDate', 'Date')}:</span> {formatDate(request.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-2 pt-2">
                         {request.status !== 'Contacted' && (
@@ -238,7 +240,7 @@ const ConnectionRequests = () => {
                             onClick={() => handleStatusUpdate(request.id, 'Contacted')}
                             className="text-xs flex-1"
                           >
-                            Mark Contacted
+                            {t('connectionRequests.markContacted', 'Mark Contacted')}
                           </Button>
                         )}
                         {request.status !== 'Converted' && (
@@ -247,7 +249,7 @@ const ConnectionRequests = () => {
                             onClick={() => handleStatusUpdate(request.id, 'Converted')}
                             className="text-xs flex-1"
                           >
-                            Mark Converted
+                            {t('connectionRequests.markConverted', 'Mark Converted')}
                           </Button>
                         )}
                       </div>

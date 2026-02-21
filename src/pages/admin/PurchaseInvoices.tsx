@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,6 +13,7 @@ import { generatePurchaseInvoicePdf } from '@/lib/pdfUtils';
 import { useStore } from '@/store/useStore';
 
 const PurchaseInvoices = () => {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +69,7 @@ const PurchaseInvoices = () => {
       await generatePurchaseInvoicePdf(inv, companyProfile, vendor ?? undefined);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
     }
   };
 
@@ -75,14 +77,14 @@ const PurchaseInvoices = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Purchase Invoices</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('purchaseInvoices.title', 'Purchase Invoices')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            GST-compliant purchase invoices with CGST/SGST/IGST breakdown
+            {t('purchaseInvoices.subtitle', 'GST-compliant purchase invoices with CGST/SGST/IGST breakdown')}
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
-          New Purchase Invoice
+          {t('purchaseInvoices.newInvoice', 'New Purchase Invoice')}
         </Button>
       </div>
 
@@ -91,7 +93,7 @@ const PurchaseInvoices = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search by vendor or invoice..."
+              placeholder={t('purchaseInvoices.searchPlaceholder', 'Search by vendor or invoice...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-sm w-50"
@@ -100,22 +102,22 @@ const PurchaseInvoices = () => {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No purchase invoices yet.</div>
+            <div className="text-center py-12 text-muted-foreground">{t('purchaseInvoices.noResults', 'No purchase invoices yet.')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Number</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Vendor</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Reference</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Amount</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">GST Breakup</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Total</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Date</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">PDF</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colNumber', 'Number')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colVendor', 'Vendor')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colReference', 'Reference')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colAmount', 'Amount')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colGstBreakup', 'GST Breakup')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colTotal', 'Total')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colDate', 'Date')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colPdf', 'PDF')}</th>
                   </tr>
                 </thead>
                 <tbody>

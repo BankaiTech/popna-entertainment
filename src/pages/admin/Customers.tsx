@@ -1,4 +1,6 @@
+// SaaS Ready — Fully Dynamic Product
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -13,6 +15,7 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
 
 const AdminCustomers = () => {
+  const { t } = useTranslation();
   const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, products, fetchProducts } = useStore();
   const { role } = useAuthStore();
   const isEmployee = role === 'employee';
@@ -40,41 +43,29 @@ const AdminCustomers = () => {
     loadData();
   }, [fetchCustomers, fetchProducts, initialize]);
 
-  // Reset Payment Status filter when Connection Type is not a cable product
-  useEffect(() => {
-    if (!Array.isArray(products) || products.length === 0) return;
-    const selectedProduct = connectionFilter !== 'All' 
-      ? products.find((p) => p.name === connectionFilter)
-      : null;
-    if (selectedProduct?.productType !== 'cable') {
-      setPaymentStatusFilter('All');
-    }
-  }, [connectionFilter, products]);
+  // Payment Collection System — SaaS Ready (universal for all products, no cable-only restriction)
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
+      // Employee view: show ONLY Inactive customers (UI-level filter, no DB change)
+      if (isEmployee && customer.status !== 'Inactive') return false;
+
       const matchesSearch =
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customer.mobile.includes(searchQuery);
       const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
       const matchesConnection =
         connectionFilter === 'All' || customer.connectionType === connectionFilter;
-      // Multi-tenant ready — check if connection filter is a cable product
-      const selectedProduct = connectionFilter !== 'All' && Array.isArray(products)
-        ? products.find((p) => p.name === connectionFilter)
-        : null;
-      const isCableFilter = selectedProduct?.productType === 'cable';
+      // Payment filter — universal for ALL product types (SaaS Ready)
       const matchesPayment =
-        !isCableFilter
+        paymentStatusFilter === 'All'
           ? true
-          : paymentStatusFilter === 'All'
-            ? true
-            : paymentStatusFilter === 'paid'
-              ? customer.paymentStatus === 'paid'
-              : customer.paymentStatus === 'not_paid';
+          : paymentStatusFilter === 'paid'
+            ? customer.paymentStatus === 'paid'
+            : customer.paymentStatus === 'not_paid';
       return matchesSearch && matchesStatus && matchesConnection && matchesPayment;
     });
-  }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter, products]);
+  }, [customers, searchQuery, statusFilter, connectionFilter, paymentStatusFilter, isEmployee]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
@@ -165,10 +156,10 @@ const AdminCustomers = () => {
     setEditingCustomer(null);
   };
 
-  /** Cable product only. Admin and Employee can update only payment fields (paymentStatus, paymentDescription, paymentUpdatedAt). No role check — payment-only updates are always allowed. */
+  // Payment Collection System — SaaS Ready (ALL product types)
   const handleUpdatePayment = async (
     customerId: number,
-    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string }
+    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; collectedAmount?: number; balanceAmount?: number }
   ) => {
     const updated = await updateCustomer(customerId, data);
     if (updated) setEditingCustomer(updated);
@@ -180,14 +171,13 @@ const AdminCustomers = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">Customers</h1>
-          <p className="text-sm text-muted-foreground">Manage your customer database</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">{t('customers.title', 'Customers')}</h1>
+          <p className="text-sm text-muted-foreground">{t('customers.subtitle', 'Manage your customer database')}</p>
         </div>
-        {/* Only show Add Customer button for Admin role */}
         {!isEmployee && (
           <Button onClick={handleAdd} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
-            Add Customer
+            {t('customers.addCustomer', 'Add Customer')}
           </Button>
         )}
       </div>
@@ -196,17 +186,11 @@ const AdminCustomers = () => {
       <Card>
         <CardHeader className="py-3">
           {/* Filters in Header */}
-          <div
-            className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${
-              connectionFilter !== 'All' && Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable'
-                ? 'lg:grid-cols-4'
-                : 'lg:grid-cols-3'
-            }`}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by name or mobile..."
+                placeholder={t('customers.searchPlaceholder', 'Search by name or mobile...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9 text-sm w-50"
@@ -217,7 +201,7 @@ const AdminCustomers = () => {
               onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Status</option>
+              <option value="All">{t('customers.allStatus', 'All Status')}</option>
               {statuses.map((status) => (
                 <option key={status} value={status}>
                   {status}
@@ -229,7 +213,7 @@ const AdminCustomers = () => {
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
               className="h-9 text-sm"
             >
-              <option value="All">All Connections</option>
+              <option value="All">{t('customers.allConnections', 'All Connections')}</option>
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
@@ -238,25 +222,23 @@ const AdminCustomers = () => {
                 ))
               ) : null}
             </Select>
-            {connectionFilter !== 'All' && Array.isArray(products) && products.find((p) => p.name === connectionFilter)?.productType === 'cable' && (
-              <Select
-                value={paymentStatusFilter}
-                onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
-                className="h-9 text-sm"
-              >
-                <option value="All">All</option>
-                <option value="paid">Paid</option>
-                <option value="not_paid">Not Paid</option>
-              </Select>
-            )}
+            <Select
+              value={paymentStatusFilter}
+              onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
+              className="h-9 text-sm"
+            >
+              <option value="All">{t('customers.allPayment', 'All Payment')}</option>
+              <option value="paid">{t('customers.paid', 'Paid')}</option>
+              <option value="not_paid">{t('customers.unpaid', 'Unpaid')}</option>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-12">Loading customers...</div>
+            <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
           ) : filteredCustomers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No customers found matching your criteria.
+              {t('customers.noResults', 'No customers found matching your criteria.')}
             </div>
           ) : (
             <>
@@ -267,12 +249,13 @@ const AdminCustomers = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-border bg-muted/30">
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">ID</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Name</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Mobile</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Connection Type</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Package</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Status</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.id', 'ID')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.name', 'Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.mobile', 'Mobile')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.connectionType', 'Connection Type')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.package', 'Package')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.paymentStatus', 'Payment')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('customers.status', 'Status')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -296,6 +279,17 @@ const AdminCustomers = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
+                          <td className="px-3 py-2 text-sm">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                customer.paymentStatus === 'paid'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {customer.paymentStatus === 'paid' ? t('customers.paid', 'Paid') : t('customers.unpaid', 'Unpaid')}
+                            </span>
+                          </td>
                           <td className="px-3 py-2 text-sm flex items-center gap-2">
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -362,16 +356,22 @@ const AdminCustomers = () => {
                     
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Mobile: </span>
+                        <span className="text-muted-foreground">{t('customers.mobile', 'Mobile')}: </span>
                         <span className="font-medium">{customer.mobile}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Connection: </span>
+                        <span className="text-muted-foreground">{t('customers.connectionType', 'Connection')}: </span>
                         <span className="font-medium">{getConnectionTypeLabel(customer.connectionType)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Package: </span>
+                        <span className="text-muted-foreground">{t('customers.package', 'Package')}: </span>
                         <span className="font-medium">{customer.package || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">{t('customers.paymentStatus', 'Payment')}: </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {customer.paymentStatus === 'paid' ? t('customers.paid', 'Paid') : t('customers.unpaid', 'Unpaid')}
+                        </span>
                       </div>
                     </div>
 
@@ -426,18 +426,18 @@ const AdminCustomers = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="password-dialog-title" aria-describedby="password-dialog-desc">
             <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
-              <h2 id="password-dialog-title" className="text-lg font-semibold">Customer Created Successfully</h2>
+              <h2 id="password-dialog-title" className="text-lg font-semibold">{t('customers.customerCreated', 'Customer Created Successfully')}</h2>
             </div>
             <div id="password-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 space-y-3">
               <p className="text-sm text-muted-foreground">
-                A password has been automatically generated for this customer.
+                {t('customers.passwordGenerated', 'A password has been automatically generated for this customer.')}
               </p>
               <div className="bg-muted rounded-lg p-4 border border-border">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Generated Password:</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">{t('customers.generatedPassword', 'Generated Password')}:</p>
                 <p className="text-lg font-mono font-bold text-foreground break-all">{generatedPassword}</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Please save this password. It will not be shown again. The customer can use their mobile number and this password to log in.
+                {t('customers.passwordNote', 'Please save this password. It will not be shown again. The customer can use their mobile number and this password to log in.')}
               </p>
             </div>
             <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
@@ -460,17 +460,17 @@ const AdminCustomers = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-desc">
             <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
-              <h2 id="delete-dialog-title" className="text-lg font-semibold">Delete Customer</h2>
+              <h2 id="delete-dialog-title" className="text-lg font-semibold">{t('customers.deleteCustomer', 'Delete Customer')}</h2>
             </div>
             <p id="delete-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 text-sm text-muted-foreground">
-              Are you sure you want to delete this customer? This action cannot be undone.
+              {t('customers.deleteConfirm', 'Are you sure you want to delete this customer? This action cannot be undone.')}
             </p>
             <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
               <Button variant="outline" onClick={handleDeleteCancel} className="w-full sm:w-auto">
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </Button>
               <Button variant="destructive" onClick={handleDeleteConfirm} className="w-full sm:w-auto">
-                Delete
+                {t('common.delete', 'Delete')}
               </Button>
             </div>
           </div>
