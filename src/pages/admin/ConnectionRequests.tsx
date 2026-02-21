@@ -6,8 +6,9 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
+import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
-import { cn } from '@/lib/utils';
+import { cn, generateCustomerPassword } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 
@@ -46,6 +47,31 @@ const ConnectionRequests = () => {
     }
   };
 
+  // Connection auto-converted to customer
+  const { addCustomer } = useStore();
+
+  const handleConvert = async (request: ConnectionRequest) => {
+    try {
+      const password = generateCustomerPassword(request.name, request.mobile);
+      await addCustomer({
+        organizationId: 'org_001',
+        name: request.name,
+        email: request.email || '',
+        mobile: request.mobile,
+        password,
+        connectionType: request.productName as any,
+        package: request.planName,
+        status: 'Active',
+        address: { line1: '', line2: '', city: '', state: '', country: '' },
+        paymentStatus: 'not_paid',
+      });
+      await handleStatusUpdate(request.id, 'Converted');
+    } catch (error) {
+      console.error('Error converting request:', error);
+      alert(t('connectionRequests.convertError', 'Failed to convert. Please try again.'));
+    }
+  };
+
   // Filter requests by status and search query
   const filteredRequests = useMemo(() => {
     return requests.filter((request) => {
@@ -74,12 +100,21 @@ const ConnectionRequests = () => {
     switch (status) {
       case 'New':
         return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Contacted':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'Converted':
         return 'bg-green-100 text-green-700 border-green-200';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: ConnectionRequestStatus) => {
+    switch (status) {
+      case 'New':
+        return t('connectionRequests.new', 'New');
+      case 'Converted':
+        return t('connectionRequests.converted', 'Converted');
+      default:
+        return status;
     }
   };
 
@@ -95,14 +130,14 @@ const ConnectionRequests = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('connectionRequests.title', 'New Connection Requests')}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">{t('connectionRequests.title', 'New Connection Requests')}</h1>
           <p className="text-sm text-gray-600 mt-1">{t('connectionRequests.subtitle', 'Manage customer plan requests')}</p>
         </div>
       </div>
 
       <Card className="border border-border bg-card shadow-soft rounded-card">
         <CardHeader className="border-b border-border bg-gray-50">
-          
+
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2 mt-4">
             <div className="relative w-full sm:w-auto sm:max-w-xs">
@@ -139,15 +174,14 @@ const ConnectionRequests = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-border bg-muted/30 sticky top-0 z-10">
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colId', 'ID')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colCustomerName', 'Customer Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colMobile', 'Mobile')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colEmail', 'Email')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colProductName', 'Product Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colStatus', 'Status')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('connectionRequests.colActions', 'Actions')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('connectionRequests.colId', 'ID')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colCustomerName', 'Customer Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('connectionRequests.colMobile', 'Mobile')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colProductName', 'Product Name')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('connectionRequests.colStatus', 'Status')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('connectionRequests.colActions', 'Actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -162,7 +196,6 @@ const ConnectionRequests = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.id}</td>
                           <td className="px-3 py-2 text-sm font-medium text-gray-900">{request.name}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.mobile}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.email || '-'}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.planName}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{getProviderDisplayName(request.productName)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(request.createdAt)}</td>
@@ -173,25 +206,15 @@ const ConnectionRequests = () => {
                                 getStatusBadgeColor(request.status)
                               )}
                             >
-                              {request.status}
+                              {getStatusLabel(request.status)}
                             </span>
                           </td>
                           <td className="px-3 py-2">
                             <div className="flex items-center gap-2">
-                              {request.status !== 'Contacted' && (
+                              {request.status === 'New' && (
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  onClick={() => handleStatusUpdate(request.id, 'Contacted')}
-                                  className="text-xs"
-                                >
-                                  {t('connectionRequests.markContacted', 'Mark Contacted')}
-                                </Button>
-                              )}
-                              {request.status !== 'Converted' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleStatusUpdate(request.id, 'Converted')}
+                                  onClick={() => handleConvert(request)}
                                   className="text-xs"
                                 >
                                   {t('connectionRequests.markConverted', 'Mark Converted')}
@@ -222,31 +245,21 @@ const ConnectionRequests = () => {
                             getStatusBadgeColor(request.status)
                           )}
                         >
-                          {request.status}
+                          {getStatusLabel(request.status)}
                         </span>
                       </div>
                       <div className="space-y-1 text-sm">
                         <p><span className="text-gray-600">{t('connectionRequests.colMobile', 'Mobile')}:</span> {request.mobile}</p>
-                        <p><span className="text-gray-600">{t('connectionRequests.colEmail', 'Email')}:</span> {request.email || '-'}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colEmail', 'Email')}:</span> {request.email || '—'}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colPlanName', 'Plan')}:</span> {request.planName}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colProductName', 'Product')}:</span> {getProviderDisplayName(request.productName)}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colRequestedDate', 'Date')}:</span> {formatDate(request.createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-2 pt-2">
-                        {request.status !== 'Contacted' && (
+                        {request.status === 'New' && (
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusUpdate(request.id, 'Contacted')}
-                            className="text-xs flex-1"
-                          >
-                            {t('connectionRequests.markContacted', 'Mark Contacted')}
-                          </Button>
-                        )}
-                        {request.status !== 'Converted' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleStatusUpdate(request.id, 'Converted')}
+                            onClick={() => handleConvert(request)}
                             className="text-xs flex-1"
                           >
                             {t('connectionRequests.markConverted', 'Mark Converted')}

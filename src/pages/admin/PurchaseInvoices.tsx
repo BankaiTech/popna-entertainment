@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, ShoppingCart, Search, Download } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
 import type { PurchaseInvoice } from '@/models/types';
 import { purchaseInvoicesApi, vendorsApi } from '@/api/purchaseInvoices';
 import PurchaseInvoiceModal from '@/components/PurchaseInvoiceModal';
@@ -57,9 +57,9 @@ const PurchaseInvoices = () => {
 
   const gstBreakupStr = (g: PurchaseInvoice['gstBreakup']) => {
     const parts: string[] = [];
-    if (g.cgst != null) parts.push(`CGST: ₹${g.cgst.toFixed(2)}`);
-    if (g.sgst != null) parts.push(`SGST: ₹${g.sgst.toFixed(2)}`);
-    if (g.igst != null) parts.push(`IGST: ₹${g.igst.toFixed(2)}`);
+    if (g.cgst != null) parts.push(`${t('invoices.cgst', 'CGST')}: ₹${g.cgst.toFixed(2)}`);
+    if (g.sgst != null) parts.push(`${t('invoices.sgst', 'SGST')}: ₹${g.sgst.toFixed(2)}`);
+    if (g.igst != null) parts.push(`${t('invoices.igst', 'IGST')}: ₹${g.igst.toFixed(2)}`);
     return parts.length ? parts.join(', ') : '—';
   };
 
@@ -77,7 +77,7 @@ const PurchaseInvoices = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('purchaseInvoices.title', 'Purchase Invoices')}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('purchaseInvoices.title', 'Purchase Invoices')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             {t('purchaseInvoices.subtitle', 'GST-compliant purchase invoices with CGST/SGST/IGST breakdown')}
           </p>
@@ -110,14 +110,14 @@ const PurchaseInvoices = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colNumber', 'Number')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colVendor', 'Vendor')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colReference', 'Reference')}</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colAmount', 'Amount')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colGstBreakup', 'GST Breakup')}</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colTotal', 'Total')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colDate', 'Date')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('purchaseInvoices.colPdf', 'PDF')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('purchaseInvoices.colNumber', 'Number')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('purchaseInvoices.colVendor', 'Vendor')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-16">{t('purchaseInvoices.colReference', 'Reference')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('purchaseInvoices.colAmount', 'Amount')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-44">{t('purchaseInvoices.colGstBreakup', 'GST Breakup')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('purchaseInvoices.colTotal', 'Total')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('purchaseInvoices.colDate', 'Date')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-16">{t('purchaseInvoices.colPdf', 'PDF')}</th>
                   </tr>
                 </thead>
                 <tbody>

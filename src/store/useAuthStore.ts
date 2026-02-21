@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { loginCustomer } from '@/api/customerAuth';
 
-export type UserRole = 'admin' | 'employee' | 'customer';
+// SaaS Ready — client role for partner companies with configurable tab access
+export type UserRole = 'admin' | 'employee' | 'customer' | 'client';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -9,6 +10,8 @@ interface AuthState {
   username: string | null;
   customerId: number | null; // For customer role
   customerMobile: string | null; // For customer role
+  /** SaaS Ready — client/partner allowed sidebar tabs */
+  allowedTabs: string[] | null;
   login: (username: string, password: string) => boolean;
   customerLogin: (mobile: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
@@ -22,7 +25,7 @@ const loadAuthFromStorage = () => {
     const customerAuth = localStorage.getItem('customer_auth');
     const customerId = localStorage.getItem('customer_id');
     const customerMobile = localStorage.getItem('customer_mobile');
-    
+
     if (customerAuth === 'true' && customerId && customerMobile) {
       return {
         isAuthenticated: true,
@@ -30,9 +33,10 @@ const loadAuthFromStorage = () => {
         username: customerMobile,
         customerId: parseInt(customerId, 10),
         customerMobile,
+        allowedTabs: null,
       };
     }
-    
+
     // Fallback to old admin/employee auth format
     const stored = localStorage.getItem('auth-storage');
     if (stored) {
@@ -50,11 +54,11 @@ const loadAuthFromStorage = () => {
   } catch (e) {
     // Ignore errors
   }
-  return { isAuthenticated: false, role: null, username: null, customerId: null, customerMobile: null };
+  return { isAuthenticated: false, role: null, username: null, customerId: null, customerMobile: null, allowedTabs: null };
 };
 
 // Save to localStorage
-const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | null; username: string | null; customerId: number | null; customerMobile: string | null }) => {
+const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | null; username: string | null; customerId: number | null; customerMobile: string | null; allowedTabs?: string[] | null }) => {
   try {
     if (state.role === 'customer') {
       // Save customer auth in separate keys
@@ -82,17 +86,23 @@ const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | n
 
 export const useAuthStore = create<AuthState>((set) => ({
   ...loadAuthFromStorage(),
+  allowedTabs: loadAuthFromStorage().allowedTabs || null,
   login: (username: string, password: string) => {
-    // Mock authentication for admin/employee
+    // Mock authentication for admin/employee/client
     if (password !== 'test123') {
       return false;
     }
-    
+
     let role: UserRole = 'employee';
+    let allowedTabs: string[] | null = null;
     if (username === 'bankaitech') {
       role = 'admin';
     } else if (username === 'bankaitech-emp') {
       role = 'employee';
+    } else if (username === 'popna-client') {
+      // SaaS Ready — client/partner login with configurable tab access
+      role = 'client';
+      allowedTabs = ['dashboard', 'customers', 'complaints', 'invoices'];
     } else {
       return false;
     }
@@ -103,6 +113,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       username,
       customerId: null,
       customerMobile: null,
+      allowedTabs,
     };
     set(newState);
     saveAuthToStorage(newState);
@@ -137,6 +148,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       username: null,
       customerId: null,
       customerMobile: null,
+      allowedTabs: null,
     };
     set(newState);
     saveAuthToStorage(newState);

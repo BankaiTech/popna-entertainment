@@ -1,17 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, FileText, Download, Search } from 'lucide-react';
+import { Plus, Download, Search } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import type { SalesInvoice, InvoiceStatus, Provider } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
-import { cn, formatCurrencyINR, formatDateDMY } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
 
 const Invoices = () => {
@@ -48,7 +48,7 @@ const Invoices = () => {
     return invoices.filter((inv) => {
       const byStatus = statusFilter === 'All' || inv.status === statusFilter;
       const byService = serviceFilter === 'All' || inv.serviceProvider === serviceFilter;
-      const bySearch = searchQuery.trim() === '' || 
+      const bySearch = searchQuery.trim() === '' ||
         inv.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase());
       return byStatus && byService && bySearch;
@@ -74,9 +74,15 @@ const Invoices = () => {
       paid: 'bg-green-100 text-green-800',
       overdue: 'bg-red-100 text-red-800',
     };
+    const statusLabels: Record<InvoiceStatus, string> = {
+      draft: t('invoices.draft', 'Draft'),
+      sent: t('invoices.sent', 'Sent'),
+      paid: t('invoices.paid', 'Paid'),
+      overdue: t('invoices.overdue', 'Overdue'),
+    };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
-        {status}
+        {statusLabels[status]}
       </span>
     );
   };
@@ -96,7 +102,7 @@ const Invoices = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('invoices.title', 'Sales Invoices')}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('invoices.title', 'Sales Invoices')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             {t('invoices.subtitle', 'GST-compliant sales invoices for customer billing')}
           </p>
@@ -156,14 +162,14 @@ const Invoices = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colNumber', 'Number')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colCustomer', 'Customer')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colService', 'Service')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colPlan', 'Plan')}</th>
-                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colTotal', 'Total')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colStatus', 'Status')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colDue', 'Due')}</th>
-                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('invoices.colPdf', 'PDF')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('invoices.colNumber', 'Number')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('invoices.colCustomer', 'Customer')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colService', 'Service')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colPlan', 'Plan')}</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colTotal', 'Total')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('invoices.colStatus', 'Status')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colDue', 'Due')}</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-16">{t('invoices.colPdf', 'PDF')}</th>
                   </tr>
                 </thead>
                 <tbody>

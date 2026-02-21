@@ -161,7 +161,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
               <option value="">{t('invoiceModal.selectPlan', 'Select Plan')}</option>
               {filteredPlans.map((plan) => (
                 <option key={plan.id} value={plan.id}>
-                  {plan.planName} - ₹{plan.price}/month
+                  {plan.planName} - ₹{plan.price}{t('plans.perMonth', '/month')}
                 </option>
               ))}
             </Select>

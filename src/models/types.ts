@@ -12,7 +12,7 @@ export type PaymentStatus = 'paid' | 'not_paid';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
-export type ConnectionRequestStatus = 'New' | 'Contacted' | 'Converted';
+export type ConnectionRequestStatus = 'New' | 'Converted';
 
 // Multi-tenant SaaS Isolation — backend will enforce org isolation
 export const MOCK_ORGANIZATION_ID = 'org_001';
@@ -61,6 +61,8 @@ export interface Customer {
   balanceAmount?: number;
   /** Optional GSTIN field for GST invoice support */
   gstin?: string | null;
+  /** Box number — only for cable product customers */
+  boxNumber?: string;
 }
 
 export interface DashboardStats {
@@ -217,3 +219,18 @@ export interface ConnectionRequest {
   status: ConnectionRequestStatus;
   createdAt: string;
 }
+
+// SaaS Ready — Client/Partner dashboard access configuration
+/** Defines which sidebar tabs a client/partner company can access */
+export interface ClientConfig {
+  id: number;
+  organizationId: string;
+  clientName: string;
+  username: string;
+  password: string;
+  /** Allowed sidebar tab keys — admin controls this per client */
+  allowedTabs: string[];
+  status: 'active' | 'inactive';
+  createdAt: string;
+}
+

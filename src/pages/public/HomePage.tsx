@@ -10,11 +10,10 @@ import popnaHomeImage from '@/assets/images/popna-home.png';
 
 const HomePage = () => {
   const { t } = useTranslation();
-  const { websiteSettings, products, companyProfile, fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile } = useStore();
+  const { products, companyProfile, fetchActiveProducts, fetchCompanyProfile } = useStore();
   useEffect(() => {
     const loadData = async () => {
       try {
-        await fetchWebsiteSettings();
         await fetchActiveProducts();
         await fetchCompanyProfile();
       } catch (error) {
@@ -22,17 +21,16 @@ const HomePage = () => {
       }
     };
     loadData();
-  }, [fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile]);
+  }, [fetchActiveProducts, fetchCompanyProfile]);
 
-  // Dynamic content from settings
-  const heroTitle = websiteSettings?.heroTitle || t('home.hero.defaultTitle');
-  const heroSubtitle = websiteSettings?.heroSubtitle || t('home.hero.defaultSubtitle');
-  const heroDescription = websiteSettings?.heroDescription || t('home.hero.defaultDescription');
-  const ctaButtonText = websiteSettings?.ctaButtonText || t('home.hero.cta');
+  // SaaS Ready — Hero content is static (not from websiteSettings)
+  const heroTitle = t('home.hero.defaultTitle');
+  const heroSubtitle = t('home.hero.defaultSubtitle');
+  const heroDescription = t('home.hero.defaultDescription');
+  const ctaButtonText = t('home.hero.cta');
 
   // API ready — replace mock with real backend
   // Get all active products (for infinite carousel)
-  // Carousel automatically adapts to number of products — template-based rendering
   const allActiveProducts = Array.isArray(products) ? products.filter((p) => p.isActive) : [];
 
   const getProductIcon = (productType: string) => {
@@ -50,12 +48,12 @@ const HomePage = () => {
     return gradients[index % gradients.length];
   };
 
-  // Company info for contact section
-  const companyPhone = companyProfile?.contactNumber || '+91 9876543210';
-  const companyEmail = companyProfile?.email || 'info@bankaitech.com';
+  // Company info for contact section — no hardcoded fallbacks
+  const companyPhone = companyProfile?.contactNumber || '';
+  const companyEmail = companyProfile?.email || '';
   const companyAddress = companyProfile
     ? `${companyProfile.addressLine1}${companyProfile.addressLine2 ? `, ${companyProfile.addressLine2}` : ''}, ${companyProfile.city}, ${companyProfile.state} ${companyProfile.pincode}`
-    : '123 Business Street, Bangalore, Karnataka 560001';
+    : '';
 
   return (
     <div className="min-h-screen bg-white">
@@ -64,10 +62,10 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {heroTitle}
             </h1>
-            <p className="text-xl sm:text-2xl text-gray-700 mb-6 font-medium">
+            <p className="text-lg sm:text-xl text-gray-700 mb-6 font-medium">
               {heroSubtitle}
             </p>
             <p className="text-base sm:text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -87,7 +85,7 @@ const HomePage = () => {
       <section id="services" className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{t('home.services.title')}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{t('home.services.title')}</h2>
             <p className="text-lg text-gray-600">{t('home.services.subtitle')}</p>
           </div>
 
@@ -149,7 +147,7 @@ const HomePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: About Text */}
             <div className="order-2 lg:order-1">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{t('home.about.title')}</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{t('home.about.title')}</h2>
               <p className="text-lg text-gray-600 mb-4">
                 {t('home.about.p1')}
               </p>
@@ -163,7 +161,7 @@ const HomePage = () => {
                 </Button>
               </a>
             </div>
-            
+
             {/* Right: Image (Desktop) / Top (Mobile) */}
             <div className="order-1 lg:order-2">
               <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -183,7 +181,7 @@ const HomePage = () => {
       <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{t('home.contact.title')}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{t('home.contact.title')}</h2>
             <p className="text-lg text-gray-600">{t('home.contact.subtitle')}</p>
           </div>
 

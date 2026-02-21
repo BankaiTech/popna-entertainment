@@ -1,0 +1,199 @@
+// Payment Collection System — SaaS Ready
+// Standalone modal: opened directly from Unpaid badge in Customer table.
+// Separate from Edit Customer sheet — no payment controls inside edit.
+// Professional payment modal applied
+import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
+import { useStore } from '@/store/useStore';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import type { Customer } from '@/models/types';
+
+interface PaymentCollectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  customer: Customer;
+  onSubmit: (
+    customerId: number,
+    data: {
+      paymentStatus: 'paid' | 'not_paid';
+      paymentDescription: string;
+      paymentUpdatedAt: string;
+      collectedAmount: number;
+      balanceAmount: number;
+    }
+  ) => Promise<void>;
+}
+
+const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: PaymentCollectionModalProps) => {
+  const { t } = useTranslation();
+  const { plans } = useStore();
+
+  const customerPlan = useMemo(() => {
+    if (!Array.isArray(plans)) return null;
+    return plans.find((p) => p.planName === customer.package && p.provider === customer.connectionType) || null;
+  }, [customer, plans]);
+
+  const planAmount = customerPlan?.price ?? 0;
+  const gstRate = customerPlan?.gstRate ?? 0;
+  const gstAmount = planAmount * (gstRate / 100);
+  const totalAmount = planAmount + gstAmount;
+
+  const [collectedAmount, setCollectedAmount] = useState<number>(customer.collectedAmount ?? 0);
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const balanceAmount = Math.max(0, totalAmount - (collectedAmount || 0));
+  const overpaidAmount = collectedAmount > totalAmount ? collectedAmount - totalAmount : 0;
+  const isFullyPaid = collectedAmount >= totalAmount && totalAmount > 0;
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const desc = description.trim();
+    if (!desc) { alert(t('payment.descriptionRequired', 'Description is required.')); return; }
+    if (collectedAmount < 0) { alert(t('payment.invalidAmount', 'Collected amount cannot be negative.')); return; }
+
+    // Auto-use current date — no manual date input needed
+    const paymentUpdatedAt = new Date().toISOString();
+    const computedStatus: 'paid' | 'not_paid' = isFullyPaid ? 'paid' : 'not_paid';
+
+    setSaving(true);
+    try {
+      await onSubmit(customer.id, {
+        paymentStatus: computedStatus,
+        paymentDescription: desc,
+        paymentUpdatedAt,
+        collectedAmount,
+        balanceAmount: isFullyPaid ? 0 : balanceAmount,
+      });
+      onClose();
+    } catch {
+      alert(t('payment.updateFailed', 'Failed to update payment status. Please try again.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
+          <h3 className="text-base font-semibold">{t('payment.collectPayment', 'Collect Payment')}</h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-accent rounded-md transition-colors min-h-[44px] touch-manipulation"
+            aria-label={t('common.close', 'Close')}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="p-4 sm:p-5 space-y-3">
+              {/* Customer info */}
+              <div className="bg-muted/30 rounded-lg p-3 border border-border">
+                <p className="text-sm font-semibold">{customer.name}</p>
+                <p className="text-xs text-muted-foreground">{customer.mobile} &middot; {customer.connectionType}</p>
+              </div>
+
+              {/* Read-only plan & amount details */}
+              <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 border border-border">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('payment.planName', 'Plan Name')}</span>
+                  <span className="font-medium">{customer.package || '—'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('payment.planAmount', 'Plan Amount')}</span>
+                  <span className="font-medium">₹{planAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('payment.gstAmount', 'GST Amount')} ({gstRate}%)</span>
+                  <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold border-t border-border pt-1.5">
+                  <span>{t('payment.totalAmount', 'Total Amount')}</span>
+                  <span>₹{totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Collected Amount */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('payment.collectedAmount', 'Collected Amount')} <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={collectedAmount || ''}
+                  onChange={(e) => setCollectedAmount(parseFloat(e.target.value) || 0)}
+                  required
+                />
+              </div>
+
+              {/* Balance / Overpaid / Fully Paid indicators */}
+              {!isFullyPaid && collectedAmount > 0 && overpaidAmount === 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-sm font-medium text-red-700">{t('payment.balanceAmount', 'Balance Amount')}</span>
+                  <span className="text-base font-bold text-red-700">₹{balanceAmount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {overpaidAmount > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="text-sm font-medium text-amber-700">{t('payment.overpaidAmount', 'Overpaid Amount')}</span>
+                  <span className="text-base font-bold text-amber-700">₹{overpaidAmount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {isFullyPaid && collectedAmount > 0 && overpaidAmount === 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 text-center">
+                  <span className="text-sm font-medium text-green-700">{t('payment.fullyPaid', 'Fully Paid')}</span>
+                </div>
+              )}
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('payment.description', 'Description')} <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
+                  rows={2}
+                  placeholder={t('payment.descriptionPlaceholder', 'Enter payment details...')}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-3 border-t border-border bg-card">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+              {saving ? t('common.saving', 'Saving...') : t('common.submit', 'Submit')}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentCollectionModal;
+// SaaS datagrid, payment, employee flow revamp completed

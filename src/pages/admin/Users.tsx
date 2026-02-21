@@ -120,7 +120,7 @@ const AdminUsers = () => {
   const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-    
+
     setEditError('');
     const name = editName.trim();
     const username = editUsername.trim();
@@ -202,7 +202,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-lg font-bold text-foreground">
               <AnimatedCounter value={users.length} duration={1500} />
             </div>
           </CardContent>
@@ -218,7 +218,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-lg font-bold text-foreground">
               <AnimatedCounter value={adminCount} duration={1500} />
             </div>
           </CardContent>
@@ -234,7 +234,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-lg font-bold text-foreground">
               <AnimatedCounter value={employeeCount} duration={1500} />
             </div>
           </CardContent>
@@ -250,7 +250,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-lg font-bold text-foreground">
               <AnimatedCounter value={activeCount} duration={1500} />
             </div>
           </CardContent>
@@ -266,7 +266,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-lg font-bold text-foreground">
               <AnimatedCounter value={inactiveCount} duration={1500} />
             </div>
           </CardContent>
@@ -325,13 +325,13 @@ const AdminUsers = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colId', 'ID')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colName', 'Name')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colUsername', 'Username')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colRole', 'Role')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colStatus', 'Status')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colCreatedDate', 'Created Date')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colActions', 'Actions')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('users.colId', 'ID')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-36">{t('users.colName', 'Name')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('users.colUsername', 'Username')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colRole', 'Role')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colStatus', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('users.colCreatedDate', 'Created Date')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colActions', 'Actions')}</th>
                     </tr>
                   </thead>
                   <tbody>

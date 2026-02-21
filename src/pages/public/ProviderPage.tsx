@@ -13,12 +13,11 @@ interface ProviderPageProps {
 
 const ProviderPage = ({ provider }: ProviderPageProps) => {
   const { t } = useTranslation();
-  const { plans, products, loading, fetchPlansByProvider, fetchActiveProducts, companyProfile, fetchCompanyProfile } = useStore();
+  const { plans, products, loading, fetchPlansByProvider, fetchActiveProducts } = useStore();
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        await fetchCompanyProfile();
         await fetchActiveProducts();
         await fetchPlansByProvider(provider);
       } catch (error) {
@@ -26,7 +25,7 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
       }
     };
     loadData();
-  }, [provider, fetchPlansByProvider, fetchActiveProducts, fetchCompanyProfile]);
+  }, [provider, fetchPlansByProvider, fetchActiveProducts]);
 
   const calculateFinalPrice = (price: number, gstRate: number) => {
     return price + (price * gstRate) / 100;
@@ -51,8 +50,6 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
   const serviceDescription = isCable
     ? t('providerPage.cableDescription', 'Choose the right cable plan for your home or business')
     : t('providerPage.internetDescription', 'Choose the perfect plan for your internet needs');
-
-  const companyName = companyProfile?.companyName || 'BankaiTech';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

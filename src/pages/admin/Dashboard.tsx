@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
-import { useAuthStore } from '@/store/useAuthStore';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
@@ -33,13 +33,7 @@ const AdminDashboard = () => {
   // Calculate active complaints count
   const activeComplaintsCount = complaints.filter((c) => c.status === 'active').length;
 
-  // SaaS Ready — Payment Summary for ALL products (universal, no cable-only restriction)
-  const allProductStats = Array.isArray(products) ? products.map((product) => {
-    const productCustomers = customers.filter((c) => c.connectionType === product.name);
-    const paidCount = productCustomers.filter((c) => c.paymentStatus === 'paid').length;
-    const unpaidCount = productCustomers.filter((c) => c.paymentStatus !== 'paid').length;
-    return { product, customers: productCustomers, paidCount, unpaidCount };
-  }) : [];
+
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
@@ -115,7 +109,7 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-3 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
+        <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
         <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
       </div>
 
@@ -134,7 +128,7 @@ const AdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent className="pb-4 px-4">
-                <div className="text-3xl font-bold text-foreground mb-1">
+                <div className="text-xl font-bold text-foreground mb-1">
                   <AnimatedCounter value={stat.value} duration={1500} />
                 </div>
               </CardContent>
@@ -201,12 +195,12 @@ const AdminDashboard = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-border bg-muted/30">
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">ID</th>
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Name</th>
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Mobile</th>
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Connection Type</th>
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Package Rate</th>
-                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">Status</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.id', 'ID')}</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.name', 'Name')}</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.mobile', 'Mobile')}</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.connectionType', 'Connection Type')}</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.package', 'Package Rate')}</th>
+                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customers.status', 'Status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,15 +219,14 @@ const AdminDashboard = () => {
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.id}</td>
                       <td className="px-3 py-2 text-sm font-medium text-gray-900">{customer.name}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.connectionType}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{getConnectionTypeLabel(customer.connectionType, products)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
                       <td className="px-3 py-2 text-sm">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            customer.status === 'Active'
-                              ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
-                              : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active'
+                            ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
+                            : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
+                            }`}
                         >
                           {customer.status}
                         </span>

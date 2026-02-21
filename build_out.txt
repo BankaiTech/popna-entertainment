@@ -1,0 +1,52 @@
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32m???[39m 1579 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                           [39m[1m[2m    0.76 kB[22m[1m[22m[2m ??? gzip:   0.43 kB[22m
+[2mdist/[22m[32massets/popna-home-B9KoSuxh.png       [39m[1m[2m8,512.66 kB[22m[1m[22m
+[2mdist/[22m[35massets/index-DfVTFuom.css            [39m[1m[2m   42.22 kB[22m[1m[22m[2m ??? gzip:   7.51 kB[22m
+[2mdist/[22m[36massets/browser-ponyfill-D1IwA0V7.js  [39m[1m[2m   10.26 kB[22m[1m[22m[2m ??? gzip:   3.50 kB[22m
+[2mdist/[22m[36massets/index-CAJLLsL6.js             [39m[1m[33m  512.98 kB[39m[22m[2m ??? gzip: 133.69 kB[22m
+node.exe : [33m
+At C:\Program Files
+\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo 
+             : No  
+  tSpecified: (   
+ [33m:String) [    
+], RemoteExcep    
+tion
+    + FullyQualifi 
+   edErrorId : Na  
+  tiveCommandErr   
+ or
+ 
+(!) Some chunks 
+are larger than 
+500 kB after 
+minification. 
+Consider:
+- Using dynamic 
+import() to 
+code-split the 
+application
+- Use build.rollupO
+ptions.output.manua
+lChunks to improve 
+chunking: https://r
+ollupjs.org/configu
+ration-options/#out
+put-manualchunks
+- Adjust chunk 
+size limit for 
+this warning via bu
+ild.chunkSizeWarnin
+gLimit.[39m
+[32m??? built in 3.73s[39m
+

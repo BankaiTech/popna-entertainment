@@ -29,7 +29,8 @@ const PublicLayout = () => {
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
   // Multi-tenant ready — company name from settings
-  const companyName = companyProfile?.companyName || 'BankaiTech';
+  // SaaS Ready — Fully Dynamic Product: no hardcoded company name
+  const companyName = companyProfile?.companyName || '';
 
   // Multi-tenant ready — company name from settings
 
@@ -163,8 +164,8 @@ const PublicLayout = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('nav.contact')}</h3>
-              <p className="text-sm text-gray-600">{companyProfile?.contactNumber || '+91 9876543210'}</p>
-              <p className="text-sm text-gray-600">{companyProfile?.email || 'info@bankaitech.com'}</p>
+              <p className="text-sm text-gray-600">{companyProfile?.contactNumber || ''}</p>
+              <p className="text-sm text-gray-600">{companyProfile?.email || ''}</p>
             </div>
           </div>
           <div className="border-t border-gray-200 pt-6">

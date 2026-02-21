@@ -228,7 +228,6 @@ export const generateSalesInvoicePdf = async (
       <div class="signature-area">
         <div class="signature-line"></div>
         <div class="signature-text">Authorized Signatory</div>
-        <div style="font-size:10px;color:#666;margin-top:2px;">${companyName}</div>
       </div>
     </div>
 
@@ -359,13 +358,10 @@ export const generatePurchaseInvoicePdf = async (
     </div>
 
     <div class="footer-area">
-      <div style="font-size:10px;color:#666;">
-        <div>E. & O.E.</div>
-      </div>
+      <div></div>
       <div class="signature-area">
         <div class="signature-line"></div>
         <div class="signature-text">Authorized Signatory</div>
-        <div style="font-size:10px;color:#666;margin-top:2px;">${companyName}</div>
       </div>
     </div>
 

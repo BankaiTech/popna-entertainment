@@ -4,7 +4,7 @@ import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import type { Plan, Provider } from '@/models/types';
+import type { Plan } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import { formatCurrencyINR } from '@/lib/utils';
 import PlanModal from '@/components/PlanModal';
@@ -67,7 +67,7 @@ const Catalog = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t('catalog.title', 'Catalog')}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-2">{t('catalog.title', 'Catalog')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             {t('catalog.subtitle', 'Services, plans, pricing, GST, installation charges. Controlled from admin; front site reflects this catalog.')}
           </p>

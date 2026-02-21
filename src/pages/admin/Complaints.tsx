@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -41,14 +41,14 @@ const Complaints = () => {
       // Employee view: show ONLY active & on-hold complaints (UI-level filter)
       if (isEmployee && complaint.status === 'completed') return false;
 
-      const matchesSearch = searchQuery.trim() === '' || 
+      const matchesSearch = searchQuery.trim() === '' ||
         complaint.customerName.toLowerCase().includes(searchQuery.toLowerCase().trim());
-      
+
       const matchesStatus = statusFilter === 'All' || complaint.status === statusFilter;
-      
+
       const matchesConnection =
         connectionFilter === 'All' || complaint.connectionType === connectionFilter;
-      
+
       return matchesSearch && matchesStatus && matchesConnection;
     });
   }, [complaints, searchQuery, statusFilter, connectionFilter, isEmployee]);
@@ -96,11 +96,11 @@ const Complaints = () => {
   const getStatusLabel = (status: ComplaintStatus) => {
     switch (status) {
       case 'active':
-        return 'Active';
+        return t('complaints.active', 'Active');
       case 'on-hold':
-        return 'On Hold';
+        return t('complaints.onHold', 'On Hold');
       case 'completed':
-        return 'Completed';
+        return t('complaints.completed', 'Completed');
       default:
         return status;
     }
@@ -112,7 +112,7 @@ const Complaints = () => {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{t('complaints.title', 'Complaints')}</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('complaints.title', 'Complaints')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">{t('complaints.subtitle', 'Manage and track customer complaints')}</p>
         </div>
         <Button onClick={handleAdd} className="w-full sm:w-auto">
@@ -157,7 +157,7 @@ const Complaints = () => {
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
-                    {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? 'Cable' : 'Internet'})
+                    {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? t('common.cable', 'Cable') : t('common.internet', 'Internet')})
                   </option>
                 ))
               ) : null}
@@ -179,13 +179,13 @@ const Complaints = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.id', 'ID')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.customer', 'Customer')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.mobile', 'Mobile')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.connection', 'Connection')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.description', 'Description')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.status', 'Status')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('complaints.created', 'Created')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('complaints.id', 'ID')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[10rem]">{t('complaints.customer', 'Customer')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.mobile', 'Mobile')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.connection', 'Connection')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[8rem]">{t('complaints.description', 'Description')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.status', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.created', 'Created')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -240,22 +240,22 @@ const Complaints = () => {
                         {getStatusLabel(complaint.status)}
                       </span>
                     </div>
-                    
+
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Mobile: </span>
+                        <span className="text-muted-foreground">{t('complaints.mobile', 'Mobile')}: </span>
                         <span className="font-medium">{complaint.mobile}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Connection: </span>
+                        <span className="text-muted-foreground">{t('complaints.connection', 'Connection')}: </span>
                         <span className="font-medium">{getConnectionTypeLabel(complaint.connectionType)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Description: </span>
+                        <span className="text-muted-foreground">{t('complaints.description', 'Description')}: </span>
                         <span className="font-medium">{complaint.customerDescription}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Created: </span>
+                        <span className="text-muted-foreground">{t('complaints.created', 'Created')}: </span>
                         <span className="font-medium">{new Date(complaint.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>

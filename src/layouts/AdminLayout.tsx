@@ -63,8 +63,8 @@ const AdminLayout = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-base sm:text-lg font-semibold">{t('dashboard.welcome')} {username || 'User'}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground capitalize">{role || 'User'} {t('dashboard.userDashboard')}</p>
+            <h2 className="text-base sm:text-lg font-semibold">{t('dashboard.welcome')} {username || t('common.user', 'User')}</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground capitalize">{role || t('common.user', 'User')} {t('dashboard.userDashboard')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

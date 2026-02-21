@@ -81,7 +81,7 @@ const PlansPage = () => {
 
   // Get productId from plan provider name
   const getProductId = (providerName: string): number => {
-    const product = Array.isArray(products) 
+    const product = Array.isArray(products)
       ? products.find((p) => p.name === providerName)
       : null;
     return product?.id || 0;
@@ -89,11 +89,11 @@ const PlansPage = () => {
 
   const handleGetPlan = (plan: Plan) => {
     const productId = getProductId(plan.provider);
-    const product = Array.isArray(products) 
+    const product = Array.isArray(products)
       ? products.find((p) => p.name === plan.provider)
       : null;
     const productName = product?.name || plan.provider;
-    
+
     setSelectedPlan({ plan, productId, productName });
     setShowModal(true);
   };
@@ -103,7 +103,7 @@ const PlansPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{t('plans.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{t('plans.title')}</h1>
           <p className="text-lg text-gray-600">{t('plans.subtitle')}</p>
         </div>
 
@@ -181,7 +181,7 @@ const PlansPage = () => {
                       </div>
                     </div>
                     <div className="mt-auto pt-4">
-                      <Button 
+                      <Button
                         className="w-full"
                         onClick={() => handleGetPlan(plan)}
                       >
