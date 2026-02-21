@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -16,6 +17,7 @@ interface PlanRequestModalProps {
 }
 
 const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuccess }: PlanRequestModalProps) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
@@ -29,15 +31,15 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
 
     // Validation
     if (!name.trim()) {
-      setError('Customer name is required');
+      setError(t('planRequest.customerNameRequired'));
       return;
     }
     if (!mobile.trim()) {
-      setError('Mobile number is required');
+      setError(t('planRequest.mobileRequired'));
       return;
     }
     if (mobile.trim().length < 10) {
-      setError('Please enter a valid mobile number');
+      setError(t('planRequest.validMobile'));
       return;
     }
 
@@ -68,7 +70,7 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
         onClose();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit request. Please try again.');
+      setError(err instanceof Error ? err.message : t('planRequest.submitFail'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
         {/* Compact Header */}
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-border">
           <div>
-            <CardTitle className="text-lg font-semibold text-foreground">Get This Plan</CardTitle>
+            <CardTitle className="text-lg font-semibold text-foreground">{t('planRequest.title')}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground mt-1">
               {plan.planName} - {productName}
             </CardDescription>
@@ -101,7 +103,7 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
           <form onSubmit={handleSubmit} className="space-y-4">
             {success && (
               <div className="p-3 rounded-md bg-green-50 text-green-700 text-sm border border-green-200">
-                Request submitted successfully! Our team will contact you shortly.
+                {t('planRequest.success')}
               </div>
             )}
             {error && (
@@ -112,14 +114,14 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
 
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
-                Customer Name <span className="text-destructive">*</span>
+                {t('planRequest.customerName')} <span className="text-destructive">*</span>
               </label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
+                placeholder={t('planRequest.placeholderName')}
                 required
                 className="w-full"
               />
@@ -127,14 +129,14 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
 
             <div>
               <label htmlFor="mobile" className="block text-sm font-medium text-foreground mb-1.5">
-                Mobile Number <span className="text-destructive">*</span>
+                {t('planRequest.mobileNumber')} <span className="text-destructive">*</span>
               </label>
               <Input
                 id="mobile"
                 type="tel"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                placeholder="Enter your mobile number"
+                placeholder={t('planRequest.placeholderMobile')}
                 required
                 className="w-full"
               />
@@ -142,14 +144,14 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
-                Email <span className="text-muted-foreground text-xs">(Optional)</span>
+                {t('common.email')} <span className="text-muted-foreground text-xs">{t('common.optional')}</span>
               </label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                placeholder={t('planRequest.placeholderEmail')}
                 className="w-full"
               />
             </div>
@@ -166,14 +168,14 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
                 onClick={onClose}
                 disabled={loading}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
                 className="min-w-[100px]"
               >
-                {loading ? 'Submitting...' : 'Submit'}
+                {loading ? t('common.submitting') : t('common.submit')}
               </Button>
             </div>
           </form>

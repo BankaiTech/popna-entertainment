@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { plansApi } from '@/api/plans';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -11,6 +12,7 @@ import { getProviderDisplayName } from '@/lib/providerUtils';
 import type { Plan } from '@/models/types';
 
 const PlansPage = () => {
+  const { t } = useTranslation();
   const { products, fetchActiveProducts } = useStore();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ const PlansPage = () => {
 
   // Filter plans based on selection
   const filteredPlans = useMemo(() => {
-    if (selectedFilter === 'All') {
+    if (selectedFilter === t('plans.filterAll')) {
       return plans;
     }
     // Filter plans where provider matches selected product name
@@ -101,8 +103,8 @@ const PlansPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">All Plans</h1>
-          <p className="text-lg text-gray-600">Choose from our comprehensive range of plans</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{t('plans.title')}</h1>
+          <p className="text-lg text-gray-600">{t('plans.subtitle')}</p>
         </div>
 
         {/* Filter Section */}
@@ -119,7 +121,7 @@ const PlansPage = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 )}
               >
-                {getProviderDisplayName(filter)}
+                {filter === 'All' ? t('plans.filterAll') : getProviderDisplayName(filter)}
               </button>
             ))}
           </div>
@@ -128,11 +130,11 @@ const PlansPage = () => {
         {/* Plans Grid */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">Loading plans...</p>
+            <p className="text-gray-600">{t('plans.loading')}</p>
           </div>
         ) : filteredPlans.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">No plans available for the selected filter.</p>
+            <p className="text-gray-600">{t('plans.noPlans')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -156,25 +158,25 @@ const PlansPage = () => {
                   <CardContent className="flex-1 flex flex-col">
                     <div className="space-y-2 mb-4 flex-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Service:</span>
+                        <span className="text-sm text-gray-600">{t('plans.service')}</span>
                         <span className="font-semibold text-gray-900">{getProviderDisplayName(plan.provider)}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Base Price:</span>
-                        <span className="font-semibold text-gray-900">{formatCurrencyINR(plan.price)}/month</span>
+                        <span className="text-sm text-gray-600">{t('plans.basePrice')}</span>
+                        <span className="font-semibold text-gray-900">{formatCurrencyINR(plan.price)}{t('plans.perMonth')}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">GST ({plan.gstRate}%):</span>
+                        <span className="text-sm text-gray-600">{t('plans.gst')} ({plan.gstRate}%):</span>
                         <span className="font-semibold text-gray-900">
                           {formatCurrencyINR((plan.price * plan.gstRate) / 100)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
-                        <span className="text-sm font-semibold text-gray-900">Final Price:</span>
-                        <span className="text-lg font-bold text-primary">{formatCurrencyINR(finalPrice)}/month</span>
+                        <span className="text-sm font-semibold text-gray-900">{t('plans.finalPrice')}</span>
+                        <span className="text-lg font-bold text-primary">{formatCurrencyINR(finalPrice)}{t('plans.perMonth')}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Installation:</span>
+                        <span className="text-sm text-gray-600">{t('plans.installation')}</span>
                         <span className="font-semibold text-gray-900">{formatCurrencyINR(plan.installationAmount)}</span>
                       </div>
                     </div>
@@ -183,7 +185,7 @@ const PlansPage = () => {
                         className="w-full"
                         onClick={() => handleGetPlan(plan)}
                       >
-                        Get This Plan
+                        {t('plans.getThisPlan')}
                       </Button>
                     </div>
                   </CardContent>

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import './i18n';
 import './styles/index.css';
 import { useAuthStore } from './store/useAuthStore';
 import { useStore } from './store/useStore';

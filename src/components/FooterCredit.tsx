@@ -1,13 +1,15 @@
 import { Heart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Global footer credit — appears on every page (front site, admin/employee, customer login & dashboard).
  * Subtle, small text; link opens in new tab.
  */
 function FooterCredit() {
+  const { t } = useTranslation();
   return (
     <p className="text-center text-xs text-muted-foreground">
-      Built with <Heart className="inline-block w-3 h-3 fill-current" aria-hidden /> by{" "}
+      {t('footer.builtWith')} <Heart className="inline-block w-3 h-3 fill-current" aria-hidden /> by{" "}
       <a
         href="https://bankaitech.co"
         target="_blank"

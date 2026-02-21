@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -10,8 +11,8 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, fetchProducts, customers, complaints, products } = useStore();
-  const { role } = useAuthStore();
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ const AdminDashboard = () => {
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
-    return <div className="text-center py-12">Loading dashboard...</div>;
+    return <div className="text-center py-12">{t('dashboard.loading')}</div>;
   }
 
   // If no stats but not loading, initialize
@@ -65,7 +66,7 @@ const AdminDashboard = () => {
     ];
     const colorIndex = product.id % colors.length;
     return {
-      title: `${product.productType === 'cable' ? 'Cable' : 'Internet'} — ${getConnectionTypeLabel(product.name)}`,
+      title: `${product.productType === 'cable' ? t('dashboard.cable') : t('dashboard.internet')} — ${getConnectionTypeLabel(product.name)}`,
       value: productCustomers.length,
       icon: Wifi,
       color: colors[colorIndex].text,
@@ -115,8 +116,8 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-3 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold mb-1 gradient-text">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Overview of your ISP management system</p>
+        <h1 className="text-2xl font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Stats Cards */}
@@ -148,7 +149,7 @@ const AdminDashboard = () => {
         <Card className="overflow-hidden animate-slide-up">
           <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
           <CardHeader className="py-3">
-            <CardTitle className="text-base">Active by Service (Cable vs Internet)</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.activeByService')}</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
@@ -170,7 +171,7 @@ const AdminDashboard = () => {
         <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
           <CardHeader className="py-3">
-            <CardTitle className="text-base">Inactive by Service (Cable vs Internet)</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.inactiveByService')}</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
@@ -194,7 +195,7 @@ const AdminDashboard = () => {
       <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
         <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Last 5 Customers</CardTitle>
+          <CardTitle className="text-base">{t('dashboard.last5Customers')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -213,7 +214,7 @@ const AdminDashboard = () => {
                 {lastCustomers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">
-                      No customers found
+                      {t('dashboard.noCustomers')}
                     </td>
                   </tr>
                 ) : (

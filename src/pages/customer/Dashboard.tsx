@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -9,9 +10,11 @@ import type { Complaint, SalesInvoice } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
 import FooterCredit from '@/components/FooterCredit';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { salesInvoicesApi } from '@/api/invoices';
 
 const CustomerDashboard = () => {
+  const { t } = useTranslation();
   const { customerId, logout } = useAuthStore();
   const navigate = useNavigate();
   const { customers, complaints, initialize } = useStore();
@@ -105,7 +108,7 @@ const CustomerDashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-muted-foreground">Loading customer data...</p>
+          <p className="text-muted-foreground">{t('customerDashboard.loadingCustomer')}</p>
         </div>
       </div>
     );
@@ -117,17 +120,18 @@ const CustomerDashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 gradient-text">My Dashboard</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Welcome, {currentCustomer.name}</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 gradient-text">{t('customerDashboard.title')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{t('customerDashboard.welcome')} {currentCustomer.name}</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-stretch sm:items-center">
+          <LanguageSwitcher />
           <Button onClick={() => setIsComplaintModalOpen(true)} className="w-full sm:w-auto shadow-lg">
             <Plus className="w-4 h-4 mr-2" />
-            Add Complaint
+            {t('customerDashboard.addComplaint')}
           </Button>
           <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
             <LogOut className="w-4 h-4 mr-2" />
-            Logout
+            {t('nav.logout')}
           </Button>
         </div>
       </div>
@@ -136,28 +140,28 @@ const CustomerDashboard = () => {
       <Card className="overflow-hidden animate-slide-up">
         <div className="h-1 bg-gradient-to-r from-primary-500 to-secondary-500"></div>
         <CardHeader>
-          <CardTitle className="text-xl">My Details</CardTitle>
+          <CardTitle className="text-xl">{t('customerDashboard.myDetails')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-md transition-all duration-300">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Name</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('common.name')}</p>
               <p className="font-semibold text-lg">{currentCustomer.name}</p>
             </div>
             <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-md transition-all duration-300">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Mobile</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('common.mobile')}</p>
               <p className="font-semibold text-lg">{currentCustomer.mobile}</p>
             </div>
             <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Connection Type</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('customers.connectionType')}</p>
               <p className="font-semibold text-lg">{getConnectionTypeLabel(currentCustomer.connectionType)}</p>
             </div>
             <div className="p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 hover:shadow-md transition-all duration-300">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Package</p>
-              <p className="font-semibold text-lg">{currentCustomer.package || 'N/A'}</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('customers.package')}</p>
+              <p className="font-semibold text-lg">{currentCustomer.package || t('customers.packageN/A')}</p>
             </div>
             <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 hover:shadow-md transition-all duration-300">
-              <p className="text-sm text-muted-foreground mb-2 font-medium">Status</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('common.status')}</p>
               <span
                 className={`px-3 py-1.5 rounded-full text-sm font-semibold inline-block ${
                   currentCustomer.status === 'Active'
@@ -179,21 +183,21 @@ const CustomerDashboard = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl flex items-center gap-2">
               <FileText className="w-5 h-5" />
-              My Invoices
+              {t('customerDashboard.myInvoices')}
             </CardTitle>
             <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full font-medium">
-              {myInvoices.length} invoice{myInvoices.length !== 1 ? 's' : ''}
+              {t('customerDashboard.invoiceCount', { count: myInvoices.length })}
             </span>
           </div>
         </CardHeader>
         <CardContent>
           {loadingInvoices ? (
-            <div className="text-center py-8 text-muted-foreground">Loading invoices...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('customerDashboard.loadingInvoices')}</div>
           ) : myInvoices.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">No invoices yet</p>
-              <p className="text-sm mt-2">Your invoices will appear here once generated</p>
+              <p className="text-lg font-medium">{t('customerDashboard.noInvoices')}</p>
+              <p className="text-sm mt-2">{t('customerDashboard.noInvoicesSub')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -217,19 +221,19 @@ const CustomerDashboard = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Plan: </span>
+                          <span className="text-muted-foreground">{t('customerDashboard.plan')} </span>
                           <span className="font-medium">{invoice.planName}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Amount: </span>
+                          <span className="text-muted-foreground">{t('customerDashboard.amount')} </span>
                           <span className="font-bold text-primary">₹{invoice.totalAmount.toFixed(2)}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Issue Date: </span>
+                          <span className="text-muted-foreground">{t('customerDashboard.issueDate')} </span>
                           <span className="font-medium">{formatDate(invoice.issueDate)}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Due Date: </span>
+                          <span className="text-muted-foreground">{t('customerDashboard.dueDate')} </span>
                           <span className="font-medium">{formatDate(invoice.dueDate)}</span>
                         </div>
                       </div>
@@ -241,7 +245,7 @@ const CustomerDashboard = () => {
                       className="w-full sm:w-auto"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download
+                      {t('customerDashboard.download')}
                     </Button>
                   </div>
                 </div>
@@ -256,9 +260,9 @@ const CustomerDashboard = () => {
         <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">My Complaints</CardTitle>
+            <CardTitle className="text-xl">{t('customerDashboard.myComplaints')}</CardTitle>
             <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full font-medium">
-              {myComplaints.length} complaint{myComplaints.length !== 1 ? 's' : ''}
+              {t('customerDashboard.complaintCount', { count: myComplaints.length })}
             </span>
           </div>
         </CardHeader>
@@ -266,8 +270,8 @@ const CustomerDashboard = () => {
           {myComplaints.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <AlertCircle className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">No complaints yet</p>
-              <p className="text-sm mt-2">Click "Add Complaint" to submit a new complaint</p>
+              <p className="text-lg font-medium">{t('customerDashboard.noComplaints')}</p>
+              <p className="text-sm mt-2">{t('customerDashboard.noComplaintsSub')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -288,7 +292,7 @@ const CustomerDashboard = () => {
                           {getStatusLabel(complaint.status)}
                         </span>
                         <span className="text-xs text-muted-foreground font-medium">
-                          Created: {formatDate(complaint.createdAt)}
+                          {t('customerDashboard.created')} {formatDate(complaint.createdAt)}
                         </span>
                       </div>
                       <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">

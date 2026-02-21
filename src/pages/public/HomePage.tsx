@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { InfiniteCarousel } from '@/components/ui/InfiniteCarousel';
@@ -8,6 +9,7 @@ import { Wifi, Radio, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
 import popnaHomeImage from '@/assets/images/popna-home.png';
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const { websiteSettings, products, companyProfile, fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile } = useStore();
   useEffect(() => {
     const loadData = async () => {
@@ -23,10 +25,10 @@ const HomePage = () => {
   }, [fetchWebsiteSettings, fetchActiveProducts, fetchCompanyProfile]);
 
   // Dynamic content from settings
-  const heroTitle = websiteSettings?.heroTitle || 'Welcome to Our Service';
-  const heroSubtitle = websiteSettings?.heroSubtitle || 'Cable & Internet Services';
-  const heroDescription = websiteSettings?.heroDescription || 'Choose the right plan for your home or business.';
-  const ctaButtonText = websiteSettings?.ctaButtonText || 'Get Started';
+  const heroTitle = websiteSettings?.heroTitle || t('home.hero.defaultTitle');
+  const heroSubtitle = websiteSettings?.heroSubtitle || t('home.hero.defaultSubtitle');
+  const heroDescription = websiteSettings?.heroDescription || t('home.hero.defaultDescription');
+  const ctaButtonText = websiteSettings?.ctaButtonText || t('home.hero.cta');
 
   // API ready — replace mock with real backend
   // Get all active products (for infinite carousel)
@@ -85,13 +87,13 @@ const HomePage = () => {
       <section id="services" className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Our Services</h2>
-            <p className="text-lg text-gray-600">Explore our range of services</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{t('home.services.title')}</h2>
+            <p className="text-lg text-gray-600">{t('home.services.subtitle')}</p>
           </div>
 
           {allActiveProducts.length === 0 ? (
             <div className="text-center py-12 px-4 rounded-xl bg-gray-50 border border-gray-200">
-              <p className="text-gray-600">No services available. Add products in Admin → Settings → Products.</p>
+              <p className="text-gray-600">{t('home.services.noServices')}</p>
             </div>
           ) : (
             <div className="overflow-hidden">
@@ -124,10 +126,10 @@ const HomePage = () => {
                           </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
                             <CardDescription className="text-center text-sm text-gray-600 line-clamp-3 mb-4 flex-shrink-0 min-h-[60px] px-2">
-                              View plans and pricing for {product.name}. Choose the perfect plan for your needs.
+                              {t('home.services.viewPlansDesc', { name: product.name })}
                             </CardDescription>
                             <div className="mt-auto pt-4 text-center">
-                              <span className="text-primary font-medium group-hover:underline">View Plans →</span>
+                              <span className="text-primary font-medium group-hover:underline">{t('home.services.viewPlans')}</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -147,18 +149,16 @@ const HomePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: About Text */}
             <div className="order-2 lg:order-1">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">About Us</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{t('home.about.title')}</h2>
               <p className="text-lg text-gray-600 mb-4">
-                We are a leading provider of cable and internet services, committed to delivering reliable and
-                high-speed connectivity to homes and businesses.
+                {t('home.about.p1')}
               </p>
               <p className="text-lg text-gray-600 mb-6">
-                With years of experience in the industry, we offer flexible plans tailored to meet your needs,
-                backed by exceptional customer support and cutting-edge technology.
+                {t('home.about.p2')}
               </p>
               <a href="#services">
                 <Button variant="outline" className="inline-flex items-center gap-2">
-                  Explore Our Services
+                  {t('home.about.explore')}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </a>
@@ -183,8 +183,8 @@ const HomePage = () => {
       <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Get In Touch</h2>
-            <p className="text-lg text-gray-600">We're here to help you with all your connectivity needs</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{t('home.contact.title')}</h2>
+            <p className="text-lg text-gray-600">{t('home.contact.subtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -192,7 +192,7 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Phone className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Phone</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.phone')}</h3>
               <p className="text-gray-600">{companyPhone}</p>
             </div>
 
@@ -200,7 +200,7 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Email</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.email')}</h3>
               <p className="text-gray-600">{companyEmail}</p>
             </div>
 
@@ -208,7 +208,7 @@ const HomePage = () => {
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Address</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.address')}</h3>
               <p className="text-gray-600 text-sm">{companyAddress}</p>
             </div>
           </div>

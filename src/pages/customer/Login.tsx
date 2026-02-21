@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -8,6 +9,7 @@ import { User } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 
 const CustomerLogin = () => {
+  const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,17 +22,17 @@ const CustomerLogin = () => {
     setError('');
 
     if (!mobile.trim()) {
-      setError('Please enter your mobile number');
+      setError(t('login.enterMobile'));
       return;
     }
 
     if (!/^\d{10}$/.test(mobile)) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError(t('login.validMobile'));
       return;
     }
 
     if (!password.trim()) {
-      setError('Please enter your password');
+      setError(t('login.enterPassword'));
       return;
     }
 
@@ -43,10 +45,10 @@ const CustomerLogin = () => {
       if (result.success) {
         navigate('/customer/dashboard');
       } else {
-        setError(result.message || 'Invalid mobile number or password');
+        setError(result.message || t('login.invalidCredentials'));
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(t('login.errorGeneric'));
     } finally {
       setIsLoading(false);
     }
@@ -62,20 +64,20 @@ const CustomerLogin = () => {
                 <User className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl">Customer Login</CardTitle>
+            <CardTitle className="text-2xl">{t('login.customerTitle')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Enter your mobile number and password to access your account
+              {t('login.customerSubtitle')}
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Mobile Number <span className="text-destructive">*</span>
+                  {t('login.mobileNumber')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="tel"
-                  placeholder="9876543210"
+                  placeholder={t('login.placeholderMobile')}
                   value={mobile}
                   onChange={(e) => {
                     setMobile(e.target.value.replace(/\D/g, '').slice(0, 10));
@@ -86,14 +88,12 @@ const CustomerLogin = () => {
                   required
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter your registered 10-digit mobile number
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('login.registeredMobile')}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Password <span className="text-destructive">*</span>
+                  {t('login.password')} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   type="password"
@@ -116,7 +116,7 @@ const CustomerLogin = () => {
               )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? t('login.loggingIn') : t('nav.login')}
               </Button>
             </form>
           </CardContent>

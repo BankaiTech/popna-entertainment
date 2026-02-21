@@ -1,5 +1,5 @@
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import Button from './Button';
 
@@ -20,6 +20,7 @@ export function Pagination({
   totalItems,
   className,
 }: PaginationProps) {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
 
   const getPageNumbers = () => {
@@ -65,9 +66,9 @@ export function Pagination({
       {/* Info */}
       {totalItems !== undefined && (
         <div className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{startItem}</span> to{' '}
-          <span className="font-medium text-foreground">{endItem}</span> of{' '}
-          <span className="font-medium text-foreground">{totalItems}</span> results
+          {t('pagination.showing')} <span className="font-medium text-foreground">{startItem}</span> {t('pagination.to')}{' '}
+          <span className="font-medium text-foreground">{endItem}</span> {t('pagination.of')}{' '}
+          <span className="font-medium text-foreground">{totalItems}</span> {t('pagination.results')}
         </div>
       )}
 
@@ -81,7 +82,7 @@ export function Pagination({
           className="flex items-center gap-1"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Previous</span>
+          <span className="hidden sm:inline">{t('common.previous')}</span>
         </Button>
 
         <div className="flex items-center gap-1">
@@ -119,7 +120,7 @@ export function Pagination({
           disabled={currentPage === totalPages}
           className="flex items-center gap-1"
         >
-          <span className="hidden sm:inline">Next</span>
+          <span className="hidden sm:inline">{t('common.next')}</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>

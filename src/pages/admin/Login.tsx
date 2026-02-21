@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -8,6 +9,7 @@ import { Lock, User } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 
 const Login = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login, isAuthenticated, role, initialize } = useAuthStore();
   const [username, setUsername] = useState('');
@@ -31,7 +33,7 @@ const Login = () => {
     setError('');
 
     if (!username || !password) {
-      setError('Please enter both username and password');
+      setError(t('login.enterBoth'));
       return;
     }
 
@@ -45,7 +47,7 @@ const Login = () => {
         navigate('/admin/customers', { replace: true });
       }
     } else {
-      setError('Invalid username or password');
+      setError(t('login.invalid'));
     }
   };
 
@@ -57,9 +59,9 @@ const Login = () => {
             <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <Lock className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <CardTitle className="text-2xl">{t('login.adminTitle')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Enter your credentials to access the admin dashboard
+              {t('login.adminSubtitle')}
             </p>
           </CardHeader>
           <CardContent>
@@ -70,40 +72,40 @@ const Login = () => {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium mb-2">Username</label>
+                <label className="block text-sm font-medium mb-2">{t('login.username')}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter username"
+                    placeholder={t('login.placeholderUsername')}
                     className="pl-10"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Password</label>
+                <label className="block text-sm font-medium mb-2">{t('login.password')}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
+                    placeholder={t('login.placeholderPassword')}
                     className="pl-10"
                     required
                   />
                 </div>
               </div>
               <Button type="submit" className="w-full">
-                Login
+                {t('nav.login')}
               </Button>
               <div className="text-xs text-center text-muted-foreground mt-4">
-                <p>Demo Credentials:</p>
-                <p>Admin: bankaitech / test123</p>
-                <p>Employee: bankaitech-emp / test123</p>
+                <p>{t('login.demoCredentials')}</p>
+                <p>{t('login.demoAdmin')}</p>
+                <p>{t('login.demoEmployee')}</p>
               </div>
             </form>
           </CardContent>

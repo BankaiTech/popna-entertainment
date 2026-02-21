@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const AdminLayout = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { role, logout, username } = useAuthStore();
@@ -19,21 +22,21 @@ const AdminLayout = () => {
 
   // Full product sidebar — enterprise SaaS structure. Admin sees all; Employee sees limited.
   const adminMenuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/customers', label: 'Customers', icon: Users },
-    { path: '/admin/connection-requests', label: 'New Connection', icon: PhoneCall },
-    { path: '/admin/catalog', label: 'Catalog', icon: Package },
-    { path: '/admin/invoices', label: 'Invoices', icon: FileText },
-    { path: '/admin/purchase-invoices', label: 'Purchase Invoices', icon: ShoppingCart },
-    { path: '/admin/complaints', label: 'Complaints', icon: AlertCircle },
-    { path: '/admin/users', label: 'Users', icon: UserCog },
-    { path: '/admin/settings', label: 'Settings', icon: Settings },
+    { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users },
+    { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall },
+    { path: '/admin/catalog', labelKey: 'nav.catalog', icon: Package },
+    { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText },
+    { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart },
+    { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle },
+    { path: '/admin/users', labelKey: 'nav.users', icon: UserCog },
+    { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings },
   ];
 
   // Employee sidebar — Dashboard hidden, only Customers and Complaints visible
   const employeeMenuItems = [
-    { path: '/admin/customers', label: 'Customers', icon: Users },
-    { path: '/admin/complaints', label: 'Complaints', icon: AlertCircle },
+    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users },
+    { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle },
   ];
 
   const menuItems = role === 'admin' ? adminMenuItems : employeeMenuItems;
@@ -55,19 +58,22 @@ const AdminLayout = () => {
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="sm:hidden p-2 hover:bg-accent rounded-md"
-            aria-label="Open menu"
+            aria-label={t('openMenu')}
           >
             <Menu className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-base sm:text-lg font-semibold">Welcome, {username || 'User'}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground capitalize">{role || 'User'} Dashboard</p>
+            <h2 className="text-base sm:text-lg font-semibold">{t('dashboard.welcome')} {username || 'User'}</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground capitalize">{role || 'User'} {t('dashboard.userDashboard')}</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleLogout} className="flex items-center space-x-2 text-sm sm:text-base">
-          <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <Button variant="outline" onClick={handleLogout} className="flex items-center space-x-2 text-sm sm:text-base">
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('nav.logout')}</span>
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-1 pt-14">
@@ -87,12 +93,12 @@ const AdminLayout = () => {
               <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <span className="text-white text-xs font-bold">P</span>
               </div>
-              <h1 className="text-base font-bold text-gray-900">Popna</h1>
+              <h1 className="text-base font-bold text-gray-900">{t('popna')}</h1>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"
-              aria-label="Close menu"
+              aria-label={t('closeMenu')}
             >
               <X className="w-4 h-4 text-gray-600" />
             </button>
@@ -116,7 +122,7 @@ const AdminLayout = () => {
                   )}
                 >
                   <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-600')} />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Link>
               );
             })}

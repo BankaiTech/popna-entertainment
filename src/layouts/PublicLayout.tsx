@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const PublicLayout = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { companyProfile, fetchCompanyProfile, fetchActiveProducts } = useStore();
@@ -51,7 +54,7 @@ const PublicLayout = () => {
                   location.pathname === '/' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
-                Home
+                {t('nav.home')}
               </Link>
 
               <Link
@@ -61,7 +64,7 @@ const PublicLayout = () => {
                   location.pathname === '/plans' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
-                Plans
+                {t('nav.plans')}
               </Link>
 
               <Link
@@ -71,8 +74,9 @@ const PublicLayout = () => {
                   location.pathname === '/customer/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
-                Login
+                {t('nav.login')}
               </Link>
+              <LanguageSwitcher />
             </div>
 
             <button
@@ -95,7 +99,7 @@ const PublicLayout = () => {
                   location.pathname === '/' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
-                Home
+                {t('nav.home')}
               </Link>
 
               <Link
@@ -106,7 +110,7 @@ const PublicLayout = () => {
                   location.pathname === '/plans' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
-                Plans
+                {t('nav.plans')}
               </Link>
 
               <Link
@@ -117,8 +121,11 @@ const PublicLayout = () => {
                   location.pathname === '/customer/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
-                Login
+                {t('nav.login')}
               </Link>
+              <div className="px-4 py-2">
+                <LanguageSwitcher />
+              </div>
             </div>
           )}
         </div>
@@ -136,33 +143,33 @@ const PublicLayout = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">{companyName}</h3>
               <p className="text-sm text-gray-600">
-                Providing reliable cable and internet services for homes and businesses.
+                {t('footer.tagline')}
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Links</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('nav.quickLinks')}</h3>
               <ul className="space-y-2">
                 <li>
                   <Link to="/" className="text-sm text-gray-600 hover:text-primary transition-colors">
-                    Home
+                    {t('nav.home')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/plans" className="text-sm text-gray-600 hover:text-primary transition-colors">
-                    Plans
+                    {t('nav.plans')}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('nav.contact')}</h3>
               <p className="text-sm text-gray-600">{companyProfile?.contactNumber || '+91 9876543210'}</p>
               <p className="text-sm text-gray-600">{companyProfile?.email || 'info@bankaitech.com'}</p>
             </div>
           </div>
           <div className="border-t border-gray-200 pt-6">
             <div className="text-center text-sm text-gray-600 space-y-2">
-              <p>&copy; 2024 {companyName}. All rights reserved.</p>
+              <p>&copy; 2024 {companyName}. {t('footer.rightsReserved')}</p>
               <FooterCredit />
             </div>
           </div>
