@@ -1,5 +1,6 @@
 // SaaS Ready — Customer Edit/Add Sheet (payment collection is a separate modal)
-import { useState, useEffect } from 'react';
+// Connection type selection bug fixed
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
@@ -22,17 +23,22 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
   const { role } = useAuthStore();
   const { products, fetchActiveProducts } = useStore();
 
-  // Fetch products when component mounts
+  // Load products when sheet opens so connection type dropdown is always populated
   useEffect(() => {
-    fetchActiveProducts();
-  }, [fetchActiveProducts]);
+    if (isOpen) {
+      fetchActiveProducts();
+    }
+  }, [isOpen, fetchActiveProducts]);
 
-  // Employees can only view customer details (read-only), cannot add or edit. Payment update is allowed for both Admin and Employee.
   const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'address'>('info');
 
-  // Products fully dynamic — no hardcoded service names. Options from Admin → Settings → Products only.
-  const availableProviders = Array.isArray(products) ? products.map((p) => p.name) : [];
+  // Stable reference — only recompute when products array identity changes
+  const availableProviders = useMemo(
+    () => (Array.isArray(products) ? products.map((p) => p.name) : []),
+    [products]
+  );
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,7 +58,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
     },
   });
 
+  // Reset form when dialog opens/closes or customer changes — NOT on availableProviders change
   useEffect(() => {
+    if (!isOpen) return;
     if (customer) {
       setFormData({
         name: customer.name,
@@ -67,13 +75,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         address: customer.address,
       });
     } else {
-      // Multi-tenant ready — use first available product as default
-      const defaultProvider = availableProviders.length > 0 ? availableProviders[0] : '';
       setFormData({
         name: '',
         email: '',
         mobile: '',
-        connectionType: defaultProvider,
+        connectionType: '',
         package: '',
         status: 'Active',
         description: '',
@@ -88,7 +94,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         },
       });
     }
-  }, [customer, isOpen, availableProviders]);
+  }, [customer, isOpen]);
 
   if (!isOpen) return null;
 
@@ -226,11 +232,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                       {availableProviders.length === 0 ? (
                         <option value="">{t('customerSheet.noProducts', 'No products — add in Settings → Products')}</option>
                       ) : (
-                        availableProviders.map((provider) => (
-                          <option key={provider} value={provider}>
-                            {getConnectionTypeLabel(provider, products)}
-                          </option>
-                        ))
+                        <>
+                          <option value="">{t('customerSheet.selectProduct', '— Select Product —')}</option>
+                          {availableProviders.map((provider) => (
+                            <option key={provider} value={provider}>
+                              {getConnectionTypeLabel(provider, products)}
+                            </option>
+                          ))}
+                        </>
                       )}
                     </Select>
                   </div>

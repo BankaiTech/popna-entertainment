@@ -22,16 +22,28 @@ interface OptionItem {
 
 function getOptions(children: React.ReactNode): OptionItem[] {
   const options: OptionItem[] = [];
-  React.Children.forEach(children, (child) => {
-    if (React.isValidElement(child) && child.type === 'option') {
-      const p = child.props as { value?: string; disabled?: boolean; children?: React.ReactNode };
-      options.push({
-        value: String(p.value ?? ''),
-        label: p.children ?? p.value ?? '',
-        disabled: p.disabled,
-      });
-    }
-  });
+
+  function collect(nodes: React.ReactNode) {
+    React.Children.toArray(nodes).forEach((child) => {
+      if (Array.isArray(child)) {
+        collect(child);
+      } else if (React.isValidElement(child)) {
+        if (child.type === 'option') {
+          const p = child.props as { value?: string; disabled?: boolean; children?: React.ReactNode };
+          options.push({
+            value: String(p.value ?? ''),
+            label: p.children ?? p.value ?? '',
+            disabled: p.disabled,
+          });
+        } else if (child.type === React.Fragment) {
+          // Recurse into Fragment children (e.g. <>...</>)
+          collect((child.props as { children?: React.ReactNode }).children);
+        }
+      }
+    });
+  }
+
+  collect(children);
   return options;
 }
 

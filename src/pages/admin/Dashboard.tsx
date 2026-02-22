@@ -269,11 +269,14 @@ const AdminDashboard = () => {
     },
   ];
 
-  // Renders a section of KPI cards
-  const renderCardSection = (title: string, cards: typeof customerCards) => (
+  // Renders a section of KPI cards. cardCols: 2 for side-by-side sections (Connection / Plans), 4 for full-width.
+  const renderCardSection = (title: string, cards: typeof customerCards, cardCols: 2 | 4 = 4) => (
     <>
       <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={cn(
+        'grid gap-4',
+        cardCols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+      )}>
         {cards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -318,11 +321,15 @@ const AdminDashboard = () => {
       {/* Complaint Metrics */}
       {renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}
 
-      {/* Connection Metrics */}
-      {renderCardSection(t('dashboard.connectionMetrics', 'Connection Metrics'), connectionCards)}
-
-      {/* Plans & Products */}
-      {renderCardSection(t('dashboard.planProductMetrics', 'Plans & Products'), planProductCards)}
+      {/* Connection Metrics & Plans & Products — same row, top-aligned */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className="space-y-3 min-w-0">
+          {renderCardSection(t('dashboard.connectionMetrics', 'Connection Metrics'), connectionCards, 2)}
+        </div>
+        <div className="space-y-3 min-w-0">
+          {renderCardSection(t('dashboard.planProductMetrics', 'Plans & Products'), planProductCards, 2)}
+        </div>
+      </div>
 
       {/* Finance Graph */}
       <Card className="overflow-hidden animate-slide-up">
