@@ -12,24 +12,6 @@ import type { Organization, OrganizationStatus, ModuleKey, SettingsTabKey } from
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 import { cn } from '@/lib/utils';
 
-const MODULE_LABELS: Record<ModuleKey, string> = {
-    'dashboard': 'Dashboard',
-    'customers': 'Customers',
-    'complaints': 'Complaints',
-    'payments': 'Payments',
-    'catalog': 'Catalog',
-    'invoices': 'Invoices',
-    'purchase-invoices': 'Purchase Invoices',
-    'users': 'Users',
-    'settings': 'Settings',
-    'connection-requests': 'New Connections',
-};
-
-const SETTINGS_TAB_LABELS: Record<SettingsTabKey, string> = {
-    'company': 'Company Settings',
-    'products': 'Products',
-};
-
 const Organizations = () => {
     const { t } = useTranslation();
     const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -156,7 +138,7 @@ const Organizations = () => {
                                     <Select
                                         value={org.status}
                                         onChange={(e) => handleStatusChange(org.id, e.target.value as OrganizationStatus)}
-                                        className="h-7 text-xs w-24"
+                                        className="h-9 text-xs w-24"
                                     >
                                         <option value="active">{t('organizations.active', 'Active')}</option>
                                         <option value="disabled">{t('organizations.disabled', 'Disabled')}</option>
@@ -181,7 +163,7 @@ const Organizations = () => {
                         <div className="px-4 sm:px-5 py-4 space-y-3">
                             <div>
                                 <label className="block text-sm font-medium mb-1">{t('organizations.orgName', 'Organization Name')}</label>
-                                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter organization name" />
+                                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder={t('organizations.placeholderOrgName', 'Enter organization name')} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -224,7 +206,7 @@ const Organizations = () => {
                                             )}
                                         >
                                             {selectedModules.includes(mod) ? <Check className="w-3 h-3" /> : <div className="w-3 h-3" />}
-                                            {MODULE_LABELS[mod]}
+                                            {t(`superadmin.modules.${mod}`)}
                                         </button>
                                     ))}
                                 </div>
@@ -245,7 +227,7 @@ const Organizations = () => {
                                             )}
                                         >
                                             {selectedTabs.includes(tab) ? <Check className="w-3 h-3" /> : <div className="w-3 h-3" />}
-                                            {SETTINGS_TAB_LABELS[tab]}
+                                            {t(`superadmin.settingsTabs.${tab}`)}
                                         </button>
                                     ))}
                                 </div>
@@ -254,7 +236,7 @@ const Organizations = () => {
                     </DialogBody>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowModulesModal(false)}>{t('common.cancel', 'Cancel')}</Button>
-                        <Button onClick={handleSaveModules}>{t('common.save', 'Save Changes')}</Button>
+                        <Button onClick={handleSaveModules}>{t('common.saveChanges', 'Save Changes')}</Button>
                     </DialogFooter>
                 </Dialog>
             )}

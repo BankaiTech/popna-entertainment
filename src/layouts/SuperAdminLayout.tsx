@@ -44,7 +44,7 @@ const SuperAdminLayout = () => {
                         <Menu className="w-5 h-5" />
                     </button>
                     <div>
-                        <h2 className="text-base sm:text-lg font-semibold">{t('superAdmin.welcome', 'Welcome')} {username || 'Super Admin'}</h2>
+                        <h2 className="text-base sm:text-lg font-semibold">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
                         <p className="text-xs sm:text-sm text-muted-foreground">{t('superAdmin.masterController', 'Master Controller')}</p>
                     </div>
                 </div>
