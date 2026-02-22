@@ -11,7 +11,7 @@ import { salesInvoicesApi } from '@/api/invoices';
 import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR } from '@/lib/utils';
 import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
 
 const Invoices = () => {
@@ -182,7 +182,7 @@ const Invoices = () => {
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.customerName}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getProviderDisplayName(inv.serviceProvider)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.planName}</td>
-                      <td className="px-3 py-2 text-right text-sm font-medium text-foreground">₹{inv.totalAmount.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-sm font-medium text-foreground">{formatCurrencyINR(inv.totalAmount)}</td>
                       <td className="px-3 py-2 text-sm">{statusBadge(inv.status)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.dueDate}</td>
                       <td className="px-3 py-2">

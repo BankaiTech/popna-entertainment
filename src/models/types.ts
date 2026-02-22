@@ -97,6 +97,7 @@ export interface Customer {
   boxNumber?: string;
 }
 
+// SaaS Dashboard KPI cards implemented
 export interface DashboardStats {
   totalCustomers: number;
   newCustomersThisMonth: number;
@@ -106,6 +107,20 @@ export interface DashboardStats {
   activeByProvider: Record<string, number>;
   /** Built from customer connectionType; keys = product names from Products API. */
   inactiveByProvider: Record<string, number>;
+  // Payment Metrics
+  totalAmountCollected: number;
+  totalPendingAmount: number;
+  overdueAmount: number;
+  // Complaint Metrics
+  totalComplaints: number;
+  activeComplaints: number;
+  onHoldComplaints: number;
+  // Connection Metrics
+  newConnectionRequests: number;
+  convertedConnections: number;
+  // Plan & Product Metrics
+  totalActivePlans: number;
+  totalProducts: number;
 }
 
 export interface Complaint {
@@ -137,8 +152,11 @@ export interface User {
   createdAt: string;
 }
 
-/** Sales invoice (mock structure — PDF ready). */
+/** Sales invoice (mock structure — PDF ready). GST-compliant fields supported. */
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+
+/** Invoice type as per GST: Tax Invoice (with GST) or Bill of Supply (exempt/compounding). */
+export type InvoiceType = 'tax_invoice' | 'bill_of_supply';
 
 export interface SalesInvoice {
   id: number;
@@ -156,6 +174,12 @@ export interface SalesInvoice {
   issueDate: string;
   dueDate: string;
   createdAt: string;
+  /** GST: Tax Invoice or Bill of Supply */
+  invoiceType?: InvoiceType;
+  /** GST: Place of supply (state name or code) */
+  placeOfSupply?: string;
+  /** GST: HSN/SAC code (e.g. 998314 for telecom/broadband services) */
+  hsnSac?: string;
 }
 
 /** Purchase invoice (vendor, GST breakup, reference). */
@@ -190,6 +214,7 @@ export interface Vendor {
 }
 
 /** Dynamic Product - Multi-tenant ready — backend will isolate by organization */
+// Product cut-off configuration added
 export interface Product {
   id: number;
   organizationId: string;
@@ -197,6 +222,10 @@ export interface Product {
   productType: 'cable' | 'internet';
   isActive: boolean;
   createdAt: string;
+  /** Cut-off date (day of month, 1-28) — only for cable products */
+  cutoffDate?: number;
+  /** Cut-off days (days after due date) — only for internet products */
+  cutoffDays?: number;
 }
 
 /** Company Profile - Multi-tenant ready — backend will isolate by organization */

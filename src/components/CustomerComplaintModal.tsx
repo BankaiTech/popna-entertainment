@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import type { Customer } from '@/models/types';
 
 interface CustomerComplaintModalProps {
@@ -53,27 +53,11 @@ const CustomerComplaintModal = ({ isOpen, onClose, customer }: CustomerComplaint
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-lg font-semibold">{t('customerComplaint.title', 'Add Complaint')}</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-md transition-colors"
-            aria-label={t('common.close', 'Close')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 pb-20 sm:pb-6 space-y-4">
+    <Dialog open={isOpen} onClose={onClose} size="lg" className="h-[95vh] sm:h-auto sm:max-h-[90vh]">
+      <DialogHeader title={t('customerComplaint.title', 'Add Complaint')} onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody>
+          <div className="p-4 sm:p-6 space-y-4">
             <div className="bg-muted p-4 rounded-md space-y-2 border border-border">
               <p className="text-sm">
                 <span className="font-medium">{t('customerComplaint.customer', 'Customer')}:</span> {customer.name}
@@ -98,18 +82,17 @@ const CustomerComplaintModal = ({ isOpen, onClose, customer }: CustomerComplaint
               />
             </div>
           </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card sticky bottom-0">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto">
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-              {isSubmitting ? t('customerComplaint.submitting', 'Submitting...') : t('customerComplaint.submitComplaint', 'Submit Complaint')}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </DialogBody>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto">
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            {isSubmitting ? t('customerComplaint.submitting', 'Submitting...') : t('customerComplaint.submitComplaint', 'Submit Complaint')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

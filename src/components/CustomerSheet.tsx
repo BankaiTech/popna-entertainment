@@ -1,12 +1,12 @@
 // SaaS Ready — Customer Edit/Add Sheet (payment collection is a separate modal)
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import type { Customer, Provider, CustomerStatus } from '@/models/types';
 import { getConnectionTypeLabel, isCableProvider } from '@/lib/providerUtils';
 
@@ -136,28 +136,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
     }
   }, [isOpen, isReadOnly, customer, onClose, t]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50" onClick={onClose}>
-      <div
-        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:w-[600px] max-h-[90vh] overflow-hidden flex flex-col border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Compact Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-lg font-semibold">
-            {isReadOnly ? t('customerSheet.details', 'Customer Details') : customer ? t('customerSheet.edit', 'Edit Customer') : t('customerSheet.add', 'Add New Customer')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-md transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  const sheetTitle = isReadOnly ? t('customerSheet.details', 'Customer Details') : customer ? t('customerSheet.edit', 'Edit Customer') : t('customerSheet.add', 'Add New Customer');
 
+  return (
+    <Dialog open={isOpen} onClose={onClose} size="lg" className="sm:max-w-[600px]">
+      <DialogHeader title={sheetTitle} onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-border shrink-0">
           <button
             onClick={() => setActiveTab('info')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'info'
@@ -178,9 +164,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
           </button>
         </div>
 
-        {/* Scrollable Content — form is flex column; body scrolls, footer always visible (no overlay on mobile) */}
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-6">
+        <DialogBody className="p-4 sm:p-6 pb-6">
             {activeTab === 'info' && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -395,22 +379,18 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                 </div>
               </div>
             )}
+        </DialogBody>
 
-          </div>
-
-          {/* Footer — shrink-0 so always visible; body scrolls above it (pb-24 on mobile for clearance) */}
-          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              {isReadOnly ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
-            </Button>
-            {!isReadOnly && (
-              <Button type="submit" className="w-full sm:w-auto">{customer ? t('common.update', 'Update') : t('common.create', 'Create')} {t('customers.customer', 'Customer')}</Button>
-            )}
-          </div>
-        </form>
-      </div>
-
-    </div>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            {isReadOnly ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
+          </Button>
+          {!isReadOnly && (
+            <Button type="submit" className="w-full sm:w-auto">{customer ? t('common.update', 'Update') : t('common.create', 'Create')} {t('customers.customer', 'Customer')}</Button>
+          )}
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

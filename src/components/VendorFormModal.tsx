@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { X } from 'lucide-react';
 import type { Vendor } from '@/models/types';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { vendorsApi } from '@/api/purchaseInvoices';
 
@@ -100,26 +100,15 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">
-            {editingVendor ? t('vendorFormModal.editTitle', 'Edit Vendor') : t('vendorFormModal.addTitle', 'Add Vendor')}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
-            aria-label={t('common.close', 'Close')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+    <Dialog open={isOpen} onClose={onClose} size="lg">
+      <DialogHeader
+        title={editingVendor ? t('vendorFormModal.editTitle', 'Edit Vendor') : t('vendorFormModal.addTitle', 'Add Vendor')}
+        onClose={onClose}
+      />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody>
+          <div className="p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">{t('vendorFormModal.vendorName', 'Vendor Name')} <span className="text-destructive">*</span></label>
@@ -209,18 +198,18 @@ const VendorFormModal = ({ isOpen, onClose, onSuccess, editingVendor }: VendorFo
               {error}
             </div>
           )}
-        </form>
-
-        <div className="flex justify-end gap-3 p-4 border-t border-border bg-muted/30">
+          </div>
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
             {t('common.cancel', 'Cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {saving ? t('vendorFormModal.saving', 'Saving...') : editingVendor ? t('vendorFormModal.updateVendor', 'Update Vendor') : t('vendorFormModal.addVendor', 'Add Vendor')}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

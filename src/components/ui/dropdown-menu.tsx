@@ -1,135 +1,154 @@
+// Global select dropdown rendered using portal to prevent clipping
+// Global select dropdown and mobile UI fully fixed
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Side = 'top' | 'right' | 'bottom' | 'left';
 type Align = 'start' | 'center' | 'end';
 
 interface DropdownMenuContextValue {
   open: boolean;
   setOpen: (v: boolean) => void;
   disabled: boolean;
-  triggerRef: React.RefObject<HTMLDivElement | null>;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  position: { top: number; left: number };
-  setPosition: (p: { top: number; left: number }) => void;
+  triggerRef: React.RefObject<HTMLDivElement>;
+  contentRef: React.RefObject<HTMLDivElement>;
+  position: { top: number; left: number; width: number };
   updatePosition: () => void;
-  side: Side;
   align: Align;
 }
 
-const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
-
-function useDropdownMenu() {
-  const ctx = useContext(DropdownMenuContext);
-  if (!ctx) throw new Error('Dropdown components must be used within DropdownMenu');
-  return ctx;
+const Ctx = createContext<DropdownMenuContextValue | null>(null);
+function useCtx() {
+  const c = useContext(Ctx);
+  if (!c) throw new Error('DropdownMenu context missing');
+  return c;
 }
+
+const EDGE_MARGIN = 8;
 
 interface DropdownMenuProps {
   children: React.ReactNode;
-  side?: Side;
+  side?: 'bottom' | 'top';
   align?: Align;
   disabled?: boolean;
 }
 
 export function DropdownMenu({ children, side = 'bottom', align = 'end', disabled = false }: DropdownMenuProps) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [open, setOpenRaw] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const contentRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  const setOpen = useCallback((v: boolean) => {
+    if (disabled && v) return;
+    setOpenRaw(v);
+  }, [disabled]);
 
   const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const gap = 2;
-    const contentWidth = contentRef.current?.getBoundingClientRect().width ?? rect.width;
-    const contentHeight = contentRef.current?.getBoundingClientRect().height ?? 0;
-    let top = 0;
-    let left = 0;
-    if (side === 'bottom') {
+    const trigger = triggerRef.current;
+    const content = contentRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const contentH = content?.offsetHeight ?? 0;
+    const contentW = content?.offsetWidth ?? rect.width;
+    const triggerW = rect.width;
+    const menuW = Math.max(contentW, triggerW);
+    const gap = 4;
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
+    // Auto-flip: prefer bottom, flip to top if not enough space below
+    const spaceBelow = vh - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+    let top: number;
+    if (side === 'bottom' && spaceBelow >= contentH) {
       top = rect.bottom + gap;
-      if (align === 'end') left = rect.right - contentWidth;
-      else if (align === 'center') left = rect.left + (rect.width - contentWidth) / 2;
-      else left = rect.left;
-    } else if (side === 'top') {
-      top = rect.top - contentHeight - gap;
-      if (align === 'end') left = rect.right - contentWidth;
-      else if (align === 'center') left = rect.left + (rect.width - contentWidth) / 2;
-      else left = rect.left;
+    } else if (side === 'bottom' && spaceAbove >= contentH) {
+      top = rect.top - contentH - gap;
+    } else if (side === 'top' && spaceAbove >= contentH) {
+      top = rect.top - contentH - gap;
     } else {
-      top = rect.top;
-      left = align === 'end' ? rect.right - contentWidth : rect.left;
+      top = rect.bottom + gap;
     }
-    setPosition({ top, left });
+
+    // Horizontal alignment
+    let left: number;
+    if (align === 'end') left = rect.right - menuW;
+    else if (align === 'center') left = rect.left + (rect.width - menuW) / 2;
+    else left = rect.left;
+
+    // Clamp to viewport edges
+    if (left + menuW > vw - EDGE_MARGIN) left = vw - menuW - EDGE_MARGIN;
+    if (left < EDGE_MARGIN) left = EDGE_MARGIN;
+    if (top + contentH > vh - EDGE_MARGIN) top = vh - contentH - EDGE_MARGIN;
+    if (top < EDGE_MARGIN) top = EDGE_MARGIN;
+
+    setPosition({ top, left, width: triggerW });
   }, [side, align]);
 
+  // Reposition after open + after content mounts
   useEffect(() => {
     if (!open) return;
-    const handleClick = (e: MouseEvent) => {
+    // Run twice: once immediately (content might not be painted yet), once after a frame
+    updatePosition();
+    const raf = requestAnimationFrame(updatePosition);
+    return () => cancelAnimationFrame(raf);
+  }, [open, updatePosition]);
+
+  // Scroll / resize tracking
+  useEffect(() => {
+    if (!open) return;
+    const handler = () => updatePosition();
+    window.addEventListener('scroll', handler, true);
+    window.addEventListener('resize', handler);
+    return () => {
+      window.removeEventListener('scroll', handler, true);
+      window.removeEventListener('resize', handler);
+    };
+  }, [open, updatePosition]);
+
+  // Click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
       const el = e.target as Node;
       if (triggerRef.current?.contains(el) || contentRef.current?.contains(el)) return;
       setOpen(false);
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, setOpen]);
 
+  // Escape key
   useEffect(() => {
     if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [open]);
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, setOpen]);
 
   return (
-    <DropdownMenuContext.Provider
-      value={{
-        open,
-        setOpen,
-        disabled,
-        triggerRef,
-        contentRef,
-        position,
-        setPosition,
-        updatePosition,
-        side,
-        align,
-      }}
-    >
+    <Ctx.Provider value={{ open, setOpen, disabled, triggerRef, contentRef, position, updatePosition, align }}>
       {children}
-    </DropdownMenuContext.Provider>
+    </Ctx.Provider>
   );
 }
 
 export function DropdownMenuTrigger({
-  children,
-  className,
-  asChild,
-  ...rest
-}: {
-  children: React.ReactNode;
-  className?: string;
-  asChild?: boolean;
-} & React.HTMLAttributes<HTMLDivElement>) {
-  const { open, setOpen, disabled, triggerRef } = useDropdownMenu();
-  const handleClick = () => {
-    if (disabled) return;
-    setOpen(!open);
-  };
+  children, className, ...rest
+}: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  const { open, setOpen, disabled, triggerRef } = useCtx();
   return (
     <div
       ref={triggerRef}
-      onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), setOpen(!open))}
+      onClick={() => { if (!disabled) setOpen(!open); }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!disabled) setOpen(!open); } }}
       role="button"
-      tabIndex={0}
-      className={cn(asChild ? '' : 'cursor-pointer outline-none', className)}
+      tabIndex={disabled ? -1 : 0}
+      className={cn('cursor-pointer outline-none', disabled && 'cursor-not-allowed opacity-50', className)}
       aria-expanded={open}
-      aria-haspopup="true"
+      aria-haspopup="listbox"
       {...rest}
     >
       {children}
@@ -137,54 +156,37 @@ export function DropdownMenuTrigger({
   );
 }
 
-export function DropdownMenuContent({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const { open, contentRef, position, updatePosition } = useDropdownMenu();
-
-  useEffect(() => {
-    if (open) {
-      const id = requestAnimationFrame(() => {
-        updatePosition();
-      });
-      return () => cancelAnimationFrame(id);
-    }
-  }, [open, updatePosition]);
-
+export function DropdownMenuContent({ children, className }: { children: React.ReactNode; className?: string }) {
+  const { open, contentRef, position } = useCtx();
   if (!open) return null;
 
   const el = (
     <div
       ref={contentRef}
-      role="menu"
+      role="listbox"
       className={cn(
-        'fixed z-[9999] rounded-lg border border-border bg-background shadow-lg py-1 min-w-[8rem] max-h-[var(--radix-dropdown-menu-content-available-height,20rem)] overflow-auto',
+        'fixed z-[9999] rounded-lg border border-border bg-background shadow-lg py-1',
+        'max-h-[250px] overflow-y-auto overscroll-contain',
+        '-webkit-overflow-scrolling-touch',
         className
       )}
-      style={{ top: position.top, left: position.left }}
+      style={{
+        top: position.top,
+        left: position.left,
+        minWidth: position.width,
+      }}
+      onTouchMove={(e) => e.stopPropagation()}
     >
       {children}
     </div>
   );
-  return typeof document !== 'undefined' ? createPortal(el, document.body) : null;
+  return createPortal(el, document.body);
 }
 
 export function DropdownMenuItem({
-  children,
-  className,
-  onSelect,
-  disabled,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  onSelect?: () => void;
-  disabled?: boolean;
-}) {
-  const { setOpen } = useDropdownMenu();
+  children, className, onSelect, disabled,
+}: { children: React.ReactNode; className?: string; onSelect?: () => void; disabled?: boolean }) {
+  const { setOpen } = useCtx();
   const handleClick = () => {
     if (disabled) return;
     onSelect?.();
@@ -192,14 +194,16 @@ export function DropdownMenuItem({
   };
   return (
     <div
-      role="menuitem"
+      role="option"
       className={cn(
-        'relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none transition-colors hover:bg-muted focus:bg-muted',
+        'flex cursor-pointer select-none items-center px-3 py-2.5 text-sm outline-none transition-colors',
+        'hover:bg-muted focus:bg-muted active:bg-muted/80',
+        'touch-manipulation',
         disabled && 'pointer-events-none opacity-50',
         className
       )}
       onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleClick())}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleClick(); } }}
       tabIndex={disabled ? -1 : 0}
     >
       {children}

@@ -2,6 +2,10 @@
 import type { Plan, Customer, DashboardStats, Provider } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockPlans, mockCustomers } from './mockData';
+import { complaintsApi } from './complaints';
+import { connectionRequestsApi } from './connectionRequests';
+import { salesInvoicesApi } from './invoices';
+import { productsApi } from './products';
 
 // Multi-tenant ready — backend will enforce org isolation. All data scoped by organizationId.
 // In-memory storage for mock data (simulates backend)
@@ -95,7 +99,15 @@ export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
     // Replace with real API call later
     // Multi-tenant ready — backend will isolate by organization
-    const customers = await customersApi.getAll();
+    const [customers, complaints, connectionRequests, invoices, plans, products] = await Promise.all([
+      customersApi.getAll(),
+      complaintsApi.getAll(),
+      connectionRequestsApi.getAll(),
+      salesInvoicesApi.getAll(),
+      plansApi.getAll(),
+      productsApi.getAll(),
+    ]);
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -117,6 +129,30 @@ export const dashboardApi = {
       }
     });
 
+    // Payment Metrics — from invoices
+    const totalAmountCollected = invoices
+      .filter((inv) => inv.status === 'paid')
+      .reduce((sum, inv) => sum + inv.totalAmount, 0);
+    const totalPendingAmount = invoices
+      .filter((inv) => inv.status !== 'paid')
+      .reduce((sum, inv) => sum + inv.totalAmount, 0);
+    const overdueAmount = invoices
+      .filter((inv) => inv.status === 'overdue')
+      .reduce((sum, inv) => sum + inv.totalAmount, 0);
+
+    // Complaint Metrics
+    const totalComplaints = complaints.length;
+    const activeComplaints = complaints.filter((c) => c.status === 'active').length;
+    const onHoldComplaints = complaints.filter((c) => c.status === 'on-hold').length;
+
+    // Connection Metrics
+    const newConnectionRequests = connectionRequests.filter((cr) => cr.status === 'New').length;
+    const convertedConnections = connectionRequests.filter((cr) => cr.status === 'Converted').length;
+
+    // Plan & Product Metrics
+    const totalActivePlans = plans.length;
+    const totalProducts = products.filter((p) => p.isActive).length;
+
     return {
       totalCustomers: customers.length,
       newCustomersThisMonth,
@@ -124,6 +160,16 @@ export const dashboardApi = {
       inactiveCustomers: customers.filter((c) => c.status === 'Inactive').length,
       activeByProvider,
       inactiveByProvider,
+      totalAmountCollected,
+      totalPendingAmount,
+      overdueAmount,
+      totalComplaints,
+      activeComplaints,
+      onHoldComplaints,
+      newConnectionRequests,
+      convertedConnections,
+      totalActivePlans,
+      totalProducts,
     };
   },
   getLastCustomers: async (limit: number = 5): Promise<Customer[]> => {

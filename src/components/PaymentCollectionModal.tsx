@@ -4,8 +4,8 @@
 // Professional payment modal applied
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
@@ -82,29 +82,11 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-base font-semibold">{t('payment.collectPayment', 'Collect Payment')}</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-md transition-colors min-h-[44px] touch-manipulation"
-            aria-label={t('common.close', 'Close')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="p-4 sm:p-5 space-y-3">
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogHeader title={t('payment.collectPayment', 'Collect Payment')} onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody>
+          <div className="p-4 sm:p-5 space-y-3">
               {/* Customer info */}
               <div className="bg-muted/30 rounded-lg p-3 border border-border">
                 <p className="text-sm font-semibold">{customer.name}</p>
@@ -195,21 +177,18 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                   required
                 />
               </div>
-            </div>
           </div>
-
-          {/* Footer */}
-          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-3 border-t border-border bg-card">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
-              {saving ? t('common.saving', 'Saving...') : t('common.submit', 'Submit')}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </DialogBody>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+            {saving ? t('common.saving', 'Saving...') : t('common.submit', 'Submit')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

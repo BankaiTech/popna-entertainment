@@ -91,6 +91,8 @@ body {
   }
 }
 
+/* Global select dropdown and mobile UI fully fixed */
+
 /* Reduce overall spacing */
 .space-y-4 > * + * {
   margin-top: 0.75rem !important;
@@ -102,4 +104,40 @@ body {
 
 .space-y-8 > * + * {
   margin-top: 1.5rem !important;
+}
+
+/* ─── Global mobile responsiveness ─── */
+@media (max-width: 640px) {
+  /* Ensure dialogs/modals respect viewport */
+  [role="dialog"],
+  [role="alertdialog"] {
+    max-width: 95vw !important;
+  }
+
+  /* Full-width inputs on mobile */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  textarea {
+    max-width: 100% !important;
+  }
+
+  /* Tables scroll horizontally instead of overflow */
+  .overflow-x-auto,
+  table {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Touch-friendly tap targets for dropdown items */
+@media (pointer: coarse) {
+  [role="option"] {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
 }

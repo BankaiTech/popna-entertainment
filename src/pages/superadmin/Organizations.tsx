@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { Plus, Building2, Check, X, Settings } from 'lucide-react';
+import { Plus, Building2, Check, Settings } from 'lucide-react';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { organizationsApi } from '@/api/organizations';
 import type { Organization, OrganizationStatus, ModuleKey, SettingsTabKey } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
@@ -174,13 +175,10 @@ const Organizations = () => {
 
             {/* Add Organization Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border">
-                        <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border flex items-center justify-between">
-                            <h2 className="text-lg font-semibold">{t('organizations.addOrganization', 'Add Organization')}</h2>
-                            <button onClick={() => setShowAddModal(false)} className="p-1.5 hover:bg-accent rounded-md"><X className="w-4 h-4" /></button>
-                        </div>
-                        <div className="flex-1 px-4 sm:px-5 py-4 space-y-3">
+                <Dialog open={showAddModal} onClose={() => setShowAddModal(false)}>
+                    <DialogHeader title={t('organizations.addOrganization', 'Add Organization')} onClose={() => setShowAddModal(false)} />
+                    <DialogBody>
+                        <div className="px-4 sm:px-5 py-4 space-y-3">
                             <div>
                                 <label className="block text-sm font-medium mb-1">{t('organizations.orgName', 'Organization Name')}</label>
                                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter organization name" />
@@ -196,30 +194,27 @@ const Organizations = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="shrink-0 flex justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
-                            <Button variant="outline" onClick={() => setShowAddModal(false)}>{t('common.cancel', 'Cancel')}</Button>
-                            <Button onClick={handleAdd} disabled={!formData.name.trim()}>{t('common.save', 'Save')}</Button>
-                        </div>
-                    </div>
-                </div>
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowAddModal(false)}>{t('common.cancel', 'Cancel')}</Button>
+                        <Button onClick={handleAdd} disabled={!formData.name.trim()}>{t('common.save', 'Save')}</Button>
+                    </DialogFooter>
+                </Dialog>
             )}
 
             {/* Modules Assignment Modal */}
             {showModulesModal && modulesOrg && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-lg flex flex-col overflow-hidden border border-border max-h-[90vh]">
-                        <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border flex items-center justify-between">
-                            <h2 className="text-lg font-semibold">{t('organizations.manageModulesFor', 'Manage Modules')} — {modulesOrg.name}</h2>
-                            <button onClick={() => setShowModulesModal(false)} className="p-1.5 hover:bg-accent rounded-md"><X className="w-4 h-4" /></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
-                            {/* Modules */}
+                <Dialog open={showModulesModal} onClose={() => setShowModulesModal(false)} size="lg">
+                    <DialogHeader title={`${t('organizations.manageModulesFor', 'Manage Modules')} — ${modulesOrg.name}`} onClose={() => setShowModulesModal(false)} />
+                    <DialogBody>
+                        <div className="px-4 sm:px-5 py-4 space-y-4">
                             <div>
                                 <h3 className="text-sm font-semibold mb-2">{t('organizations.allowedModules', 'Allowed Modules')}</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     {ALL_MODULES.map((mod) => (
                                         <button
                                             key={mod}
+                                            type="button"
                                             onClick={() => toggleModule(mod)}
                                             className={cn(
                                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all',
@@ -234,13 +229,13 @@ const Organizations = () => {
                                     ))}
                                 </div>
                             </div>
-                            {/* Settings Tabs */}
                             <div>
                                 <h3 className="text-sm font-semibold mb-2">{t('organizations.allowedSettingsTabs', 'Allowed Settings Tabs')}</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     {ALL_SETTINGS_TABS.map((tab) => (
                                         <button
                                             key={tab}
+                                            type="button"
                                             onClick={() => toggleTab(tab)}
                                             className={cn(
                                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all',
@@ -256,12 +251,12 @@ const Organizations = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="shrink-0 flex justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
-                            <Button variant="outline" onClick={() => setShowModulesModal(false)}>{t('common.cancel', 'Cancel')}</Button>
-                            <Button onClick={handleSaveModules}>{t('common.save', 'Save Changes')}</Button>
-                        </div>
-                    </div>
-                </div>
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowModulesModal(false)}>{t('common.cancel', 'Cancel')}</Button>
+                        <Button onClick={handleSaveModules}>{t('common.save', 'Save Changes')}</Button>
+                    </DialogFooter>
+                </Dialog>
             )}
         </div>
     );

@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { Plus, AlertCircle, LogOut, FileText, Download } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
+import { formatCurrencyINR } from '@/lib/utils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -164,8 +165,8 @@ const CustomerDashboard = () => {
                 <p className="text-sm text-muted-foreground mb-2 font-medium">{t('common.status')}</p>
                 <span
                   className={`px-3 py-1.5 rounded-full text-sm font-semibold inline-block ${currentCustomer.status === 'Active'
-                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
-                      : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
+                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
+                    : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
                     }`}
                 >
                   {currentCustomer.status}
@@ -174,6 +175,46 @@ const CustomerDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Finance Summary — Indian currency format */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up" style={{ animationDelay: '0.025s' }}>
+          <Card className="overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-muted-foreground font-medium mb-1">{t('customerDashboard.totalPaid', 'Total Paid')}</p>
+              <p className="text-xl font-bold text-green-600">
+                {formatCurrencyINR(
+                  myInvoices.filter((inv) => inv.status === 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0)
+                )}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-muted-foreground font-medium mb-1">{t('customerDashboard.totalPending', 'Total Pending')}</p>
+              <p className="text-xl font-bold text-red-600">
+                {formatCurrencyINR(
+                  myInvoices.filter((inv) => inv.status !== 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0)
+                )}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-muted-foreground font-medium mb-1">{t('customerDashboard.lastPaymentDate', 'Last Payment Date')}</p>
+              <p className="text-xl font-bold text-blue-600">
+                {(() => {
+                  const paidInvoices = myInvoices.filter((inv) => inv.status === 'paid');
+                  if (paidInvoices.length === 0) return '—';
+                  const lastPaid = paidInvoices.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())[0];
+                  return formatDate(lastPaid.issueDate);
+                })()}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* My Invoices Section */}
         <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.05s' }}>
@@ -225,7 +266,7 @@ const CustomerDashboard = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">{t('customerDashboard.amount')} </span>
-                            <span className="font-bold text-primary">₹{invoice.totalAmount.toFixed(2)}</span>
+                            <span className="font-bold text-primary">{formatCurrencyINR(invoice.totalAmount)}</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">{t('customerDashboard.issueDate')} </span>

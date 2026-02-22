@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { purchaseInvoicesApi, vendorsApi } from '@/api/purchaseInvoices';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import type { Vendor } from '@/models/types';
 import VendorFormModal from '@/components/VendorFormModal';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
+import { formatCurrencyINR } from '@/lib/utils';
 
 interface PurchaseInvoiceModalProps {
   isOpen: boolean;
@@ -48,15 +50,6 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
     vendorsApi.getById(vendorId as number).then(setSelectedVendor);
   }, [isOpen, vendorId]);
 
-  const hasVendorAddress = selectedVendor && (
-    selectedVendor.addressLine1 ||
-    selectedVendor.addressLine2 ||
-    selectedVendor.city ||
-    selectedVendor.state ||
-    selectedVendor.country ||
-    selectedVendor.pincode
-  );
-
   const vendorAddressLines = selectedVendor
     ? [
       [selectedVendor.addressLine1, selectedVendor.addressLine2].filter(Boolean).join(', '),
@@ -90,7 +83,7 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
     }
     setSaving(true);
     try {
-      const invoiceNumber = `PINV-${Date.now()}`;
+      const invoiceNumber = `PINV - ${Date.now()} `;
       await purchaseInvoicesApi.create({
         organizationId: MOCK_ORGANIZATION_ID,
         invoiceNumber,
@@ -130,157 +123,193 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
     setVendorFormOpen(false);
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
-          <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-2xl font-bold gradient-text">{t('purchaseInvoiceModal.title', 'Create Purchase Invoice')}</h2>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label={t('common.close', 'Close')}>
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.vendor', 'Vendor')} <span className="text-destructive">*</span></label>
-                <Select
-                  value={vendorId === '' ? '' : String(vendorId)}
-                  onChange={(e) => setVendorId(e.target.value === '' ? '' : Number(e.target.value))}
-                  required
-                >
-                  <option value="">{t('purchaseInvoiceModal.selectVendor', 'Select vendor')}</option>
-                  {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
-                  ))}
-                </Select>
+      <Dialog open={isOpen} onClose={onClose} size="xl" className="max-h-[95vh]">
+        <DialogHeader title={t('purchaseInvoiceModal.title', 'Create Purchase Invoice')} onClose={onClose} />
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <DialogBody>
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* 1. Vendor list with Add Vendor */}
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold mb-2">
+                    {t('purchaseInvoiceModal.vendor', 'Vendor')} <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={vendorId === '' ? '' : String(vendorId)}
+                    onChange={(e) => setVendorId(e.target.value === '' ? '' : Number(e.target.value))}
+                    required
+                  >
+                    <option value="">{t('purchaseInvoiceModal.selectVendor', 'Select vendor')}</option>
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Button type="button" variant="outline" onClick={() => setVendorFormOpen(true)} className="whitespace-nowrap shrink-0">
+                  <Plus className="w-4 h-4 mr-1" />
+                  {t('purchaseInvoiceModal.addVendor', 'Add vendor')}
+                </Button>
               </div>
-              <Button type="button" variant="outline" onClick={() => setVendorFormOpen(true)} className="whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-1" />
-                {t('purchaseInvoiceModal.addVendor', 'Add vendor')}
-              </Button>
-            </div>
 
-            {hasVendorAddress && selectedVendor && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t('purchaseInvoiceModal.vendorDetails', 'Vendor details (for invoice)')}</p>
-                <p className="font-medium text-foreground">{selectedVendor.name}</p>
-                {vendorAddressLines.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
-                    {vendorAddressLines.join('\n')}
+              {/* 2. Left: Vendor details | Right: Invoice number + Reference number */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {t('purchaseInvoiceModal.vendorDetails', 'Vendor details')}
                   </p>
-                )}
-                {selectedVendor.gstin && (
-                  <p className="text-sm text-muted-foreground mt-1">{t('purchaseInvoiceModal.gstin', 'GSTIN')}: {selectedVendor.gstin}</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.reference', 'Reference / Invoice Number')}</label>
-              <Input
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder={t('purchaseInvoiceModal.referencePlaceholder', "Vendor's invoice number (optional)")}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.baseAmountLabel', 'Base Amount (\u20b9)')} <span className="text-destructive">*</span></label>
-              <Input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.gstType', 'GST Type')} <span className="text-destructive">*</span></label>
-                <Select value={gstType} onChange={(e) => setGstType(e.target.value as 'intrastate' | 'interstate')}>
-                  <option value="intrastate">{t('purchaseInvoiceModal.intrastate', 'Intrastate (CGST + SGST)')}</option>
-                  <option value="interstate">{t('purchaseInvoiceModal.interstate', 'Interstate (IGST)')}</option>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {gstType === 'intrastate' ? t('purchaseInvoiceModal.intrastateHint', 'Within same state - CGST & SGST apply') : t('purchaseInvoiceModal.interstateHint', 'Across states - IGST applies')}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.gstRate', 'GST Rate (%)')} <span className="text-destructive">*</span></label>
-                <Select value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))}>
-                  <option value="0">{t('purchaseInvoiceModal.gstExempt', '0% (Exempt)')}</option>
-                  <option value="5">5%</option>
-                  <option value="12">12%</option>
-                  <option value="18">18%</option>
-                  <option value="28">28%</option>
-                </Select>
-              </div>
-            </div>
-
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{t('purchaseInvoiceModal.gstBreakdown', 'GST Breakdown (As per GoI Guidelines)')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{t('purchaseInvoiceModal.baseAmount', 'Base Amount')}:</span>
-                  <span className="font-semibold">₹{amount.toFixed(2)}</span>
+                  {selectedVendor ? (
+                    <>
+                      <p className="font-medium text-foreground">{selectedVendor.name}</p>
+                      {vendorAddressLines.length > 0 && (
+                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
+                          {vendorAddressLines.join('\n')}
+                        </p>
+                      )}
+                      {selectedVendor.gstin && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {t('purchaseInvoiceModal.gstin', 'GSTIN')}: {selectedVendor.gstin}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('purchaseInvoiceModal.selectVendorFirst', 'Select a vendor')}</p>
+                  )}
                 </div>
-                {gstType === 'intrastate' ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{t('purchaseInvoiceModal.cgst', 'CGST')} ({gstRate / 2}%):</span>
-                      <span className="font-semibold">\u20b9{(gstBreakup.cgst || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{t('purchaseInvoiceModal.sgst', 'SGST')} ({gstRate / 2}%):</span>
-                      <span className="font-semibold">\u20b9{(gstBreakup.sgst || 0).toFixed(2)}</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{t('purchaseInvoiceModal.igst', 'IGST')} ({gstRate}%):</span>
-                    <span className="font-semibold">\u20b9{(gstBreakup.igst || 0).toFixed(2)}</span>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      {t('purchaseInvoiceModal.invoiceNumber', 'Invoice Number')}
+                    </label>
+                    <Input
+                      value={t('purchaseInvoiceModal.autoGenerated', 'Auto-generated on save')}
+                      readOnly
+                      disabled
+                      className="bg-muted/50 cursor-not-allowed"
+                    />
                   </div>
-                )}
-                <div className="border-t-2 border-primary/20 pt-3 flex justify-between items-center">
-                  <span className="text-base font-bold">{t('purchaseInvoiceModal.totalAmount', 'Total Amount')}:</span>
-                  <span className="text-xl font-bold text-primary">\u20b9{totalAmount.toFixed(2)}</span>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      {t('purchaseInvoiceModal.reference', 'Reference Number')}
+                    </label>
+                    <Input
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder={t('purchaseInvoiceModal.referencePlaceholder', "Vendor's invoice number (optional)")}
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('purchaseInvoiceModal.issueDate', 'Issue Date')} <span className="text-destructive">*</span></label>
-              <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
-            </div>
-
-            {error && (
-              <div className="p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg text-sm text-destructive">
-                {error}
               </div>
-            )}
-          </form>
 
-          <div className="flex justify-end gap-3 p-6 border-t border-border bg-muted/30">
+              {/* 3. Left: Base amount | Right: GST type + GST rate (input group) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    {t('purchaseInvoiceModal.baseAmountLabel', 'Base Amount (₹)')} &amp; {t('purchaseInvoiceModal.issueDate', 'Issue Date')} <span className="text-destructive">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_170px] gap-2 items-stretch">
+                    <div>
+                      <label className="sr-only">{t('purchaseInvoiceModal.baseAmountLabel', 'Base Amount (₹)')}</label>
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(Number(e.target.value))}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="sr-only">{t('purchaseInvoiceModal.issueDate', 'Issue Date')}</label>
+                      <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    {t('purchaseInvoiceModal.gstTypeAndRate', 'GST Type & Rate')} <span className="text-destructive">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_140px] gap-2 items-stretch">
+                    <Select
+                      value={gstType}
+                      onChange={(e) => setGstType(e.target.value as 'intrastate' | 'interstate')}
+                      className="h-11 w-full"
+                    >
+                      <option value="intrastate">{t('purchaseInvoiceModal.intrastate', 'Intrastate (CGST+SGST)')}</option>
+                      <option value="interstate">{t('purchaseInvoiceModal.interstate', 'Interstate (IGST)')}</option>
+                    </Select>
+                    <div className="min-w-0 sm:w-[140px]">
+                      <label className="sr-only">{t('purchaseInvoiceModal.gstRate', 'GST Rate (%)')}</label>
+                      <Select
+                        value={String(gstRate)}
+                        onChange={(e) => setGstRate(Number(e.target.value))}
+                        className="h-11 w-full"
+                      >
+                        <option value="0">{t('purchaseInvoiceModal.gstExempt', '0% (Exempt)')}</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                        <option value="28">28%</option>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">{t('purchaseInvoiceModal.gstBreakdown', 'GST Breakdown')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{t('purchaseInvoiceModal.baseAmount', 'Base Amount')}:</span>
+                    <span className="font-semibold">{formatCurrencyINR(amount)}</span>
+                  </div>
+                  {gstType === 'intrastate' ? (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{t('purchaseInvoiceModal.cgst', 'CGST')} ({gstRate / 2}%):</span>
+                        <span className="font-semibold">{formatCurrencyINR(gstBreakup.cgst || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{t('purchaseInvoiceModal.sgst', 'SGST')} ({gstRate / 2}%):</span>
+                        <span className="font-semibold">{formatCurrencyINR(gstBreakup.sgst || 0)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{t('purchaseInvoiceModal.igst', 'IGST')} ({gstRate}%):</span>
+                      <span className="font-semibold">{formatCurrencyINR(gstBreakup.igst || 0)}</span>
+                    </div>
+                  )}
+                  <div className="border-t-2 border-primary/20 pt-3 flex justify-between items-center">
+                    <span className="text-base font-bold">{t('purchaseInvoiceModal.totalAmount', 'Total Amount')}:</span>
+                    <span className="text-xl font-bold text-primary">{formatCurrencyINR(totalAmount)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {error && (
+                <div className="p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+            </div>
+          </DialogBody>
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleSubmit} disabled={saving || amount <= 0 || vendorId === ''}>
+            <Button type="submit" disabled={saving || amount <= 0 || vendorId === ''}>
               {saving ? t('purchaseInvoiceModal.creating', 'Creating...') : t('purchaseInvoiceModal.createPurchaseInvoice', 'Create Purchase Invoice')}
             </Button>
-          </div>
-        </div>
-      </div>
+          </DialogFooter>
+        </form>
+      </Dialog>
 
       <VendorFormModal
         isOpen={vendorFormOpen}

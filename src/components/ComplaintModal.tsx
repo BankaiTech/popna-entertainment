@@ -4,6 +4,7 @@ import { X, Camera } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import Select from './ui/Select';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import type { Complaint, ComplaintStatus, Customer } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 
@@ -155,30 +156,15 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl w-full sm:max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-lg font-semibold">
-            {complaint ? t('complaintModal.editTitle', 'Edit Complaint') : t('complaintModal.addTitle', 'Add New Complaint')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-md transition-colors"
-            aria-label={t('common.close', 'Close')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 pb-20 sm:pb-6">
-          <div className="space-y-4">
+    <>
+      <Dialog open={isOpen} onClose={onClose} size="lg" className="h-[95vh] sm:h-auto sm:max-h-[90vh]">
+        <DialogHeader
+          title={complaint ? t('complaintModal.editTitle', 'Edit Complaint') : t('complaintModal.addTitle', 'Add New Complaint')}
+          onClose={onClose}
+        />
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <DialogBody>
+            <div className="p-4 sm:p-6 space-y-4">
             {!complaint && (
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -333,42 +319,41 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
                 )}
               </div>
             )}
-          </div>
-          </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border bg-card sticky bottom-0">
+            </div>
+          </DialogBody>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button type="submit" className="w-full sm:w-auto">{complaint ? t('complaintModal.updateComplaint', 'Update Complaint') : t('complaintModal.createComplaint', 'Create Complaint')}</Button>
-          </div>
+          </DialogFooter>
         </form>
+      </Dialog>
 
-        {imagePreviewOpen && (closureImage ?? complaint?.closureImage) && (
-          <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+      {isOpen && imagePreviewOpen && (closureImage ?? complaint?.closureImage) && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setImagePreviewOpen(false)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Escape' && setImagePreviewOpen(false)}
+        >
+          <button
             onClick={() => setImagePreviewOpen(false)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Escape' && setImagePreviewOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            aria-label={t('complaintModal.closePreview', 'Close preview')}
           >
-            <button
-              onClick={() => setImagePreviewOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
-              aria-label={t('complaintModal.closePreview', 'Close preview')}
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img
-              src={closureImage ?? complaint?.closureImage ?? ''}
-              alt={t('complaintModal.closurePreviewAlt', 'Closure preview')}
-              className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={closureImage ?? complaint?.closureImage ?? ''}
+            alt={t('complaintModal.closurePreviewAlt', 'Closure preview')}
+            className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 };
 

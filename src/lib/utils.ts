@@ -5,10 +5,11 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
+// Indian currency format applied globally
 /**
- * Format number as Indian Rupee currency
+ * Format number as Indian Rupee currency (Indian grouping: 3,2,2)
  * @param amount Amount to format
- * @returns Formatted currency string (e.g., ₹1,234.56)
+ * @returns Formatted currency string (e.g., ₹1,23,456.00)
  */
 export function formatCurrencyINR(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
@@ -18,6 +19,9 @@ export function formatCurrencyINR(amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+/** Alias for formatCurrencyINR — Indian currency format */
+export const formatIndianCurrency = formatCurrencyINR;
 
 /**
  * Format date as dd-mm-yyyy
@@ -66,14 +70,14 @@ export function generateCustomerPassword(name: string, mobile: string): string {
   const namePart = name
     .replace(/[^a-zA-Z]/g, '')
     .toLowerCase();
-  
+
   // Use first 4 characters, or full name if less than 4 characters
   const namePrefix = namePart.length >= 4 ? namePart.slice(0, 4) : namePart;
-  
+
   // Extract last 5 digits from mobile number
   // If mobile has fewer than 5 digits, use all available digits
   const mobileDigits = mobile.replace(/\D/g, ''); // Remove non-digits
   const mobileSuffix = mobileDigits.slice(-5); // Gets last 5 digits, or all if fewer than 5
-  
+
   return `${namePrefix}${mobileSuffix}`;
 }

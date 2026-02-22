@@ -20,6 +20,8 @@ const ProductManagement = () => {
     name: '',
     productType: 'internet',
     isActive: true,
+    cutoffDate: undefined,
+    cutoffDays: undefined,
   });
 
   useEffect(() => {
@@ -44,6 +46,8 @@ const ProductManagement = () => {
       name: '',
       productType: 'internet',
       isActive: true,
+      cutoffDate: undefined,
+      cutoffDays: undefined,
     });
     setEditingProduct(null);
     setShowForm(false);
@@ -55,6 +59,8 @@ const ProductManagement = () => {
       name: product.name,
       productType: product.productType,
       isActive: product.isActive,
+      cutoffDate: product.cutoffDate,
+      cutoffDays: product.cutoffDays,
     });
     setShowForm(true);
   };
@@ -132,6 +138,44 @@ const ProductManagement = () => {
                   {t('productManagement.activeLabel', 'Active (visible in front site)')}
                 </label>
               </div>
+              {/* Product cut-off configuration added */}
+              {formData.productType === 'cable' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground">
+                    {t('productManagement.cutoffDate', 'Cut-off Date (Day of Month)')}
+                  </label>
+                  <Select
+                    value={formData.cutoffDate?.toString() || ''}
+                    onChange={(e) => setFormData({ ...formData, cutoffDate: e.target.value ? Number(e.target.value) : undefined })}
+                  >
+                    <option value="">{t('productManagement.selectCutoffDate', 'Select cut-off date')}</option>
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>{day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of every month</option>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('productManagement.cutoffDateHint', 'Payment cut-off date for cable customers')}
+                  </p>
+                </div>
+              )}
+              {formData.productType === 'internet' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground">
+                    {t('productManagement.cutoffDays', 'Cut-off Days (After Due Date)')}
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={formData.cutoffDays || ''}
+                    onChange={(e) => setFormData({ ...formData, cutoffDays: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder={t('productManagement.cutoffDaysPlaceholder', 'e.g., 5')}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('productManagement.cutoffDaysHint', 'Number of days after due date for internet service cut-off')}
+                  </p>
+                </div>
+              )}
               <div className="flex space-x-2">
                 <Button type="submit">{editingProduct ? t('productManagement.updateProduct', 'Update Product') : t('productManagement.createProduct', 'Create Product')}</Button>
                 <Button type="button" variant="outline" onClick={resetForm}>

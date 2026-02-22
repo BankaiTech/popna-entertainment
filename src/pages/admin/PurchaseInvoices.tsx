@@ -8,7 +8,7 @@ import { Plus, Search, Download } from 'lucide-react';
 import type { PurchaseInvoice } from '@/models/types';
 import { purchaseInvoicesApi, vendorsApi } from '@/api/purchaseInvoices';
 import PurchaseInvoiceModal from '@/components/PurchaseInvoiceModal';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR } from '@/lib/utils';
 import { generatePurchaseInvoicePdf } from '@/lib/pdfUtils';
 import { useStore } from '@/store/useStore';
 
@@ -57,9 +57,9 @@ const PurchaseInvoices = () => {
 
   const gstBreakupStr = (g: PurchaseInvoice['gstBreakup']) => {
     const parts: string[] = [];
-    if (g.cgst != null) parts.push(`${t('invoices.cgst', 'CGST')}: ₹${g.cgst.toFixed(2)}`);
-    if (g.sgst != null) parts.push(`${t('invoices.sgst', 'SGST')}: ₹${g.sgst.toFixed(2)}`);
-    if (g.igst != null) parts.push(`${t('invoices.igst', 'IGST')}: ₹${g.igst.toFixed(2)}`);
+    if (g.cgst != null) parts.push(`${t('invoices.cgst', 'CGST')}: ${formatCurrencyINR(g.cgst)}`);
+    if (g.sgst != null) parts.push(`${t('invoices.sgst', 'SGST')}: ${formatCurrencyINR(g.sgst)}`);
+    if (g.igst != null) parts.push(`${t('invoices.igst', 'IGST')}: ${formatCurrencyINR(g.igst)}`);
     return parts.length ? parts.join(', ') : '—';
   };
 
@@ -129,9 +129,9 @@ const PurchaseInvoices = () => {
                       <td className="px-3 py-2 text-sm font-medium text-foreground">{inv.invoiceNumber}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.vendorName}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.reference ?? '—'}</td>
-                      <td className="px-3 py-2 text-right text-sm font-normal text-gray-600 dark:text-foreground">₹{inv.amount.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-sm font-normal text-gray-600 dark:text-foreground">{formatCurrencyINR(inv.amount)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{gstBreakupStr(inv.gstBreakup)}</td>
-                      <td className="px-3 py-2 text-right text-sm font-medium text-foreground">₹{inv.totalAmount.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-sm font-medium text-foreground">{formatCurrencyINR(inv.totalAmount)}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.issueDate}</td>
                       <td className="px-3 py-2">
                         <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(inv)}>

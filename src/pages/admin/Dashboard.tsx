@@ -1,19 +1,34 @@
-import { useEffect, useState } from 'react';
+// SaaS Dashboard KPI cards implemented
+// Finance graph implemented
+// Financial system enhancement completed
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
-import { Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle } from 'lucide-react';
+import Select from '@/components/ui/Select';
+import {
+  Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle,
+  DollarSign, Clock, AlertTriangle, MessageSquare, Zap, Package, Layers
+} from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 import { customersApi } from '@/api/api';
-import type { Customer } from '@/models/types';
+import { salesInvoicesApi } from '@/api/invoices';
+import type { Customer, SalesInvoice } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR } from '@/lib/utils';
+
+// Finance chart time filter type
+type TimeFilter = 'this_month' | 'last_month' | 'last_6_months' | 'this_year';
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
-  const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, fetchProducts, customers, complaints, products } = useStore();
+  const { dashboardStats, loading, fetchDashboardStats, initialize, fetchCustomers, fetchProducts, customers, products } = useStore();
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
+  const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('this_month');
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,14 +41,67 @@ const AdminDashboard = () => {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5);
       setLastCustomers(sorted);
+      const allInvoices = await salesInvoicesApi.getAll();
+      setInvoices(allInvoices);
     };
     loadData();
   }, [fetchDashboardStats, fetchProducts, fetchCustomers, initialize]);
 
-  // Calculate active complaints count
-  const activeComplaintsCount = complaints.filter((c) => c.status === 'active').length;
+  // Finance chart data — computed from invoices based on time filter
+  const financeChartData = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
+    // Helper to get month label
+    const monthLabel = (m: number, y: number) => {
+      const d = new Date(y, m, 1);
+      return d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+    };
 
+    // Determine time range
+    let months: { month: number; year: number }[] = [];
+    switch (timeFilter) {
+      case 'this_month':
+        months = [{ month: currentMonth, year: currentYear }];
+        break;
+      case 'last_month': {
+        const lm = currentMonth === 0 ? 11 : currentMonth - 1;
+        const ly = currentMonth === 0 ? currentYear - 1 : currentYear;
+        months = [{ month: lm, year: ly }];
+        break;
+      }
+      case 'last_6_months':
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(currentYear, currentMonth - i, 1);
+          months.push({ month: d.getMonth(), year: d.getFullYear() });
+        }
+        break;
+      case 'this_year':
+        for (let m = 0; m <= currentMonth; m++) {
+          months.push({ month: m, year: currentYear });
+        }
+        break;
+    }
+
+    return months.map(({ month, year }) => {
+      const monthInvoices = invoices.filter((inv) => {
+        const d = new Date(inv.issueDate);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+      const collected = monthInvoices
+        .filter((inv) => inv.status === 'paid')
+        .reduce((sum, inv) => sum + inv.totalAmount, 0);
+      const pending = monthInvoices
+        .filter((inv) => inv.status !== 'paid')
+        .reduce((sum, inv) => sum + inv.totalAmount, 0);
+      return {
+        name: monthLabel(month, year),
+        collected,
+        pending,
+      };
+    });
+  }, [invoices, timeFilter]);
 
   // Show data immediately if available, don't show loading if we have data
   if (!dashboardStats && loading) {
@@ -64,16 +132,19 @@ const AdminDashboard = () => {
       icon: Wifi,
       color: colors[colorIndex].text,
       bgColor: colors[colorIndex].bg,
+      isCurrency: false,
     };
   }) : [];
 
-  const statCards = [
+  // Customer KPI cards
+  const customerCards = [
     {
       title: t('dashboard.totalCustomers'),
       value: dashboardStats.totalCustomers,
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
+      isCurrency: false,
     },
     ...productStatCards,
     {
@@ -82,6 +153,7 @@ const AdminDashboard = () => {
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      isCurrency: false,
     },
     {
       title: t('dashboard.activeCustomers'),
@@ -89,6 +161,7 @@ const AdminDashboard = () => {
       icon: UserCheck,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      isCurrency: false,
     },
     {
       title: t('dashboard.inactiveCustomers'),
@@ -96,31 +169,117 @@ const AdminDashboard = () => {
       icon: UserX,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
-    },
-    {
-      title: t('dashboard.activeComplaints'),
-      value: activeComplaintsCount,
-      icon: AlertCircle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      isCurrency: false,
     },
   ];
 
-  return (
-    <div className="space-y-3 animate-fade-in">
-      <div>
-        <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
-      </div>
+  // Payment KPI cards
+  const paymentCards = [
+    {
+      title: t('dashboard.totalCollected', 'Total Collected'),
+      value: dashboardStats.totalAmountCollected,
+      icon: DollarSign,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      isCurrency: true,
+    },
+    {
+      title: t('dashboard.totalPending', 'Total Pending'),
+      value: dashboardStats.totalPendingAmount,
+      icon: Clock,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      isCurrency: true,
+    },
+    {
+      title: t('dashboard.overdueAmount', 'Overdue Amount'),
+      value: dashboardStats.overdueAmount,
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      isCurrency: true,
+    },
+  ];
 
-      {/* Stats Cards */}
+  // Complaint KPI cards
+  const complaintCards = [
+    {
+      title: t('dashboard.totalComplaints', 'Total Complaints'),
+      value: dashboardStats.totalComplaints,
+      icon: MessageSquare,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.activeComplaints'),
+      value: dashboardStats.activeComplaints,
+      icon: AlertCircle,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.onHoldComplaints', 'On Hold'),
+      value: dashboardStats.onHoldComplaints,
+      icon: Clock,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      isCurrency: false,
+    },
+  ];
+
+  // Connection KPI cards
+  const connectionCards = [
+    {
+      title: t('dashboard.newConnections', 'New Requests'),
+      value: dashboardStats.newConnectionRequests,
+      icon: Zap,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.convertedConnections', 'Converted'),
+      value: dashboardStats.convertedConnections,
+      icon: UserCheck,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      isCurrency: false,
+    },
+  ];
+
+  // Plan & Product KPI cards
+  const planProductCards = [
+    {
+      title: t('dashboard.totalActivePlans', 'Active Plans'),
+      value: dashboardStats.totalActivePlans,
+      icon: Layers,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.totalProducts', 'Total Products'),
+      value: dashboardStats.totalProducts,
+      icon: Package,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      isCurrency: false,
+    },
+  ];
+
+  // Renders a section of KPI cards
+  const renderCardSection = (title: string, cards: typeof customerCards) => (
+    <>
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => {
+        {cards.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider ">
+                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider">
                   {stat.title}
                 </CardTitle>
                 <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
@@ -129,13 +288,91 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent className="pb-4 px-4">
                 <div className="text-xl font-bold text-foreground mb-1">
-                  <AnimatedCounter value={stat.value} duration={1500} />
+                  {stat.isCurrency ? (
+                    formatCurrencyINR(stat.value)
+                  ) : (
+                    <AnimatedCounter value={stat.value} duration={1500} />
+                  )}
                 </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
+    </>
+  );
+
+  return (
+    <div className="space-y-3 animate-fade-in">
+      <div>
+        <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
+      </div>
+
+      {/* Customer Metrics */}
+      {renderCardSection(t('dashboard.customerMetrics', 'Customer Metrics'), customerCards)}
+
+      {/* Payment Metrics */}
+      {renderCardSection(t('dashboard.paymentMetrics', 'Payment Metrics'), paymentCards)}
+
+      {/* Complaint Metrics */}
+      {renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}
+
+      {/* Connection Metrics */}
+      {renderCardSection(t('dashboard.connectionMetrics', 'Connection Metrics'), connectionCards)}
+
+      {/* Plans & Products */}
+      {renderCardSection(t('dashboard.planProductMetrics', 'Plans & Products'), planProductCards)}
+
+      {/* Finance Graph */}
+      <Card className="overflow-hidden animate-slide-up">
+        <div className="h-1 bg-gradient-to-r from-green-500 to-red-500"></div>
+        <CardHeader className="py-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">{t('dashboard.financeGraph', 'Finance Overview')}</CardTitle>
+          <Select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+            className="h-8 text-xs w-auto"
+          >
+            <option value="this_month">{t('dashboard.thisMonth', 'This Month')}</option>
+            <option value="last_month">{t('dashboard.lastMonth', 'Last Month')}</option>
+            <option value="last_6_months">{t('dashboard.last6Months', 'Last 6 Months')}</option>
+            <option value="this_year">{t('dashboard.thisYear', 'This Year')}</option>
+          </Select>
+        </CardHeader>
+        <CardContent className="py-2">
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={financeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="name" fontSize={12} tickLine={false} />
+                <YAxis
+                  fontSize={12}
+                  tickLine={false}
+                  tickFormatter={(value) => formatCurrencyINR(value)}
+                />
+                <Tooltip
+                  formatter={(value) => formatCurrencyINR(Number(value ?? 0))}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar
+                  dataKey="collected"
+                  name={t('dashboard.collected', 'Collected')}
+                  fill="#22c55e"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="pending"
+                  name={t('dashboard.pending', 'Pending')}
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Provider Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

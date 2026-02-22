@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { connectionRequestsApi } from '@/api/connectionRequests';
 import type { Plan } from '@/models/types';
 
@@ -79,28 +78,12 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <Card className="w-full max-w-md rounded-modal shadow-soft-xl border border-border bg-card">
-        {/* Compact Header */}
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-border">
-          <div>
-            <CardTitle className="text-lg font-semibold text-foreground">{t('planRequest.title')}</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground mt-1">
-              {plan.planName} - {productName}
-            </CardDescription>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-accent rounded-md transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </CardHeader>
-
-        {/* Scrollable Body */}
-        <CardContent className="p-6 max-h-[60vh] overflow-y-auto">
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogHeader title={t('planRequest.title')} onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody>
+          <div className="p-4 sm:p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">{plan.planName} - {productName}</p>
             {success && (
               <div className="p-3 rounded-md bg-green-50 text-green-700 text-sm border border-green-200">
                 {t('planRequest.success')}
@@ -156,32 +139,20 @@ const PlanRequestModal = ({ plan, productId, productName, isOpen, onClose, onSuc
               />
             </div>
 
-            {/* Hidden fields for API */}
             <input type="hidden" name="packageId" value={plan.id} />
             <input type="hidden" name="productId" value={productId} />
-
-            {/* Fixed Footer */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={loading}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="min-w-[100px]"
-              >
-                {loading ? t('common.submitting') : t('common.submit')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" disabled={loading} className="min-w-[100px]">
+            {loading ? t('common.submitting') : t('common.submit')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

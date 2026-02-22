@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select';
 import CustomerSheet from '@/components/CustomerSheet';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import { Pagination } from '@/components/ui/Pagination';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
@@ -446,12 +447,10 @@ const AdminCustomers = () => {
 
       {/* Password Success Dialog — shown once after customer creation */}
       {showPasswordDialog && generatedPassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="password-dialog-title" aria-describedby="password-dialog-desc">
-            <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
-              <h2 id="password-dialog-title" className="text-lg font-semibold">{t('customers.customerCreated', 'Customer Created Successfully')}</h2>
-            </div>
-            <div id="password-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 space-y-3">
+        <Dialog open={showPasswordDialog} onClose={() => { setShowPasswordDialog(false); setGeneratedPassword(null); }}>
+          <DialogHeader title={t('customers.customerCreated', 'Customer Created Successfully')} onClose={() => { setShowPasswordDialog(false); setGeneratedPassword(null); }} />
+          <DialogBody>
+            <div className="px-4 sm:px-5 py-4 space-y-3" id="password-dialog-desc">
               <p className="text-sm text-muted-foreground">
                 {t('customers.passwordGenerated', 'A password has been automatically generated for this customer.')}
               </p>
@@ -463,41 +462,33 @@ const AdminCustomers = () => {
                 {t('customers.passwordNote', 'Please save this password. It will not be shown again. The customer can use their mobile number and this password to log in.')}
               </p>
             </div>
-            <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
-              <Button
-                onClick={() => {
-                  setShowPasswordDialog(false);
-                  setGeneratedPassword(null);
-                }}
-                className="w-full sm:w-auto"
-              >
-                {t('common.ok', 'OK')}
-              </Button>
-            </div>
-          </div>
-        </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button onClick={() => { setShowPasswordDialog(false); setGeneratedPassword(null); }} className="w-full sm:w-auto">
+              {t('common.ok', 'OK')}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
 
       {/* Delete Customer — confirmation alert dialog (Admin only) */}
       {customerIdToDelete != null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card rounded-modal shadow-soft-xl w-full max-w-md flex flex-col overflow-hidden border border-border" role="alertdialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-desc">
-            <div className="shrink-0 px-4 sm:px-5 py-3 border-b border-border">
-              <h2 id="delete-dialog-title" className="text-lg font-semibold">{t('customers.deleteCustomer', 'Delete Customer')}</h2>
-            </div>
-            <p id="delete-dialog-desc" className="flex-1 px-4 sm:px-5 py-4 text-sm text-muted-foreground">
+        <Dialog open={customerIdToDelete != null} onClose={handleDeleteCancel}>
+          <DialogHeader title={t('customers.deleteCustomer', 'Delete Customer')} onClose={handleDeleteCancel} />
+          <DialogBody>
+            <p id="delete-dialog-desc" className="px-4 sm:px-5 py-4 text-sm text-muted-foreground">
               {t('customers.deleteConfirm', 'Are you sure you want to delete this customer? This action cannot be undone.')}
             </p>
-            <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-border bg-card">
-              <Button variant="outline" onClick={handleDeleteCancel} className="w-full sm:w-auto">
-                {t('common.cancel', 'Cancel')}
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteConfirm} className="w-full sm:w-auto">
-                {t('common.delete', 'Delete')}
-              </Button>
-            </div>
-          </div>
-        </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDeleteCancel} className="w-full sm:w-auto">
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} className="w-full sm:w-auto">
+              {t('common.delete', 'Delete')}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
     </div>
   );
