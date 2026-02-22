@@ -1,3 +1,4 @@
+// Client folder removed — SaaS multi-tenant only
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, UserRole } from '@/store/useAuthStore';
 
@@ -5,10 +6,9 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
   customerOnly?: boolean; // For customer-specific routes
-  clientOnly?: boolean; // SaaS Ready — for client/partner routes
 }
 
-const ProtectedRoute = ({ children, allowedRoles, customerOnly, clientOnly }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles, customerOnly }: ProtectedRouteProps) => {
   const { isAuthenticated, role } = useAuthStore();
   const location = useLocation();
 
@@ -27,23 +27,9 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly, clientOnly }: Pr
     return <>{children}</>;
   }
 
-  // Client/Partner routes — only clients can access
-  if (clientOnly) {
-    if (role !== 'client') {
-      if (role === 'admin' || role === 'employee') {
-        return <Navigate to="/admin/dashboard" replace />;
-      }
-      return <Navigate to="/admin/login" replace />;
-    }
-    return <>{children}</>;
-  }
-
-  // Admin/Employee routes - customers and clients must not access
+  // Admin/Employee/SuperAdmin routes - customers must not access
   if (role === 'customer' && !customerOnly) {
     return <Navigate to="/customer/dashboard" replace />;
-  }
-  if (role === 'client' && !clientOnly) {
-    return <Navigate to="/client/dashboard" replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
@@ -54,8 +40,8 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly, clientOnly }: Pr
     if (role === 'customer') {
       return <Navigate to="/customer/dashboard" replace />;
     }
-    if (role === 'client') {
-      return <Navigate to="/client/dashboard" replace />;
+    if (role === 'superadmin') {
+      return <Navigate to="/superadmin/organizations" replace />;
     }
     return <Navigate to="/admin/dashboard" replace />;
   }
@@ -64,4 +50,3 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly, clientOnly }: Pr
 };
 
 export default ProtectedRoute;
-

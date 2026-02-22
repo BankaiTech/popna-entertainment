@@ -230,11 +230,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                       disabled={isReadOnly}
                       className="uppercase"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formData.gstin && formData.gstin.length !== 15
-                        ? t('customerSheet.gstinLengthError', 'GSTIN must be 15 characters')
-                        : t('customerSheet.gstinHint', 'Optional GSTIN field for GST invoice support')}
-                    </p>
+                    {/* GSTIN hint removed */}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>

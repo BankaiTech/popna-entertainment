@@ -209,7 +209,7 @@ const ProductManagement = () => {
                     {t('common.edit', 'Edit')}
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(product.id)}
                     className="flex-1"

@@ -46,7 +46,7 @@ const availableIcons = [
 
 const WebsiteSettingsComponent = () => {
   const { t } = useTranslation();
-  const { websiteSettings, loading, fetchWebsiteSettings, updateWebsiteSettings } = useStore();
+  const { websiteSettings, fetchWebsiteSettings, updateWebsiteSettings } = useStore();
   const [formData, setFormData] = useState<Partial<WebsiteSettings>>({
     heroTitle: '',
     heroSubtitle: '',
@@ -295,7 +295,7 @@ const WebsiteSettingsComponent = () => {
                         </Button>
                         <Button
                           type="button"
-                          variant="danger"
+                          variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteCard(index)}
                         >

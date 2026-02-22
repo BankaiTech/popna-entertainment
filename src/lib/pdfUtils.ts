@@ -1,4 +1,5 @@
 // Professional SaaS Invoice Template
+// Invoice PDF browser header/footer removed
 // Replace with backend PDF generation later
 
 import type { SalesInvoice, PurchaseInvoice, Customer, CompanyProfile, Vendor } from '@/models/types';
@@ -58,13 +59,20 @@ const numberToWords = (num: number): string => {
   return result + ' Only';
 };
 
+// Fixed invoice PDF layout and browser header removal
 const baseStyles = `
-  @page { size: A4 portrait; margin: 15mm 18mm; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  /* Remove browser header/footer completely */
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    html, body { margin: 0; padding: 0; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: A4 portrait; margin: 0; }
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.45; }
-  .invoice-container { max-width: 800px; margin: 0 auto; padding: 24px; }
-  .header-bar { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 3px solid #1a1a1a; margin-bottom: 20px; }
+  html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.45; background: white; }
+  .invoice-container { width: 210mm; min-height: 297mm; padding: 15mm; margin: auto; box-sizing: border-box; background: white; position: relative; overflow: hidden; word-wrap: break-word; overflow-wrap: break-word; }
+  .header-bar { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 3px solid #1a1a1a; margin-bottom: 20px; page-break-inside: avoid; }
   .company-block { flex: 1; }
   .company-name { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; letter-spacing: -0.3px; }
   .company-detail { font-size: 10.5px; color: #444; margin: 2px 0; line-height: 1.5; }
@@ -77,33 +85,33 @@ const baseStyles = `
   .status-draft { background: #e2e3e5; color: #383d41; }
   .status-sent { background: #cce5ff; color: #004085; }
   .status-overdue { background: #f8d7da; color: #721c24; }
-  .section-box { border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; margin: 16px 0; background: #fafafa; }
+  .section-box { border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; margin: 16px 0; background: #fafafa; page-break-inside: avoid; }
   .section-label { font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .section-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
   .section-line { font-size: 10.5px; color: #444; margin: 2px 0; }
-  .items-table { width: 100%; border-collapse: collapse; margin: 20px 0 16px 0; font-size: 10.5px; page-break-inside: auto; }
+  .items-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 20px 0 16px 0; font-size: 10.5px; page-break-inside: avoid; }
   .items-table tr { page-break-inside: avoid; }
   .items-table thead { display: table-header-group; }
-  .items-table th { background: #1a1a1a; color: #fff; padding: 10px 12px; text-align: left; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .items-table th { background: #1a1a1a; color: #fff; padding: 10px 12px; text-align: left; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; word-wrap: break-word; }
   .items-table th:first-child { border-radius: 4px 0 0 0; }
   .items-table th:last-child { border-radius: 0 4px 0 0; }
   .items-table th.num { text-align: right; }
   .items-table th.cen { text-align: center; }
-  .items-table td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+  .items-table td { padding: 10px 12px; border-bottom: 1px solid #eee; word-wrap: break-word; overflow-wrap: break-word; }
   .items-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .items-table td.cen { text-align: center; }
   .items-table tbody tr:last-child td { border-bottom: 2px solid #1a1a1a; }
-  .summary-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .summary-row { display: flex; justify-content: flex-end; margin-top: 8px; page-break-inside: avoid; }
   .summary-box { width: 300px; }
   .summary-line { display: flex; justify-content: space-between; padding: 5px 0; font-size: 10.5px; color: #444; }
   .summary-line.total { font-size: 14px; font-weight: 700; color: #1a1a1a; border-top: 2px solid #1a1a1a; margin-top: 6px; padding-top: 10px; }
-  .amount-words-box { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px 14px; margin: 20px 0; font-size: 10.5px; color: #333; }
+  .amount-words-box { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px 14px; margin: 20px 0; font-size: 10.5px; color: #333; page-break-inside: avoid; }
   .amount-words-box strong { color: #1a1a1a; }
-  .footer-area { margin-top: 30px; padding-top: 16px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: flex-end; }
+  .footer-area { margin-top: 30px; padding-top: 16px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: flex-end; position: relative; page-break-inside: avoid; }
   .signature-area { text-align: right; }
   .signature-line { width: 180px; border-top: 1px solid #999; margin-left: auto; margin-bottom: 4px; }
   .signature-text { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-  .computer-note { font-size: 9px; color: #999; text-align: center; margin-top: 20px; }
+  .computer-note { font-size: 9px; color: #999; text-align: center; margin-top: 20px; position: relative; }
 `;
 
 const getStatusClass = (status: string) => {
@@ -240,6 +248,8 @@ export const generateSalesInvoicePdf = async (
   if (printWindow) {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+    // Suppress browser header/footer in print dialog
+    printWindow.document.title = ' ';
     printWindow.onload = () => { printWindow.print(); };
   }
 };
@@ -374,6 +384,8 @@ export const generatePurchaseInvoicePdf = async (
   if (printWindow) {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+    // Suppress browser header/footer in print dialog
+    printWindow.document.title = ' ';
     printWindow.onload = () => { printWindow.print(); };
   }
 };

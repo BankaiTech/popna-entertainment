@@ -11,7 +11,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import type { Customer, Provider, CustomerStatus } from '@/models/types';
+import type { Customer, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
 
@@ -161,7 +161,7 @@ const AdminCustomers = () => {
   // Payment Collection System — SaaS Ready (ALL product types)
   const handleUpdatePayment = async (
     customerId: number,
-    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; collectedAmount?: number; balanceAmount?: number }
+    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; paymentMethod?: PaymentMethod; collectedAmount?: number; balanceAmount?: number }
   ) => {
     const updated = await updateCustomer(customerId, data);
     if (updated) setEditingCustomer(updated);

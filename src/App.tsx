@@ -1,10 +1,11 @@
-// SaaS Ready — Fully Dynamic Product
+// SaaS Product Fully Completed
+// Client folder removed — SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
-import ClientLayout from './layouts/ClientLayout';
+import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
 import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -16,10 +17,10 @@ import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
+import Organizations from './pages/superadmin/Organizations';
 import Login from './pages/admin/Login';
 import CustomerLogin from './pages/customer/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
-import ClientDashboard from './pages/client/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuthStore } from './store/useAuthStore';
@@ -54,6 +55,26 @@ function App() {
           path="/customer"
           element={<Navigate to="/customer/dashboard" replace />}
         />
+
+        {/* Super Admin Routes — SaaS Master Controller */}
+        <Route
+          path="/superadmin"
+          element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            path="organizations"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <Organizations />
+              </ProtectedRoute>
+            }
+          />
+          <Route index element={<Navigate to="/superadmin/organizations" replace />} />
+        </Route>
 
         {/* Admin Routes - Protected */}
         <Route
@@ -138,50 +159,6 @@ function App() {
           />
           <Route index element={<AdminRedirect />} />
         </Route>
-
-        {/* Client/Partner Routes — SaaS Ready */}
-        <Route
-          path="/client"
-          element={
-            <ProtectedRoute clientOnly>
-              <ClientLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route
-            path="dashboard"
-            element={
-              <ProtectedRoute clientOnly>
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="customers"
-            element={
-              <ProtectedRoute clientOnly>
-                <AdminCustomers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="complaints"
-            element={
-              <ProtectedRoute clientOnly>
-                <AdminComplaints />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="invoices"
-            element={
-              <ProtectedRoute clientOnly>
-                <AdminInvoices />
-              </ProtectedRoute>
-            }
-          />
-          <Route index element={<Navigate to="/client/dashboard" replace />} />
-        </Route>
       </Routes>
     </>
   );
@@ -199,8 +176,8 @@ function AdminRedirect() {
     return <Navigate to="/customer/dashboard" replace />;
   }
 
-  if (role === 'client') {
-    return <Navigate to="/client/dashboard" replace />;
+  if (role === 'superadmin') {
+    return <Navigate to="/superadmin/organizations" replace />;
   }
 
   if (role === 'admin') {

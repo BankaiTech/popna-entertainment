@@ -6,7 +6,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import type { Customer, Plan, Provider } from '@/models/types';
+import type { Customer, Plan } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -20,14 +20,14 @@ interface InvoiceModalProps {
 
 const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceModalProps) => {
   const { t } = useTranslation();
-  const { companyProfile, fetchCompanyProfile } = useStore();
-  
+  const { fetchCompanyProfile } = useStore();
+
   useEffect(() => {
     if (isOpen) {
       fetchCompanyProfile();
     }
   }, [isOpen, fetchCompanyProfile]);
-  
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>('');
   const [selectedPlanId, setSelectedPlanId] = useState<number | ''>('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -74,7 +74,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     setSaving(true);
     try {
       const invoiceNumber = `INV-${Date.now()}`;
-      
+
       await salesInvoicesApi.create({
         organizationId: MOCK_ORGANIZATION_ID,
         invoiceNumber,

@@ -1,6 +1,5 @@
 // API ready — replace mock with real backend
 import type { Plan } from '@/models/types';
-import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { plansApi as basePlansApi } from './api';
 
 /**

@@ -10,12 +10,42 @@ export type CustomerStatus = 'Active' | 'Inactive';
 // SaaS Ready — Payment applies to ALL product types (cable, internet, future products)
 export type PaymentStatus = 'paid' | 'not_paid';
 
+/** How the payment was collected — e.g. UPI, Cash, Card. For reporting and reconciliation. */
+export type PaymentMethod = 'cash' | 'upi' | 'card' | 'other';
+
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
 export type ConnectionRequestStatus = 'New' | 'Converted';
 
 // Multi-tenant SaaS Isolation — backend will enforce org isolation
 export const MOCK_ORGANIZATION_ID = 'org_001';
+
+// SaaS Master Controller created
+export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
+
+/** All available modules that can be assigned to an organization */
+export const ALL_MODULES = [
+  'dashboard', 'customers', 'complaints', 'payments', 'catalog',
+  'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests'
+] as const;
+
+/** All available settings tabs that can be assigned to an organization */
+export const ALL_SETTINGS_TABS = [
+  'company', 'products'
+] as const;
+
+export type ModuleKey = typeof ALL_MODULES[number];
+export type SettingsTabKey = typeof ALL_SETTINGS_TABS[number];
+
+export interface Organization {
+  id: string;
+  name: string;
+  status: OrganizationStatus;
+  allowedModules: ModuleKey[];
+  allowedSettingsTabs: SettingsTabKey[];
+  subscriptionStart: string;
+  subscriptionEnd: string;
+}
 
 export interface Plan {
   id: number;
@@ -55,6 +85,8 @@ export interface Customer {
   paymentStatus?: PaymentStatus;
   paymentDescription?: string;
   paymentUpdatedAt?: string;
+  /** How payment was collected: UPI, Cash, Card, etc. */
+  paymentMethod?: PaymentMethod;
   /** Amount collected (supports partial payment) */
   collectedAmount?: number;
   /** Remaining balance after partial payment */

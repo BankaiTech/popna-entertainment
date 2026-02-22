@@ -9,7 +9,7 @@ import type { CompanyProfile } from '@/models/types';
 
 const CompanyProfileSettings = () => {
   const { t } = useTranslation();
-  const { companyProfile, loading, fetchCompanyProfile, updateCompanyProfile } = useStore();
+  const { companyProfile, fetchCompanyProfile, updateCompanyProfile } = useStore();
   const [formData, setFormData] = useState<Partial<CompanyProfile>>({
     companyName: '',
     gstin: '',

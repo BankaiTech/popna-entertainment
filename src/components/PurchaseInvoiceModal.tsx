@@ -19,7 +19,7 @@ interface PurchaseInvoiceModalProps {
 
 const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceModalProps) => {
   const { t } = useTranslation();
-  const { companyProfile, fetchCompanyProfile } = useStore();
+  const { fetchCompanyProfile } = useStore();
 
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorId, setVendorId] = useState<number | ''>('');
@@ -59,10 +59,10 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
 
   const vendorAddressLines = selectedVendor
     ? [
-        [selectedVendor.addressLine1, selectedVendor.addressLine2].filter(Boolean).join(', '),
-        [selectedVendor.city, selectedVendor.state, selectedVendor.pincode].filter(Boolean).join(', '),
-        selectedVendor.country,
-      ].filter(Boolean)
+      [selectedVendor.addressLine1, selectedVendor.addressLine2].filter(Boolean).join(', '),
+      [selectedVendor.city, selectedVendor.state, selectedVendor.pincode].filter(Boolean).join(', '),
+      selectedVendor.country,
+    ].filter(Boolean)
     : [];
 
   const calculateGST = () => {

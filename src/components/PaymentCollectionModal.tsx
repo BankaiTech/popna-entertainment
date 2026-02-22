@@ -8,7 +8,8 @@ import { X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import Input from './ui/Input';
-import type { Customer } from '@/models/types';
+import Select from './ui/Select';
+import type { Customer, PaymentMethod } from '@/models/types';
 
 interface PaymentCollectionModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface PaymentCollectionModalProps {
       paymentStatus: 'paid' | 'not_paid';
       paymentDescription: string;
       paymentUpdatedAt: string;
+      paymentMethod?: PaymentMethod;
       collectedAmount: number;
       balanceAmount: number;
     }
@@ -42,6 +44,7 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
 
   const [collectedAmount, setCollectedAmount] = useState<number>(customer.collectedAmount ?? 0);
   const [description, setDescription] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(customer.paymentMethod ?? 'upi');
   const [saving, setSaving] = useState(false);
 
   const balanceAmount = Math.max(0, totalAmount - (collectedAmount || 0));
@@ -66,6 +69,7 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
         paymentStatus: computedStatus,
         paymentDescription: desc,
         paymentUpdatedAt,
+        paymentMethod,
         collectedAmount,
         balanceAmount: isFullyPaid ? 0 : balanceAmount,
       });
@@ -125,6 +129,20 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                   <span>{t('payment.totalAmount', 'Total Amount')}</span>
                   <span>₹{totalAmount.toFixed(2)}</span>
                 </div>
+              </div>
+
+              {/* Payment Method — UPI, Cash, Card, Other */}
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('payment.paymentMethod', 'Payment Method')}</label>
+                <Select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                >
+                  <option value="upi">{t('payment.methodUpi', 'UPI')}</option>
+                  <option value="cash">{t('payment.methodCash', 'Cash')}</option>
+                  <option value="card">{t('payment.methodCard', 'Card')}</option>
+                  <option value="other">{t('payment.methodOther', 'Other')}</option>
+                </Select>
               </div>
 
               {/* Collected Amount */}

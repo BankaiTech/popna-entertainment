@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+// Catalog filter aligned with frontsite
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -6,7 +7,7 @@ import Button from '@/components/ui/Button';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import type { Plan } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
-import { formatCurrencyINR } from '@/lib/utils';
+import { formatCurrencyINR, cn } from '@/lib/utils';
 import PlanModal from '@/components/PlanModal';
 
 // Plan add/edit converted fully to dialog-based UI
@@ -16,6 +17,7 @@ const Catalog = () => {
   const { plans, loading, fetchPlans, addPlan, updatePlan, deletePlan, products, fetchProducts } = useStore();
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
 
   const { initialize } = useStore();
 
@@ -27,6 +29,19 @@ const Catalog = () => {
     };
     loadData();
   }, [fetchPlans, fetchProducts, initialize]);
+
+  // Dynamic filter options from products (same pattern as PlansPage)
+  const filterOptions = useMemo(() => {
+    const allProducts = Array.isArray(products) ? products.filter((p) => p.isActive) : [];
+    const uniqueNames = Array.from(new Set(allProducts.map((p) => p.name)));
+    return ['All', ...uniqueNames];
+  }, [products]);
+
+  // Filter plans based on selected product
+  const filteredPlans = useMemo(() => {
+    if (selectedFilter === 'All') return plans;
+    return plans.filter((plan) => plan.provider === selectedFilter);
+  }, [plans, selectedFilter]);
 
   const handleOpenAdd = () => {
     setEditingPlan(null);
@@ -78,11 +93,29 @@ const Catalog = () => {
         </Button>
       </div>
 
+      {/* Product Filter — same as frontsite plans page */}
+      <div className="flex flex-wrap items-center gap-2">
+        {filterOptions.map((filter) => (
+          <button
+            key={filter}
+            onClick={() => setSelectedFilter(filter)}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+              selectedFilter === filter
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            )}
+          >
+            {filter === 'All' ? t('catalog.filterAll', 'All') : getProviderDisplayName(filter, products)}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="text-center py-12">{t('catalog.loading', 'Loading plans...')}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((plan) => {
+          {filteredPlans.map((plan) => {
             const finalPrice = plan.price + (plan.price * plan.gstRate) / 100;
             return (
               <Card key={plan.id} className="hover:shadow-lg transition-all duration-300">

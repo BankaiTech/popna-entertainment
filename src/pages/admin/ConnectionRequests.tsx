@@ -1,8 +1,9 @@
+// Fixed connection status dropdown visibility
+// Connection conversion moved to status dropdown
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
@@ -72,6 +73,15 @@ const ConnectionRequests = () => {
     }
   };
 
+  // Status dropdown change handler — auto-converts on "Converted"
+  const handleStatusDropdown = async (request: ConnectionRequest, newStatus: string) => {
+    if (newStatus === 'Converted' && request.status !== 'Converted') {
+      await handleConvert(request);
+    } else if (newStatus === 'New' && request.status !== 'New') {
+      await handleStatusUpdate(request.id, 'New');
+    }
+  };
+
   // Filter requests by status and search query
   const filteredRequests = useMemo(() => {
     return requests.filter((request) => {
@@ -99,31 +109,31 @@ const ConnectionRequests = () => {
   const getStatusBadgeColor = (status: ConnectionRequestStatus) => {
     switch (status) {
       case 'New':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'Converted':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-green-50 text-green-700 border-green-200';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   const getStatusLabel = (status: ConnectionRequestStatus) => {
     switch (status) {
       case 'New':
-        return t('connectionRequests.new', 'New');
+        return t('connectionRequests.statusNew', 'New');
       case 'Converted':
-        return t('connectionRequests.converted', 'Converted');
+        return t('connectionRequests.statusConverted', 'Converted');
       default:
         return status;
     }
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -156,21 +166,20 @@ const ConnectionRequests = () => {
             >
               <option value="All">{t('connectionRequests.allStatus', 'All Status')}</option>
               <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
-              <option value="Contacted">{t('connectionRequests.statusContacted', 'Contacted')}</option>
               <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0" style={{ overflow: 'visible' }}>
           {loading ? (
             <div className="p-8 text-center text-gray-600">{t('connectionRequests.loading', 'Loading requests...')}</div>
           ) : filteredRequests.length === 0 ? (
             <div className="p-8 text-center text-gray-600">{t('connectionRequests.empty', 'No connection requests found.')}</div>
           ) : (
             <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <div className="min-w-full">
+              {/* Desktop Table View — Action column removed, status is now a dropdown */}
+              <div className="hidden md:block" style={{ overflow: 'visible' }}>
+                <div className="min-w-full" style={{ overflow: 'visible' }}>
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-border bg-muted/30 sticky top-0 z-10">
@@ -180,8 +189,7 @@ const ConnectionRequests = () => {
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colProductName', 'Product Name')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('connectionRequests.colStatus', 'Status')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('connectionRequests.colActions', 'Actions')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colStatus', 'Status')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -199,28 +207,26 @@ const ConnectionRequests = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.planName}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{getProviderDisplayName(request.productName)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(request.createdAt)}</td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={cn(
-                                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-                                getStatusBadgeColor(request.status)
-                              )}
-                            >
-                              {getStatusLabel(request.status)}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              {request.status === 'New' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleConvert(request)}
-                                  className="text-xs"
-                                >
-                                  {t('connectionRequests.markConverted', 'Mark Converted')}
-                                </Button>
-                              )}
-                            </div>
+                          <td className="px-3 py-2" style={{ overflow: 'visible' }}>
+                            {request.status === 'Converted' ? (
+                              <span
+                                className={cn(
+                                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+                                  getStatusBadgeColor(request.status)
+                                )}
+                              >
+                                {getStatusLabel(request.status)}
+                              </span>
+                            ) : (
+                              <Select
+                                value={request.status}
+                                onChange={(e) => handleStatusDropdown(request, e.target.value)}
+                                className="h-7 text-xs w-24"
+                              >
+                                <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
+                                <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
+                              </Select>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -229,7 +235,7 @@ const ConnectionRequests = () => {
                 </div>
               </div>
 
-              {/* Mobile Card View */}
+              {/* Mobile Card View — Action buttons removed, status is dropdown */}
               <div className="md:hidden space-y-3 p-4">
                 {paginatedRequests.map((request) => (
                   <Card key={request.id} className="border border-border">
@@ -239,14 +245,25 @@ const ConnectionRequests = () => {
                           <p className="font-semibold text-gray-900">{request.name}</p>
                           <p className="text-sm text-gray-600">{t('connectionRequests.colId', 'ID')}: {request.id}</p>
                         </div>
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-                            getStatusBadgeColor(request.status)
-                          )}
-                        >
-                          {getStatusLabel(request.status)}
-                        </span>
+                        {request.status === 'Converted' ? (
+                          <span
+                            className={cn(
+                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
+                              getStatusBadgeColor(request.status)
+                            )}
+                          >
+                            {getStatusLabel(request.status)}
+                          </span>
+                        ) : (
+                          <Select
+                            value={request.status}
+                            onChange={(e) => handleStatusDropdown(request, e.target.value)}
+                            className="h-7 text-xs w-24"
+                          >
+                            <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
+                            <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
+                          </Select>
+                        )}
                       </div>
                       <div className="space-y-1 text-sm">
                         <p><span className="text-gray-600">{t('connectionRequests.colMobile', 'Mobile')}:</span> {request.mobile}</p>
@@ -254,17 +271,6 @@ const ConnectionRequests = () => {
                         <p><span className="text-gray-600">{t('connectionRequests.colPlanName', 'Plan')}:</span> {request.planName}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colProductName', 'Product')}:</span> {getProviderDisplayName(request.productName)}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colRequestedDate', 'Date')}:</span> {formatDate(request.createdAt)}</p>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2">
-                        {request.status === 'New' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleConvert(request)}
-                            className="text-xs flex-1"
-                          >
-                            {t('connectionRequests.markConverted', 'Mark Converted')}
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>

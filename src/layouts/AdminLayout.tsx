@@ -1,43 +1,56 @@
-import { useState } from 'react';
+// Module access controlled by organization permissions
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import type { ModuleKey } from '@/models/types';
 
 const AdminLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, logout, username } = useAuthStore();
+  const { role, logout, username, organizationId } = useAuthStore();
+  const { fetchOrganization, isModuleAllowed } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Fetch organization permissions on mount
+  useEffect(() => {
+    if (organizationId) {
+      fetchOrganization(organizationId);
+    }
+  }, [organizationId, fetchOrganization]);
 
   const handleLogout = () => {
     logout();
     navigate('/admin/login', { replace: true });
   };
 
-  // Full product sidebar — enterprise SaaS structure. Admin sees all; Employee sees limited.
-  const adminMenuItems = [
-    { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users },
-    { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall },
-    { path: '/admin/catalog', labelKey: 'nav.catalog', icon: Package },
-    { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText },
-    { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart },
-    { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle },
-    { path: '/admin/users', labelKey: 'nav.users', icon: UserCog },
-    { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings },
+  // Full product sidebar — enterprise SaaS structure. Admin sees all (filtered by org); Employee sees limited.
+  const allAdminMenuItems: { path: string; labelKey: string; icon: typeof LayoutDashboard; moduleKey: ModuleKey }[] = [
+    { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard' },
+    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users, moduleKey: 'customers' },
+    { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests' },
+    { path: '/admin/catalog', labelKey: 'nav.catalog', icon: Package, moduleKey: 'catalog' },
+    { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices' },
+    { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices' },
+    { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints' },
+    { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users' },
+    { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings' },
   ];
 
-  // Employee sidebar — Dashboard hidden, only Customers and Complaints visible
-  const employeeMenuItems = [
-    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users },
-    { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle },
-  ];
+  // Filter admin menu by organization allowed modules
+  const adminMenuItems = allAdminMenuItems.filter((item) => isModuleAllowed(item.moduleKey));
+
+  // Employee sidebar — Dashboard hidden, only Customers and Complaints visible (also filtered by org)
+  const employeeMenuItems = allAdminMenuItems.filter(
+    (item) => (item.moduleKey === 'customers' || item.moduleKey === 'complaints') && isModuleAllowed(item.moduleKey)
+  );
 
   const menuItems = role === 'admin' ? adminMenuItems : employeeMenuItems;
 
@@ -103,7 +116,7 @@ const AdminLayout = () => {
               <X className="w-4 h-4 text-gray-600" />
             </button>
           </div>
-          
+
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
             {menuItems.map((item) => {
@@ -127,21 +140,6 @@ const AdminLayout = () => {
               );
             })}
           </nav>
-          
-          {/* Profile Section */}
-          {/* <div className="p-3 border-t border-gray-200 shrink-0 bg-gray-50">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-semibold">
-                  {username?.charAt(0).toUpperCase() || 'U'}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{username || 'User'}</p>
-                <p className="text-xs text-gray-500 truncate">{username ? `${username}@popna.com` : 'user@popna.com'}</p>
-              </div>
-            </div>
-          </div> */}
         </aside>
 
         {/* Main content — flex column to push footer to bottom */}
@@ -149,7 +147,7 @@ const AdminLayout = () => {
           <div className="flex-1 overflow-auto p-4 sm:p-6">
             <Outlet />
           </div>
-          
+
           {/* Footer credit — sticks to bottom using margin-top: auto */}
           <footer className="shrink-0 mt-auto border-t border-gray-200 bg-white py-2 px-4">
             <FooterCredit />

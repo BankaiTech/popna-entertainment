@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Button from './Button';
 
 interface CarouselProps {
   children: React.ReactNode[];

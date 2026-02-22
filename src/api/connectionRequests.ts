@@ -7,7 +7,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 const generateMockConnectionRequests = (): ConnectionRequest[] => {
   const now = new Date();
   const requests: ConnectionRequest[] = [];
-  
+
   // Generate 20+ realistic mock entries
   const names = [
     'Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
@@ -16,7 +16,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     'Sunita Devi', 'Mohan Das', 'Sarita Joshi', 'Naveen Kumar', 'Rekha Agarwal',
     'Deepak Malhotra', 'Shilpa Bansal', 'Ravi Verma', 'Neha Kapoor', 'Ajay Tiwari'
   ];
-  
+
   const mobiles = [
     '9876543210', '9876543211', '9876543212', '9876543213', '9876543214',
     '9876543215', '9876543216', '9876543217', '9876543218', '9876543219',
@@ -24,7 +24,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     '9876543225', '9876543226', '9876543227', '9876543228', '9876543229',
     '9876543230', '9876543231', '9876543232', '9876543233', '9876543234'
   ];
-  
+
   const emails = [
     'rajesh.kumar@email.com', 'priya.sharma@email.com', 'amit.patel@email.com',
     'sneha.reddy@email.com', 'vikram.singh@email.com', 'anjali.mehta@email.com',
@@ -35,7 +35,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     'naveen.kumar@email.com', 'rekha.agarwal@email.com', 'deepak.malhotra@email.com',
     'shilpa.bansal@email.com', 'ravi.verma@email.com', 'neha.kapoor@email.com', 'ajay.tiwari@email.com'
   ];
-  
+
   // Product display names updated to generic labels (productId unchanged)
   const plans = [
     { id: 1, name: 'Cable Basic 50 Mbps', productId: 1, productName: 'Cable' },
@@ -49,26 +49,24 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     { id: 9, name: 'Internet 3 Basic', productId: 4, productName: 'Internet 3' },
     { id: 10, name: 'Internet 3 Premium', productId: 4, productName: 'Internet 3' },
   ];
-  
-  const statuses: ConnectionRequestStatus[] = ['New', 'Contacted', 'Converted'];
-  
+
+  // Status assignment is inline — no statuses array needed
+
   for (let i = 0; i < 25; i++) {
     const plan = plans[i % plans.length];
     const daysAgo = Math.floor(Math.random() * 30); // Random date within last 30 days
     const requestedAt = new Date(now);
     requestedAt.setDate(requestedAt.getDate() - daysAgo);
-    
-    // Weight statuses: 40% New, 35% Contacted, 25% Converted
+
+    // Weight statuses: 60% New, 40% Converted
     let status: ConnectionRequestStatus;
     const rand = Math.random();
-    if (rand < 0.4) {
+    if (rand < 0.6) {
       status = 'New';
-    } else if (rand < 0.75) {
-      status = 'Contacted';
     } else {
       status = 'Converted';
     }
-    
+
     requests.push({
       id: i + 1,
       organizationId: MOCK_ORGANIZATION_ID,
@@ -83,7 +81,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
       createdAt: requestedAt.toISOString(),
     });
   }
-  
+
   // Sort by date (newest first)
   return requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
@@ -113,7 +111,7 @@ export const connectionRequestsApi = {
    */
   create: async (payload: CreateConnectionRequestPayload): Promise<ConnectionRequest> => {
     const newRequest: ConnectionRequest = {
-      id: connectionRequestsData.length > 0 
+      id: connectionRequestsData.length > 0
         ? Math.max(...connectionRequestsData.map((r) => r.id), 0) + 1
         : 1,
       organizationId: MOCK_ORGANIZATION_ID,
@@ -128,11 +126,11 @@ export const connectionRequestsApi = {
       createdAt: new Date().toISOString(),
     };
     connectionRequestsData.push(newRequest);
-    
+
     // Backend will handle WhatsApp & Email sending
     // WhatsApp Template: Hello {Name}, Thank you for choosing {Plan Name}. Our team will contact you shortly.
     // Email Template: Subject: New Plan Request - {Plan Name}
-    
+
     return Promise.resolve(newRequest);
   },
 

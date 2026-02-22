@@ -1,23 +1,41 @@
-import { useState } from 'react';
+// Organization-based settings tab access
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Package, Building2 } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import { cn } from '@/lib/utils';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import type { SettingsTabKey } from '@/models/types';
 
-type SettingsTab = 'company' | 'products';
+type SettingsTab = SettingsTabKey;
 
 const Settings = () => {
   const { t } = useTranslation();
-  // Display order: 1 Company Details, 2 Website Settings, 3 Products
-  const [activeTab, setActiveTab] = useState<SettingsTab>('company');
+  const { isSettingsTabAllowed } = useOrganizationStore();
 
-  // SaaS Ready — Website Settings removed; frontsite homepage is static (only services/plans are dynamic)
-  const tabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = [
+  // All possible tabs
+  const allTabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = [
     { id: 'company', label: t('settings.tabCompany', 'Company Details'), icon: Building2, description: t('settings.companyDesc', 'Configure company information for invoices and documents') },
     { id: 'products', label: t('settings.tabProducts', 'Products'), icon: Package, description: t('settings.productsDesc', 'Manage products, plans, and pricing') },
   ];
+
+  // Filter by organization allowed settings tabs
+  const tabs = useMemo(
+    () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
+    [isSettingsTabAllowed, t]
+  );
+
+  // Display order: 1 Company Details, 2 Products (filtered by org access)
+  const [activeTab, setActiveTab] = useState<SettingsTab>(tabs.length > 0 ? tabs[0].id : 'company');
+
+  // Update active tab when tabs change
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.find((tab) => tab.id === activeTab)) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [tabs, activeTab]);
 
   return (
     <div className="space-y-6">
