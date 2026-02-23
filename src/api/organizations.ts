@@ -68,4 +68,23 @@ export const organizationsApi = {
         organizations = organizations.filter((org) => org.id !== id);
         return true;
     },
+
+    /**
+     * Renew subscription by advancing subscriptionEnd by `months` (default: 1).
+     * Uses max(today, currentEnd) as the base so it's always safe to call.
+     */
+    renewSubscription: async (id: string, months = 1): Promise<Organization | null> => {
+        const index = organizations.findIndex((org) => org.id === id);
+        if (index === -1) return null;
+
+        const currentEnd = new Date(organizations[index].subscriptionEnd);
+        const today = new Date();
+        // Start from whichever is later — today or current expiry
+        const base = currentEnd > today ? currentEnd : today;
+        base.setMonth(base.getMonth() + months);
+        const newEnd = base.toISOString().split('T')[0];
+
+        organizations[index] = { ...organizations[index], subscriptionEnd: newEnd };
+        return organizations[index];
+    },
 };

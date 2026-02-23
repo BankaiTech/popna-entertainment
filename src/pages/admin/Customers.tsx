@@ -13,8 +13,10 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
+import { organizationsApi } from '@/api/organizations';
 
 const AdminCustomers = () => {
   const { t } = useTranslation();
@@ -166,6 +168,18 @@ const AdminCustomers = () => {
   ) => {
     const updated = await updateCustomer(customerId, data);
     if (updated) setEditingCustomer(updated);
+
+    // Auto-renew subscription when customer is fully paid
+    if (data.paymentStatus === 'paid') {
+      const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
+      if (renewed) {
+        alert(
+          t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', {
+            date: renewed.subscriptionEnd,
+          })
+        );
+      }
+    }
   };
 
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];

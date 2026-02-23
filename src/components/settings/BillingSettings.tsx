@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Save, Smartphone, CreditCard, RefreshCw } from 'lucide-react';
-import { upiPaymentApi, type UpiPaymentConfig } from '@/api/upiPayment';
+import { Save, Smartphone, CreditCard, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { upiPaymentApi } from '@/api/upiPayment';
 import { organizationsApi } from '@/api/organizations';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import type { Organization } from '@/models/types';
@@ -21,13 +21,13 @@ const UPI_APPS = [
 
 const BillingSettings = () => {
   const { t } = useTranslation();
-  const [config, setConfig] = useState<UpiPaymentConfig | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [renewLoading, setRenewLoading] = useState(false);
   const [renewMessage, setRenewMessage] = useState<string | null>(null);
+  const [renewSuccess, setRenewSuccess] = useState<boolean | null>(null);
   const [form, setForm] = useState({
     upiId: '',
     upiDisplayName: '',
@@ -42,7 +42,6 @@ const BillingSettings = () => {
           upiPaymentApi.getConfig(MOCK_ORGANIZATION_ID),
           organizationsApi.getById(MOCK_ORGANIZATION_ID),
         ]);
-        setConfig(upiData);
         setOrganization(org ?? null);
         setForm({
           upiId: upiData.upiId ?? '',
@@ -90,26 +89,28 @@ const BillingSettings = () => {
   const handlePayToRenew = async () => {
     setRenewLoading(true);
     setRenewMessage(null);
+    setRenewSuccess(null);
     try {
       const result = await upiPaymentApi.createRenewalPayment({ organizationId: MOCK_ORGANIZATION_ID });
       if (result.paymentLink) {
         window.open(result.paymentLink, '_blank');
         setRenewMessage(t('settings.paymentLinkOpened', 'Payment link opened. Complete payment in the new tab.'));
-      } else if (result.upiIntent) {
-        setRenewMessage(
-          t('settings.payAmountViaUpi', 'Pay {{amount}} via any UPI app. Order ID: {{orderId}}. Backend will extend subscription on payment confirmation.', {
-            amount: formatCurrencyINR(result.amount),
-            orderId: result.orderId,
-          })
-        );
       } else {
-        setRenewMessage(
-          t('settings.renewalApiReady', 'Monthly amount: {{amount}}. Replace createRenewalPayment API with your gateway to get UPI link — then admin can pay every month to renew.', {
-            amount: formatCurrencyINR(result.amount),
-          })
-        );
+        // Mock/demo: treat as paid immediately — replace with real payment callback in production
+        const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
+        if (renewed) {
+          setOrganization(renewed);
+          setRenewSuccess(true);
+          setRenewMessage(
+            t('settings.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}. Amount: {{amount}}.', {
+              date: renewed.subscriptionEnd,
+              amount: formatCurrencyINR(result.amount),
+            })
+          );
+        }
       }
     } catch (e) {
+      setRenewSuccess(false);
       setRenewMessage(t('settings.renewalError', 'Could not create payment. Try again or contact support.'));
     } finally {
       setRenewLoading(false);
@@ -148,7 +149,16 @@ const BillingSettings = () => {
             {renewLoading ? t('settings.creatingPayment', 'Creating payment...') : t('settings.payViaUpi', 'Pay via UPI (monthly renewal)')}
           </Button>
           {renewMessage && (
-            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">{renewMessage}</p>
+            <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${renewSuccess === true
+              ? 'bg-green-50 border border-green-200 text-green-800'
+              : renewSuccess === false
+                ? 'bg-red-50 border border-red-200 text-red-800'
+                : 'bg-muted/50 text-muted-foreground'
+              }`}>
+              {renewSuccess === true && <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+              {renewSuccess === false && <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+              <p>{renewMessage}</p>
+            </div>
           )}
         </CardContent>
       </Card>
