@@ -151,6 +151,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         {/* Tabs */}
         <div className="flex border-b border-border shrink-0">
           <button
+            type="button"
             onClick={() => setActiveTab('info')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'info'
               ? 'border-b-2 border-primary text-primary'
@@ -160,6 +161,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
             {t('customerSheet.information', 'Information')}
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('address')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'address'
               ? 'border-b-2 border-primary text-primary'
@@ -171,187 +173,40 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         </div>
 
         <DialogBody className="p-4 sm:p-6 pb-6">
-            {activeTab === 'info' && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {t('customerSheet.name', 'Name')} <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.email', 'Email')}</label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.mobile', 'Mobile')}</label>
-                    <Input
-                      value={formData.mobile}
-                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
-                    </label>
-                    <Input
-                      value={formData.gstin || ''}
-                      onChange={(e) => {
-                        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
-                        setFormData({
-                          ...formData,
-                          gstin: value || undefined,
-                        });
-                      }}
-                      placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
-                      maxLength={15}
-                      disabled={isReadOnly}
-                      className="uppercase"
-                    />
-                    {/* GSTIN hint removed */}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
-                    <Select
-                      value={formData.connectionType}
-                      onChange={(e) => setFormData({ ...formData, connectionType: e.target.value as Provider })}
-                      disabled={isReadOnly}
-                    >
-                      {availableProviders.length === 0 ? (
-                        <option value="">{t('customerSheet.noProducts', 'No products — add in Settings → Products')}</option>
-                      ) : (
-                        <>
-                          <option value="">{t('customerSheet.selectProduct', '— Select Product —')}</option>
-                          {availableProviders.map((provider) => (
-                            <option key={provider} value={provider}>
-                              {getConnectionTypeLabel(provider, products)}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.package', 'Package')}</label>
-                    <Input
-                      value={formData.package}
-                      onChange={(e) => setFormData({ ...formData, package: e.target.value })}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  {/* Box Number — only for cable product customers */}
-                  {isCableProvider(formData.connectionType, products) && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        {t('customerSheet.boxNumber', 'Box Number')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
-                      </label>
-                      <Input
-                        value={formData.boxNumber}
-                        onChange={(e) => setFormData({ ...formData, boxNumber: e.target.value })}
-                        placeholder={t('customerSheet.boxNumberPlaceholder', 'Enter box number')}
-                        disabled={isReadOnly}
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
-                    <Select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
-                      disabled={isReadOnly}
-                    >
-                      {statuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="col-span-full">
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.description', 'Description')}</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:bg-muted disabled:cursor-not-allowed"
-                      rows={4}
-                      placeholder={t('customerSheet.descriptionPlaceholder', 'Enter customer description...')}
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                </div>
-
-              </>
-            )}
-
-            {activeTab === 'address' && (
+          {activeTab === 'info' && (
+            <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine1', 'Address Line 1')}</label>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.name', 'Name')} <span className="text-destructive">*</span>
+                  </label>
                   <Input
-                    value={formData.address.line1}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        address: { ...formData.address, line1: e.target.value },
-                      })
-                    }
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine2', 'Address Line 2')}</label>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.email', 'Email')}</label>
                   <Input
-                    value={formData.address.line2}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        address: { ...formData.address, line2: e.target.value },
-                      })
-                    }
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.city', 'City')}</label>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.mobile', 'Mobile')}</label>
                   <Input
-                    value={formData.address.city}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        address: { ...formData.address, city: e.target.value },
-                      })
-                    }
-                    disabled={isReadOnly}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.state', 'State')}</label>
-                  <Input
-                    value={formData.address.state}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        address: { ...formData.address, state: e.target.value },
-                      })
-                    }
+                    value={formData.mobile}
+                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span>
+                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
                   </label>
                   <Input
                     value={formData.gstin || ''}
@@ -367,27 +222,174 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                     disabled={isReadOnly}
                     className="uppercase"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formData.gstin && formData.gstin.length !== 15
-                      ? t('customerSheet.gstinLengthError', 'GSTIN must be 15 characters')
-                      : t('customerSheet.gstinHint', 'Optional GSTIN field for GST invoice support')}
-                  </p>
+                  {/* GSTIN hint removed */}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.country', 'Country')}</label>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
+                  <Select
+                    value={formData.connectionType}
+                    onChange={(e) => setFormData({ ...formData, connectionType: e.target.value as Provider })}
+                    disabled={isReadOnly}
+                  >
+                    {availableProviders.length === 0 ? (
+                      <option value="">{t('customerSheet.noProducts', 'No products — add in Settings → Products')}</option>
+                    ) : (
+                      <>
+                        <option value="">{t('customerSheet.selectProduct', '— Select Product —')}</option>
+                        {availableProviders.map((provider) => (
+                          <option key={provider} value={provider}>
+                            {getConnectionTypeLabel(provider, products)}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.package', 'Package')}</label>
                   <Input
-                    value={formData.address.country}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        address: { ...formData.address, country: e.target.value },
-                      })
-                    }
+                    value={formData.package}
+                    onChange={(e) => setFormData({ ...formData, package: e.target.value })}
+                    disabled={isReadOnly}
+                  />
+                </div>
+                {/* Box Number — only for cable product customers */}
+                {isCableProvider(formData.connectionType, products) && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.boxNumber', 'Box Number')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    </label>
+                    <Input
+                      value={formData.boxNumber}
+                      onChange={(e) => setFormData({ ...formData, boxNumber: e.target.value })}
+                      placeholder={t('customerSheet.boxNumberPlaceholder', 'Enter box number')}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
+                    disabled={isReadOnly}
+                  >
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-full">
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.description', 'Description')}</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:bg-muted disabled:cursor-not-allowed"
+                    rows={4}
+                    placeholder={t('customerSheet.descriptionPlaceholder', 'Enter customer description...')}
                     disabled={isReadOnly}
                   />
                 </div>
               </div>
-            )}
+
+            </>
+          )}
+
+          {activeTab === 'address' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine1', 'Address Line 1')}</label>
+                <Input
+                  value={formData.address.line1}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, line1: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine2', 'Address Line 2')}</label>
+                <Input
+                  value={formData.address.line2}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, line2: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.city', 'City')}</label>
+                <Input
+                  value={formData.address.city}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, city: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.state', 'State')}</label>
+                <Input
+                  value={formData.address.state}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, state: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span>
+                </label>
+                <Input
+                  value={formData.gstin || ''}
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                    setFormData({
+                      ...formData,
+                      gstin: value || undefined,
+                    });
+                  }}
+                  placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
+                  maxLength={15}
+                  disabled={isReadOnly}
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.gstin && formData.gstin.length !== 15
+                    ? t('customerSheet.gstinLengthError', 'GSTIN must be 15 characters')
+                    : t('customerSheet.gstinHint', 'Optional GSTIN field for GST invoice support')}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.country', 'Country')}</label>
+                <Input
+                  value={formData.address.country}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, country: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+            </div>
+          )}
         </DialogBody>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">

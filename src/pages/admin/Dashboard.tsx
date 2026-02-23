@@ -480,7 +480,8 @@ const AdminDashboard = () => {
           <CardTitle className="text-base">{t('dashboard.last5Customers')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-border bg-muted/30">
@@ -525,6 +526,44 @@ const AdminDashboard = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 p-3">
+            {lastCustomers.length === 0 ? (
+              <div className="text-center p-4 text-muted-foreground text-sm">
+                {t('dashboard.noCustomers')}
+              </div>
+            ) : (
+              lastCustomers.map((customer) => (
+                <div key={customer.id} className="bg-card border border-border rounded-lg p-4 space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{customer.name}</p>
+                      <p className="text-xs text-muted-foreground">{customer.mobile}</p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active'
+                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
+                        : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
+                        }`}
+                    >
+                      {customer.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('customers.connectionType', 'Connection Type')}</p>
+                      <p className="font-medium">{getConnectionTypeLabel(customer.connectionType, products)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('customers.package', 'Package Rate')}</p>
+                      <p className="font-medium">{customer.package}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
