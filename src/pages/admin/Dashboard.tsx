@@ -7,18 +7,22 @@ import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import Select from '@/components/ui/Select';
+import { Link } from 'react-router-dom';
 import {
   Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle,
-  DollarSign, Clock, AlertTriangle, MessageSquare, Zap, Package, Layers
+  DollarSign, Clock, AlertTriangle, MessageSquare, Zap, Package, Layers, RefreshCw
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { customersApi } from '@/api/api';
 import { salesInvoicesApi } from '@/api/invoices';
-import type { Customer, SalesInvoice } from '@/models/types';
+import { organizationsApi } from '@/api/organizations';
+import type { Customer, SalesInvoice, Organization } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn, formatCurrencyINR } from '@/lib/utils';
+import Button from '@/components/ui/Button';
 
 // Finance chart time filter type
 type TimeFilter = 'this_month' | 'last_month' | 'last_6_months' | 'this_year';
@@ -29,6 +33,7 @@ const AdminDashboard = () => {
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('this_month');
+  const [organization, setOrganization] = useState<Organization | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,6 +48,8 @@ const AdminDashboard = () => {
       setLastCustomers(sorted);
       const allInvoices = await salesInvoicesApi.getAll();
       setInvoices(allInvoices);
+      const org = await organizationsApi.getById(MOCK_ORGANIZATION_ID);
+      setOrganization(org ?? null);
     };
     loadData();
   }, [fetchDashboardStats, fetchProducts, fetchCustomers, initialize]);
@@ -307,9 +314,47 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-3 animate-fade-in">
-      <div>
-        <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
+        </div>
+        {/* Subscription renewal — show only when due within 7 days or expired */}
+        {organization && (() => {
+          const endDate = new Date(organization.subscriptionEnd);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          endDate.setHours(0, 0, 0, 0);
+          const daysUntilEnd = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const showRenewCard = daysUntilEnd <= 7;
+          if (!showRenewCard) return null;
+          return (
+            <Card className="overflow-hidden border-primary/20 bg-primary/5 sm:w-auto w-full">
+              <CardContent className="py-3 px-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <RefreshCw className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t('dashboard.subscription', 'Subscription')}
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      {daysUntilEnd <= 0
+                        ? t('dashboard.subscriptionExpired', 'Expired')
+                        : t('dashboard.validUntil', 'Valid until') + ' ' + organization.subscriptionEnd}
+                    </p>
+                  </div>
+                </div>
+                <Link to="/admin/settings?tab=billing">
+                  <Button size="sm" className="whitespace-nowrap">
+                    {t('dashboard.renewSubscription', 'Renew subscription')}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
 
       {/* Customer Metrics */}

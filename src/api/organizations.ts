@@ -14,6 +14,7 @@ let organizations: Organization[] = [
         subscriptionEnd: '2026-12-31',
     },
 ];
+// Note: ALL_SETTINGS_TABS includes 'billing' for UPI/payment settings
 
 export const organizationsApi = {
     getAll: async (): Promise<Organization[]> => {
