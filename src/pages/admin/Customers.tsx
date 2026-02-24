@@ -11,7 +11,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ const AdminCustomers = () => {
   const { role } = useAuthStore();
   const isEmployee = role === 'employee';
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('All');
+  const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('Inactive');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('All');
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
@@ -257,6 +257,10 @@ const AdminCustomers = () => {
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.mobile', 'Mobile')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.connectionType', 'Connection Type')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('customers.package', 'Package')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">STB No</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">CAN/CAF</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">CIN</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">Area</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.paymentStatus', 'Payment')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.status', 'Status')}</th>
                       </tr>
@@ -282,6 +286,10 @@ const AdminCustomers = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.stbNumber || '—'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.canCafId || '—'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.cin || '—'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.area || '—'}</td>
                           <td className="px-3 py-2 text-sm">
                             {customer.paymentStatus !== 'paid' ? (
                               <button
@@ -297,7 +305,7 @@ const AdminCustomers = () => {
                               </span>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-sm flex items-center gap-2">
+                          <td className="px-3 py-2 text-sm">
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active'
                                 ? 'bg-green-100 text-green-800'
@@ -306,24 +314,6 @@ const AdminCustomers = () => {
                             >
                               {customer.status}
                             </span>
-                            {!isEmployee && (
-                              <div className="flex space-x-1">
-                                <button
-                                  onClick={() => handleEdit(customer)}
-                                  className="p-1 hover:bg-accent rounded transition-colors"
-                                  title={t('common.edit', 'Edit')}
-                                >
-                                  <Edit className="w-3.5 h-3.5 text-muted-foreground" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteClick(customer.id)}
-                                  className="p-1 hover:bg-destructive/10 rounded transition-colors"
-                                  title={t('common.delete', 'Delete')}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                                </button>
-                              </div>
-                            )}
                           </td>
                         </tr>
                       ))}
@@ -389,25 +379,6 @@ const AdminCustomers = () => {
                         )}
                       </div>
                     </div>
-
-                    {!isEmployee && (
-                      <div className="flex gap-2 pt-2 border-t border-border">
-                        <button
-                          onClick={() => handleEdit(customer)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-                        >
-                          <Edit className="w-4 h-4" />
-                          {t('common.edit', 'Edit')}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(customer.id)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition-colors text-sm font-medium"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {t('common.delete', 'Delete')}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

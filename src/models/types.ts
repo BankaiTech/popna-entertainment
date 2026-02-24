@@ -95,6 +95,14 @@ export interface Customer {
   gstin?: string | null;
   /** Box number — only for cable product customers */
   boxNumber?: string;
+  /** STB No/User ID - Set-Top Box number or User ID */
+  stbNumber?: string;
+  /** CAN/CAF ID - Customer Account Number or Customer Application Form ID */
+  canCafId?: string;
+  /** CIN - Customer Identification Number */
+  cin?: string;
+  /** Area - Customer's service area */
+  area?: string;
 }
 
 // SaaS Dashboard KPI cards implemented

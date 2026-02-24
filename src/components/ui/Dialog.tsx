@@ -76,15 +76,15 @@ export interface DialogHeaderProps {
 
 export function DialogHeader({ title, onClose, className }: DialogHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between shrink-0 p-4 sm:p-6 border-b border-border', className)}>
-      <h2 className="text-lg sm:text-xl font-bold text-foreground">{title}</h2>
+    <div className={cn('flex items-center justify-between shrink-0 px-4 sm:px-5 py-3 border-b border-border', className)}>
+      <h2 className="text-base sm:text-lg font-semibold text-foreground">{title}</h2>
       <button
         type="button"
         onClick={onClose}
-        className="p-2 hover:bg-accent rounded-lg transition-colors"
+        className="p-1.5 hover:bg-accent rounded-lg transition-colors"
         aria-label="Close"
       >
-        <X className="w-5 h-5" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   );
@@ -110,7 +110,7 @@ export interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('shrink-0 flex flex-wrap justify-end gap-3 p-4 sm:p-6 border-t border-border bg-muted/30', className)}>
+    <div className={cn('shrink-0 flex flex-wrap justify-end gap-2 px-4 sm:px-5 py-3 border-t border-border bg-muted/30', className)}>
       {children}
     </div>
   );

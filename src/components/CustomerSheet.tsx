@@ -31,7 +31,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
   }, [isOpen, fetchActiveProducts]);
 
   const isReadOnly = role === 'employee';
-  const [activeTab, setActiveTab] = useState<'info' | 'address'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address'>('info');
 
   // Stable reference — only recompute when products array identity changes
   const availableProviders = useMemo(
@@ -49,6 +49,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
     description: '',
     gstin: '' as string | undefined,
     boxNumber: '',
+    stbNumber: '',
+    canCafId: '',
+    cin: '',
+    area: '',
     address: {
       line1: '',
       line2: '',
@@ -72,6 +76,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         description: customer.description || '',
         gstin: customer.gstin || undefined,
         boxNumber: customer.boxNumber || '',
+        stbNumber: customer.stbNumber || '',
+        canCafId: customer.canCafId || '',
+        cin: customer.cin || '',
+        area: customer.area || '',
         address: customer.address,
       });
     } else {
@@ -85,6 +93,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         description: '',
         gstin: undefined,
         boxNumber: '',
+        stbNumber: '',
+        canCafId: '',
+        cin: '',
+        area: '',
         address: {
           line1: '',
           line2: '',
@@ -151,6 +163,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         {/* Tabs */}
         <div className="flex border-b border-border shrink-0">
           <button
+            type="button"
             onClick={() => setActiveTab('info')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'info'
               ? 'border-b-2 border-primary text-primary'
@@ -160,6 +173,17 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
             {t('customerSheet.information', 'Information')}
           </button>
           <button
+            type="button"
+            onClick={() => setActiveTab('plan')}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'plan'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            {t('customerSheet.plan', 'Plan')}
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('address')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'address'
               ? 'border-b-2 border-primary text-primary'
@@ -171,6 +195,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         </div>
 
         <DialogBody className="p-4 sm:p-6 pb-6">
+            {/* Information Tab */}
             {activeTab === 'info' && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,10 +220,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.mobile', 'Mobile')}</label>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.mobile', 'Mobile')} <span className="text-destructive">*</span>
+                    </label>
                     <Input
                       value={formData.mobile}
                       onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                      required
                       disabled={isReadOnly}
                     />
                   </div>
@@ -220,8 +248,51 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                       disabled={isReadOnly}
                       className="uppercase"
                     />
-                    {/* GSTIN hint removed */}
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.area', 'Area')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    </label>
+                    <Input
+                      value={formData.area}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      placeholder={t('customerSheet.areaPlaceholder', 'Enter service area')}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
+                    <Select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
+                      disabled={isReadOnly}
+                    >
+                      {statuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="col-span-full">
+                    <label className="block text-sm font-medium mb-2">{t('customerSheet.description', 'Description')}</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:bg-muted disabled:cursor-not-allowed"
+                      rows={4}
+                      placeholder={t('customerSheet.descriptionPlaceholder', 'Enter customer description...')}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Plan Tab */}
+            {activeTab === 'plan' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
                     <Select
@@ -251,6 +322,42 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                       disabled={isReadOnly}
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.stbNumber', 'STB No.')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    </label>
+                    <Input
+                      value={formData.stbNumber}
+                      onChange={(e) => setFormData({ ...formData, stbNumber: e.target.value })}
+                      placeholder={t('customerSheet.stbNumberPlaceholder', 'Enter STB number or User ID')}
+                      disabled={isReadOnly}
+                      title={t('customerSheet.stbNumberTooltip', 'Set-Top Box number or User ID')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.canCafId', 'CAF/CAN ID')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    </label>
+                    <Input
+                      value={formData.canCafId}
+                      onChange={(e) => setFormData({ ...formData, canCafId: e.target.value })}
+                      placeholder={t('customerSheet.canCafIdPlaceholder', 'Enter CAF or CAN ID')}
+                      disabled={isReadOnly}
+                      title={t('customerSheet.canCafIdTooltip', 'Customer Application Form ID or Customer Account Number')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.cin', 'CIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    </label>
+                    <Input
+                      value={formData.cin}
+                      onChange={(e) => setFormData({ ...formData, cin: e.target.value })}
+                      placeholder={t('customerSheet.cinPlaceholder', 'Enter Customer Identification Number')}
+                      disabled={isReadOnly}
+                      title={t('customerSheet.cinTooltip', 'Customer Identification Number')}
+                    />
+                  </div>
                   {/* Box Number — only for cable product customers */}
                   {isCableProvider(formData.connectionType, products) && (
                     <div>
@@ -265,33 +372,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                       />
                     </div>
                   )}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
-                    <Select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
-                      disabled={isReadOnly}
-                    >
-                      {statuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="col-span-full">
-                    <label className="block text-sm font-medium mb-2">{t('customerSheet.description', 'Description')}</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:bg-muted disabled:cursor-not-allowed"
-                      rows={4}
-                      placeholder={t('customerSheet.descriptionPlaceholder', 'Enter customer description...')}
-                      disabled={isReadOnly}
-                    />
-                  </div>
                 </div>
-
               </>
             )}
 
