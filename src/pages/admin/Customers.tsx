@@ -52,8 +52,10 @@ const AdminCustomers = () => {
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
-      // Employee view: show ONLY Inactive customers (UI-level filter, no DB change)
-      if (isEmployee && customer.status !== 'Inactive') return false;
+      // Employee view: show ONLY Active + not paid customers (UI-level filter)
+      if (isEmployee) {
+        if (customer.status !== 'Active' || customer.paymentStatus !== 'not_paid') return false;
+      }
 
       const matchesSearch =
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,6 +98,7 @@ const AdminCustomers = () => {
   };
 
   const handleEdit = (customer: Customer) => {
+    if (isEmployee) return; // Employees cannot open edit customer
     setIsAddCustomerOpen(false);
     setEditingCustomer(customer);
     setIsSheetOpen(true);
@@ -214,18 +217,20 @@ const AdminCustomers = () => {
             </div>
           </CardHeading>
           <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
-              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
-            >
-              <option value="All">{t('customers.allStatus', 'All Status')}</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                </option>
-              ))}
-            </Select>
+            {!isEmployee && (
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
+                className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+              >
+                <option value="All">{t('customers.allStatus', 'All Status')}</option>
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
+                  </option>
+                ))}
+              </Select>
+            )}
             <Select
               value={connectionFilter}
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
@@ -240,15 +245,17 @@ const AdminCustomers = () => {
                 ))
               ) : null}
             </Select>
-            <Select
-              value={paymentStatusFilter}
-              onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
-              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
-            >
-              <option value="All">{t('customers.allPayment', 'All Payment')}</option>
-              <option value="not_paid">{t('customers.unpaid', 'Unpaid')}</option>
-              <option value="paid">{t('customers.paid', 'Paid')}</option>
-            </Select>
+            {!isEmployee && (
+              <Select
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
+                className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+              >
+                <option value="All">{t('customers.allPayment', 'All Payment')}</option>
+                <option value="not_paid">{t('customers.unpaid', 'Unpaid')}</option>
+                <option value="paid">{t('customers.paid', 'Paid')}</option>
+              </Select>
+            )}
           </CardToolbar>
         </CardHeader>
         <CardContent className="p-0">
@@ -291,12 +298,16 @@ const AdminCustomers = () => {
                         >
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.id}</td>
                           <td className="px-3 py-2">
-                            <button
-                              onClick={() => handleEdit(customer)}
-                              className="text-sm font-medium text-primary hover:underline"
-                            >
-                              {customer.name}
-                            </button>
+                            {isEmployee ? (
+                              <span className="text-sm font-medium text-foreground">{customer.name}</span>
+                            ) : (
+                              <button
+                                onClick={() => handleEdit(customer)}
+                                className="text-sm font-medium text-primary hover:underline"
+                              >
+                                {customer.name}
+                              </button>
+                            )}
                           </td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
@@ -346,12 +357,16 @@ const AdminCustomers = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <button
-                          onClick={() => handleEdit(customer)}
-                          className="text-base font-semibold text-primary hover:underline text-left"
-                        >
-                          {customer.name}
-                        </button>
+                        {isEmployee ? (
+                          <span className="text-base font-semibold text-foreground">{customer.name}</span>
+                        ) : (
+                          <button
+                            onClick={() => handleEdit(customer)}
+                            className="text-base font-semibold text-primary hover:underline text-left"
+                          >
+                            {customer.name}
+                          </button>
+                        )}
                         <p className="text-xs text-muted-foreground mt-1">{t('customers.id', 'ID')}: {customer.id}</p>
                       </div>
                       <span

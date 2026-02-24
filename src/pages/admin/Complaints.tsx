@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardHeading, CardToolbar } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -123,10 +123,10 @@ const Complaints = () => {
 
       {/* Data Grid */}
       <Card>
-        <CardHeader className="py-3">
+        <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           {/* Filters in Header */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <div className="relative">
+          <CardHeading className="p-0 w-full md:w-auto md:min-w-0 shrink-0">
+            <div className="relative w-full min-w-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
@@ -136,10 +136,12 @@ const Complaints = () => {
                 className="pl-9 h-9 text-sm w-50"
               />
             </div>
+          </CardHeading>
+          <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'All')}
-              className="h-9 text-sm"
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('complaints.allStatus', 'All Status')}</option>
               {statuses.map((status) => (
@@ -151,7 +153,7 @@ const Complaints = () => {
             <Select
               value={connectionFilter}
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
-              className="h-9 text-sm"
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('complaints.allConnections', 'All Connections')}</option>
               {Array.isArray(products) && products.length > 0 ? (
@@ -162,7 +164,7 @@ const Complaints = () => {
                 ))
               ) : null}
             </Select>
-          </div>
+          </CardToolbar>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
