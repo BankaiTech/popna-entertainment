@@ -72,7 +72,7 @@ const Settings = () => {
       {/* Tabs */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-wrap gap-2 border-b border-border">
+          <div className="flex flex-nowrap overflow-x-auto gap-2 border-b border-border">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

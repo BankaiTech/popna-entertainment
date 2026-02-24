@@ -34,24 +34,24 @@ const SuperAdminLayout = () => {
                 />
             )}
 
-            <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-4 sm:px-8 border-b border-border bg-card">
-                <div className="flex items-center gap-3">
+            <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
                     <button
                         onClick={() => setIsMobileMenuOpen(true)}
-                        className="sm:hidden p-2 hover:bg-accent rounded-md"
+                        className="sm:hidden p-2 hover:bg-accent rounded-md shrink-0"
                         aria-label={t('openMenu', 'Open Menu')}
                     >
                         <Menu className="w-5 h-5" />
                     </button>
-                    <div>
-                        <h2 className="text-base sm:text-lg font-semibold">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
-                        <p className="text-xs sm:text-sm text-muted-foreground">{t('superAdmin.masterController', 'Master Controller')}</p>
+                    <div className="hidden sm:block min-w-0">
+                        <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('superAdmin.masterController', 'Master Controller')}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <LanguageSwitcher />
-                    <Button variant="outline" onClick={handleLogout} className="flex items-center space-x-2 text-sm sm:text-base">
-                        <LogOut className="w-4 h-4" />
+                    <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base p-2 sm:px-3 sm:py-2">
+                        <LogOut className="w-4 h-4 shrink-0" />
                         <span className="hidden sm:inline">{t('nav.logout', 'Logout')}</span>
                     </Button>
                 </div>
