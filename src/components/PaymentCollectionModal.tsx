@@ -1,10 +1,11 @@
 // Payment Collection System — SaaS Ready
 // Standalone modal: opened directly from Unpaid badge in Customer table.
 // Separate from Edit Customer sheet — no payment controls inside edit.
-// Professional payment modal applied
-import { useState, useMemo } from 'react';
+// Professional payment modal applied. Supports permanent discount (customer/plan) and instant discount.
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -24,6 +25,7 @@ interface PaymentCollectionModalProps {
       paymentMethod?: PaymentMethod;
       collectedAmount: number;
       balanceAmount: number;
+      collectedByUsername?: string;
     }
   ) => Promise<void>;
 }
@@ -31,35 +33,45 @@ interface PaymentCollectionModalProps {
 const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: PaymentCollectionModalProps) => {
   const { t } = useTranslation();
   const { plans } = useStore();
+  const { username } = useAuthStore();
 
   const customerPlan = useMemo(() => {
     if (!Array.isArray(plans)) return null;
     return plans.find((p) => p.planName === customer.package && p.provider === customer.connectionType) || null;
   }, [customer, plans]);
 
+  const permanentDiscountPercent = customer.permanentDiscount ?? customerPlan?.permanentDiscount ?? 0;
   const planAmount = customerPlan?.price ?? 0;
+  const planAfterPermanentDiscount = planAmount * (1 - permanentDiscountPercent / 100);
   const gstRate = customerPlan?.gstRate ?? 0;
-  const gstAmount = planAmount * (gstRate / 100);
-  const totalAmount = planAmount + gstAmount;
+  const gstAmount = planAfterPermanentDiscount * (gstRate / 100);
+  const totalAmount = planAfterPermanentDiscount + gstAmount;
 
   const [collectedAmount, setCollectedAmount] = useState<number>(customer.collectedAmount ?? 0);
-  const [description, setDescription] = useState('');
+  const [instantDiscount, setInstantDiscount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(customer.paymentMethod ?? 'upi');
   const [saving, setSaving] = useState(false);
 
-  const balanceAmount = Math.max(0, totalAmount - (collectedAmount || 0));
-  const overpaidAmount = collectedAmount > totalAmount ? collectedAmount - totalAmount : 0;
-  const isFullyPaid = collectedAmount >= totalAmount && totalAmount > 0;
+  // Reset state when modal opens or customer changes
+  useEffect(() => {
+    if (isOpen) {
+      setCollectedAmount(customer.collectedAmount ?? 0);
+      setInstantDiscount(0);
+      setPaymentMethod(customer.paymentMethod ?? 'upi');
+    }
+  }, [isOpen, customer.id, customer.collectedAmount, customer.paymentMethod]);
+
+  const amountAfterInstantDiscount = Math.max(0, totalAmount - instantDiscount);
+  const balanceAmount = Math.max(0, amountAfterInstantDiscount - (collectedAmount || 0));
+  const overpaidAmount = collectedAmount > amountAfterInstantDiscount ? collectedAmount - amountAfterInstantDiscount : 0;
+  const isFullyPaid = amountAfterInstantDiscount > 0 && collectedAmount >= amountAfterInstantDiscount;
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const desc = description.trim();
-    if (!desc) { alert(t('payment.descriptionRequired', 'Description is required.')); return; }
     if (collectedAmount < 0) { alert(t('payment.invalidAmount', 'Collected amount cannot be negative.')); return; }
 
-    // Auto-use current date — no manual date input needed
     const paymentUpdatedAt = new Date().toISOString();
     const computedStatus: 'paid' | 'not_paid' = isFullyPaid ? 'paid' : 'not_paid';
 
@@ -67,11 +79,12 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
     try {
       await onSubmit(customer.id, {
         paymentStatus: computedStatus,
-        paymentDescription: desc,
+        paymentDescription: '',
         paymentUpdatedAt,
         paymentMethod,
         collectedAmount,
         balanceAmount: isFullyPaid ? 0 : balanceAmount,
+        ...(computedStatus === 'paid' && username ? { collectedByUsername: username } : {}),
       });
       onClose();
     } catch {
@@ -103,6 +116,12 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                   <span className="text-muted-foreground">{t('payment.planAmount', 'Plan Amount')}</span>
                   <span className="font-medium">₹{planAmount.toFixed(2)}</span>
                 </div>
+                {permanentDiscountPercent > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('payment.permanentDiscount', 'Permanent Discount')} ({permanentDiscountPercent}%)</span>
+                    <span className="font-medium">-₹{(planAmount - planAfterPermanentDiscount).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t('payment.gstAmount', 'GST Amount')} ({gstRate}%)</span>
                   <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
@@ -113,18 +132,36 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                 </div>
               </div>
 
-              {/* Payment Method — UPI, Cash, Card, Other */}
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('payment.paymentMethod', 'Payment Method')}</label>
-                <Select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                >
-                  <option value="upi">{t('payment.methodUpi', 'UPI')}</option>
-                  <option value="cash">{t('payment.methodCash', 'Cash')}</option>
-                  <option value="card">{t('payment.methodCard', 'Card')}</option>
-                  <option value="other">{t('payment.methodOther', 'Other')}</option>
-                </Select>
+              {/* Instant discount + Payment method in one row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('payment.instantDiscount', 'Instant Discount')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span></label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={instantDiscount || ''}
+                    onChange={(e) => setInstantDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                    placeholder="0"
+                  />
+                  {instantDiscount > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('payment.amountAfterDiscount', 'Amount after discount')}: ₹{amountAfterInstantDiscount.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('payment.paymentMethod', 'Payment Method')}</label>
+                  <Select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                  >
+                    <option value="upi">{t('payment.methodUpi', 'UPI')}</option>
+                    <option value="cash">{t('payment.methodCash', 'Cash')}</option>
+                    <option value="card">{t('payment.methodCard', 'Card')}</option>
+                    <option value="other">{t('payment.methodOther', 'Other')}</option>
+                  </Select>
+                </div>
               </div>
 
               {/* Collected Amount */}
@@ -162,21 +199,6 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                   <span className="text-sm font-medium text-green-700">{t('payment.fullyPaid', 'Fully Paid')}</span>
                 </div>
               )}
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('payment.description', 'Description')} <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
-                  rows={2}
-                  placeholder={t('payment.descriptionPlaceholder', 'Enter payment details...')}
-                  required
-                />
-              </div>
           </div>
         </DialogBody>
         <DialogFooter className="flex-col sm:flex-row gap-2">

@@ -164,10 +164,10 @@ const AdminCustomers = () => {
     setEditingCustomer(null);
   };
 
-  // Payment Collection System — SaaS Ready (ALL product types)
+  // Payment Collection System — SaaS Ready (ALL product types). collectedByUsername for employee stats.
   const handleUpdatePayment = async (
     customerId: number,
-    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; paymentMethod?: PaymentMethod; collectedAmount?: number; balanceAmount?: number }
+    data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; paymentMethod?: PaymentMethod; collectedAmount?: number; balanceAmount?: number; collectedByUsername?: string }
   ) => {
     const updated = await updateCustomer(customerId, data);
     if (updated) setEditingCustomer(updated);
@@ -279,10 +279,10 @@ const AdminCustomers = () => {
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.mobile', 'Mobile')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.connectionType', 'Connection Type')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('customers.package', 'Package')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">STB No</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">CAN/CAF</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">CIN</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">Area</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.stbNo', 'STB No')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.canCaf', 'CAN/CAF')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.cin', 'CIN')}</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.area', 'Area')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.paymentStatus', 'Payment')}</th>
                         <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.status', 'Status')}</th>
                       </tr>

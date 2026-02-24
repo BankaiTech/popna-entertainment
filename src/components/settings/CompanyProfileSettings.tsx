@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Building2, Save } from 'lucide-react';
@@ -76,22 +75,12 @@ const CompanyProfileSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-foreground">{t('companyProfile.title', 'Company Profile')}</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t('companyProfile.description', 'Configure company information for invoices and documents.')}
-        </p>
+      <div className="flex items-center gap-2 mb-4">
+        <Building2 className="w-5 h-5 text-primary" />
+        <h2 className="text-lg font-semibold text-foreground">{t('companyProfile.companyInformation', 'Company Information')}</h2>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" />
-            {t('companyProfile.companyInformation', 'Company Information')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
                 {error}
@@ -237,8 +226,6 @@ const CompanyProfileSettings = () => {
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
     </div>
   );
 };

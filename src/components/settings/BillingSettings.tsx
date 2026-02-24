@@ -1,7 +1,6 @@
 // Billing & UPI payment settings — API ready
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Save, Smartphone, CreditCard, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
@@ -128,17 +127,15 @@ const BillingSettings = () => {
   return (
     <div className="space-y-6">
       {/* Pay to renew subscription — monthly */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <RefreshCw className="w-5 h-5" />
-            {t('settings.renewSubscription', 'Renew your subscription')}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('settings.renewSubscriptionDesc', 'Pay every month to keep your plan active. Payment can be made via UPI apps (Google Pay, PhonePe, Paytm, etc.).')}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="border border-border rounded-lg p-4 bg-muted/30">
+        <div className="flex items-center gap-2 mb-2">
+          <RefreshCw className="w-5 h-5 text-primary" />
+          <h3 className="text-base font-semibold">{t('settings.renewSubscription', 'Renew your subscription')}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          {t('settings.renewSubscriptionDesc', 'Pay every month to keep your plan active. Payment can be made via UPI apps (Google Pay, PhonePe, Paytm, etc.).')}
+        </p>
+        <div className="space-y-4">
           {organization && (
             <p className="text-sm text-foreground">
               {t('settings.validUntil', 'Current plan valid until')} <strong>{organization.subscriptionEnd}</strong>.
@@ -160,20 +157,18 @@ const BillingSettings = () => {
               <p>{renewMessage}</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Smartphone className="w-5 h-5" />
-            {t('settings.payByUpi', 'Pay by UPI apps')}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready — replace with real payment gateway.')}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="border border-border rounded-lg p-4 bg-muted/30">
+        <div className="flex items-center gap-2 mb-2">
+          <Smartphone className="w-5 h-5 text-primary" />
+          <h3 className="text-base font-semibold">{t('settings.payByUpi', 'Pay by UPI apps')}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready — replace with real payment gateway.')}
+        </p>
+        <div className="space-y-4">
           <form onSubmit={handleSave} className="space-y-4">
             <div className="flex items-center gap-2">
               <input
@@ -245,8 +240,8 @@ const BillingSettings = () => {
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <p className="text-xs text-muted-foreground">
         {t('settings.apiReadyNote', 'API ready — replace upiPaymentApi with your payment gateway (e.g. Razorpay, Paytm, PhonePe) for live UPI collection.')}

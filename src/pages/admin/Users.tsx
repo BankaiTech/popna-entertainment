@@ -8,13 +8,15 @@ import { Pagination } from '@/components/ui/Pagination';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { usersApi } from '@/api/users';
+import { useStore } from '@/store/useStore';
 import type { User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Plus, UserCog } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR } from '@/lib/utils';
 
 const AdminUsers = () => {
   const { t } = useTranslation();
+  const { customers, initialize, fetchCustomers } = useStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -53,6 +55,22 @@ const AdminUsers = () => {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    initialize();
+    fetchCustomers();
+  }, [initialize, fetchCustomers]);
+
+  // Amount collected by each employee (customers where collectedByUsername === user.username, sum of collectedAmount)
+  const collectedByUsername = useMemo(() => {
+    const map: Record<string, number> = {};
+    (customers ?? []).forEach((c) => {
+      if (c.collectedByUsername && (c.collectedAmount ?? 0) > 0) {
+        map[c.collectedByUsername] = (map[c.collectedByUsername] ?? 0) + (c.collectedAmount ?? 0);
+      }
+    });
+    return map;
+  }, [customers]);
 
   const handleOpenAdd = () => {
     setAddName('');
@@ -331,6 +349,7 @@ const AdminUsers = () => {
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('users.colUsername', 'Username')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colRole', 'Role')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colStatus', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('users.colCollected', 'Collected')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('users.colCreatedDate', 'Created Date')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colActions', 'Actions')}</th>
                     </tr>
@@ -355,6 +374,9 @@ const AdminUsers = () => {
                           )}>
                             {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                           </span>
+                        </td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600">
+                          {u.role === 'employee' ? formatCurrencyINR(collectedByUsername[u.username] ?? 0) : '—'}
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(u.createdAt)}</td>
                         <td className="px-3 py-2">
@@ -391,6 +413,12 @@ const AdminUsers = () => {
                       <span className="text-muted-foreground">{t('users.colRole', 'Role')}: </span>
                       <span className="capitalize">{u.role}</span>
                     </div>
+                    {u.role === 'employee' && (
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">{t('users.colCollected', 'Collected')}: </span>
+                        <span className="font-medium text-green-700">{formatCurrencyINR(collectedByUsername[u.username] ?? 0)}</span>
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground">{t('users.created', 'Created')}: {formatDate(u.createdAt)}</div>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(u)} className="w-full">
                       {t('common.edit', 'Edit')}

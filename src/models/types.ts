@@ -57,6 +57,8 @@ export interface Plan {
   gstRate: number;
   installationAmount: number;
   description: string;
+  /** Permanent discount percentage (0–100) for this plan */
+  permanentDiscount?: number;
 }
 
 export interface Address {
@@ -103,6 +105,10 @@ export interface Customer {
   cin?: string;
   /** Area - Customer's service area */
   area?: string;
+  /** Permanent discount percentage (0–100) applied to plan amount */
+  permanentDiscount?: number;
+  /** Username of the user who last collected payment (for employee collection stats) */
+  collectedByUsername?: string;
 }
 
 // SaaS Dashboard KPI cards implemented

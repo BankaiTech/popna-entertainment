@@ -60,6 +60,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     canCafId: '',
     cin: '',
     area: '',
+    permanentDiscount: undefined as number | undefined,
     address: {
       line1: '',
       line2: '',
@@ -87,6 +88,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         canCafId: customer.canCafId || '',
         cin: customer.cin || '',
         area: customer.area || '',
+        permanentDiscount: customer.permanentDiscount ?? undefined,
         address: customer.address,
       });
     } else {
@@ -105,6 +107,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         canCafId: '',
         cin: '',
         area: '',
+        permanentDiscount: undefined,
         address: {
           line1: '',
           line2: '',
@@ -327,6 +330,24 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     <Input
                       value={formData.package}
                       onChange={(e) => setFormData({ ...formData, package: e.target.value })}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t('customerSheet.permanentDiscount', 'Permanent Discount')} <span className="text-xs text-muted-foreground font-normal">(%)</span>
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={formData.permanentDiscount ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                        setFormData({ ...formData, permanentDiscount: v === undefined || isNaN(v) ? undefined : Math.min(100, Math.max(0, v)) });
+                      }}
+                      placeholder={t('customerSheet.permanentDiscountPlaceholder', '0–100')}
                       disabled={isReadOnly}
                     />
                   </div>

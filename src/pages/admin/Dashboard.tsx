@@ -180,8 +180,17 @@ const AdminDashboard = () => {
     },
   ];
 
-  // Payment KPI cards
+  // Payment KPI cards — Total Amount first; overdue and avg invoice value removed
+  const totalAmount = (dashboardStats.totalAmountCollected ?? 0) + (dashboardStats.totalPendingAmount ?? 0);
   const paymentCards = [
+    {
+      title: t('dashboard.totalAmount', 'Total Amount'),
+      value: totalAmount,
+      icon: DollarSign,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      isCurrency: true,
+    },
     {
       title: t('dashboard.totalCollected', 'Total Collected'),
       value: dashboardStats.totalAmountCollected,
@@ -199,12 +208,68 @@ const AdminDashboard = () => {
       isCurrency: true,
     },
     {
-      title: t('dashboard.overdueAmount', 'Overdue Amount'),
-      value: dashboardStats.overdueAmount,
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
+      title: t('dashboard.thisMonthCollection', 'This Month Collection'),
+      value: invoices
+        .filter((inv) => {
+          const d = new Date(inv.issueDate);
+          const now = new Date();
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && inv.status === 'paid';
+        })
+        .reduce((sum, inv) => sum + inv.totalAmount, 0),
+      icon: TrendingUp,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
       isCurrency: true,
+    },
+    {
+      title: t('dashboard.lastMonthCollection', 'Last Month Collection'),
+      value: invoices
+        .filter((inv) => {
+          const d = new Date(inv.issueDate);
+          const now = new Date();
+          const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+          const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && inv.status === 'paid';
+        })
+        .reduce((sum, inv) => sum + inv.totalAmount, 0),
+      icon: DollarSign,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      isCurrency: true,
+    },
+    {
+      title: t('dashboard.avgMonthlyRevenue', 'Avg Monthly Revenue'),
+      value: (() => {
+        const now = new Date();
+        const monthsData = [];
+        for (let i = 0; i < 6; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthTotal = invoices
+            .filter((inv) => {
+              const invDate = new Date(inv.issueDate);
+              return invDate.getMonth() === d.getMonth() && invDate.getFullYear() === d.getFullYear() && inv.status === 'paid';
+            })
+            .reduce((sum, inv) => sum + inv.totalAmount, 0);
+          monthsData.push(monthTotal);
+        }
+        return monthsData.length > 0 ? Math.round(monthsData.reduce((a, b) => a + b, 0) / monthsData.length) : 0;
+      })(),
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      isCurrency: true,
+    },
+    {
+      title: t('dashboard.collectionRate', 'Collection Rate'),
+      value: invoices.length > 0 
+        ? Math.round((invoices.filter((inv) => inv.status === 'paid').length / invoices.length) * 100)
+        : 0,
+      icon: TrendingUp,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-50',
+      isCurrency: false,
+      suffix: '%',
+      tooltip: 'Percentage of paid invoices vs total invoices',
     },
   ];
 
@@ -279,29 +344,32 @@ const AdminDashboard = () => {
   // Renders a section of KPI cards. cardCols: 2 for side-by-side sections (Connection / Plans), 4 for full-width.
   const renderCardSection = (title: string, cards: typeof customerCards, cardCols: 2 | 4 = 4) => (
     <>
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       <div className={cn(
-        'grid gap-4',
-        cardCols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+        'grid gap-2',
+        cardCols === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
       )}>
         {cards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                <CardTitle className="text-[10px] font-semibold uppercase tracking-wider">
+            <Card key={index} className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2 px-3">
+                <CardTitle className="text-[9px] font-semibold uppercase tracking-wider line-clamp-2">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                <div className={`p-1.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                  <Icon className={`w-3.5 h-3.5 ${stat.color}`} />
                 </div>
               </CardHeader>
-              <CardContent className="pb-4 px-4">
-                <div className="text-xl font-bold text-foreground mb-1">
+              <CardContent className="pb-2 px-3">
+                <div className="text-base font-bold text-foreground">
                   {stat.isCurrency ? (
                     formatCurrencyINR(stat.value)
                   ) : (
-                    <AnimatedCounter value={stat.value} duration={1500} />
+                    <>
+                      <AnimatedCounter value={stat.value} duration={1500} />
+                      {(stat as any).suffix && <span className="text-sm ml-0.5">{(stat as any).suffix}</span>}
+                    </>
                   )}
                 </div>
               </CardContent>
