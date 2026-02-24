@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardHeading, CardToolbar } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -24,9 +24,9 @@ const AdminCustomers = () => {
   const { role } = useAuthStore();
   const isEmployee = role === 'employee';
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('Inactive');
+  const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('Active');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('All');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('not_paid');
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -201,22 +201,23 @@ const AdminCustomers = () => {
 
       {/* Data Grid */}
       <Card>
-        <CardHeader className="py-3">
-          {/* Filters in Header */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <CardHeading className="p-0 w-full md:w-auto md:min-w-0 shrink-0">
+            <div className="relative w-full min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none shrink-0" />
               <Input
                 placeholder={t('customers.searchPlaceholder', 'Search by name or mobile...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm w-50"
+                className="pl-9 h-9 text-sm w-full min-w-0"
               />
             </div>
+          </CardHeading>
+          <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
-              className="h-9 text-sm"
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('customers.allStatus', 'All Status')}</option>
               {statuses.map((status) => (
@@ -228,7 +229,7 @@ const AdminCustomers = () => {
             <Select
               value={connectionFilter}
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
-              className="h-9 text-sm"
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('customers.allConnections', 'All Connections')}</option>
               {Array.isArray(products) && products.length > 0 ? (
@@ -242,13 +243,13 @@ const AdminCustomers = () => {
             <Select
               value={paymentStatusFilter}
               onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
-              className="h-9 text-sm"
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('customers.allPayment', 'All Payment')}</option>
-              <option value="paid">{t('customers.paid', 'Paid')}</option>
               <option value="not_paid">{t('customers.unpaid', 'Unpaid')}</option>
+              <option value="paid">{t('customers.paid', 'Paid')}</option>
             </Select>
-          </div>
+          </CardToolbar>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -375,6 +376,10 @@ const AdminCustomers = () => {
                       <div>
                         <span className="text-muted-foreground">{t('customers.package', 'Package')}: </span>
                         <span className="font-medium">{customer.package || t('common.na', 'N/A')}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">{t('customers.stbNo', 'STB No')}: </span>
+                        <span className="font-medium">{customer.stbNumber || t('common.na', 'N/A')}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">{t('customers.paymentStatus', 'Payment')}: </span>

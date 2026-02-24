@@ -1,25 +1,25 @@
-// Fixed connection status dropdown visibility
-// Connection conversion moved to status dropdown
+// Connection Requests — Shows only "New" requests with clickable badge to add customer
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
 import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
-import { cn, generateCustomerPassword } from '@/lib/utils';
-import { Search } from 'lucide-react';
-import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
+import { cn } from '@/lib/utils';
+import { Search, Info } from 'lucide-react';
+import CustomerSheet from '@/components/CustomerSheet';
+import type { ConnectionRequest } from '@/models/types';
 
 const ConnectionRequests = () => {
   const { t } = useTranslation();
   const [requests, setRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<ConnectionRequestStatus | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCustomerSheetOpen, setIsCustomerSheetOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const ConnectionRequests = () => {
     }
   };
 
-  const handleStatusUpdate = async (id: number, newStatus: ConnectionRequestStatus) => {
+  const handleStatusUpdate = async (id: number, newStatus: 'Converted') => {
     try {
       await connectionRequestsApi.updateStatus(id, newStatus);
       await loadRequests();
@@ -48,51 +48,34 @@ const ConnectionRequests = () => {
     }
   };
 
-  // Connection auto-converted to customer
   const { addCustomer } = useStore();
 
-  const handleConvert = async (request: ConnectionRequest) => {
-    try {
-      const password = generateCustomerPassword(request.name, request.mobile);
-      await addCustomer({
-        organizationId: 'org_001',
-        name: request.name,
-        email: request.email || '',
-        mobile: request.mobile,
-        password,
-        connectionType: request.productName as any,
-        package: request.planName,
-        status: 'Active',
-        address: { line1: '', line2: '', city: '', state: '', country: '' },
-        paymentStatus: 'not_paid',
-      });
-      await handleStatusUpdate(request.id, 'Converted');
-    } catch (error) {
-      console.error('Error converting request:', error);
-      alert(t('connectionRequests.convertError', 'Failed to convert. Please try again.'));
+  const handleAddCustomer = (customerData: any) => {
+    // Add customer and mark request as converted
+    addCustomer(customerData);
+    if (selectedRequest) {
+      handleStatusUpdate(selectedRequest.id, 'Converted');
     }
+    setIsCustomerSheetOpen(false);
+    setSelectedRequest(null);
   };
 
-  // Status dropdown change handler — auto-converts on "Converted"
-  const handleStatusDropdown = async (request: ConnectionRequest, newStatus: string) => {
-    if (newStatus === 'Converted' && request.status !== 'Converted') {
-      await handleConvert(request);
-    } else if (newStatus === 'New' && request.status !== 'New') {
-      await handleStatusUpdate(request.id, 'New');
-    }
+  const handleNewBadgeClick = (request: ConnectionRequest) => {
+    setSelectedRequest(request);
+    setIsCustomerSheetOpen(true);
   };
 
-  // Filter requests by status and search query
+  // Filter to show only "New" requests
   const filteredRequests = useMemo(() => {
     return requests.filter((request) => {
-      const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
+      const isNew = request.status === 'New';
       const matchesSearch =
         searchQuery === '' ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.mobile.includes(searchQuery);
-      return matchesStatus && matchesSearch;
+      return isNew && matchesSearch;
     });
-  }, [requests, statusFilter, searchQuery]);
+  }, [requests, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
@@ -104,28 +87,10 @@ const ConnectionRequests = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery]);
 
-  const getStatusBadgeColor = (status: ConnectionRequestStatus) => {
-    switch (status) {
-      case 'New':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Converted':
-        return 'bg-green-50 text-green-700 border-green-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
-  const getStatusLabel = (status: ConnectionRequestStatus) => {
-    switch (status) {
-      case 'New':
-        return t('connectionRequests.statusNew', 'New');
-      case 'Converted':
-        return t('connectionRequests.statusConverted', 'Converted');
-      default:
-        return status;
-    }
+  const getNewBadgeCount = () => {
+    return filteredRequests.length;
   };
 
   const formatDate = (dateString: string) => {
@@ -146,28 +111,18 @@ const ConnectionRequests = () => {
       </div>
 
       <Card className="border border-border bg-card shadow-soft rounded-card">
-        <CardHeader className="border-b border-border bg-gray-50">
-
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+        <CardHeader className="border-b border-border bg-gray-50 py-3">
+          {/* Search only - no status filter */}
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-auto sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={t('connectionRequests.searchPlaceholder', 'Search by name or mobile...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs w-full sm:w-64"
+                className="pl-8 h-8 text-xs w-full sm:w-50"
               />
             </div>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ConnectionRequestStatus | 'All')}
-              className="h-8 text-xs w-full sm:w-auto sm:min-w-[140px]"
-            >
-              <option value="All">{t('connectionRequests.allStatus', 'All Status')}</option>
-              <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
-              <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
-            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0" style={{ overflow: 'visible' }}>
@@ -177,19 +132,19 @@ const ConnectionRequests = () => {
             <div className="p-8 text-center text-gray-600">{t('connectionRequests.empty', 'No connection requests found.')}</div>
           ) : (
             <>
-              {/* Desktop Table View — Action column removed, status is now a dropdown */}
-              <div className="hidden md:block" style={{ overflow: 'visible' }}>
-                <div className="min-w-full" style={{ overflow: 'visible' }}>
+              {/* Desktop Table View — Status shows "New" badge with info icon */}
+              <div className="hidden md:block">
+                <div className="min-w-full">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b-2 border-border bg-muted/30 sticky top-0 z-10">
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('connectionRequests.colId', 'ID')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colCustomerName', 'Customer Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('connectionRequests.colMobile', 'Mobile')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colProductName', 'Product Name')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('connectionRequests.colStatus', 'Status')}</th>
+                      <tr className="border-b-2 border-border bg-muted/30">
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colId', 'ID')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colCustomerName', 'Customer Name')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colMobile', 'Mobile')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colPlanName', 'Plan Name')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colProductName', 'Product Name')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colRequestedDate', 'Requested Date')}</th>
+                        <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('connectionRequests.colStatus', 'Status')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -201,32 +156,21 @@ const ConnectionRequests = () => {
                             idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
                           )}
                         >
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.id}</td>
-                          <td className="px-3 py-2 text-sm font-medium text-gray-900">{request.name}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.mobile}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{request.planName}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{getProviderDisplayName(request.productName)}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(request.createdAt)}</td>
-                          <td className="px-3 py-2" style={{ overflow: 'visible' }}>
-                            {request.status === 'Converted' ? (
-                              <span
-                                className={cn(
-                                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-                                  getStatusBadgeColor(request.status)
-                                )}
-                              >
-                                {getStatusLabel(request.status)}
-                              </span>
-                            ) : (
-                              <Select
-                                value={request.status}
-                                onChange={(e) => handleStatusDropdown(request, e.target.value)}
-                                className="h-7 text-xs w-24"
-                              >
-                                <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
-                                <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
-                              </Select>
-                            )}
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{request.id}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{request.name}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{request.mobile}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{request.planName}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getProviderDisplayName(request.productName)}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{formatDate(request.createdAt)}</td>
+                          <td className="px-3 py-2">
+                            <button
+                              onClick={() => handleNewBadgeClick(request)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+                              title={t('connectionRequests.addCustomerTooltip', 'Click to add customer')}
+                            >
+                              {t('connectionRequests.statusNew', 'New')}
+                              <Info className="w-3 h-3" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -235,7 +179,7 @@ const ConnectionRequests = () => {
                 </div>
               </div>
 
-              {/* Mobile Card View — Action buttons removed, status is dropdown */}
+              {/* Mobile Card View */}
               <div className="md:hidden space-y-3 p-4">
                 {paginatedRequests.map((request) => (
                   <Card key={request.id} className="border border-border">
@@ -245,25 +189,14 @@ const ConnectionRequests = () => {
                           <p className="font-semibold text-gray-900">{request.name}</p>
                           <p className="text-sm text-gray-600">{t('connectionRequests.colId', 'ID')}: {request.id}</p>
                         </div>
-                        {request.status === 'Converted' ? (
-                          <span
-                            className={cn(
-                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-                              getStatusBadgeColor(request.status)
-                            )}
-                          >
-                            {getStatusLabel(request.status)}
-                          </span>
-                        ) : (
-                          <Select
-                            value={request.status}
-                            onChange={(e) => handleStatusDropdown(request, e.target.value)}
-                            className="h-7 text-xs w-24"
-                          >
-                            <option value="New">{t('connectionRequests.statusNew', 'New')}</option>
-                            <option value="Converted">{t('connectionRequests.statusConverted', 'Converted')}</option>
-                          </Select>
-                        )}
+                        <button
+                          onClick={() => handleNewBadgeClick(request)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+                          title={t('connectionRequests.addCustomerTooltip', 'Click to add customer')}
+                        >
+                          {t('connectionRequests.statusNew', 'New')}
+                          <Info className="w-3 h-3" />
+                        </button>
                       </div>
                       <div className="space-y-1 text-sm">
                         <p><span className="text-gray-600">{t('connectionRequests.colMobile', 'Mobile')}:</span> {request.mobile}</p>
@@ -293,6 +226,28 @@ const ConnectionRequests = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* CustomerSheet Dialog */}
+      <CustomerSheet
+        isOpen={isCustomerSheetOpen}
+        onClose={() => {
+          setIsCustomerSheetOpen(false);
+          setSelectedRequest(null);
+        }}
+        customer={null}
+        onSave={handleAddCustomer}
+        prefillData={
+          selectedRequest
+            ? {
+                name: selectedRequest.name,
+                email: selectedRequest.email || '',
+                mobile: selectedRequest.mobile,
+                connectionType: selectedRequest.productName as any,
+                package: selectedRequest.planName,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };

@@ -16,9 +16,16 @@ interface CustomerSheetProps {
   onClose: () => void;
   customer?: Customer | null;
   onSave: (customer: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => void;
+  prefillData?: {
+    name?: string;
+    email?: string;
+    mobile?: string;
+    connectionType?: Provider;
+    package?: string;
+  };
 }
 
-const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps) => {
+const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: CustomerSheetProps) => {
   const { t } = useTranslation();
   const { role } = useAuthStore();
   const { products, fetchActiveProducts } = useStore();
@@ -83,12 +90,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         address: customer.address,
       });
     } else {
+      // Use prefillData if available, otherwise use empty defaults
       setFormData({
-        name: '',
-        email: '',
-        mobile: '',
-        connectionType: '',
-        package: '',
+        name: prefillData?.name || '',
+        email: prefillData?.email || '',
+        mobile: prefillData?.mobile || '',
+        connectionType: prefillData?.connectionType || '',
+        package: prefillData?.package || '',
         status: 'Active',
         description: '',
         gstin: undefined,
@@ -106,9 +114,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
         },
       });
     }
-  }, [customer, isOpen]);
-
-  if (!isOpen) return null;
+  }, [customer, isOpen, prefillData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +161,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
   }, [isOpen, isReadOnly, customer, onClose, t]);
 
   const sheetTitle = isReadOnly ? t('customerSheet.details', 'Customer Details') : customer ? t('customerSheet.edit', 'Edit Customer') : t('customerSheet.add', 'Add New Customer');
+
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg" className="sm:max-w-[600px]">
