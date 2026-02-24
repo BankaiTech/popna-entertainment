@@ -269,7 +269,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave }: CustomerSheetProps
                     >
                       {statuses.map((status) => (
                         <option key={status} value={status}>
-                          {status}
+                          {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                         </option>
                       ))}
                     </Select>

@@ -221,7 +221,7 @@ const AdminCustomers = () => {
               <option value="All">{t('customers.allStatus', 'All Status')}</option>
               {statuses.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                 </option>
               ))}
             </Select>
@@ -326,7 +326,7 @@ const AdminCustomers = () => {
                                 : 'bg-red-100 text-red-800'
                                 }`}
                             >
-                              {customer.status}
+                              {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                             </span>
                           </td>
                         </tr>
@@ -359,7 +359,7 @@ const AdminCustomers = () => {
                           : 'bg-red-100 text-red-800'
                           }`}
                       >
-                        {customer.status}
+                        {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                       </span>
                     </div>
 

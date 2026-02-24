@@ -518,7 +518,7 @@ const AdminDashboard = () => {
                             : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
                             }`}
                         >
-                          {customer.status}
+                          {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                         </span>
                       </td>
                     </tr>
@@ -548,7 +548,7 @@ const AdminDashboard = () => {
                         : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
                         }`}
                     >
-                      {customer.status}
+                      {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
