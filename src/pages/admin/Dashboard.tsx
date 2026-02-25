@@ -10,7 +10,7 @@ import Select from '@/components/ui/Select';
 import { Link } from 'react-router-dom';
 import {
   Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle,
-  DollarSign, Clock, AlertTriangle, MessageSquare, Zap, Package, Layers, RefreshCw
+  DollarSign, Clock, MessageSquare, Zap, Package, Layers, RefreshCw
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend

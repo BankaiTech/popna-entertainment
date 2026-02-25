@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
@@ -72,21 +73,14 @@ const ProductModal = ({ isOpen, onClose, onSave, onUpdate, editingProduct }: Pro
 
   if (!isOpen) return null;
 
+  const title = editingProduct ? t('productManagement.editProduct', 'Edit Product') : t('productManagement.addNewProduct', 'Add New Product');
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50">
-      <div
-        className="w-full sm:max-w-lg bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl flex flex-col max-h-[90vh] sm:max-h-[85vh] border border-border"
-        role="dialog"
-        aria-labelledby="product-modal-title"
-        aria-modal="true"
-      >
-        <div className="shrink-0 px-4 sm:px-6 py-4 border-b border-border">
-          <h2 id="product-modal-title" className="text-lg font-semibold">
-            {editingProduct ? t('productManagement.editProduct', 'Edit Product') : t('productManagement.addNewProduct', 'Add New Product')}
-          </h2>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+    <Dialog open={isOpen} onClose={onClose} size="lg" closeOnOverlayClick={!saving}>
+      <DialogHeader title={title} onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody className="p-4 sm:p-5">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-foreground">
                 {t('productManagement.productName', 'Product Name')} <span className="text-destructive">*</span>
@@ -174,17 +168,17 @@ const ProductModal = ({ isOpen, onClose, onSave, onUpdate, editingProduct }: Pro
               </div>
             )}
           </div>
-          <div className="shrink-0 flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto" disabled={saving}>
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
-              {saving ? t('common.saving', 'Saving...') : editingProduct ? t('productManagement.updateProduct', 'Update Product') : t('productManagement.createProduct', 'Create Product')}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? t('common.saving', 'Saving...') : editingProduct ? t('productManagement.updateProduct', 'Update Product') : t('productManagement.createProduct', 'Create Product')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 };
 

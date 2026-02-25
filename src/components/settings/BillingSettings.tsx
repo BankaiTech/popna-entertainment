@@ -8,7 +8,8 @@ import { upiPaymentApi } from '@/api/upiPayment';
 import { organizationsApi } from '@/api/organizations';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import type { Organization } from '@/models/types';
-import { formatCurrencyINR } from '@/lib/utils';
+import UpiPaymentModal from '@/components/UpiPaymentModal';
+import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
 
 const UPI_APPS = [
   { id: 'gpay', label: 'Google Pay' },
@@ -24,9 +25,10 @@ const BillingSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [renewLoading, setRenewLoading] = useState(false);
+  const [renewLoading] = useState(false);
   const [renewMessage, setRenewMessage] = useState<string | null>(null);
   const [renewSuccess, setRenewSuccess] = useState<boolean | null>(null);
+  const [showUpiModal, setShowUpiModal] = useState(false);
   const [form, setForm] = useState({
     upiId: '',
     upiDisplayName: '',
@@ -86,34 +88,18 @@ const BillingSettings = () => {
   };
 
   const handlePayToRenew = async () => {
-    setRenewLoading(true);
-    setRenewMessage(null);
-    setRenewSuccess(null);
-    try {
-      const result = await upiPaymentApi.createRenewalPayment({ organizationId: MOCK_ORGANIZATION_ID });
-      if (result.paymentLink) {
-        window.open(result.paymentLink, '_blank');
-        setRenewMessage(t('settings.paymentLinkOpened', 'Payment link opened. Complete payment in the new tab.'));
-      } else {
-        // Mock/demo: treat as paid immediately — replace with real payment callback in production
-        const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
-        if (renewed) {
-          setOrganization(renewed);
-          setRenewSuccess(true);
-          setRenewMessage(
-            t('settings.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}. Amount: {{amount}}.', {
-              date: renewed.subscriptionEnd,
-              amount: formatCurrencyINR(result.amount),
-            })
-          );
-        }
-      }
-    } catch (e) {
-      setRenewSuccess(false);
-      setRenewMessage(t('settings.renewalError', 'Could not create payment. Try again or contact support.'));
-    } finally {
-      setRenewLoading(false);
+    // Renewal: org pays platform — use our (platform) UPI/QR only
+    if (hasPlatformUpi()) {
+      setShowUpiModal(true);
+    } else {
+      alert(t('settings.renewalUpiNotConfigured', 'Renewal payment is not configured. Please contact support.'));
     }
+  };
+
+  const handlePaymentInitiated = () => {
+    setShowUpiModal(false);
+    setRenewMessage('Payment initiated. Please share the payment screenshot or UTR number for verification.');
+    setRenewSuccess(null);
   };
 
   if (loading) {
@@ -157,6 +143,10 @@ const BillingSettings = () => {
               <p>{renewMessage}</p>
             </div>
           )}
+          <div className="rounded-lg p-3 bg-muted/30 border border-border text-xs text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">{t('settings.howConfirmationWorks', 'How payment confirmation works')}</p>
+            <p>{t('settings.confirmationNote', 'After you pay, share the payment screenshot or UTR number with support. We will verify and extend your subscription. With direct UPI there is no automatic confirmation — a payment gateway can be added later for instant verification.')}</p>
+          </div>
         </div>
       </div>
 
@@ -244,8 +234,26 @@ const BillingSettings = () => {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {t('settings.apiReadyNote', 'API ready — replace upiPaymentApi with your payment gateway (e.g. Razorpay, Paytm, PhonePe) for live UPI collection.')}
+        {t('settings.apiReadyNote', 'Configure your UPI ID above to accept direct UPI payments without any payment gateway fees.')}
       </p>
+
+      {/* UPI Payment Modal — renewal uses platform (our) UPI only; note includes org id, name, Subscription Renewal */}
+      {hasPlatformUpi() && (
+        <UpiPaymentModal
+          isOpen={showUpiModal}
+          onClose={() => setShowUpiModal(false)}
+          upiId={PLATFORM_UPI.upiId}
+          businessName={PLATFORM_UPI.businessName}
+          amount={500} // Monthly subscription amount - adjust as needed
+          description={
+            organization
+              ? `${organization.id} | ${organization.name} | Subscription Renewal`
+              : t('settings.monthlyRenewal', 'Monthly Subscription Renewal')
+          }
+          transactionRef={organization ? `SUB_${organization.id}_${Date.now()}` : `SUB${Date.now()}`}
+          onPaymentInitiated={handlePaymentInitiated}
+        />
+      )}
     </div>
   );
 };

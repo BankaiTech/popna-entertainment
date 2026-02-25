@@ -8,7 +8,10 @@ import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import ProductModal from '@/components/ProductModal';
+import UpiPaymentModal from '@/components/UpiPaymentModal';
+import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
 
 const FREE_PRODUCT_LIMIT = 4;
 const ADDITIONAL_PRODUCT_COST = 200;
@@ -19,6 +22,7 @@ const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showUpiModal, setShowUpiModal] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -70,11 +74,18 @@ const ProductManagement = () => {
   };
 
   const handlePayForAdditionalProducts = () => {
-    // Mock payment - Replace with real payment gateway
-    alert(`Payment of ₹${ADDITIONAL_PRODUCT_COST} required. Redirecting to payment gateway...`);
+    // Additional products: org pays platform — use our (platform) UPI
     setShowPaymentModal(false);
-    // After successful payment, allow adding more products
-    setShowModal(true);
+    if (hasPlatformUpi()) {
+      setShowUpiModal(true);
+    } else {
+      alert(t('productManagement.platformUpiNotConfigured', 'Payment is not configured. Please contact support.'));
+    }
+  };
+
+  const handlePaymentInitiated = () => {
+    setShowUpiModal(false);
+    alert('Payment initiated! Please share the payment screenshot or UTR number with admin for verification. Once verified, you can add more products.');
   };
 
   return (
@@ -190,39 +201,59 @@ const ProductManagement = () => {
         editingProduct={editingProduct}
       />
 
-      {/* Payment Required Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-md bg-card rounded-lg shadow-xl border border-border p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-full bg-blue-100">
-                <Lock className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold">Additional Product Limit Reached</h3>
+      {/* Payment Required — use Dialog for consistency */}
+      <Dialog open={showPaymentModal} onClose={() => setShowPaymentModal(false)} size="sm">
+        <DialogHeader
+          title={t('productManagement.additionalProductLimitTitle', 'Additional Product Limit Reached')}
+          onClose={() => setShowPaymentModal(false)}
+        />
+        <DialogBody className="p-4 sm:p-5">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 rounded-full bg-primary/10 shrink-0">
+              <Lock className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              You've used all {FREE_PRODUCT_LIMIT} free products. To add more products, please pay ₹{ADDITIONAL_PRODUCT_COST} for each additional product.
+            <p className="text-sm text-muted-foreground">
+              {t('productManagement.additionalProductLimitDesc', "You've used all {{limit}} free products. To add more, pay ₹{{cost}} per additional product.", {
+                limit: FREE_PRODUCT_LIMIT,
+                cost: ADDITIONAL_PRODUCT_COST,
+              })}
             </p>
-            <div className="bg-muted/50 rounded-lg p-4 mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm">Additional Product</span>
-                <span className="font-semibold">₹{ADDITIONAL_PRODUCT_COST}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs text-muted-foreground">
-                <span>One-time payment</span>
-                <span>Per product</span>
-              </div>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 border border-border">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium text-foreground">
+                {t('productManagement.additionalProduct', 'Additional Product')}
+              </span>
+              <span className="font-semibold text-foreground">₹{ADDITIONAL_PRODUCT_COST}</span>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowPaymentModal(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handlePayForAdditionalProducts} className="flex-1">
-                Pay ₹{ADDITIONAL_PRODUCT_COST}
-              </Button>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{t('productManagement.oneTimePayment', 'One-time payment')}</span>
+              <span>{t('productManagement.perProduct', 'Per product')}</span>
             </div>
           </div>
-        </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowPaymentModal(false)}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button onClick={handlePayForAdditionalProducts}>
+            {t('productManagement.payAmount', 'Pay ₹{{amount}}', { amount: ADDITIONAL_PRODUCT_COST })}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* UPI Payment Modal — additional products: platform (our) UPI only */}
+      {hasPlatformUpi() && (
+        <UpiPaymentModal
+          isOpen={showUpiModal}
+          onClose={() => setShowUpiModal(false)}
+          upiId={PLATFORM_UPI.upiId}
+          businessName={PLATFORM_UPI.businessName}
+          amount={ADDITIONAL_PRODUCT_COST}
+          description={t('productManagement.additionalProductPurchase', 'Additional Product Purchase')}
+          transactionRef={`PROD${Date.now()}`}
+          onPaymentInitiated={handlePaymentInitiated}
+        />
       )}
     </div>
   );

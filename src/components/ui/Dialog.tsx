@@ -46,7 +46,7 @@ export function Dialog({
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
       onClick={closeOnOverlayClick ? onClose : undefined}
       role="presentation"
     >
@@ -54,7 +54,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'bg-card rounded-t-modal sm:rounded-modal shadow-soft-xl max-h-[90vh] overflow-hidden flex flex-col border border-border',
+          'bg-card rounded-modal shadow-soft-xl max-h-[90vh] overflow-hidden flex flex-col border border-border',
           sizeClasses[size],
           className
         )}

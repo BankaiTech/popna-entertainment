@@ -22,12 +22,8 @@ import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { salesInvoicesApi } from '@/api/invoices';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-
-const UPI_APPS = [
-  { id: 'gpay', name: 'Google Pay', icon: '💳' },
-  { id: 'phonepe', name: 'PhonePe', icon: '📱' },
-  { id: 'paytm', name: 'Paytm', icon: '💰' },
-] as const;
+import { upiPaymentApi } from '@/api/upiPayment';
+import UpiPaymentModal from '@/components/UpiPaymentModal';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
@@ -39,10 +35,9 @@ const CustomerDashboard = () => {
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // UPI Payment dialog state
+  // UPI Payment: customer pays org — use organization admin's UPI
   const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
-  const [selectedUpiApp, setSelectedUpiApp] = useState<string>('');
-  const [manualUpiId, setManualUpiId] = useState('');
+  const [orgUpiConfig, setOrgUpiConfig] = useState<{ upiId: string; upiDisplayName: string; enabled: boolean } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,7 +57,28 @@ const CustomerDashboard = () => {
     loadData();
   }, [initialize, customerId]);
 
+  // Load org (admin) UPI config for customer "Pay Now" — customer pays organization
   const currentCustomer = customers.find((c) => c.id === customerId);
+  useEffect(() => {
+    if (!currentCustomer?.organizationId) {
+      setOrgUpiConfig(null);
+      return;
+    }
+    let cancelled = false;
+    upiPaymentApi.getConfig(currentCustomer.organizationId).then((data) => {
+      if (!cancelled) {
+        setOrgUpiConfig({
+          upiId: data.upiId ?? '',
+          upiDisplayName: data.upiDisplayName ?? '',
+          enabled: data.enabled ?? false,
+        });
+      }
+    }).catch(() => {
+      if (!cancelled) setOrgUpiConfig(null);
+    });
+    return () => { cancelled = true; };
+  }, [currentCustomer?.organizationId]);
+
   const myComplaints = complaints.filter((c) => c.customerId === customerId);
 
   const totalPaid = useMemo(
@@ -117,14 +133,8 @@ const CustomerDashboard = () => {
     navigate('/customer/login');
   };
 
-  const handleUpiPay = () => {
-    const upiTarget = selectedUpiApp || manualUpiId;
-    if (!upiTarget) return;
-    alert(t('customerDashboard.upiPaymentInitiated', `UPI payment initiated via ${selectedUpiApp ? UPI_APPS.find(a => a.id === selectedUpiApp)?.name : manualUpiId}`));
-    setIsUpiDialogOpen(false);
-    setSelectedUpiApp('');
-    setManualUpiId('');
-  };
+  const canPayViaOrgUpi = !!(orgUpiConfig?.enabled && orgUpiConfig?.upiId);
+  const payAmount = currentCustomer?.balanceAmount ?? totalPending ?? 0;
 
   if (!currentCustomer) {
     return (
@@ -517,66 +527,33 @@ const CustomerDashboard = () => {
         customer={currentCustomer}
       />
 
-      {/* UPI Payment Dialog */}
-      <Dialog open={isUpiDialogOpen} onClose={() => setIsUpiDialogOpen(false)}>
-        <DialogHeader title={t('customerDashboard.upiPayment', 'UPI Payment')} onClose={() => setIsUpiDialogOpen(false)} />
-        <DialogBody className="p-4 sm:p-6">
-          <div className="space-y-4">
-            {/* Pending amount display */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200">
-              <p className="text-xs text-muted-foreground">{t('customerDashboard.amountToPay', 'Amount to Pay')}</p>
-              <p className="text-xl font-bold text-amber-700">{formatCurrencyINR(currentCustomer.balanceAmount ?? totalPending)}</p>
-            </div>
-
-            {/* UPI App selection */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('customerDashboard.selectUpiApp', 'Select UPI App')}</label>
-              <div className="grid grid-cols-3 gap-2">
-                {UPI_APPS.map((app) => (
-                  <button
-                    key={app.id}
-                    type="button"
-                    onClick={() => { setSelectedUpiApp(app.id); setManualUpiId(''); }}
-                    className={cn(
-                      'flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-sm font-medium transition-all',
-                      selectedUpiApp === app.id
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border bg-background text-foreground hover:border-primary/30 hover:bg-muted'
-                    )}
-                  >
-                    <span className="text-2xl">{app.icon}</span>
-                    <span className="text-xs">{app.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground uppercase font-medium">{t('customerDashboard.or', 'or')}</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            {/* Manual UPI ID */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">{t('customerDashboard.enterUpiId', 'Enter UPI ID')}</label>
-              <Input
-                value={manualUpiId}
-                onChange={(e) => { setManualUpiId(e.target.value); setSelectedUpiApp(''); }}
-                placeholder={t('customerDashboard.upiIdPlaceholder', 'name@upi')}
-              />
-            </div>
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsUpiDialogOpen(false)}>{t('common.cancel', 'Cancel')}</Button>
-          <Button onClick={handleUpiPay} disabled={!selectedUpiApp && !manualUpiId.trim()}>
-            <Smartphone className="w-4 h-4 mr-2" />
-            {t('customerDashboard.payViaUpi', 'Pay via UPI')}
-          </Button>
-        </DialogFooter>
-      </Dialog>
+      {/* Pay Now: customer pays org — show organization admin's UPI/QR */}
+      {canPayViaOrgUpi && orgUpiConfig && (
+        <UpiPaymentModal
+          isOpen={isUpiDialogOpen}
+          onClose={() => setIsUpiDialogOpen(false)}
+          upiId={orgUpiConfig.upiId}
+          businessName={orgUpiConfig.upiDisplayName || t('customerDashboard.yourProvider', 'Your Provider')}
+          amount={payAmount}
+          description={t('customerDashboard.planPayment', 'Plan payment')}
+          transactionRef={`CUST${currentCustomer?.id ?? ''}_${Date.now()}`}
+          onPaymentInitiated={() => setIsUpiDialogOpen(false)}
+        />
+      )}
+      {/* Fallback when org has not configured UPI */}
+      {!canPayViaOrgUpi && (
+        <Dialog open={isUpiDialogOpen} onClose={() => setIsUpiDialogOpen(false)}>
+          <DialogHeader title={t('customerDashboard.upiPayment', 'UPI Payment')} onClose={() => setIsUpiDialogOpen(false)} />
+          <DialogBody className="p-4 sm:p-6">
+            <p className="text-sm text-muted-foreground">
+              {t('customerDashboard.providerUpiNotConfigured', 'Your provider has not set up UPI payments. Please contact them for payment details.')}
+            </p>
+          </DialogBody>
+          <DialogFooter>
+            <Button onClick={() => setIsUpiDialogOpen(false)}>{t('common.close', 'Close')}</Button>
+          </DialogFooter>
+        </Dialog>
+      )}
     </div>
   );
 };
