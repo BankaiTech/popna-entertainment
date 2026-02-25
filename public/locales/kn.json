@@ -842,6 +842,7 @@
   "upiPaymentModal.close": "ಮುಚ್ಚಿ",
   "upiPaymentModal.amountToPay": "ಪಾವತಿಸಬೇಕಾದ ಮೊತ್ತ",
   "upiPaymentModal.scanQr": "ಯಾವುದೇ UPI ಅಪ್ಲಿಕೇಶನ್‌ನೊಂದಿಗೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಪಾವತಿಸಿ",
+  "upiPaymentModal.scanToPay": "ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಪಾವತಿಸಿ",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "ನಕಲಿಸಿ",
   "upiPaymentModal.copied": "ನಕಲಿಸಲಾಗಿದೆ",
@@ -859,5 +860,6 @@
   "upiPaymentModal.instructionDesktop3": "ಮೊತ್ತವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಪಾವತಿ ಪೂರ್ಣಗೊಳಿಸಿ",
   "upiPaymentModal.instructionDesktop4": "ಪಾವತಿ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಅಥವಾ UTR ಸಂಖ್ಯೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ",
   "upiPaymentModal.reference": "ಉಲ್ಲೇಖ",
+  "upiPaymentModal.autopayNote": "ಪುನರಾವರ್ತಿತ ಪಾವತಿಗಳಿಗಾಗಿ ಯಾಂತ್ರಿಕ ಪಾವತಿ ಐಚ್ಛಿಕವನ್ನು ನಂತರ ಶಕ್ತಗೊಳಿಸಬಹುದು (ಇನ್ನೂ ಜಾರಿಗೆ ಬಂದಿಲ್ಲ).",
   "upiPaymentModal.verificationNote": "ಪಾವತಿಯ ನಂತರ ಪರಿಶೀಲನೆಗಾಗಿ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಅಥವಾ UTR ಹಂಚಿಕೊಳ್ಳಿ"
 }

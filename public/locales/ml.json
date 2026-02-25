@@ -849,6 +849,7 @@
   "upiPaymentModal.close": "അടയ്ക്കുക",
   "upiPaymentModal.amountToPay": "നൽകേണ്ട തുക",
   "upiPaymentModal.scanQr": "ഏത് UPI ആപ്പ് ഉപയോഗിച്ചും സ്കാൻ ചെയ്ത് പണം നൽകുക",
+  "upiPaymentModal.scanToPay": "സ്കാൻ ചെയ്ത് പണം നൽകുക",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "കോപ്പി",
   "upiPaymentModal.copied": "കോപ്പി ചെയ്തു",
@@ -866,5 +867,6 @@
   "upiPaymentModal.instructionDesktop3": "തുക സ്ഥിരീകരിച്ച് പേയ്‌മെന്റ് പൂർത്തിയാക്കുക",
   "upiPaymentModal.instructionDesktop4": "പേയ്‌മെന്റ് സ്ക്രീൻഷോട്ട് അല്ലെങ്കിൽ UTR നമ്പർ പങ്കിടുക",
   "upiPaymentModal.reference": "റഫറൻസ്",
+  "upiPaymentModal.autopayNote": "ആവർത്തന പേയ്‌മെന്റുകൾക്കായി ഓട്ടോപേ ഓപ്ഷൻ പിന്നീട് പ്രാപ്തമാക്കാം (ഇതുവരെ ഇംപ്ലിമെന്റ് ചെയ്തിട്ടില്ല).",
   "upiPaymentModal.verificationNote": "പേയ്‌മെന്റിന് ശേഷം സ്ഥിരീകരണത്തിനായി സ്ക്രീൻഷോട്ട് അല്ലെങ്കിൽ UTR പങ്കിടുക"
 }

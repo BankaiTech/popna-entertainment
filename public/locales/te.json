@@ -848,6 +848,7 @@
   "upiPaymentModal.close": "మూసివేయండి",
   "upiPaymentModal.amountToPay": "చెల్లించాల్సిన మొత్తం",
   "upiPaymentModal.scanQr": "ఏ UPI యాప్‌తోనైనా స్కాన్ చేసి చెల్లించండి",
+  "upiPaymentModal.scanToPay": "స్కాన్ చేసి చెల్లించండి",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "కాపీ",
   "upiPaymentModal.copied": "కాపీ అయింది",
@@ -865,5 +866,6 @@
   "upiPaymentModal.instructionDesktop3": "మొత్తాన్ని ధృవీకరించి చెల్లింపు పూర్తి చేయండి",
   "upiPaymentModal.instructionDesktop4": "చెల్లింపు స్క్రీన్‌షాట్ లేదా UTR నంబర్‌ను భాగస్వామ్యం చేయండి",
   "upiPaymentModal.reference": "రిఫరెన్స్",
+  "upiPaymentModal.autopayNote": "పునరావృత చెల్లింపుల కోసం ఆటోపే ఎంపిక తర్వాత ప్రారంభించబడవచ్చు (ఇంకా అమలులో లేదు).",
   "upiPaymentModal.verificationNote": "చెల్లింపు తర్వాత ధృవీకరణ కోసం స్క్రీన్‌షాట్ లేదా UTR భాగస్వామ్యం చేయండి"
 }

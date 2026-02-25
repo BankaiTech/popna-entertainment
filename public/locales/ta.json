@@ -848,6 +848,7 @@
   "upiPaymentModal.close": "மூடு",
   "upiPaymentModal.amountToPay": "செலுத்த வேண்டிய தொகை",
   "upiPaymentModal.scanQr": "எந்த UPI பயன்பாட்டுடனும் ஸ்கேன் செய்து செலுத்துங்கள்",
+  "upiPaymentModal.scanToPay": "ஸ்கேன் செய்து செலுத்துங்கள்",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "நகலெடு",
   "upiPaymentModal.copied": "நகலெடுக்கப்பட்டது",
@@ -865,5 +866,6 @@
   "upiPaymentModal.instructionDesktop3": "தொகையை சரிபார்த்து கட்டணத்தை முடிக்கவும்",
   "upiPaymentModal.instructionDesktop4": "கட்டண ஸ்கிரீன்ஷாட் அல்லது UTR எண்ணை பகிரவும்",
   "upiPaymentModal.reference": "குறிப்பு",
+  "upiPaymentModal.autopayNote": "திரும்பத் திரும்பக் கட்டணங்களுக்கான தானியங்கி செலுத்துதல் விருப்பம் பின்னர் இயக்கப்படலாம் (இன்னும் செயல்படுத்தப்படவில்லை).",
   "upiPaymentModal.verificationNote": "கட்டணத்திற்குப் பிறகு, சரிபார்ப்பிற்கு ஸ்கிரீன்ஷாட் அல்லது UTR ஐ பகிரவும்"
 }

@@ -868,6 +868,7 @@
   "upiPaymentModal.close": "Close",
   "upiPaymentModal.amountToPay": "Amount to Pay",
   "upiPaymentModal.scanQr": "Scan with any UPI app to pay",
+  "upiPaymentModal.scanToPay": "Scan to pay",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "Copy",
   "upiPaymentModal.copied": "Copied",
@@ -886,5 +887,6 @@
   "upiPaymentModal.instructionDesktop3": "Verify the amount and complete payment",
   "upiPaymentModal.instructionDesktop4": "Share the payment screenshot or UTR number",
   "upiPaymentModal.reference": "Reference",
+  "upiPaymentModal.autopayNote": "Autopay option for recurring payments can be enabled later (not implemented yet).",
   "upiPaymentModal.verificationNote": "After payment, share the screenshot or UTR for verification"
 }

@@ -849,6 +849,7 @@
   "upiPaymentModal.close": "बंद करें",
   "upiPaymentModal.amountToPay": "भुगतान राशि",
   "upiPaymentModal.scanQr": "किसी भी UPI ऐप से स्कैन करके भुगतान करें",
+  "upiPaymentModal.scanToPay": "स्कैन करके भुगतान करें",
   "upiPaymentModal.upiId": "UPI ID",
   "upiPaymentModal.copy": "कॉपी",
   "upiPaymentModal.copied": "कॉपी हो गया",
@@ -866,5 +867,6 @@
   "upiPaymentModal.instructionDesktop3": "राशि सत्यापित करें और भुगतान पूरा करें",
   "upiPaymentModal.instructionDesktop4": "भुगतान स्क्रीनशॉट या UTR नंबर साझा करें",
   "upiPaymentModal.reference": "संदर्भ",
+  "upiPaymentModal.autopayNote": "आवर्ती भुगतान के लिए ऑटोपे विकल्प बाद में सक्षम किया जा सकता है (अभी लागू नहीं).",
   "upiPaymentModal.verificationNote": "भुगतान के बाद सत्यापन के लिए स्क्रीनशॉट या UTR साझा करें"
 }
