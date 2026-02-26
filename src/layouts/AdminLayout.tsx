@@ -15,8 +15,8 @@ const AdminLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, logout, username, organizationId } = useAuthStore();
-  const { fetchOrganization, isModuleAllowed } = useOrganizationStore();
+  const { role, logout, organizationId } = useAuthStore();
+  const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Fetch organization permissions on mount
@@ -65,9 +65,9 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Sticky header — full width, compact, stays above content */}
+      {/* Sticky header — organization name only; mobile: hamburger + org name */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="sm:hidden p-2 hover:bg-accent rounded-md shrink-0"
@@ -75,10 +75,9 @@ const AdminLayout = () => {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="hidden sm:block min-w-0">
-            <h2 className="text-base sm:text-lg font-semibold truncate">{t('dashboard.welcome')} {username || t('common.user', 'User')}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground capitalize truncate">{role || t('common.user', 'User')} {t('dashboard.userDashboard')}</p>
-          </div>
+          <h2 className="text-base sm:text-lg font-semibold truncate min-w-0">
+            {currentOrganization?.name || t('nav.organization', 'Organization')}
+          </h2>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <LanguageSwitcher />
