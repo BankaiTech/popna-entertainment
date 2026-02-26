@@ -145,11 +145,6 @@ const AdminCustomers = () => {
     }
   };
 
-  const handleDeleteClick = (id: number) => {
-    if (isEmployee) return;
-    setCustomerIdToDelete(id);
-  };
-
   const handleDeleteCancel = () => setCustomerIdToDelete(null);
 
   const handleDeleteConfirm = async () => {

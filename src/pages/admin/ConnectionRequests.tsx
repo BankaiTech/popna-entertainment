@@ -89,10 +89,6 @@ const ConnectionRequests = () => {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const getNewBadgeCount = () => {
-    return filteredRequests.length;
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',

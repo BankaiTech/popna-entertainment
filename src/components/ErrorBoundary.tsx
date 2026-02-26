@@ -1,4 +1,5 @@
 import React from 'react';
+import { sendErrorToPage } from '@/utils/errorPage';
 
 interface State {
   hasError: boolean;
@@ -17,6 +18,7 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    sendErrorToPage(error, 'React ErrorBoundary: ' + (errorInfo?.componentStack?.split('\n')[1]?.trim() || ''));
   }
 
   render() {

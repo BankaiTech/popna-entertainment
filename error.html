@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Error – Popna Entertainment</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      max-width: 640px;
+      width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .header {
+      background: #dc2626;
+      color: #fff;
+      padding: 16px 20px;
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+    .body { padding: 20px; }
+    .meta {
+      font-size: 0.8125rem;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .message {
+      font-size: 0.9375rem;
+      color: #1e293b;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .stack {
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      overflow: auto;
+      max-height: 240px;
+      color: #475569;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .empty {
+      color: #64748b;
+      text-align: center;
+      padding: 48px 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header" id="header">Something went wrong</div>
+    <div class="body">
+      <div id="content">
+        <div class="empty" id="empty">No error details available. You may have opened this page directly.</div>
+        <div id="details" style="display: none;">
+          <div class="meta" id="meta"></div>
+          <div class="message" id="message"></div>
+          <pre class="stack" id="stack"></pre>
+          <div class="actions">
+            <a href="/" class="btn btn-primary" id="btnHome">Back to app</a>
+            <button type="button" class="btn btn-secondary" id="btnRetry">Try again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var STORAGE_KEY = '__popna_error__';
+
+      function getFromUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var message = params.get('message');
+        var stack = params.get('stack');
+        var time = params.get('time');
+        if (message || stack) {
+          return { message: message || 'Unknown error', stack: stack || '', time: time || null };
+        }
+        return null;
+      }
+
+      function getFromStorage() {
+        try {
+          var raw = sessionStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var data = JSON.parse(raw);
+            sessionStorage.removeItem(STORAGE_KEY);
+            return data;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function render(data) {
+        var empty = document.getElementById('empty');
+        var details = document.getElementById('details');
+        if (!data || (!data.message && !data.stack)) {
+          empty.style.display = 'block';
+          details.style.display = 'none';
+          return;
+        }
+        empty.style.display = 'none';
+        details.style.display = 'block';
+        document.getElementById('message').textContent = data.message || 'No message';
+        document.getElementById('stack').textContent = data.stack || 'No stack trace';
+        var metaParts = [];
+        if (data.time) metaParts.push('Time: ' + new Date(data.time).toLocaleString());
+        if (data.context) metaParts.push('Context: ' + data.context);
+        document.getElementById('meta').textContent = metaParts.join(' · ');
+      }
+
+      var data = getFromUrl() || getFromStorage();
+      render(data);
+
+      document.getElementById('btnRetry').onclick = function() {
+        window.location.href = '/';
+      };
+    })();
+  </script>
+</body>
+</html>

@@ -8,11 +8,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import {
-  Plus, AlertCircle, LogOut, FileText, Download, CreditCard, Clock,
-  Wallet, IndianRupee, CalendarClock, Wifi, Smartphone, Menu, X, Shield
+  Plus, AlertCircle, LogOut, FileText, Download, CreditCard,
+  Wallet, IndianRupee, CalendarClock, Wifi, Menu, X, Shield
 } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
