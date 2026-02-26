@@ -210,6 +210,7 @@
   "customerDashboard.noInvoicesSub": "Your invoices will appear here once generated",
   "customerDashboard.or": "or",
   "customerDashboard.overview": "Overview",
+  "customerDashboard.overviewHint": "Use the Complaints and Invoices tabs in the menu for details.",
   "customerDashboard.paid": "Paid",
   "customerDashboard.payNow": "Pay Now",
   "customerDashboard.payViaUpi": "Pay via UPI",
