@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Popna Entertainment vs PayPakka — Feature Comparison</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fa;
+      color: #1a1a2e;
+      font-size: 14px;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      background: linear-gradient(135deg, #009ef7 0%, #7239ea 100%);
+      color: #fff;
+      padding: 60px 80px;
+      page-break-after: always;
+    }
+    .cover .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .cover h1 {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .cover h1 span { color: #ffe082; }
+    .cover p.subtitle {
+      font-size: 16px;
+      opacity: 0.88;
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .cover .meta {
+      display: flex;
+      gap: 40px;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    .cover .meta strong { display: block; font-size: 15px; opacity: 1; color: #fff; }
+
+    /* ── Page wrapper ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 40px;
+    }
+
+    /* ── Section headings ── */
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #009ef7;
+      border-bottom: 3px solid #009ef7;
+      padding-bottom: 8px;
+      margin: 40px 0 20px;
+    }
+    .section-title:first-of-type { margin-top: 0; }
+
+    /* ── Executive summary box ── */
+    .summary-box {
+      background: linear-gradient(135deg, #e8f5fe 0%, #f0ebff 100%);
+      border-left: 5px solid #009ef7;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+    .summary-box strong { color: #7239ea; }
+
+    /* ── Scorecard strip ── */
+    .scorecard {
+      display: flex;
+      gap: 16px;
+      margin: 28px 0;
+      flex-wrap: wrap;
+    }
+    .score-card {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 12px;
+      padding: 20px 22px;
+      text-align: center;
+    }
+    .score-card.us { background: #e8f5fe; border: 2px solid #009ef7; }
+    .score-card.them { background: #fff3e0; border: 2px solid #f57c00; }
+    .score-card .num { font-size: 42px; font-weight: 800; }
+    .score-card.us .num { color: #009ef7; }
+    .score-card.them .num { color: #f57c00; }
+    .score-card .label { font-size: 13px; color: #555; margin-top: 4px; }
+    .score-card .sublabel { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* ── Main comparison table ── */
+    table.compare {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 32px;
+      font-size: 13px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    table.compare thead tr {
+      background: linear-gradient(90deg, #009ef7, #7239ea);
+      color: #fff;
+    }
+    table.compare thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    table.compare thead th:first-child { width: 34%; }
+    table.compare thead th:nth-child(2),
+    table.compare thead th:nth-child(3) { width: 33%; text-align: center; }
+    table.compare tbody tr:nth-child(even) { background: #f8fafc; }
+    table.compare tbody tr:nth-child(odd)  { background: #ffffff; }
+    table.compare tbody tr:hover { background: #eaf6ff; }
+    table.compare td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e8edf2;
+      vertical-align: top;
+    }
+    table.compare td:first-child { font-weight: 600; color: #1a1a2e; }
+    table.compare td:nth-child(2),
+    table.compare td:nth-child(3) { text-align: center; }
+    table.compare .cat-row td {
+      background: #1a1a2e;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 8px 16px;
+    }
+    .yes  { color: #00b050; font-weight: 700; font-size: 16px; }
+    .no   { color: #e53935; font-weight: 700; font-size: 16px; }
+    .part { color: #f57c00; font-weight: 700; font-size: 14px; }
+
+    /* ── Advantages section ── */
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 20px 0 32px;
+    }
+    .adv-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e0e7ef;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .adv-card .icon { font-size: 26px; margin-bottom: 8px; }
+    .adv-card h3 { font-size: 14px; font-weight: 700; color: #009ef7; margin-bottom: 6px; }
+    .adv-card p { font-size: 12.5px; color: #555; line-height: 1.6; }
+
+    /* ── Highlight callout ── */
+    .callout {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin: 16px 0 24px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .callout strong { color: #f57c00; }
+
+    /* ── Audience / use-case table ── */
+    table.usecase { width: 100%; border-collapse: collapse; margin: 16px 0 32px; font-size: 13px; }
+    table.usecase th { background: #1a1a2e; color: #fff; padding: 10px 14px; text-align: left; }
+    table.usecase td { padding: 9px 14px; border-bottom: 1px solid #e8edf2; }
+    table.usecase tr:nth-child(even) td { background: #f8fafc; }
+    .winner-us   { background: #e8f5fe !important; font-weight: 600; color: #0277bd; }
+    .winner-them { background: #fff3e0 !important; font-weight: 600; color: #e65100; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 60px;
+      padding: 24px 40px;
+      background: #1a1a2e;
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      text-align: center;
+    }
+    .footer strong { color: #fff; }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; }
+      .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.compare thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cat-row td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .adv-card, .callout, .summary-box { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ COVER -->
+<div class="cover">
+  <div class="badge">Competitive Analysis · 2025</div>
+  <h1>Popna Entertainment<br><span>vs PayPakka</span></h1>
+  <p class="subtitle">
+    A side-by-side feature comparison highlighting why Popna Entertainment's
+    ISP Management Platform delivers significantly more value for growing
+    Cable TV and Internet Service Providers.
+  </p>
+  <div class="meta">
+    <div><strong>Our Platform</strong>Popna Entertainment ISP Suite</div>
+    <div><strong>Competitor</strong>PayPakka (Kartan Technologies)</div>
+    <div><strong>Prepared</strong>February 2025</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ BODY -->
+<div class="page">
+
+  <!-- Executive Summary -->
+  <div class="section-title">Executive Summary</div>
+  <div class="summary-box">
+    PayPakka is a <strong>mobile-app-first collection tool</strong> built for small Local Cable Operators (LCOs).
+    It does payment collection and basic complaint ticketing well — but stops there.<br><br>
+    <strong>Popna Entertainment</strong> is a <strong>full-stack, web-based SaaS management platform</strong>:
+    a complete business operating system for ISPs and Cable Operators that handles billing, GST-compliant
+    invoicing, vendor management, analytics, multi-language support, a public-facing customer website,
+    and a true multi-tenant architecture — all from one unified dashboard.
+    If PayPakka is a collection app, Popna Entertainment is the entire back office.
+  </div>
+
+  <!-- Scorecard -->
+  <div class="scorecard">
+    <div class="score-card us">
+      <div class="num">58+</div>
+      <div class="label">API Endpoints</div>
+      <div class="sublabel">Popna Entertainment</div>
+    </div>
+    <div class="score-card us">
+      <div class="num">13</div>
+      <div class="label">Database Modules</div>
+      <div class="sublabel">Popna Entertainment</div>
+    </div>
+    <div class="score-card us">
+      <div class="num">6</div>
+      <div class="label">Languages Supported</div>
+      <div class="sublabel">EN · TA · HI · TE · KN · ML</div>
+    </div>
+    <div class="score-card us">
+      <div class="num">4</div>
+      <div class="label">User Roles (RBAC)</div>
+      <div class="sublabel">SuperAdmin · Admin · Employee · Customer</div>
+    </div>
+    <div class="score-card them">
+      <div class="num">3</div>
+      <div class="label">Apps (Mobile Only)</div>
+      <div class="sublabel">PayPakka</div>
+    </div>
+  </div>
+
+  <!-- ─── SECTION 1: Full Feature Matrix ─── -->
+  <div class="section-title">1 · Full Feature Comparison Matrix</div>
+
+  <table class="compare">
+    <thead>
+      <tr>
+        <th>Feature / Capability</th>
+        <th>Popna Entertainment</th>
+        <th>PayPakka</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- Platform -->
+      <tr class="cat-row"><td colspan="3">PLATFORM &amp; ACCESS</td></tr>
+      <tr><td>Web-based dashboard</td><td><span class="yes">✔</span> Full-featured browser app</td><td><span class="no">✖</span> Mobile app only</td></tr>
+      <tr><td>Mobile-responsive UI</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span> Native apps</td></tr>
+      <tr><td>Public-facing customer website</td><td><span class="yes">✔</span> Built-in, ISP-branded</td><td><span class="no">✖</span> Not available</td></tr>
+      <tr><td>Customer self-service portal</td><td><span class="yes">✔</span> Web portal + invoices</td><td><span class="part">~</span> Customer app only</td></tr>
+      <tr><td>Multi-tenant SaaS architecture</td><td><span class="yes">✔</span> Full org isolation</td><td><span class="no">✖</span> Single-org per account</td></tr>
+      <tr><td>Per-org module enable/disable</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Offline / PWA support</td><td><span class="part">~</span> Planned</td><td><span class="yes">✔</span> Native mobile</td></tr>
+
+      <!-- Access Control -->
+      <tr class="cat-row"><td colspan="3">USER ROLES &amp; ACCESS CONTROL</td></tr>
+      <tr><td>Super Admin (SaaS owner)</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Admin role</td><td><span class="yes">✔</span> Full access</td><td><span class="yes">✔</span> Operator/distributor</td></tr>
+      <tr><td>Employee / field agent role</td><td><span class="yes">✔</span> Restricted view (RBAC)</td><td><span class="part">~</span> Agent app</td></tr>
+      <tr><td>Customer login &amp; portal</td><td><span class="yes">✔</span> Web portal</td><td><span class="yes">✔</span> Customer app</td></tr>
+      <tr><td>Role-based data filtering</td><td><span class="yes">✔</span> UI enforced per role</td><td><span class="no">✖</span> Not documented</td></tr>
+      <tr><td>Employee view restrictions</td><td><span class="yes">✔</span> Active/unpaid only</td><td><span class="no">✖</span></td></tr>
+
+      <!-- Customer Management -->
+      <tr class="cat-row"><td colspan="3">CUSTOMER MANAGEMENT</td></tr>
+      <tr><td>Customer records (full CRUD)</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Advanced search &amp; filtering</td><td><span class="yes">✔</span> Name, mobile, status, product, payment</td><td><span class="part">~</span> Basic</td></tr>
+      <tr><td>Connection type &amp; area tracking</td><td><span class="yes">✔</span> STB, CAF ID, area</td><td><span class="part">~</span> STB number only</td></tr>
+      <tr><td>Auto-generated customer passwords</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Customer status (active/inactive)</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Permanent discount per customer</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Connection requests / lead tracking</td><td><span class="yes">✔</span> New → Converted funnel</td><td><span class="no">✖</span></td></tr>
+      <tr><td>Data grid with pagination</td><td><span class="yes">✔</span> 10 items/page</td><td><span class="no">✖</span> List view only</td></tr>
+
+      <!-- Billing & Payments -->
+      <tr class="cat-row"><td colspan="3">BILLING &amp; PAYMENT COLLECTION</td></tr>
+      <tr><td>Cash payment collection</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>UPI payment</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Card payment</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Wallet payment</td><td><span class="part">~</span> "Other" category</td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Partial payment support</td><td><span class="yes">✔</span> Balance tracking</td><td><span class="no">✖</span> Not documented</td></tr>
+      <tr><td>Payment history per customer</td><td><span class="yes">✔</span> Full log with timestamps</td><td><span class="part">~</span> Basic</td></tr>
+      <tr><td>Collection employee tracking</td><td><span class="yes">✔</span> For reconciliation</td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Payment date tracking</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Paid / unpaid reports</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Overdue payment tracking</td><td><span class="yes">✔</span> Dashboard KPI</td><td><span class="no">✖</span></td></tr>
+      <tr><td>UPI QR code generation</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Configurable cut-off dates</td><td><span class="yes">✔</span> Per product type</td><td><span class="no">✖</span></td></tr>
+
+      <!-- Invoicing -->
+      <tr class="cat-row"><td colspan="3">INVOICING &amp; GST COMPLIANCE</td></tr>
+      <tr><td>GST-compliant sales invoices</td><td><span class="yes">✔</span> Tax Invoice + Bill of Supply</td><td><span class="no">✖</span> Basic billing only</td></tr>
+      <tr><td>HSN / SAC code support</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>CGST / SGST / IGST breakup</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Place of supply tracking</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Invoice status (draft/sent/paid/overdue)</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Invoice due date management</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>PDF export</td><td><span class="yes">✔</span></td><td><span class="part">~</span> Bill sharing only</td></tr>
+      <tr><td>Purchase invoices (vendor bills)</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Installation charge on invoices</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+
+      <!-- Plans & Products -->
+      <tr class="cat-row"><td colspan="3">PLAN &amp; PRODUCT MANAGEMENT</td></tr>
+      <tr><td>Internet plan management</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Cable TV plan management</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Dynamic product creation (admin)</td><td><span class="yes">✔</span> Zero hardcoded names</td><td><span class="no">✖</span> Fixed categories</td></tr>
+      <tr><td>Plan image management</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Auto GST calculation on plans</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Customer plan selection (self-service)</td><td><span class="yes">✔</span> Public website</td><td><span class="yes">✔</span> Customer app</td></tr>
+
+      <!-- Complaint Management -->
+      <tr class="cat-row"><td colspan="3">COMPLAINT &amp; SERVICE MANAGEMENT</td></tr>
+      <tr><td>Complaint creation &amp; tracking</td><td><span class="yes">✔</span></td><td><span class="yes">✔</span></td></tr>
+      <tr><td>Status workflow (active/hold/closed)</td><td><span class="yes">✔</span></td><td><span class="part">~</span> Basic</td></tr>
+      <tr><td>Photo attachment on closure</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Internal vs customer description</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Complaint search &amp; filtering</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Field technician app</td><td><span class="part">~</span> Employee role (web)</td><td><span class="yes">✔</span> Native mobile app</td></tr>
+      <tr><td>Customer complaint portal</td><td><span class="yes">✔</span> Web portal</td><td><span class="yes">✔</span> Customer app</td></tr>
+
+      <!-- Vendor Management -->
+      <tr class="cat-row"><td colspan="3">VENDOR &amp; EXPENSE MANAGEMENT</td></tr>
+      <tr><td>Vendor records management</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Purchase invoice management</td><td><span class="yes">✔</span> Full CRUD</td><td><span class="no">✖</span></td></tr>
+      <tr><td>GST on purchase invoices</td><td><span class="yes">✔</span> CGST/SGST/IGST</td><td><span class="no">✖</span></td></tr>
+      <tr><td>Vendor address &amp; GSTIN</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+
+      <!-- Analytics -->
+      <tr class="cat-row"><td colspan="3">ANALYTICS &amp; REPORTING</td></tr>
+      <tr><td>Dashboard with KPI cards</td><td><span class="yes">✔</span> Animated counters</td><td><span class="no">✖</span> Basic totals</td></tr>
+      <tr><td>Monthly financial trend charts</td><td><span class="yes">✔</span> Recharts graphs</td><td><span class="no">✖</span></td></tr>
+      <tr><td>Customer growth analytics</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Complaint status analytics</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Connection conversion funnel</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Provider-wise customer breakdown</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Overdue / pending payment reports</td><td><span class="yes">✔</span></td><td><span class="part">~</span> Paid/unpaid list only</td></tr>
+
+      <!-- Settings & Localization -->
+      <tr class="cat-row"><td colspan="3">SETTINGS, LOCALIZATION &amp; BRANDING</td></tr>
+      <tr><td>Company profile &amp; GSTIN settings</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Multi-language support</td><td><span class="yes">✔</span> 6 languages (EN/TA/HI/TE/KN/ML)</td><td><span class="no">✖</span> English only</td></tr>
+      <tr><td>UPI ID &amp; business name config</td><td><span class="yes">✔</span></td><td><span class="part">~</span> Platform-managed</td></tr>
+      <tr><td>Dark mode support</td><td><span class="yes">✔</span></td><td><span class="no">✖</span></td></tr>
+      <tr><td>Organization branding</td><td><span class="yes">✔</span> Per-org customization</td><td><span class="no">✖</span></td></tr>
+
+    </tbody>
+  </table>
+
+  <!-- ─── SECTION 2: Our Advantages ─── -->
+  <div class="section-title">2 · Our Key Advantages Over PayPakka</div>
+
+  <div class="adv-grid">
+
+    <div class="adv-card">
+      <div class="icon">🌐</div>
+      <h3>Web-First, No App Install Required</h3>
+      <p>Popna Entertainment runs entirely in a web browser. Admins, employees, and customers
+         access everything without installing any app — reducing friction, enabling instant updates,
+         and working on any device including desktops and tablets. PayPakka requires separate
+         native apps for every role.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🏢</div>
+      <h3>True Multi-Tenant SaaS Architecture</h3>
+      <p>Our platform is built as a multi-tenant SaaS: one deployment serves multiple organizations
+         with complete data isolation, per-organization module control, and subscription management.
+         PayPakka is a single-org tool — it cannot white-label or manage multiple ISPs from one dashboard.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">📋</div>
+      <h3>Full GST-Compliant Invoicing</h3>
+      <p>We generate proper Tax Invoices and Bills of Supply with HSN/SAC codes, CGST/SGST/IGST
+         breakdowns, place of supply, and PDF export — fully compliant with Indian GST regulations.
+         PayPakka offers only basic bill sharing with no GST line items.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">📊</div>
+      <h3>Real-Time Analytics Dashboard</h3>
+      <p>Our dashboard delivers live KPI cards (customers, revenue, complaints, conversions),
+         interactive monthly/yearly financial trend charts, provider-wise breakdowns, and overdue
+         payment tracking. PayPakka has no analytics — just a simple paid/unpaid report list.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🛒</div>
+      <h3>Public-Facing Customer Website</h3>
+      <p>Popna Entertainment includes a built-in, ISP-branded public website where prospective
+         customers can browse plans, compare prices (with auto GST), and submit connection requests
+         online. PayPakka has no public website feature — new customer acquisition happens entirely offline.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🔐</div>
+      <h3>Role-Based Access Control (RBAC)</h3>
+      <p>Four distinct roles — SuperAdmin, Admin, Employee, Customer — each with precisely defined
+         data access. Employees see only active unpaid customers; admins see everything; customers
+         see only their own data. PayPakka has no documented granular RBAC system.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🌏</div>
+      <h3>6-Language Localization</h3>
+      <p>The entire interface is localized in English, Tamil, Hindi, Telugu, Kannada, and Malayalam —
+         covering India's major language markets. Language preference is saved per user.
+         PayPakka only supports English, limiting reach in South India.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🧾</div>
+      <h3>Vendor &amp; Purchase Invoice Management</h3>
+      <p>Track all vendor relationships and incoming purchase bills (with CGST/SGST/IGST)
+         — giving a complete picture of business expenses alongside income. PayPakka has no
+         vendor or expense management capability at all.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">💸</div>
+      <h3>Advanced Payment Features</h3>
+      <p>Partial payments with balance carry-forward, permanent per-customer discounts, collection
+         employee attribution, and UPI QR code generation. PayPakka supports standard payment
+         methods but lacks partial payment tracking and customer-level discounts.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">⚙️</div>
+      <h3>Fully Dynamic Product System</h3>
+      <p>Admin can create, rename, and delete service categories without touching any code — zero
+         hardcoded product names. Plans, invoices, and filters all update automatically. PayPakka
+         has fixed Cable/Internet categories with no flexibility.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">📌</div>
+      <h3>Lead &amp; Connection Request Tracking</h3>
+      <p>Track every prospect from "new request" through to "converted customer" with a built-in
+         conversion funnel visible on the analytics dashboard. PayPakka has no lead management
+         or conversion tracking feature.</p>
+    </div>
+
+    <div class="adv-card">
+      <div class="icon">🎨</div>
+      <h3>Branded Customer Experience</h3>
+      <p>Customers see a fully branded portal with invoice history, UPI payment button, complaint
+         filing, and a mobile-optimized dashboard — all under the ISP's own branding.
+         PayPakka's customer app carries PayPakka branding rather than the operator's.</p>
+    </div>
+
+  </div>
+
+  <!-- ─── SECTION 3: Where PayPakka Has an Edge ─── -->
+  <div class="section-title">3 · Where PayPakka Currently Has an Edge</div>
+  <div class="callout">
+    Being transparent about competitor strengths helps us identify future roadmap priorities.
+  </div>
+
+  <table class="usecase">
+    <thead>
+      <tr><th>Area</th><th>PayPakka Advantage</th><th>Our Roadmap</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Native mobile apps</td>
+        <td class="winner-them">Dedicated iOS/Android apps for operators, agents &amp; customers</td>
+        <td>Progressive Web App (PWA) planned; mobile-responsive web available today</td>
+      </tr>
+      <tr>
+        <td>Field technician app</td>
+        <td class="winner-them">Native app for service engineers in the field</td>
+        <td>Employee web role available; dedicated field app on roadmap</td>
+      </tr>
+      <tr>
+        <td>Wallet &amp; fintech payments</td>
+        <td class="winner-them">Full wallet &amp; multi-provider payment gateway integration</td>
+        <td>UPI + Cash + Card today; payment gateway integration planned</td>
+      </tr>
+      <tr>
+        <td>Established market presence</td>
+        <td class="winner-them">Operating since 2019 with existing customer base</td>
+        <td>Newer platform with modern architecture and faster feature velocity</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── SECTION 4: Target Audience Fit ─── -->
+  <div class="section-title">4 · Who Each Platform Serves Best</div>
+
+  <table class="usecase">
+    <thead>
+      <tr><th>Business Profile</th><th>Best Fit</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Small LCO (&lt;200 customers, cash-only)</td>
+        <td class="winner-them">PayPakka</td>
+        <td>Simple mobile app is sufficient for basic collection needs</td>
+      </tr>
+      <tr>
+        <td>Growing ISP (200–2000 customers)</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Needs analytics, GST invoicing, employee management &amp; web dashboard</td>
+      </tr>
+      <tr>
+        <td>ISP needing GST compliance</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Full Tax Invoice / Bill of Supply with HSN codes &amp; place of supply</td>
+      </tr>
+      <tr>
+        <td>Multi-service ISP (internet + cable)</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Dynamic product system handles unlimited service types</td>
+      </tr>
+      <tr>
+        <td>SaaS reseller / multi-org platform</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Native multi-tenancy; PayPakka has no multi-org capability</td>
+      </tr>
+      <tr>
+        <td>South Indian regional operators</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Tamil, Telugu, Kannada, Malayalam built-in; PayPakka is English-only</td>
+      </tr>
+      <tr>
+        <td>Operator wanting customer website</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Built-in branded public website for online plan browsing &amp; signup</td>
+      </tr>
+      <tr>
+        <td>Operator needing vendor/expense tracking</td>
+        <td class="winner-us">Popna Entertainment</td>
+        <td>Full purchase invoice &amp; vendor management; PayPakka has none</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── SECTION 5: Technology Comparison ─── -->
+  <div class="section-title">5 · Technology Stack Comparison</div>
+
+  <table class="compare">
+    <thead>
+      <tr><th>Aspect</th><th>Popna Entertainment</th><th>PayPakka</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Interface type</td><td>Web app (React + TypeScript)</td><td>Native mobile apps</td></tr>
+      <tr><td>Architecture</td><td>Multi-tenant SaaS, REST API</td><td>Single-tenant mobile backend</td></tr>
+      <tr><td>Database design</td><td>13-table normalized PostgreSQL schema</td><td>Not publicly disclosed</td></tr>
+      <tr><td>Frontend framework</td><td>React 18, Vite, Tailwind CSS</td><td>Flutter / React Native (assumed)</td></tr>
+      <tr><td>State management</td><td>Zustand (typed, scalable)</td><td>Not disclosed</td></tr>
+      <tr><td>Localization</td><td>i18next · 6 languages</td><td>None documented</td></tr>
+      <tr><td>Charts / Analytics</td><td>Recharts (interactive)</td><td>None</td></tr>
+      <tr><td>QR code generation</td><td>Built-in (qrcode lib)</td><td>Not available</td></tr>
+      <tr><td>Dark mode</td><td>Supported</td><td>Not available</td></tr>
+      <tr><td>PDF invoice export</td><td>Built-in</td><td>Bill sharing only</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── Closing Statement ─── -->
+  <div class="section-title">Summary</div>
+  <div class="summary-box">
+    <strong>Popna Entertainment wins on depth, compliance, and scalability.</strong><br><br>
+    PayPakka solves one problem well: collecting money from customers on a mobile phone.
+    Popna Entertainment solves the <em>entire business</em> — from attracting new customers on a
+    public website, to GST-compliant invoicing, to vendor expense tracking, to multi-tenant SaaS
+    reselling — all from a single, modern, web-based platform with no app install required.<br><br>
+    For any ISP that is growing, GST-registered, managing employees, or serving South Indian
+    customers in their native language, <strong>Popna Entertainment is the clear choice</strong>.
+  </div>
+
+</div><!-- /page -->
+
+<!-- Footer -->
+<div class="footer">
+  <strong>Popna Entertainment ISP Management Platform</strong> &nbsp;·&nbsp;
+  Competitive Analysis Document &nbsp;·&nbsp; Prepared February 2025 &nbsp;·&nbsp;
+  Confidential — For Internal Use &amp; Sales Presentations
+</div>
+
+</body>
+</html>
