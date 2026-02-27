@@ -21,12 +21,13 @@ import { salesInvoicesApi } from '@/api/invoices';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { upiPaymentApi } from '@/api/upiPayment';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
+import { getNextDueDateForCustomer } from '@/lib/billingUtils';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
   const { customerId, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { customers, complaints, initialize } = useStore();
+  const { customers, complaints, products, initialize, fetchProducts } = useStore();
   const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
   const [myInvoices, setMyInvoices] = useState<SalesInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
@@ -38,6 +39,7 @@ const CustomerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       if (customerId) {
         try {
           const allInvoices = await salesInvoicesApi.getAll();
@@ -80,10 +82,6 @@ const CustomerDashboard = () => {
     () => myInvoices.filter((inv) => inv.status !== 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
     [myInvoices]
   );
-  const nextDueInvoice = useMemo(() => {
-    const unpaid = myInvoices.filter((inv) => inv.status !== 'paid').sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    return unpaid[0] || null;
-  }, [myInvoices]);
 
   const getStatusColor = (status: Complaint['status']) => {
     switch (status) {
@@ -121,7 +119,7 @@ const CustomerDashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/customer/login');
+    navigate('/login');
   };
 
   const canPayViaOrgUpi = !!(orgUpiConfig?.enabled && orgUpiConfig?.upiId);
@@ -136,6 +134,28 @@ const CustomerDashboard = () => {
       </div>
     );
   }
+
+  const customerProduct = useMemo(
+    () => products.find((p) => p.name === currentCustomer.connectionType),
+    [products, currentCustomer.connectionType]
+  );
+
+  const nextDueDate = useMemo(
+    () => getNextDueDateForCustomer(currentCustomer, customerProduct),
+    [currentCustomer, customerProduct]
+  );
+
+  const daysUntilDue = useMemo(() => {
+    if (!nextDueDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(nextDueDate);
+    due.setHours(0, 0, 0, 0);
+    return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  }, [nextDueDate]);
+
+  const isRenewWindow = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 7;
+  const isCableCustomer = customerProduct?.productType === 'cable';
 
   // KPI cards — same style as admin dashboard
   const kpiCards = [
@@ -159,7 +179,7 @@ const CustomerDashboard = () => {
     },
     {
       title: t('customerDashboard.nextDueDate', 'Next Due Date'),
-      value: nextDueInvoice ? formatDate(nextDueInvoice.dueDate) : '-',
+      value: nextDueDate ? formatDate(nextDueDate.toISOString()) : '-',
       icon: CalendarClock,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
@@ -204,7 +224,9 @@ const CustomerDashboard = () => {
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => setIsUpiDialogOpen(true)} className="shadow-lg">
                     <IndianRupee className="w-4 h-4 mr-2" />
-                    {t('customerDashboard.payNow', 'Pay Now')}
+                    {isRenewWindow
+                      ? t('customerDashboard.renewNow', 'Renew Subscription')
+                      : t('customerDashboard.payNow', 'Pay Now')}
                   </Button>
                   <Button variant="outline" onClick={() => setIsComplaintModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -234,6 +256,16 @@ const CustomerDashboard = () => {
                   );
                 })}
               </div>
+
+              {isCableCustomer && customerProduct?.cutoffDate && (
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    'customerDashboard.cableCutoffInfo',
+                    'Your cable service renews on day {{day}} of every month.',
+                    { day: customerProduct.cutoffDate }
+                  )}
+                </p>
+              )}
 
               {/* Complaints section */}
               <div id="section-complaints">

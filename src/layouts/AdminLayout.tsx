@@ -28,7 +28,7 @@ const AdminLayout = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login', { replace: true });
+    navigate('/login', { replace: true });
   };
 
   // Full product sidebar — enterprise SaaS structure. Admin sees all (filtered by org); Employee sees limited.

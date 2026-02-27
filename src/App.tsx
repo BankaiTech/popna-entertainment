@@ -18,8 +18,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
 import Organizations from './pages/superadmin/Organizations';
-import Login from './pages/admin/Login';
-import CustomerLogin from './pages/customer/Login';
+import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
@@ -36,11 +35,8 @@ function App() {
           <Route path="plans" element={<PlansPage />} />
         </Route>
 
-        {/* Admin Login */}
-        <Route path="/admin/login" element={<Login />} />
-
-        {/* Customer Login */}
-        <Route path="/customer/login" element={<CustomerLogin />} />
+        {/* Single Login — admin/employee/customer determined by credentials */}
+        <Route path="/login" element={<Login />} />
 
         {/* Customer Routes - Protected */}
         <Route
@@ -169,7 +165,7 @@ function AdminRedirect() {
   const { isAuthenticated, role } = useAuthStore();
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (role === 'customer') {

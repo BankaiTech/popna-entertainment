@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
-import { Menu, X, ChevronDown, UserCog, User } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 const PublicLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { companyProfile, fetchCompanyProfile, fetchActiveProducts } = useStore();
 
@@ -70,29 +68,15 @@ const PublicLayout = () => {
                 {t('nav.plans')}
               </Link>
 
-              <DropdownMenu side="bottom" align="end">
-                <DropdownMenuTrigger
-                  className={cn(
-                    'flex items-center gap-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                    (location.pathname === '/admin/login' || location.pathname === '/customer/login')
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                  )}
-                >
-                  {t('nav.login')}
-                  <ChevronDown className="w-4 h-4 shrink-0" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="min-w-[180px]">
-                  <DropdownMenuItem onSelect={() => navigate('/admin/login')}>
-                    <UserCog className="w-4 h-4 mr-2 shrink-0 text-muted-foreground" />
-                    {t('nav.loginAsAdmin', 'Admin Login')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => navigate('/customer/login')}>
-                    <User className="w-4 h-4 mr-2 shrink-0 text-muted-foreground" />
-                    {t('nav.loginAsCustomer', 'Customer Login')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Link
+                to="/login"
+                className={cn(
+                  'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                )}
+              >
+                {t('nav.login')}
+              </Link>
               <LanguageSwitcher />
             </div>
 
@@ -130,31 +114,16 @@ const PublicLayout = () => {
                 {t('nav.plans')}
               </Link>
 
-              <div className="px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t('nav.login')}</p>
-                <Link
-                  to="/admin/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md mt-0.5',
-                    location.pathname === '/admin/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
-                  )}
-                >
-                  <UserCog className="w-4 h-4 shrink-0" />
-                  {t('nav.loginAsAdmin', 'Admin Login')}
-                </Link>
-                <Link
-                  to="/customer/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md mt-0.5',
-                    location.pathname === '/customer/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
-                  )}
-                >
-                  <User className="w-4 h-4 shrink-0" />
-                  {t('nav.loginAsCustomer', 'Customer Login')}
-                </Link>
-              </div>
+              <Link
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  'block px-4 py-3 text-sm font-medium',
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                )}
+              >
+                {t('nav.login')}
+              </Link>
               <div className="px-4 py-3 border-t border-gray-100">
                 <LanguageSwitcher />
               </div>
