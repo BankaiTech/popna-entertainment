@@ -286,17 +286,6 @@ const AdminDashboard = () => {
     },
   ];
 
-  const handleSendSmsReminders = () => {
-    const dueSoonCableMobiles = cableDueSoon.map(({ customer }) => customer.mobile);
-    alert(
-      t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', {
-        count: dueSoonCableMobiles.length,
-      })
-    );
-    // eslint-disable-next-line no-console
-    console.log('Mock SMS to mobiles:', dueSoonCableMobiles);
-  };
-
   // Complaint KPI cards
   const complaintCards = [
     {
@@ -451,11 +440,6 @@ const AdminDashboard = () => {
       {/* Payment Metrics */}
       <div className="space-y-2">
         {renderCardSection(t('dashboard.paymentMetrics', 'Payment Metrics'), paymentCards)}
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={handleSendSmsReminders}>
-            {t('dashboard.sendSmsReminders', 'Send SMS reminders (mock)')}
-          </Button>
-        </div>
       </div>
 
       {/* Complaint Metrics */}

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import Button from '@/components/ui/Button';
@@ -80,6 +80,17 @@ const AdminLayout = () => {
           </h2>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {role === 'admin' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/dashboard')}
+              className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base p-2 sm:px-3 sm:py-2"
+            >
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">{t('nav.sendSmsReminders', 'Send SMS reminders')}</span>
+            </Button>
+          )}
           <LanguageSwitcher />
           <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base p-2 sm:px-3 sm:py-2">
             <LogOut className="w-4 h-4 shrink-0" />
