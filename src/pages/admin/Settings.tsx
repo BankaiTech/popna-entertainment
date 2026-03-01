@@ -55,8 +55,6 @@ const Settings = () => {
     }
   };
 
-  const activeTabInfo = tabs.find((t) => t.id === activeTab);
-
   return (
     <div className="space-y-4 sm:space-y-6 px-0 sm:px-0 pb-6 sm:pb-0">
       {/* Page header */}
