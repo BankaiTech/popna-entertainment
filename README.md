@@ -1,4 +1,4 @@
-# Popna Entertainment - ISP Management Platform
+# NexLink - ISP Management Platform
 
 A complete Internet Service Provider (ISP) Management Platform built with React 18+, TypeScript, and Vite. This system manages multiple ISP providers (GTPL, BSNL, Railwire, Krishiinet) with a public-facing website and a comprehensive admin dashboard.
 
@@ -52,7 +52,7 @@ A complete Internet Service Provider (ISP) Management Platform built with React 
 ## Project Structure
 
 ```
-popna-react/
+nexlink-react/
 ├── src/
 │   ├── api/              # API service layer
 │   │   └── api.ts
@@ -235,4 +235,4 @@ npm run preview
 
 ## License
 
-This project is proprietary software for Popna Entertainment.
+This project is proprietary software for NexLink.

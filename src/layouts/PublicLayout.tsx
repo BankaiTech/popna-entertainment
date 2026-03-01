@@ -28,9 +28,8 @@ const PublicLayout = () => {
     loadData();
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
-  // Multi-tenant ready — company name from settings
-  // SaaS Ready — Fully Dynamic Product: no hardcoded company name
-  const companyName = companyProfile?.companyName || '';
+  // Multi-tenant ready — company name from settings; fallback to NexLink
+  const companyName = companyProfile?.companyName || 'NexLink';
 
   // Multi-tenant ready — company name from settings
 
@@ -40,9 +39,9 @@ const PublicLayout = () => {
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link to="/" className="text-lg sm:text-xl font-bold text-primary">
-                {companyName}
+            <div className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-2">
+                <img src="/NexLink.svg" alt="NexLink" className="h-[150px] w-auto object-contain" />
               </Link>
             </div>
 

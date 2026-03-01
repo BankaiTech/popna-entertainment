@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { Building2, LogOut, Menu, X, Shield } from 'lucide-react';
+import { Building2, LogOut, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
@@ -43,6 +43,7 @@ const SuperAdminLayout = () => {
                     >
                         <Menu className="w-5 h-5" />
                     </button>
+                    <img src="/NexLink.svg" alt="NexLink" className="h-[45px] w-auto object-contain shrink-0" />
                     <div className="hidden sm:block min-w-0">
                         <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('superAdmin.masterController', 'Master Controller')}</p>
@@ -68,12 +69,7 @@ const SuperAdminLayout = () => {
                     )}
                 >
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-gray-50">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
-                                <Shield className="w-4 h-4 text-white" />
-                            </div>
-                            <h1 className="text-base font-bold text-gray-900">{t('superAdmin.title', 'Super Admin')}</h1>
-                        </div>
+                        <h1 className="text-base font-bold text-gray-900">{t('nexlink', 'NexLink')}</h1>
                         <button
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"

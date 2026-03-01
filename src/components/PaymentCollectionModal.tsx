@@ -132,10 +132,10 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                 </div>
               </div>
 
-              {/* Instant discount + Payment method in one row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Instant discount + Payment method (stacked to avoid label overlap in Tamil/Malayalam) */}
+              <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">{t('payment.instantDiscount', 'Instant Discount')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span></label>
+                  <label className="block text-sm font-medium mb-1 whitespace-nowrap">{t('payment.instantDiscount', 'Instant Discount')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span></label>
                   <Input
                     type="number"
                     min={0}
@@ -145,7 +145,7 @@ const PaymentCollectionModal = ({ isOpen, onClose, customer, onSubmit }: Payment
                     placeholder="0"
                   />
                   {instantDiscount > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
                       {t('payment.amountAfterDiscount', 'Amount after discount')}: ₹{amountAfterInstantDiscount.toFixed(2)}
                     </p>
                   )}

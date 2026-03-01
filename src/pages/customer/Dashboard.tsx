@@ -201,6 +201,7 @@ const CustomerDashboard = () => {
       {/* Sticky header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
+          <img src="/NexLink.svg" alt="NexLink" className="h-[45px] w-auto object-contain shrink-0" />
           <h2 className="text-base sm:text-lg font-semibold truncate">{t('customerDashboard.welcome')} {currentCustomer.name}</h2>
           <p className="hidden sm:block text-xs text-muted-foreground truncate ml-2"> {t('customerDashboard.title')}</p>
         </div>

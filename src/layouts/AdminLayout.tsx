@@ -65,7 +65,7 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Sticky header — organization name only; mobile: hamburger + org name */}
+      {/* Sticky header — logo in navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
@@ -75,9 +75,8 @@ const AdminLayout = () => {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h2 className="text-base sm:text-lg font-semibold truncate min-w-0">
-            {currentOrganization?.name || t('nav.organization', 'Organization')}
-          </h2>
+          <img src="/NexLink.svg" alt="NexLink" className="h-[150px] w-auto object-contain shrink-0" />
+          
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {role === 'admin' && (
@@ -110,14 +109,9 @@ const AdminLayout = () => {
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
-          {/* Logo Header */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-gray-50">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">P</span>
-              </div>
-              <h1 className="text-base font-bold text-gray-900">{t('popna')}</h1>
-            </div>
+          {/* Sidebar header — name only */}
+          <div className="p-4 border-b border-gray-200 flex items-center justify-center shrink-0 bg-gray-50">
+            <h1 className="text-base font-bold text-gray-900">{currentOrganization?.name || t('nexlink', 'NexLink')}</h1>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"

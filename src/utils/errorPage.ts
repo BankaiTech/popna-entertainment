@@ -2,7 +2,7 @@
  * Send error details to the standalone error.html page.
  * Persists to sessionStorage and redirects so error.html can display it.
  */
-const STORAGE_KEY = '__popna_error__';
+const STORAGE_KEY = '__nexlink_error__';
 
 export function sendErrorToPage(error: Error, context?: string): void {
   try {
