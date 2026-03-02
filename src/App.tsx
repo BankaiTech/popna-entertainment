@@ -2,11 +2,12 @@
 // Client folder removed — SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
+import ErrorShowPage from './pages/ErrorShowPage';
 import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminCatalog from './pages/admin/Catalog';
@@ -25,9 +26,14 @@ import ScrollToTop from './components/ScrollToTop';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const showErrorPage = location.pathname === '/' && searchParams.has('error_show');
+
   return (
     <>
       <ScrollToTop />
+      {showErrorPage && <ErrorShowPage />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>

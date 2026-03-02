@@ -1,8 +1,8 @@
 /**
- * Send error details to the standalone error.html page.
- * Persists to sessionStorage and redirects so error.html can display it.
+ * On error: redirect to home. Persist error in sessionStorage.
+ * When user visits the same URL with ?error_show, the app shows the error details.
  */
-const STORAGE_KEY = '__nexlink_error__';
+export const ERROR_STORAGE_KEY = '__nexlink_error__';
 
 export function sendErrorToPage(error: Error, context?: string): void {
   try {
@@ -12,9 +12,9 @@ export function sendErrorToPage(error: Error, context?: string): void {
       time: new Date().toISOString(),
       context: context ?? '',
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    window.location.href = '/error.html';
+    sessionStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(data));
+    window.location.href = '/?error_show';
   } catch {
-    window.location.href = '/error.html?message=' + encodeURIComponent(String(error));
+    window.location.href = '/?error_show&message=' + encodeURIComponent(String(error));
   }
 }
