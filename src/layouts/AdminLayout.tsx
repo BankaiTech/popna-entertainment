@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, X, PhoneCall, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, PhoneCall, MessageSquare, Contact2, Box } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import Button from '@/components/ui/Button';
@@ -40,6 +40,8 @@ const AdminLayout = () => {
     { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices' },
     { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices' },
     { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints' },
+    { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts' },
+    { path: '/admin/inventory-products', labelKey: 'nav.inventoryProducts', icon: Box, moduleKey: 'inventory-products' },
     { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users' },
     { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings' },
   ];
@@ -76,7 +78,7 @@ const AdminLayout = () => {
             <Menu className="w-5 h-5" />
           </button>
           <img src="/NexLink.svg" alt="NexLink" className="h-[150px] w-auto object-contain shrink-0" />
-          
+
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {role === 'admin' && (

@@ -18,6 +18,8 @@ import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
+import AdminContacts from './pages/admin/Contacts';
+import InventoryProducts from './pages/admin/InventoryProducts';
 import Organizations from './pages/superadmin/Organizations';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -156,6 +158,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <ConnectionRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="contacts"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminContacts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventory-products"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <InventoryProducts />
               </ProtectedRoute>
             }
           />

@@ -26,7 +26,8 @@ export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
 /** All available modules that can be assigned to an organization */
 export const ALL_MODULES = [
   'dashboard', 'customers', 'complaints', 'payments', 'catalog',
-  'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests'
+  'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
+  'contacts', 'inventory-products'
 ] as const;
 
 /** All available settings tabs that can be assigned to an organization */
@@ -307,5 +308,128 @@ export interface ClientConfig {
   allowedTabs: string[];
   status: 'active' | 'inactive';
   createdAt: string;
+}
+
+// ===== Business Management Types =====
+
+/** Supplier for contacts module */
+export interface Supplier {
+  id: number;
+  organizationId: string;
+  name: string;
+  contactPerson?: string;
+  mobile: string;
+  email?: string;
+  taxNumber?: string;
+  openingBalance?: number;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+  };
+  createdAt: string;
+}
+
+/** Unit of measurement for products */
+export interface Unit {
+  id: number;
+  organizationId: string;
+  name: string;
+  shortName: string;
+  createdAt: string;
+}
+
+/** Product category */
+export interface Category {
+  id: number;
+  organizationId: string;
+  name: string;
+  code: string;
+  description?: string;
+  createdAt: string;
+}
+
+/** Product sub-category */
+export interface SubCategory {
+  id: number;
+  organizationId: string;
+  categoryId: number;
+  name: string;
+  createdAt: string;
+}
+
+/** Business branch/location */
+export interface Branch {
+  id: number;
+  organizationId: string;
+  name: string;
+  location?: string;
+  createdAt: string;
+}
+
+/** Tax rate configuration */
+export interface TaxRate {
+  id: number;
+  organizationId: string;
+  name: string;
+  rate: number;
+  type: 'inclusive' | 'exclusive';
+  createdAt: string;
+}
+
+/** Warranty configuration */
+export interface Warranty {
+  id: number;
+  organizationId: string;
+  name: string;
+  duration: number;
+  durationUnit: 'days' | 'months' | 'years';
+  createdAt: string;
+}
+
+/** Product variant */
+export interface ProductVariant {
+  id: number;
+  variantName: string;
+  price: number;
+  taxType: 'inclusive' | 'exclusive' | 'none';
+  skuId: string;
+  warrantyId?: number;
+}
+
+/** Inventory product — full business product */
+export interface InventoryProduct {
+  id: number;
+  organizationId: string;
+  name: string;
+  sku: string;
+  categoryId?: number;
+  categoryCode?: string;
+  subCategoryId?: number;
+  branchId?: number;
+  unitId?: number;
+  stockAlert?: number;
+  taxType: 'inclusive' | 'exclusive' | 'none';
+  taxRateId?: number;
+  warrantyId?: number;
+  description?: string;
+  price: number;
+  image?: string;
+  variants: ProductVariant[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Label print configuration */
+export interface LabelConfig {
+  showProductName: boolean;
+  showProductVariation: boolean;
+  showProductPrice: boolean;
+  showBusinessName: boolean;
+  showCurrency: boolean;
+  showPackingDate: boolean;
 }
 
