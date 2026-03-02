@@ -112,13 +112,6 @@ const AdminLayout = () => {
           {/* Sidebar header — name only */}
           <div className="p-4 border-b border-gray-200 flex items-center justify-center shrink-0 bg-gray-50">
             <h1 className="text-base font-bold text-gray-900">{currentOrganization?.name || t('nexlink', 'NexLink')}</h1>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"
-              aria-label={t('closeMenu')}
-            >
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
           </div>
 
           {/* Navigation */}
