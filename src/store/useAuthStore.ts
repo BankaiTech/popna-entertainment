@@ -1,6 +1,8 @@
 // Client folder removed — SaaS multi-tenant architecture used
 import { create } from 'zustand';
 import { loginCustomer } from '@/api/customerAuth';
+import { usersApi } from '@/api/users';
+import type { ModuleKey } from '@/models/types';
 
 // SaaS Ready — superadmin for product owner, admin/employee for organizations
 export type UserRole = 'superadmin' | 'admin' | 'employee' | 'customer';
@@ -13,7 +15,9 @@ interface AuthState {
   customerMobile: string | null;
   /** Organization ID for admin/employee users */
   organizationId: string | null;
-  login: (username: string, password: string) => boolean;
+  /** Module-based access for employees */
+  allowedModules: ModuleKey[] | null;
+  login: (username: string, password: string) => Promise<boolean>;
   customerLogin: (mobile: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   initialize: () => void;
@@ -50,10 +54,10 @@ const loadAuthFromStorage = () => {
   } catch {
     // Ignore errors
   }
-  return { isAuthenticated: false, role: null, username: null, customerId: null, customerMobile: null, organizationId: null };
+  return { isAuthenticated: false, role: null, username: null, customerId: null, customerMobile: null, organizationId: null, allowedModules: null };
 };
 
-const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | null; username: string | null; customerId: number | null; customerMobile: string | null; organizationId?: string | null }) => {
+const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | null; username: string | null; customerId: number | null; customerMobile: string | null; organizationId?: string | null; allowedModules?: ModuleKey[] | null }) => {
   try {
     if (state.role === 'customer') {
       localStorage.setItem('customer_auth', state.isAuthenticated.toString());
@@ -78,7 +82,8 @@ const saveAuthToStorage = (state: { isAuthenticated: boolean; role: UserRole | n
 export const useAuthStore = create<AuthState>((set) => ({
   ...loadAuthFromStorage(),
   organizationId: loadAuthFromStorage().organizationId || null,
-  login: (username: string, password: string) => {
+  allowedModules: loadAuthFromStorage().allowedModules || null,
+  login: async (username: string, password: string) => {
     // Mock authentication for superadmin/admin/employee
     if (password !== 'test123') {
       return false;
@@ -86,6 +91,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     let role: UserRole = 'employee';
     let organizationId: string | null = null;
+    let allowedModules: ModuleKey[] | null = null;
 
     if (username === 'superadmin') {
       // SaaS Product Owner — Master Controller access
@@ -94,11 +100,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     } else if (username === 'bankaitech') {
       role = 'admin';
       organizationId = 'org_001';
-    } else if (username === 'bankaitech-emp') {
-      role = 'employee';
-      organizationId = 'org_001';
     } else {
-      return false;
+      // Try to find user from users API
+      const allUsers = await usersApi.getAll();
+      const matchedUser = allUsers.find(
+        (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password && u.status === 'active'
+      );
+      if (!matchedUser) return false;
+      role = matchedUser.role;
+      organizationId = matchedUser.organizationId;
+      allowedModules = matchedUser.allowedModules || null;
     }
 
     const newState = {
@@ -108,6 +119,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       customerId: null,
       customerMobile: null,
       organizationId,
+      allowedModules,
     };
     set(newState);
     saveAuthToStorage(newState);
@@ -143,6 +155,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       customerId: null,
       customerMobile: null,
       organizationId: null,
+      allowedModules: null,
     };
     set(newState);
     saveAuthToStorage(newState);

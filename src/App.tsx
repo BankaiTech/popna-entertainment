@@ -10,8 +10,8 @@ import HomePage from './pages/public/HomePage';
 import ErrorShowPage from './pages/ErrorShowPage';
 import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
-import AdminCatalog from './pages/admin/Catalog';
-import AdminCustomers from './pages/admin/Customers';
+import AdminProducts from './pages/admin/Catalog'; // Will be renamed to Products later
+// Customers module removed — merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
@@ -20,6 +20,8 @@ import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
 import AdminContacts from './pages/admin/Contacts';
 import InventoryProducts from './pages/admin/InventoryProducts';
+import AdminBranches from './pages/admin/Branches';
+import AdminPointOfSale from './pages/admin/PointOfSale';
 import Organizations from './pages/superadmin/Organizations';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -98,13 +100,15 @@ function App() {
             }
           />
           <Route
-            path="catalog"
+            path="products"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminCatalog />
+                <AdminProducts />
               </ProtectedRoute>
             }
           />
+          {/* Catalog → Products redirect for backward compat */}
+          <Route path="catalog" element={<Navigate to="/admin/products" replace />} />
           <Route
             path="invoices"
             element={
@@ -121,14 +125,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="customers"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <AdminCustomers />
-              </ProtectedRoute>
-            }
-          />
+          {/* Customers → Contacts redirect for backward compat */}
+          <Route path="customers" element={<Navigate to="/admin/contacts" replace />} />
           <Route
             path="complaints"
             element={
@@ -164,7 +162,7 @@ function App() {
           <Route
             path="contacts"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
                 <AdminContacts />
               </ProtectedRoute>
             }
@@ -174,6 +172,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <InventoryProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="branches"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminBranches />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pos"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <AdminPointOfSale />
               </ProtectedRoute>
             }
           />
@@ -204,7 +218,7 @@ function AdminRedirect() {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  return <Navigate to="/admin/customers" replace />;
+  return <Navigate to="/admin/contacts" replace />;
 }
 
 export default App;

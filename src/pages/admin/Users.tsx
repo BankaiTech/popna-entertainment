@@ -9,10 +9,26 @@ import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { usersApi } from '@/api/users';
 import { useStore } from '@/store/useStore';
-import type { User } from '@/models/types';
-import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { Plus, UserCog } from 'lucide-react';
+import type { User, ModuleKey } from '@/models/types';
+import { MOCK_ORGANIZATION_ID, ALL_MODULES } from '@/models/types';
+import { Plus, UserCog, Shield } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
+
+// User-friendly labels for module keys
+const MODULE_LABELS: Record<string, string> = {
+  'dashboard': 'Dashboard',
+  'contacts': 'Contacts',
+  'complaints': 'Complaints',
+  'payments': 'Payments',
+  'invoices': 'Invoices',
+  'purchase-invoices': 'Purchase Invoices',
+  'users': 'Users',
+  'settings': 'Settings',
+  'connection-requests': 'New Connections',
+  'inventory-products': 'Inventory Products',
+  'branches': 'Branches',
+  'pos': 'Point of Sale',
+};
 
 const AdminUsers = () => {
   const { t } = useTranslation();
@@ -32,6 +48,7 @@ const AdminUsers = () => {
   const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<'admin' | 'employee'>('employee');
   const [addStatus, setAddStatus] = useState<'active' | 'inactive'>('active');
+  const [addAllowedModules, setAddAllowedModules] = useState<ModuleKey[]>(['contacts', 'complaints']);
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [editName, setEditName] = useState('');
@@ -39,6 +56,7 @@ const AdminUsers = () => {
   const [editPassword, setEditPassword] = useState('');
   const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
   const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active');
+  const [editAllowedModules, setEditAllowedModules] = useState<ModuleKey[]>([]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -61,7 +79,7 @@ const AdminUsers = () => {
     fetchCustomers();
   }, [initialize, fetchCustomers]);
 
-  // Amount collected by each employee (customers where collectedByUsername === user.username, sum of collectedAmount)
+  // Amount collected by each employee
   const collectedByUsername = useMemo(() => {
     const map: Record<string, number> = {};
     (customers ?? []).forEach((c) => {
@@ -78,6 +96,7 @@ const AdminUsers = () => {
     setAddPassword('');
     setAddRole('employee');
     setAddStatus('active');
+    setAddAllowedModules(['contacts', 'complaints']);
     setAddError('');
     setIsAddOpen(true);
   };
@@ -94,22 +113,19 @@ const AdminUsers = () => {
     const username = addUsername.trim();
     const password = addPassword;
 
-    if (!name) {
-      setAddError(t('users.validation.nameRequired', 'Name is required'));
-      return;
-    }
-    if (!username) {
-      setAddError(t('users.validation.usernameRequired', 'Username is required'));
-      return;
-    }
-    if (!password) {
-      setAddError(t('users.validation.passwordRequired', 'Password is required'));
-      return;
-    }
+    if (!name) { setAddError(t('users.validation.nameRequired', 'Name is required')); return; }
+    if (!username) { setAddError(t('users.validation.usernameRequired', 'Username is required')); return; }
+    if (!password) { setAddError(t('users.validation.passwordRequired', 'Password is required')); return; }
 
     setAddSaving(true);
     try {
-      await usersApi.create({ organizationId: MOCK_ORGANIZATION_ID, name, username, password, role: addRole, status: addStatus });
+      await usersApi.create({
+        organizationId: MOCK_ORGANIZATION_ID,
+        name, username, password,
+        role: addRole,
+        status: addStatus,
+        allowedModules: addRole === 'employee' ? addAllowedModules : undefined,
+      });
       await loadUsers();
       handleCloseAdd();
     } catch (err) {
@@ -126,6 +142,7 @@ const AdminUsers = () => {
     setEditPassword('');
     setEditRole(user.role);
     setEditStatus(user.status);
+    setEditAllowedModules(user.allowedModules || []);
     setEditError('');
     setIsEditOpen(true);
   };
@@ -144,26 +161,18 @@ const AdminUsers = () => {
     const name = editName.trim();
     const username = editUsername.trim();
 
-    if (!name) {
-      setEditError(t('users.validation.nameRequired', 'Name is required'));
-      return;
-    }
-    if (!username) {
-      setEditError(t('users.validation.usernameRequired', 'Username is required'));
-      return;
-    }
+    if (!name) { setEditError(t('users.validation.nameRequired', 'Name is required')); return; }
+    if (!username) { setEditError(t('users.validation.usernameRequired', 'Username is required')); return; }
 
     setEditSaving(true);
     try {
       const updates: Partial<Omit<User, 'id' | 'createdAt'>> = {
-        name,
-        username,
+        name, username,
         role: editRole,
         status: editStatus,
+        allowedModules: editRole === 'employee' ? editAllowedModules : undefined,
       };
-      if (editPassword) {
-        updates.password = editPassword;
-      }
+      if (editPassword) updates.password = editPassword;
       await usersApi.update(editingUser.id, updates);
       await loadUsers();
       handleCloseEdit();
@@ -172,6 +181,10 @@ const AdminUsers = () => {
     } finally {
       setEditSaving(false);
     }
+  };
+
+  const toggleModule = (modules: ModuleKey[], setModules: (m: ModuleKey[]) => void, mod: ModuleKey) => {
+    setModules(modules.includes(mod) ? modules.filter((m) => m !== mod) : [...modules, mod]);
   };
 
   const formatDate = (s: string) =>
@@ -183,25 +196,57 @@ const AdminUsers = () => {
     return users.filter((u) => u.status === statusFilter);
   }, [users, statusFilter]);
 
-  // Pagination logic
+  // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredUsers, currentPage, itemsPerPage]);
 
-  // Summary card counts (analytics only; filters are separate data control)
+  // Summary cards
   const adminCount = users.filter((u) => u.role === 'admin').length;
   const employeeCount = users.filter((u) => u.role === 'employee').length;
   const activeCount = users.filter((u) => u.status === 'active').length;
   const inactiveCount = users.filter((u) => u.status === 'inactive').length;
+
+  // Module access checkboxes component
+  const ModuleAccessCheckboxes = ({ modules, setModules }: { modules: ModuleKey[]; setModules: (m: ModuleKey[]) => void }) => (
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        <Shield className="w-4 h-4 inline mr-1" />
+        {t('users.fields.moduleAccess', 'Module Access')}
+      </label>
+      <p className="text-xs text-muted-foreground mb-3">{t('users.hints.moduleAccess', 'Select which modules this employee can access')}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {ALL_MODULES.filter((mod) => mod !== 'users' && mod !== 'settings').map((mod) => (
+          <label
+            key={mod}
+            className={cn(
+              'flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all text-sm',
+              modules.includes(mod)
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={modules.includes(mod)}
+              onChange={() => toggleModule(modules, setModules, mod)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="truncate">{MODULE_LABELS[mod] || mod}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h1 className="text-xl font-bold text-foreground mb-0.5">{t('users.title', 'Users')}</h1>
-          <p className="text-xs text-muted-foreground">{t('users.subtitle', 'Manage admin and employee users')}</p>
+          <p className="text-xs text-muted-foreground">{t('users.subtitle', 'Manage admin and employee users with module access')}</p>
         </div>
         <Button onClick={handleOpenAdd} className="w-full sm:w-auto" size="sm">
           <Plus className="w-4 h-4 mr-2" />
@@ -209,7 +254,7 @@ const AdminUsers = () => {
         </Button>
       </div>
 
-      {/* Summary cards = analytics only; filters below = data control. Removed duplicate user count display for cleaner UX */}
+      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
@@ -237,9 +282,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-lg font-bold text-foreground">
-              <AnimatedCounter value={adminCount} duration={1500} />
-            </div>
+            <div className="text-lg font-bold text-foreground"><AnimatedCounter value={adminCount} duration={1500} /></div>
           </CardContent>
         </Card>
 
@@ -253,9 +296,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-lg font-bold text-foreground">
-              <AnimatedCounter value={employeeCount} duration={1500} />
-            </div>
+            <div className="text-lg font-bold text-foreground"><AnimatedCounter value={employeeCount} duration={1500} /></div>
           </CardContent>
         </Card>
 
@@ -269,9 +310,7 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-lg font-bold text-foreground">
-              <AnimatedCounter value={activeCount} duration={1500} />
-            </div>
+            <div className="text-lg font-bold text-foreground"><AnimatedCounter value={activeCount} duration={1500} /></div>
           </CardContent>
         </Card>
 
@@ -285,53 +324,31 @@ const AdminUsers = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-3 px-3">
-            <div className="text-lg font-bold text-foreground">
-              <AnimatedCounter value={inactiveCount} duration={1500} />
-            </div>
+            <div className="text-lg font-bold text-foreground"><AnimatedCounter value={inactiveCount} duration={1500} /></div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Status filter — simple tabs, no counts; data control only */}
+      {/* Status filter tabs */}
       <div className="flex gap-2 border-b border-border pb-2">
-        <button
-          type="button"
-          onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            statusFilter === 'all'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-          )}
-        >
-          {t('common.all', 'All')}
-        </button>
-        <button
-          type="button"
-          onClick={() => { setStatusFilter('active'); setCurrentPage(1); }}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            statusFilter === 'active'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-          )}
-        >
-          {t('common.active', 'Active')}
-        </button>
-        <button
-          type="button"
-          onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); }}
-          className={cn(
-            'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-            statusFilter === 'inactive'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-          )}
-        >
-          {t('common.inactive', 'Inactive')}
-        </button>
+        {(['all', 'active', 'inactive'] as const).map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => { setStatusFilter(status); setCurrentPage(1); }}
+            className={cn(
+              'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+              statusFilter === status
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            {status === 'all' ? t('common.all', 'All') : status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
+          </button>
+        ))}
       </div>
 
+      {/* Users table */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
@@ -340,6 +357,7 @@ const AdminUsers = () => {
             <div className="text-center py-12 text-muted-foreground">{t('users.noResults', 'No users found.')}</div>
           ) : (
             <>
+              {/* Desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -349,6 +367,7 @@ const AdminUsers = () => {
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('users.colUsername', 'Username')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colRole', 'Role')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colStatus', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('users.colModules', 'Modules')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('users.colCollected', 'Collected')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('users.colCreatedDate', 'Created Date')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('users.colActions', 'Actions')}</th>
@@ -356,24 +375,30 @@ const AdminUsers = () => {
                   </thead>
                   <tbody>
                     {paginatedUsers.map((u, idx) => (
-                      <tr
-                        key={u.id}
-                        className={cn(
-                          "border-b border-border hover:bg-muted/50 transition-colors",
-                          idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
-                        )}
-                      >
+                      <tr key={u.id} className={cn("border-b border-border hover:bg-muted/50 transition-colors", idx % 2 === 0 ? 'bg-white' : 'bg-muted/20')}>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.id}</td>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{u.name}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.username}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 capitalize">{u.role}</td>
                         <td className="px-3 py-2">
-                          <span className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                            u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          )}>
+                          <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium", u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                             {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                           </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          {u.role === 'employee' && u.allowedModules ? (
+                            <div className="flex flex-wrap gap-1">
+                              {u.allowedModules.map((mod) => (
+                                <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
+                                  {MODULE_LABELS[mod] || mod}
+                                </span>
+                              ))}
+                            </div>
+                          ) : u.role === 'admin' ? (
+                            <span className="text-xs text-gray-400 italic">All modules</span>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">
                           {u.role === 'employee' ? formatCurrencyINR(collectedByUsername[u.username] ?? 0) : '—'}
@@ -390,18 +415,13 @@ const AdminUsers = () => {
                 </table>
               </div>
 
+              {/* Mobile */}
               <div className="md:hidden space-y-3 p-3">
                 {paginatedUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    className="bg-card border border-border rounded-lg p-4 space-y-2"
-                  >
+                  <div key={u.id} className="bg-card border border-border rounded-lg p-4 space-y-2">
                     <div className="flex justify-between items-start">
                       <span className="font-medium">{u.name}</span>
-                      <span className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                        u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      )}>
+                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium", u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                         {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                       </span>
                     </div>
@@ -413,6 +433,18 @@ const AdminUsers = () => {
                       <span className="text-muted-foreground">{t('users.colRole', 'Role')}: </span>
                       <span className="capitalize">{u.role}</span>
                     </div>
+                    {u.role === 'employee' && u.allowedModules && u.allowedModules.length > 0 && (
+                      <div className="text-sm">
+                        <span className="text-muted-foreground block mb-1">Modules:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {u.allowedModules.map((mod) => (
+                            <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
+                              {MODULE_LABELS[mod] || mod}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {u.role === 'employee' && (
                       <div className="text-sm">
                         <span className="text-muted-foreground">{t('users.colCollected', 'Collected')}: </span>
@@ -430,13 +462,7 @@ const AdminUsers = () => {
           )}
         </CardContent>
         {filteredUsers.length > itemsPerPage && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            itemsPerPage={itemsPerPage}
-            totalItems={filteredUsers.length}
-          />
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} totalItems={filteredUsers.length} />
         )}
       </Card>
 
@@ -449,61 +475,38 @@ const AdminUsers = () => {
               <div className="px-4 sm:px-6 py-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.name', 'Name')} <span className="text-destructive">*</span></label>
-                  <Input
-                    value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
-                    placeholder={t('users.placeholders.fullName', 'Full name')}
-                    required
-                    disabled={addSaving}
-                  />
+                  <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={t('users.placeholders.fullName', 'Full name')} required disabled={addSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
-                  <Input
-                    value={addUsername}
-                    onChange={(e) => setAddUsername(e.target.value)}
-                    placeholder={t('users.placeholders.uniqueUsername', 'Unique username')}
-                    required
-                    disabled={addSaving}
-                  />
+                  <Input value={addUsername} onChange={(e) => setAddUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={addSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')} <span className="text-destructive">*</span></label>
-                  <Input
-                    type="password"
-                    value={addPassword}
-                    onChange={(e) => setAddPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    disabled={addSaving}
-                  />
+                  <Input type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} placeholder="••••••••" required disabled={addSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
-                  <Select
-                    value={addRole}
-                    onChange={(e) => setAddRole(e.target.value as 'admin' | 'employee')}
-                    disabled={addSaving}
-                  >
+                  <Select value={addRole} onChange={(e) => setAddRole(e.target.value as 'admin' | 'employee')} disabled={addSaving}>
                     <option value="admin">{t('users.roles.admin', 'Admin')}</option>
                     <option value="employee">{t('users.roles.employee', 'Employee')}</option>
                   </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
-                  <Select
-                    value={addStatus}
-                    onChange={(e) => setAddStatus(e.target.value as 'active' | 'inactive')}
-                    disabled={addSaving}
-                  >
+                  <Select value={addStatus} onChange={(e) => setAddStatus(e.target.value as 'active' | 'inactive')} disabled={addSaving}>
                     <option value="active">{t('common.active', 'Active')}</option>
                     <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                   </Select>
                 </div>
+
+                {/* Module access — only for employees */}
+                {addRole === 'employee' && (
+                  <ModuleAccessCheckboxes modules={addAllowedModules} setModules={setAddAllowedModules} />
+                )}
+
                 {addError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
-                    {addError}
-                  </div>
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">{addError}</div>
                 )}
               </div>
             </DialogBody>
@@ -528,64 +531,40 @@ const AdminUsers = () => {
               <div className="px-4 sm:px-6 py-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.name', 'Name')} <span className="text-destructive">*</span></label>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder={t('users.placeholders.fullName', 'Full name')}
-                    required
-                    disabled={editSaving}
-                  />
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder={t('users.placeholders.fullName', 'Full name')} required disabled={editSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
-                  <Input
-                    value={editUsername}
-                    onChange={(e) => setEditUsername(e.target.value)}
-                    placeholder={t('users.placeholders.uniqueUsername', 'Unique username')}
-                    required
-                    disabled={editSaving}
-                  />
+                  <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={editSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')}</label>
-                  <Input
-                    type="password"
-                    value={editPassword}
-                    onChange={(e) => setEditPassword(e.target.value)}
-                    placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')}
-                    disabled={editSaving}
-                  />
+                  <Input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')} disabled={editSaving} />
                   <p className="text-xs text-muted-foreground mt-1">{t('users.hints.keepPassword', 'Leave blank to keep current password')}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
-                  <Select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as 'admin' | 'employee')}
-                    disabled={editSaving}
-                  >
+                  <Select value={editRole} onChange={(e) => setEditRole(e.target.value as 'admin' | 'employee')} disabled={editSaving}>
                     <option value="admin">{t('users.roles.admin', 'Admin')}</option>
                     <option value="employee">{t('users.roles.employee', 'Employee')}</option>
                   </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
-                  <Select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as 'active' | 'inactive')}
-                    disabled={editSaving}
-                  >
+                  <Select value={editStatus} onChange={(e) => setEditStatus(e.target.value as 'active' | 'inactive')} disabled={editSaving}>
                     <option value="active">{t('common.active', 'Active')}</option>
                     <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                   </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t('users.hints.inactiveLogin', 'Inactive users cannot login')}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('users.hints.inactiveLogin', 'Inactive users cannot login')}</p>
                 </div>
+
+                {/* Module access — only for employees */}
+                {editRole === 'employee' && (
+                  <ModuleAccessCheckboxes modules={editAllowedModules} setModules={setEditAllowedModules} />
+                )}
+
                 {editError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
-                    {editError}
-                  </div>
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">{editError}</div>
                 )}
               </div>
             </DialogBody>

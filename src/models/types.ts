@@ -25,9 +25,9 @@ export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
 
 /** All available modules that can be assigned to an organization */
 export const ALL_MODULES = [
-  'dashboard', 'customers', 'complaints', 'payments', 'catalog',
+  'dashboard', 'contacts', 'complaints', 'payments',
   'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
-  'contacts', 'inventory-products'
+  'inventory-products', 'branches', 'pos'
 ] as const;
 
 /** All available settings tabs that can be assigned to an organization */
@@ -164,6 +164,10 @@ export interface User {
   password: string;
   role: 'admin' | 'employee';
   status: 'active' | 'inactive';
+  /** Module-based access — which sidebar modules this user can access (employees only) */
+  allowedModules?: ModuleKey[];
+  /** Branch assignment */
+  branchId?: number;
   createdAt: string;
 }
 
@@ -367,6 +371,9 @@ export interface Branch {
   organizationId: string;
   name: string;
   location?: string;
+  address?: string;
+  phone?: string;
+  isActive: boolean;
   createdAt: string;
 }
 

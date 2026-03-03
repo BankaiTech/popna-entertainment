@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Package, Users, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, PhoneCall, MessageSquare, Contact2, Box } from 'lucide-react';
+import { LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle, UserCog, Settings, LogOut, Menu, PhoneCall, MessageSquare, Contact2, Box, GitBranch, Store } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import Button from '@/components/ui/Button';
@@ -15,7 +15,7 @@ const AdminLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, logout, organizationId } = useAuthStore();
+  const { role, logout, organizationId, allowedModules } = useAuthStore();
   const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -34,14 +34,15 @@ const AdminLayout = () => {
   // Full product sidebar — enterprise SaaS structure. Admin sees all (filtered by org); Employee sees limited.
   const allAdminMenuItems: { path: string; labelKey: string; icon: typeof LayoutDashboard; moduleKey: ModuleKey }[] = [
     { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard' },
-    { path: '/admin/customers', labelKey: 'nav.customers', icon: Users, moduleKey: 'customers' },
     { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests' },
-    { path: '/admin/catalog', labelKey: 'nav.catalog', icon: Package, moduleKey: 'catalog' },
+    { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts' },
+    { path: '/admin/products', labelKey: 'nav.products', icon: Package, moduleKey: 'contacts' },
     { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices' },
     { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices' },
     { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints' },
-    { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts' },
     { path: '/admin/inventory-products', labelKey: 'nav.inventoryProducts', icon: Box, moduleKey: 'inventory-products' },
+    { path: '/admin/pos', labelKey: 'nav.pos', icon: Store, moduleKey: 'pos' },
+    { path: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch, moduleKey: 'branches' },
     { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users' },
     { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings' },
   ];
@@ -49,9 +50,9 @@ const AdminLayout = () => {
   // Filter admin menu by organization allowed modules
   const adminMenuItems = allAdminMenuItems.filter((item) => isModuleAllowed(item.moduleKey));
 
-  // Employee sidebar — Dashboard hidden, only Customers and Complaints visible (also filtered by org)
+  // Employee sidebar — filtered by user's allowedModules (set in Users management)
   const employeeMenuItems = allAdminMenuItems.filter(
-    (item) => (item.moduleKey === 'customers' || item.moduleKey === 'complaints') && isModuleAllowed(item.moduleKey)
+    (item) => allowedModules?.includes(item.moduleKey) && isModuleAllowed(item.moduleKey)
   );
 
   const menuItems = role === 'admin' ? adminMenuItems : employeeMenuItems;

@@ -626,7 +626,7 @@ export const mockCustomers: Customer[] = [
 // Mock Users (Admin/Employee). Password plain text for mock only.
 export const mockUsers: User[] = [
   { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Admin User', username: 'bankaitech', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(365) },
-  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', status: 'active', createdAt: getDateString(180) },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', status: 'active', allowedModules: ['contacts', 'complaints'], createdAt: getDateString(180) },
 ];
 
 // Mock Complaints - Cable and Internet (internal ids unchanged; do not mix)
