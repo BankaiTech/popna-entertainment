@@ -21,7 +21,7 @@ const Contacts = () => {
     const [search, setSearch] = useState('');
 
     // Customer state (reusing existing store)
-    const { customers, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, products, fetchProducts, initialize } = useStore();
+    const { customers, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, fetchProducts, initialize } = useStore();
     const [showCustomerSheet, setShowCustomerSheet] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -372,8 +372,7 @@ const Contacts = () => {
                     isOpen={showCustomerSheet}
                     onClose={() => { setShowCustomerSheet(false); setEditingCustomer(null); }}
                     onSave={handleSaveCustomer}
-                    editingCustomer={editingCustomer}
-                    products={products}
+                    customer={editingCustomer}
                 />
             )}
         </div>
