@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Edit, Trash2, Upload, Search, Package, Printer, Tag, AlertTriangle, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Plus, Trash2, Upload, Search, Package, Printer, Tag, AlertTriangle, TrendingUp, ShoppingCart } from 'lucide-react';
 import AddInventoryProductModal from '@/components/AddInventoryProductModal';
 import ImportModal from '@/components/ImportModal';
 import type { InventoryProduct, LabelConfig } from '@/models/types';
@@ -76,7 +76,6 @@ const InventoryProducts = () => {
                     margin: 5,
                 });
             } catch {
-                // Fallback for invalid barcode
                 JsBarcode(barcodeRef.current, `PRD${selectedProduct.id}`, {
                     format: 'CODE128',
                     width: 2,
@@ -131,9 +130,8 @@ const InventoryProducts = () => {
         setStockUpdateProduct(null);
     };
 
-    const getCategoryName = (id?: number) => categories.find((c) => c.id === id)?.name || '-';
-    const getUnitName = (id?: number) => units.find((u) => u.id === id)?.shortName || '-';
-    const getBranchName = (id?: number) => branches.find((b) => b.id === id)?.name || '-';
+    const getCategoryName = (id?: number) => categories.find((c) => c.id === id)?.name || '—';
+    const getTaxRateName = (id?: number) => taxRates.find((tr) => tr.id === id)?.name || '—';
 
     // Filtered + sorted products
     const filteredProducts = useMemo(() => {
@@ -141,7 +139,7 @@ const InventoryProducts = () => {
         return products
             .filter((p) => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
             .filter((p) => {
-                if (stockFilter === 'out_of_stock') return (p.currentStock ?? 0) === 0;
+                if (stockFilter === 'out_of_stock') return (p.currentStock ?? 0) === 0 && p.productType !== 'service';
                 if (stockFilter === 'low_stock') return (p.currentStock ?? 0) > 0 && p.stockAlert !== undefined && p.currentStock! <= p.stockAlert;
                 if (stockFilter === 'needs_reorder') return p.reorderLevel !== undefined && (p.currentStock ?? 0) <= p.reorderLevel;
                 if (stockFilter === 'in_stock') return p.currentStock !== undefined && p.currentStock > (p.stockAlert ?? 0);
@@ -168,7 +166,7 @@ const InventoryProducts = () => {
         (p) => p.currentStock !== undefined && p.stockAlert !== undefined && p.currentStock <= p.stockAlert && p.currentStock > 0
     ).length;
     const outOfStockItems = products.filter(
-        (p) => p.currentStock !== undefined && p.currentStock === 0
+        (p) => p.currentStock !== undefined && p.currentStock === 0 && p.productType !== 'service'
     ).length;
     const totalInventoryValue = products.reduce((sum, p) => {
         const baseValue = (p.currentStock || 0) * p.price;
@@ -279,180 +277,204 @@ const InventoryProducts = () => {
             {/* List Products */}
             {activeTab === 'list' && (
                 <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                    {/* Search + Add Button */}
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
                         <div className="relative flex-1 w-full sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('inventory.searchPlaceholder', 'Search products...')} />
+                            <Input className="pl-9 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('inventory.searchPlaceholder', 'Search products...')} />
                         </div>
-                        <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} className="w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" /> {t('inventory.addProduct', 'Add Product')}
+                        <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} size="sm" className="w-full sm:w-auto h-9">
+                            <Plus className="w-4 h-4 mr-1" /> {t('inventory.addProduct', 'Add Product')}
                         </Button>
                     </div>
-                    {/* Filters + Sort Row */}
-                    <div className="flex flex-wrap gap-2">
-                        <Select value={stockFilter} onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)} className="text-xs h-8 py-0 min-w-[130px]">
+
+                    {/* Compact Filters — same style as Customers page */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Select value={stockFilter} onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
                             <option value="all">{t('inventory.filterAll', 'All Stock')}</option>
                             <option value="in_stock">{t('inventory.filterInStock', 'In Stock')}</option>
                             <option value="low_stock">{t('inventory.filterLowStock', 'Low Stock')}</option>
                             <option value="out_of_stock">{t('inventory.filterOutOfStock', 'Out of Stock')}</option>
                             <option value="needs_reorder">{t('inventory.filterNeedsReorder', 'Needs Reorder')}</option>
                         </Select>
-                        <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs h-8 py-0 min-w-[130px]">
+                        <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
                             <option value="all">{t('inventory.allCategories', 'All Categories')}</option>
                             {categoryOptions.map((c) => (
                                 <option key={c.id} value={c.id}>{c.label}</option>
                             ))}
                         </Select>
-                        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="text-xs h-8 py-0 min-w-[150px]">
+                        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="text-xs h-8 py-0 min-w-[130px] w-auto">
                             <option value="name">{t('inventory.sortName', 'Name (A–Z)')}</option>
-                            <option value="stock_asc">{t('inventory.sortStockAsc', 'Stock (Low to High)')}</option>
-                            <option value="stock_desc">{t('inventory.sortStockDesc', 'Stock (High to Low)')}</option>
+                            <option value="stock_asc">{t('inventory.sortStockAsc', 'Stock (Low→High)')}</option>
+                            <option value="stock_desc">{t('inventory.sortStockDesc', 'Stock (High→Low)')}</option>
                         </Select>
                         {(stockFilter !== 'all' || categoryFilter !== 'all' || sortBy !== 'name') && (
                             <button onClick={() => { setStockFilter('all'); setCategoryFilter('all'); setSortBy('name'); }} className="text-xs text-blue-600 hover:underline px-1">
-                                Reset
+                                {t('common.reset', 'Reset')}
                             </button>
                         )}
                     </div>
-                    {/* Desktop Table — hidden on mobile */}
+
+                    {/* Desktop Table */}
                     <div className="overflow-x-auto hidden sm:block">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50">
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Product</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">SKU</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Category</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Unit</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Branch</th>
-                                    <th className="text-right px-4 py-3 font-medium text-gray-600">Price</th>
-                                    <th className="text-center px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Stock</th>
-                                    <th className="text-center px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Variants</th>
-                                    <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                                    <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider">{t('inventory.colProduct', 'Product / Item')}</th>
+                                    <th className="text-right px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider">{t('inventory.colPrice', 'Price')}</th>
+                                    <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colCategory', 'Category')}</th>
+                                    <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden lg:table-cell">{t('inventory.colTax', 'Tax')}</th>
+                                    <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colSku', 'SKU ID')}</th>
+                                    <th className="text-center px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colStock', 'Stock')}</th>
+                                    <th className="text-center px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden lg:table-cell">{t('inventory.colVariants', 'Variants')}</th>
+                                    <th className="w-10 px-2 py-2.5"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredProducts.map((product) => (
-                                    <tr key={product.id} className="border-b hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-3">
-                                            <div>
-                                                <span className="font-medium text-gray-900">{product.name}</span>
-                                                {!product.isActive && (
-                                                    <span className="ml-2 px-1.5 py-0.5 text-xs bg-red-100 text-red-600 rounded">Inactive</span>
-                                                )}
-                                                {product.brand && <p className="text-xs text-gray-400">{product.brand}</p>}
-                                            </div>
+                                {filteredProducts.map((product, idx) => (
+                                    <tr key={product.id} className={cn("border-b hover:bg-gray-50 transition-colors", idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30')}>
+                                        <td className="px-3 py-2.5">
+                                            <button
+                                                onClick={() => { setEditingProduct(product); setShowProductModal(true); }}
+                                                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                            >
+                                                {product.name}
+                                            </button>
+                                            {product.brand && <p className="text-xs text-gray-400">{product.brand}</p>}
+                                            {!product.isActive && (
+                                                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded">{t('common.inactive', 'Inactive')}</span>
+                                            )}
+                                            {product.productType === 'service' && (
+                                                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-blue-100 text-blue-600 rounded">{t('inventory.service', 'Service')}</span>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-600 font-mono text-xs">{product.sku}</td>
-                                        <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{getCategoryName(product.categoryId)}</td>
-                                        <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{getUnitName(product.unitId)}</td>
-                                        <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{getBranchName(product.branchId)}</td>
-                                        <td className="px-4 py-3 text-right font-semibold">₹{product.price.toLocaleString()}</td>
-                                        <td className="px-4 py-3 text-center hidden md:table-cell">
-                                            {product.currentStock !== undefined ? (
+                                        <td className="px-3 py-2.5 text-right font-semibold text-sm">₹{product.price.toLocaleString()}</td>
+                                        <td className="px-3 py-2.5 text-sm text-gray-600 hidden md:table-cell">{getCategoryName(product.categoryId)}</td>
+                                        <td className="px-3 py-2.5 text-sm text-gray-600 hidden lg:table-cell">
+                                            <span className="text-xs">{getTaxRateName(product.taxRateId)}</span>
+                                        </td>
+                                        <td className="px-3 py-2.5 text-gray-500 font-mono text-xs hidden md:table-cell">{product.sku}</td>
+                                        <td className="px-3 py-2.5 text-center hidden md:table-cell">
+                                            {product.productType === 'service' ? (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            ) : product.currentStock !== undefined ? (
                                                 <button
                                                     onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
                                                     title={t('inventory.quickUpdateStock', 'Click to update stock')}
                                                     className={cn(
                                                         'px-2 py-0.5 text-xs rounded-full font-medium cursor-pointer hover:opacity-75 transition-opacity',
                                                         product.currentStock === 0 ? 'bg-red-100 text-red-700' :
-                                                        (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'bg-amber-100 text-amber-700' :
-                                                        'bg-green-100 text-green-700'
+                                                            (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'bg-amber-100 text-amber-700' :
+                                                                'bg-green-100 text-green-700'
                                                     )}
                                                 >
                                                     {product.currentStock}
                                                 </button>
-                                            ) : '-'}
+                                            ) : (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3 text-center hidden md:table-cell">
+                                        <td className="px-3 py-2.5 text-center hidden lg:table-cell">
                                             {product.variants.length > 0 ? (
                                                 <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">{product.variants.length}</span>
-                                            ) : '-'}
+                                            ) : (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button onClick={() => { setEditingProduct(product); setShowProductModal(true); }} className="p-1.5 hover:bg-blue-50 rounded text-blue-600" title="Edit">
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => { if (confirm('Delete this product?')) deleteProduct(product.id); }} className="p-1.5 hover:bg-red-50 rounded text-red-600" title="Delete">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => { setSelectedProductId(product.id); setSelectedVariantIdx(-1); setActiveTab('labels'); }}
-                                                    className="p-1.5 hover:bg-green-50 rounded text-green-600" title="Print Label"
-                                                >
-                                                    <Tag className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                        <td className="px-2 py-2.5 text-center">
+                                            <button
+                                                onClick={() => { if (confirm(t('inventory.deleteConfirm', 'Delete this product?'))) deleteProduct(product.id); }}
+                                                className="p-1.5 hover:bg-red-50 rounded text-red-400 hover:text-red-600 transition-colors"
+                                                title={t('common.delete', 'Delete')}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
                                 {filteredProducts.length === 0 && (
-                                    <tr><td colSpan={9} className="text-center py-8 text-gray-500">No products found</td></tr>
+                                    <tr><td colSpan={8} className="text-center py-8 text-gray-500 text-sm">{t('common.noResults', 'No products found')}</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* Mobile Card View — sm:hidden */}
+                    {/* Mobile Card View */}
                     <div className="sm:hidden space-y-2">
                         {filteredProducts.map((product) => (
                             <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-3 space-y-2 shadow-sm">
                                 <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                                        {product.brand && <p className="text-xs text-gray-400">{product.brand}</p>}
+                                    <div className="min-w-0 flex-1">
+                                        <button
+                                            onClick={() => { setEditingProduct(product); setShowProductModal(true); }}
+                                            className="text-sm font-semibold text-blue-600 hover:underline text-left truncate block w-full"
+                                        >
+                                            {product.name}
+                                        </button>
                                         <p className="text-xs text-gray-400 font-mono">{product.sku}</p>
                                     </div>
-                                    {!product.isActive && (
-                                        <span className="px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded shrink-0">Inactive</span>
-                                    )}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {!product.isActive && (
+                                            <span className="px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded">{t('common.inactive', 'Inactive')}</span>
+                                        )}
+                                        {product.productType === 'service' && (
+                                            <span className="px-1.5 py-0.5 text-[10px] bg-blue-100 text-blue-600 rounded">{t('inventory.service', 'Service')}</span>
+                                        )}
+                                        <button
+                                            onClick={() => { if (confirm(t('inventory.deleteConfirm', 'Delete this product?'))) deleteProduct(product.id); }}
+                                            className="p-1 hover:bg-red-50 rounded text-red-400"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                     <div>
-                                        <p className="text-gray-400">Price</p>
+                                        <p className="text-gray-400">{t('inventory.colPrice', 'Price')}</p>
                                         <p className="font-semibold text-gray-900">₹{product.price.toLocaleString()}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.stock', 'Stock')}</p>
-                                        <button
-                                            onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
-                                            title={t('inventory.quickUpdateStock', 'Click to update stock')}
-                                            className={cn(
-                                                'font-semibold cursor-pointer hover:opacity-75',
-                                                product.currentStock === undefined ? 'text-gray-400' :
-                                                product.currentStock === 0 ? 'text-red-600' :
-                                                (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'text-amber-600' :
-                                                'text-green-600'
-                                            )}
-                                        >
-                                            {product.currentStock ?? '-'}
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-400">Category</p>
+                                        <p className="text-gray-400">{t('inventory.colCategory', 'Category')}</p>
                                         <p className="font-medium text-gray-700 truncate">{getCategoryName(product.categoryId)}</p>
                                     </div>
+                                    <div>
+                                        <p className="text-gray-400">{t('inventory.colTax', 'Tax')}</p>
+                                        <p className="font-medium text-gray-700 truncate">{getTaxRateName(product.taxRateId)}</p>
+                                    </div>
                                 </div>
-                                {product.variants.length > 0 && (
-                                    <p className="text-[10px] text-purple-600 font-medium">
-                                        {product.variants.length} variant{product.variants.length > 1 ? 's' : ''}
-                                    </p>
-                                )}
-                                <div className="flex items-center justify-end gap-1 pt-1 border-t border-gray-100">
-                                    <button onClick={() => { setEditingProduct(product); setShowProductModal(true); }} className="p-1.5 hover:bg-blue-50 rounded text-blue-600">
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => { if (confirm('Delete this product?')) deleteProduct(product.id); }} className="p-1.5 hover:bg-red-50 rounded text-red-600">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => { setSelectedProductId(product.id); setSelectedVariantIdx(-1); setActiveTab('labels'); }} className="p-1.5 hover:bg-green-50 rounded text-green-600">
-                                        <Tag className="w-4 h-4" />
-                                    </button>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <p className="text-gray-400">{t('inventory.colStock', 'Stock')}</p>
+                                        {product.productType === 'service' ? (
+                                            <p className="text-gray-400">—</p>
+                                        ) : (
+                                            <button
+                                                onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
+                                                className={cn(
+                                                    'font-semibold cursor-pointer hover:opacity-75',
+                                                    product.currentStock === undefined ? 'text-gray-400' :
+                                                        product.currentStock === 0 ? 'text-red-600' :
+                                                            (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'text-amber-600' :
+                                                                'text-green-600'
+                                                )}
+                                            >
+                                                {product.currentStock ?? '—'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400">{t('inventory.colVariants', 'Variants')}</p>
+                                        <p className="font-medium text-gray-700">
+                                            {product.variants.length > 0 ? (
+                                                <span className="text-purple-600">{product.variants.length}</span>
+                                            ) : '—'}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                         {filteredProducts.length === 0 && (
-                            <div className="text-center py-8 text-gray-500 text-sm">No products found</div>
+                            <div className="text-center py-8 text-gray-500 text-sm">{t('common.noResults', 'No products found')}</div>
                         )}
                     </div>
                 </div>
@@ -465,14 +487,14 @@ const InventoryProducts = () => {
                     <Card>
                         <CardContent className="p-5 space-y-5">
                             <h3 className="text-base font-semibold flex items-center gap-2">
-                                <Printer className="w-5 h-5" /> Label Configuration
+                                <Printer className="w-5 h-5" /> {t('inventory.labelConfig', 'Label Configuration')}
                             </h3>
 
                             {/* Product Selection */}
                             <div>
-                                <label className="block text-sm font-medium mb-1">Select Product</label>
+                                <label className="block text-sm font-medium mb-1">{t('inventory.selectProduct', 'Select Product')}</label>
                                 <Select value={selectedProductId || ''} onChange={(e) => { setSelectedProductId(Number(e.target.value)); setSelectedVariantIdx(-1); }}>
-                                    <option value="">-- Select a product --</option>
+                                    <option value="">-- {t('inventory.selectProduct', 'Select a product')} --</option>
                                     {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
                                 </Select>
                             </div>
@@ -480,9 +502,9 @@ const InventoryProducts = () => {
                             {/* Variant Selection */}
                             {selectedProduct && selectedProduct.variants.length > 0 && (
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Select Variation</label>
+                                    <label className="block text-sm font-medium mb-1">{t('inventory.selectVariant', 'Select Variation')}</label>
                                     <Select value={selectedVariantIdx} onChange={(e) => setSelectedVariantIdx(Number(e.target.value))}>
-                                        <option value={-1}>Base Product</option>
+                                        <option value={-1}>{t('inventory.baseProduct', 'Base Product')}</option>
                                         {selectedProduct.variants.map((v, i) => (
                                             <option key={i} value={i}>{v.variantName} - ₹{v.price.toLocaleString()}</option>
                                         ))}
@@ -492,14 +514,14 @@ const InventoryProducts = () => {
 
                             {/* Checkboxes */}
                             <div className="space-y-3 pt-2">
-                                <p className="text-sm font-medium text-gray-700">Information to show on label:</p>
+                                <p className="text-sm font-medium text-gray-700">{t('inventory.labelShowInfo', 'Information to show on label')}:</p>
                                 {[
-                                    { key: 'showProductName' as const, label: 'Product Name' },
-                                    { key: 'showProductVariation' as const, label: 'Product Variation' },
-                                    { key: 'showProductPrice' as const, label: 'Product Price' },
-                                    { key: 'showBusinessName' as const, label: 'Business Name' },
-                                    { key: 'showCurrency' as const, label: 'Currency Symbol' },
-                                    { key: 'showPackingDate' as const, label: 'Packing Date' },
+                                    { key: 'showProductName' as const, label: t('inventory.labelProductName', 'Product Name') },
+                                    { key: 'showProductVariation' as const, label: t('inventory.labelProductVariation', 'Product Variation') },
+                                    { key: 'showProductPrice' as const, label: t('inventory.labelProductPrice', 'Product Price') },
+                                    { key: 'showBusinessName' as const, label: t('inventory.labelBusinessName', 'Business Name') },
+                                    { key: 'showCurrency' as const, label: t('inventory.labelCurrency', 'Currency Symbol') },
+                                    { key: 'showPackingDate' as const, label: t('inventory.labelPackingDate', 'Packing Date') },
                                 ].map((opt) => (
                                     <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -555,13 +577,13 @@ const InventoryProducts = () => {
                     {/* Preview */}
                     <Card>
                         <CardContent className="p-5">
-                            <h3 className="text-base font-semibold mb-4">Label Preview</h3>
+                            <h3 className="text-base font-semibold mb-4">{t('inventory.labelPreview', 'Label Preview')}</h3>
                             {selectedProduct ? (
                                 <div ref={printAreaRef} className="flex justify-center">
                                     <div className="label border-2 border-gray-800 rounded-lg p-4 text-center inline-block min-w-[240px] bg-white">
                                         {labelConfig.showBusinessName && (
                                             <div className="label-business text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">
-                                                {companyProfile?.companyName || 'Business Name'}
+                                                {companyProfile?.companyName || t('inventory.businessName', 'Business Name')}
                                             </div>
                                         )}
                                         {labelConfig.showProductName && (
@@ -588,7 +610,7 @@ const InventoryProducts = () => {
                                         )}
                                         {labelConfig.showPackingDate && (
                                             <div className="label-date text-xs text-gray-500 mt-1">
-                                                Packed: {packingDate
+                                                {t('inventory.packed', 'Packed')}: {packingDate
                                                     ? new Date(packingDate + 'T00:00:00').toLocaleDateString('en-IN')
                                                     : new Date().toLocaleDateString('en-IN')}
                                             </div>
@@ -598,7 +620,7 @@ const InventoryProducts = () => {
                             ) : (
                                 <div className="text-center py-12 text-gray-400">
                                     <Tag className="w-10 h-10 mx-auto mb-2" />
-                                    <p className="text-sm">Select a product to preview the label</p>
+                                    <p className="text-sm">{t('inventory.selectProductPreview', 'Select a product to preview the label')}</p>
                                 </div>
                             )}
                         </CardContent>
@@ -611,9 +633,9 @@ const InventoryProducts = () => {
                 <Card>
                     <CardContent className="p-6 sm:p-8 text-center space-y-4">
                         <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-900">Import Products</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{t('inventory.importTitle', 'Import Products')}</h3>
                         <p className="text-sm text-gray-500 max-w-md mx-auto">
-                            Import products from a CSV file. Download the sample template to get the correct format.
+                            {t('inventory.importDesc', 'Import products from a CSV file. Download the sample template to get the correct format.')}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <a
@@ -621,10 +643,10 @@ const InventoryProducts = () => {
                                 download="products_template.csv"
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
                             >
-                                Download Template
+                                {t('inventory.downloadTemplate', 'Download Template')}
                             </a>
                             <Button onClick={() => setShowImportModal(true)}>
-                                <Upload className="w-4 h-4 mr-2" /> Import CSV
+                                <Upload className="w-4 h-4 mr-2" /> {t('inventory.importCsv', 'Import CSV')}
                             </Button>
                         </div>
                     </CardContent>
@@ -654,7 +676,7 @@ const InventoryProducts = () => {
             <ImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
-                title="Import Products"
+                title={t('inventory.importTitle', 'Import Products')}
                 templateUrl="/templates/products_template.csv"
                 templateFileName="products_template.csv"
                 onImport={handleImportProducts}
@@ -676,8 +698,8 @@ const InventoryProducts = () => {
                                 <span className={cn(
                                     'font-bold text-base',
                                     (stockUpdateProduct.currentStock ?? 0) === 0 ? 'text-red-600' :
-                                    (stockUpdateProduct.stockAlert !== undefined && (stockUpdateProduct.currentStock ?? 0) <= stockUpdateProduct.stockAlert) ? 'text-amber-600' :
-                                    'text-green-600'
+                                        (stockUpdateProduct.stockAlert !== undefined && (stockUpdateProduct.currentStock ?? 0) <= stockUpdateProduct.stockAlert) ? 'text-amber-600' :
+                                            'text-green-600'
                                 )}>
                                     {stockUpdateProduct.currentStock ?? 0}
                                 </span>

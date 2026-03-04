@@ -10,7 +10,7 @@ import HomePage from './pages/public/HomePage';
 import ErrorShowPage from './pages/ErrorShowPage';
 import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
-import AdminProducts from './pages/admin/Catalog'; // Will be renamed to Products later
+// Catalog module removed — merged into Inventory
 // Customers module removed — merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
@@ -99,16 +99,9 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="products"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminProducts />
-              </ProtectedRoute>
-            }
-          />
-          {/* Catalog → Products redirect for backward compat */}
-          <Route path="catalog" element={<Navigate to="/admin/products" replace />} />
+          {/* Catalog & Products → Inventory redirect for backward compat */}
+          <Route path="products" element={<Navigate to="/admin/inventory-products" replace />} />
+          <Route path="catalog" element={<Navigate to="/admin/inventory-products" replace />} />
           <Route
             path="invoices"
             element={
