@@ -8,8 +8,13 @@ import { companyProfileApi } from '@/api/companyProfile';
 import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
 
-// Products fully dynamic — no hardcoded service names. Initial state from API; no legacy fallback list.
-const mockProducts: Product[] = [];
+// Products fully dynamic — initial mock data for dashboard and catalog to work out-of-the-box
+const mockProducts: Product[] = [
+  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Cable', productType: 'cable', isActive: true, createdAt: new Date().toISOString(), cutoffDate: 10 },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 1', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
+  { id: 3, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 2', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
+  { id: 4, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 3', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
+];
 
 // SaaS Ready — Admin Full Control: company profile loaded from API, no static defaults in production
 const mockCompanyProfile: CompanyProfile = {
@@ -55,7 +60,7 @@ interface AppState {
   loading: boolean;
   error: string | null;
   initialized: boolean;
-  
+
   // Actions
   initialize: () => Promise<void>;
   fetchPlans: () => Promise<void>;
@@ -63,29 +68,29 @@ interface AppState {
   addPlan: (plan: Omit<Plan, 'id'>) => Promise<void>;
   updatePlan: (id: number, plan: Partial<Plan>) => Promise<void>;
   deletePlan: (id: number) => Promise<void>;
-  
+
   fetchCustomers: () => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<void>;
   updateCustomer: (id: number, customer: Partial<Customer>) => Promise<Customer | void>;
   deleteCustomer: (id: number) => Promise<void>;
-  
+
   fetchComplaints: () => Promise<void>;
   addComplaint: (complaint: Omit<Complaint, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<void>;
   updateComplaint: (id: number, complaint: Partial<Complaint>) => Promise<void>;
-  
+
   fetchDashboardStats: () => Promise<void>;
-  
+
   // Product Management - Multi-tenant ready
   fetchProducts: () => Promise<void>;
   fetchActiveProducts: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
   updateProduct: (id: number, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
-  
+
   // Company Profile - Multi-tenant ready
   fetchCompanyProfile: () => Promise<void>;
   updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
-  
+
   // Website Settings - Multi-tenant ready
   fetchWebsiteSettings: () => Promise<void>;
   updateWebsiteSettings: (settings: Partial<WebsiteSettings>) => Promise<void>;
@@ -108,15 +113,15 @@ export const useStore = create<AppState>((set, get) => ({
     set({ loading: true });
     try {
       // Initialize with mock data immediately (no loading screen)
-      set({ 
-        plans: [...mockPlans], 
+      set({
+        plans: [...mockPlans],
         customers: [...mockCustomers],
         complaints: [...mockComplaints],
         products: [...mockProducts], // Initialize with mock products
         companyProfile: { ...mockCompanyProfile }, // Initialize with mock company profile
         websiteSettings: { ...mockWebsiteSettings }, // Initialize with mock website settings
         initialized: true,
-        loading: false 
+        loading: false
       });
       // Sync customers to localStorage for customer login
       try {
@@ -135,9 +140,9 @@ export const useStore = create<AppState>((set, get) => ({
           companyProfileApi.get().catch(() => mockCompanyProfile),
           websiteSettingsApi.get().catch(() => mockWebsiteSettings),
         ]);
-        set({ 
-          plans: apiPlans, 
-          customers: apiCustomers, 
+        set({
+          plans: apiPlans,
+          customers: apiCustomers,
           complaints: apiComplaints,
           products: apiProducts || mockProducts,
           companyProfile: apiCompanyProfile || mockCompanyProfile,
@@ -146,7 +151,7 @@ export const useStore = create<AppState>((set, get) => ({
       } catch (error) {
         console.error('Error loading data:', error);
         // Keep mock data if API fails
-        set({ 
+        set({
           products: mockProducts,
           companyProfile: mockCompanyProfile,
           websiteSettings: mockWebsiteSettings,

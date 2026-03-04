@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,8 +11,9 @@
 }
 
 html {
-  color: #181c32;
-  background-color: #f5f8fa;
+  color: #0f172a;
+  background-color: #f8fafc;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -19,47 +22,59 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f8fa;
+  background: #f8fafc;
   min-height: 100vh;
-  color: #181c32;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 #root {
   min-height: 100vh;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  html.dark {
-    color: #f5f8fa;
-    background-color: #181c32;
-  }
-  
-  html.dark body {
-    background: #181c32;
-    color: #f5f8fa;
-  }
+/* ─── Scrollbar styling ─── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 @layer utilities {
   .glass-effect {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
-  
+
   .gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-grid-pattern {
-    background-image: 
-      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   .animate-infinite-scroll {
@@ -68,12 +83,8 @@ body {
   }
 
   @keyframes infinite-scroll {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(calc(-1 * var(--carousel-width, 0px) / 2));
-    }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-1 * var(--carousel-width, 0px) / 2)); }
   }
 
   .line-clamp-2 {
@@ -91,30 +102,14 @@ body {
   }
 }
 
-/* Global select dropdown and mobile UI fully fixed */
-
-/* Reduce overall spacing */
-.space-y-4 > * + * {
-  margin-top: 0.75rem !important;
-}
-
-.space-y-6 > * + * {
-  margin-top: 1rem !important;
-}
-
-.space-y-8 > * + * {
-  margin-top: 1.5rem !important;
-}
-
 /* ─── Global mobile responsiveness ─── */
 @media (max-width: 640px) {
-  /* Ensure dialogs/modals respect viewport */
   [role="dialog"],
   [role="alertdialog"] {
     max-width: 95vw !important;
+    max-height: 90vh !important;
   }
 
-  /* Full-width inputs on mobile */
   input[type="text"],
   input[type="number"],
   input[type="email"],
@@ -124,20 +119,36 @@ body {
   input[type="url"],
   textarea {
     max-width: 100% !important;
+    font-size: 16px !important; /* Prevent iOS zoom on focus */
   }
 
-  /* Tables scroll horizontally instead of overflow */
   .overflow-x-auto,
   table {
     -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Touch-friendly tap targets for dropdown items */
+/* Touch-friendly tap targets */
 @media (pointer: coarse) {
   [role="option"] {
     min-height: 44px;
     display: flex;
     align-items: center;
   }
+  
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+}
+
+/* ─── Compact spacing override ─── */
+.space-y-4 > * + * { margin-top: 0.625rem !important; }
+.space-y-6 > * + * { margin-top: 0.875rem !important; }
+.space-y-8 > * + * { margin-top: 1.25rem !important; }
+
+/* ─── Focus ring for accessibility ─── */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
 }

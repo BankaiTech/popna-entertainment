@@ -46,7 +46,7 @@ export function Dialog({
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm"
       onClick={closeOnOverlayClick ? onClose : undefined}
       role="presentation"
     >
@@ -54,7 +54,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'bg-card rounded-modal shadow-soft-xl max-h-[90vh] overflow-hidden flex flex-col border border-border',
+          'bg-white rounded-lg shadow-xl max-h-[85vh] overflow-hidden flex flex-col border border-gray-200/60 animate-scale-in',
           sizeClasses[size],
           className
         )}
@@ -76,8 +76,8 @@ export interface DialogHeaderProps {
 
 export function DialogHeader({ title, onClose, className }: DialogHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between shrink-0 px-4 sm:px-5 py-3 border-b border-border', className)}>
-      <h2 className="text-base sm:text-lg font-semibold text-foreground">{title}</h2>
+    <div className={cn('flex items-center justify-between shrink-0 px-4 py-2.5 border-b border-gray-100', className)}>
+      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
       <button
         type="button"
         onClick={onClose}
@@ -110,7 +110,7 @@ export interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('shrink-0 flex flex-wrap justify-end gap-2 px-4 sm:px-5 py-3 border-t border-border bg-muted/30', className)}>
+    <div className={cn('shrink-0 flex flex-wrap justify-end gap-2 px-4 py-2.5 border-t border-gray-100 bg-gray-50/50', className)}>
       {children}
     </div>
   );
