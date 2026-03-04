@@ -55,7 +55,7 @@ const Login = () => {
     setIsLoading(true);
 
     // 1) Try admin/employee/superadmin login
-    const adminSuccess = login(username.trim(), password);
+    const adminSuccess = await login(username.trim(), password);
     if (adminSuccess) {
       const userRole = useAuthStore.getState().role;
       setIsLoading(false);

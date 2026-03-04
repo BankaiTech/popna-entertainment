@@ -27,7 +27,7 @@ export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
 export const ALL_MODULES = [
   'dashboard', 'contacts', 'complaints', 'payments',
   'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
-  'inventory-products', 'branches', 'pos'
+  'inventory-products', 'products', 'branches', 'pos'
 ] as const;
 
 /** All available settings tabs that can be assigned to an organization */
@@ -409,9 +409,13 @@ export interface ProductVariant {
   taxType: 'inclusive' | 'exclusive' | 'none';
   skuId: string;
   warrantyId?: number;
+  mrp?: number;           // Maximum Retail Price per variant
+  purchasePrice?: number; // Cost/purchase price per variant
+  barcode?: string;       // EAN/UPC barcode per variant
+  currentStock?: number;  // Stock on hand per variant
 }
 
-/** Inventory product — full business product */
+/** Inventory product — full business product (multi-business: supermarket, ISP, textile, pharma, electronics) */
 export interface InventoryProduct {
   id: number;
   organizationId: string;
@@ -432,6 +436,27 @@ export interface InventoryProduct {
   variants: ProductVariant[];
   isActive: boolean;
   createdAt: string;
+  // Multi-business fields
+  productType?: 'physical' | 'service' | 'digital' | 'bundle';
+  brand?: string;
+  /** HSN code (goods) or SAC code (services) — mandatory for Indian GST compliance */
+  hsnSacCode?: string;
+  /** Maximum Retail Price — printed on labels; required for FMCG/retail */
+  mrp?: number;
+  /** Cost/purchase price — for margin and profit calculation */
+  purchasePrice?: number;
+  /** Current stock quantity on hand */
+  currentStock?: number;
+  /** Reorder point — triggers alert when stock falls to or below this */
+  reorderLevel?: number;
+  /** none = no tracking | serial = per-unit serial number (electronics, ISP equipment) | batch = batch/lot (pharma, FMCG) */
+  trackingType?: 'none' | 'serial' | 'batch';
+  /** EAN-13, UPC-A, or custom barcode for scanning */
+  barcode?: string;
+  weight?: number;
+  weightUnit?: 'g' | 'kg' | 'lb';
+  /** Enable expiry date tracking — for pharma and FMCG */
+  expiryTracking?: boolean;
 }
 
 /** Label print configuration */

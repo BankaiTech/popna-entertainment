@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle,
   UserCog, Settings, LogOut, Menu, X, PhoneCall, Contact2,
-  Box, GitBranch, Store, ChevronDown
+  GitBranch, Store, ChevronDown, BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -69,7 +69,8 @@ const AdminLayout = () => {
       labelKey: 'nav.groupBusiness',
       items: [
         { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts' },
-        { path: '/admin/products', labelKey: 'nav.products', icon: Package, moduleKey: 'contacts' },
+        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products' },
+        { path: '/admin/products', labelKey: 'nav.catalog', icon: BookOpen, moduleKey: 'products' },
         { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices' },
         { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices' },
       ],
@@ -79,7 +80,6 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests' },
         { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints' },
-        { path: '/admin/inventory-products', labelKey: 'nav.inventoryProducts', icon: Box, moduleKey: 'inventory-products' },
         { path: '/admin/pos', labelKey: 'nav.pos', icon: Store, moduleKey: 'pos' },
       ],
     },
@@ -127,7 +127,7 @@ const AdminLayout = () => {
           >
             <Menu className="w-4.5 h-4.5 text-gray-600" />
           </button>
-          <img src="/NexLink.svg" alt="NexLink" className="h-[72px] w-auto object-contain shrink-0" />
+          <img src="/NexLink.svg" alt="NexLink" className="h-[104px] w-auto object-contain shrink-0" />
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <LanguageSwitcher />
@@ -226,14 +226,42 @@ const AdminLayout = () => {
 
         {/* Main content */}
         <main className="flex-1 flex flex-col w-full bg-white sm:ml-52">
-          <div className="flex-1 overflow-auto p-3 sm:p-5">
+          <div className="flex-1 overflow-auto p-3 sm:p-5 pb-20 sm:pb-5">
             <Outlet />
           </div>
-          <footer className="shrink-0 mt-auto border-t border-gray-200/80 bg-white py-1.5 px-3">
+          <footer className="shrink-0 mt-auto border-t border-gray-200/80 bg-white py-1.5 px-3 hidden sm:block">
             <FooterCredit />
           </footer>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation — PWA-style */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200/80 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-around px-1 py-1.5">
+          {([
+            { path: '/admin/dashboard',          icon: LayoutDashboard, label: t('nav.bottomHome', 'Home') },
+            { path: '/admin/contacts',            icon: Contact2,        label: t('nav.contacts', 'Contacts') },
+            { path: '/admin/invoices',            icon: FileText,        label: t('nav.invoices', 'Invoices') },
+            { path: '/admin/inventory-products',  icon: Package,         label: t('nav.inventory', 'Inventory') },
+            { path: '/admin/settings',            icon: Settings,        label: t('nav.settings', 'Settings') },
+          ] as { path: string; icon: typeof LayoutDashboard; label: string }[]).map(({ path, icon: Icon, label }) => {
+            const isActive = location.pathname === path;
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={cn(
+                  'flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all duration-150 min-w-0',
+                  isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                )}
+              >
+                <Icon className={cn('w-5 h-5 shrink-0', isActive && 'scale-110')} />
+                <span className="text-[9px] font-medium truncate">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 };

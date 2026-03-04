@@ -41,20 +41,24 @@ export const loginCustomer = async (mobile: string, password: string): Promise<C
   }
 
   // Get all customers from API (includes newly created ones)
-  // Fallback to localStorage if API fails, then to mockCustomers
+  // Fallback chain: API → localStorage → mockCustomers
   let customers: Customer[] = [];
   try {
     customers = await customersApi.getAll();
-  } catch (error) {
-    // Fallback to localStorage
+    // If API customers have no passwords, fall back to mockCustomers for auth
+    // (db.json may not store password field; mockCustomers always have passwords set)
+    const hasPasswordsInApi = customers.some((c) => c.password);
+    if (!hasPasswordsInApi) {
+      customers = mockCustomers;
+    }
+  } catch {
+    // Fallback to localStorage, then mockCustomers
     try {
       const stored = localStorage.getItem('customers-data');
-      if (stored) {
-        customers = JSON.parse(stored);
-      } else {
-        customers = mockCustomers;
-      }
-    } catch (e) {
+      const parsed: Customer[] = stored ? JSON.parse(stored) : [];
+      const hasPasswords = parsed.some((c) => c.password);
+      customers = hasPasswords ? parsed : mockCustomers;
+    } catch {
       customers = mockCustomers;
     }
   }

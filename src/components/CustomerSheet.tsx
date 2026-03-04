@@ -248,36 +248,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
-                  </label>
-                  <Input
-                    value={formData.gstin || ''}
-                    onChange={(e) => {
-                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
-                      setFormData({
-                        ...formData,
-                        gstin: value || undefined,
-                      });
-                    }}
-                    placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
-                    maxLength={15}
-                    disabled={isReadOnly}
-                    className="uppercase"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.area', 'Area')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
-                  </label>
-                  <Input
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    placeholder={t('customerSheet.areaPlaceholder', 'Enter service area')}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
                   <Select
                     value={formData.status}
@@ -310,6 +280,33 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
           {activeTab === 'plan' && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                  </label>
+                  <Input
+                    value={formData.gstin || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                      setFormData({ ...formData, gstin: value || undefined });
+                    }}
+                    placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
+                    maxLength={15}
+                    disabled={isReadOnly}
+                    className="uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.area', 'Area')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                  </label>
+                  <Input
+                    value={formData.area}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                    placeholder={t('customerSheet.areaPlaceholder', 'Enter service area')}
+                    disabled={isReadOnly}
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
                   <Select

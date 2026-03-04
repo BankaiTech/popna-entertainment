@@ -43,7 +43,7 @@ const SuperAdminLayout = () => {
                     >
                         <Menu className="w-5 h-5" />
                     </button>
-                    <img src="/NexLink.svg" alt="NexLink" className="h-[45px] w-auto object-contain shrink-0" />
+                    <img src="/NexLink.svg" alt="NexLink" className="h-[65px] w-auto object-contain shrink-0" />
                     <div className="hidden sm:block min-w-0">
                         <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('superAdmin.masterController', 'Master Controller')}</p>

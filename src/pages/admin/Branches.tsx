@@ -84,7 +84,7 @@ const AdminBranches = () => {
         e.preventDefault();
         setFormError('');
         const name = formName.trim();
-        if (!name) { setFormError('Branch name is required'); return; }
+        if (!name) { setFormError(t('branches.nameRequired', 'Branch name is required')); return; }
 
         setSaving(true);
         try {
@@ -96,7 +96,7 @@ const AdminBranches = () => {
             await loadBranches();
             setIsDialogOpen(false);
         } catch (err) {
-            setFormError(err instanceof Error ? err.message : 'Failed to save branch');
+            setFormError(err instanceof Error ? err.message : t('branches.saveFailed', 'Failed to save branch'));
         } finally {
             setSaving(false);
         }
@@ -130,11 +130,11 @@ const AdminBranches = () => {
                     <CardHeading className="p-0 w-full md:w-auto">
                         <div className="relative w-full min-w-0">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                            <Input placeholder="Search branches..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm w-full" />
+                            <Input placeholder={t('branches.searchPlaceholder', 'Search branches...')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm w-full" />
                         </div>
                     </CardHeading>
                     <CardToolbar className="text-sm text-muted-foreground">
-                        {branches.length} {branches.length === 1 ? 'branch' : 'branches'}
+                        {branches.length} {t(branches.length === 1 ? 'branches.count_one' : 'branches.count_other', branches.length === 1 ? 'branch' : 'branches')}
                     </CardToolbar>
                 </CardHeader>
 
@@ -142,7 +142,7 @@ const AdminBranches = () => {
                     {loading ? (
                         <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
                     ) : filteredBranches.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">No branches found</div>
+                        <div className="text-center py-12 text-muted-foreground">{t('branches.noBranchesFound', 'No branches found')}</div>
                     ) : (
                         <>
                             {/* Desktop */}
@@ -150,13 +150,13 @@ const AdminBranches = () => {
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b-2 border-border bg-muted/30">
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">ID</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Name</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">Address</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">Phone</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">Status</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">Created</th>
-                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">Actions</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('branches.colId', 'ID')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('common.name', 'Name')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('branches.colAddress', 'Address')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.mobile', 'Phone')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.status', 'Status')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('branches.colCreated', 'Created')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.actions', 'Actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -168,7 +168,7 @@ const AdminBranches = () => {
                                                 <td className="px-3 py-2 text-sm text-gray-600">{b.phone || '—'}</td>
                                                 <td className="px-3 py-2">
                                                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                                        {b.isActive ? 'Active' : 'Inactive'}
+                                                        {b.isActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2 text-sm text-gray-600">{formatDate(b.createdAt)}</td>
@@ -206,10 +206,10 @@ const AdminBranches = () => {
                                                 <span className="text-gray-600">{b.phone}</span>
                                             </div>
                                         )}
-                                        <div className="text-xs text-muted-foreground">Created: {formatDate(b.createdAt)}</div>
+                                        <div className="text-xs text-muted-foreground">{t('branches.colCreated', 'Created')}: {formatDate(b.createdAt)}</div>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={() => handleOpenEdit(b)} className="flex-1">
-                                                <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+                                                <Edit className="w-3.5 h-3.5 mr-1" /> {t('common.edit', 'Edit')}
                                             </Button>
                                             <Button variant="outline" size="sm" onClick={() => setDeleteId(b.id)} className="text-red-600 hover:bg-red-50">
                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -229,27 +229,27 @@ const AdminBranches = () => {
             {/* Add/Edit Dialog */}
             {isDialogOpen && (
                 <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-                    <DialogHeader title={editingBranch ? 'Edit Branch' : 'Add Branch'} onClose={() => setIsDialogOpen(false)} />
+                    <DialogHeader title={editingBranch ? t('branches.dialogEditTitle', 'Edit Branch') : t('branches.dialogAddTitle', 'Add Branch')} onClose={() => setIsDialogOpen(false)} />
                     <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
                         <DialogBody>
                             <div className="px-4 sm:px-6 py-4 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Branch Name <span className="text-destructive">*</span></label>
-                                    <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g. North Branch" required disabled={saving} />
+                                    <label className="block text-sm font-medium mb-1">{t('branches.labelName', 'Branch Name')} <span className="text-destructive">*</span></label>
+                                    <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t('branches.namePlaceholder', 'e.g. North Branch')} required disabled={saving} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Address</label>
-                                    <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder="Full address" disabled={saving} />
+                                    <label className="block text-sm font-medium mb-1">{t('branches.colAddress', 'Address')}</label>
+                                    <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={t('branches.addressPlaceholder', 'Full address')} disabled={saving} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Phone</label>
-                                    <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="Phone number" disabled={saving} />
+                                    <label className="block text-sm font-medium mb-1">{t('common.mobile', 'Phone')}</label>
+                                    <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder={t('branches.phonePlaceholder', 'Phone number')} disabled={saving} />
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <label className="text-sm font-medium">Status:</label>
+                                    <label className="text-sm font-medium">{t('common.status', 'Status')}:</label>
                                     <button type="button" onClick={() => setFormActive(!formActive)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors", formActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                         {formActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                        {formActive ? 'Active' : 'Inactive'}
+                                        {formActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                                     </button>
                                 </div>
                                 {formError && (
@@ -258,9 +258,9 @@ const AdminBranches = () => {
                             </div>
                         </DialogBody>
                         <DialogFooter className="flex-col sm:flex-row gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto" disabled={saving}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto" disabled={saving}>{t('common.cancel', 'Cancel')}</Button>
                             <Button type="submit" className="w-full sm:w-auto" disabled={saving}>
-                                {saving ? 'Saving...' : editingBranch ? 'Update' : 'Save'}
+                                {saving ? t('common.saving', 'Saving...') : editingBranch ? t('common.update', 'Update') : t('common.save', 'Save')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -270,15 +270,15 @@ const AdminBranches = () => {
             {/* Delete Confirmation */}
             {deleteId !== null && (
                 <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)}>
-                    <DialogHeader title="Delete Branch" onClose={() => setDeleteId(null)} />
+                    <DialogHeader title={t('branches.dialogDeleteTitle', 'Delete Branch')} onClose={() => setDeleteId(null)} />
                     <DialogBody>
                         <p className="px-4 sm:px-5 py-4 text-sm text-muted-foreground">
-                            Are you sure you want to delete this branch? This action cannot be undone.
+                            {t('branches.deleteConfirm', 'Are you sure you want to delete this branch? This action cannot be undone.')}
                         </p>
                     </DialogBody>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteId(null)} className="w-full sm:w-auto">Cancel</Button>
-                        <Button variant="destructive" onClick={handleDelete} className="w-full sm:w-auto">Delete</Button>
+                        <Button variant="outline" onClick={() => setDeleteId(null)} className="w-full sm:w-auto">{t('common.cancel', 'Cancel')}</Button>
+                        <Button variant="destructive" onClick={handleDelete} className="w-full sm:w-auto">{t('common.delete', 'Delete')}</Button>
                     </DialogFooter>
                 </Dialog>
             )}

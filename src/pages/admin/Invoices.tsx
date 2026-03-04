@@ -137,14 +137,12 @@ const Invoices = () => {
                 ))
               ) : null}
             </Select>
-            <Button onClick={() => setIsModalOpen(true)} size="xs" className="hidden sm:flex shrink-0">
-              <Plus className="w-3.5 h-3.5" />
-              {t('invoices.newInvoice', 'New Invoice')}
-            </Button>
-            <Button onClick={() => setIsModalOpen(true)} size="xs" className="sm:hidden w-auto shrink-0">
-              <Plus className="w-3.5 h-3.5" />
-              {t('invoices.newInvoice', 'New Invoice')}
-            </Button>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsModalOpen(true)} size="xs" className="w-fit shrink-0">
+                <Plus className="w-3.5 h-3.5" />
+                {t('invoices.newInvoice', 'New Invoice')}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">

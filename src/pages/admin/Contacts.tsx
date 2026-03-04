@@ -237,7 +237,7 @@ const Contacts = () => {
         await updateSupplier(id, data);
     };
     const handleDeleteSupplier = async (id: number) => {
-        if (confirm('Are you sure you want to delete this supplier?')) {
+        if (confirm(t('contacts.deleteSupplierConfirm', 'Are you sure you want to delete this supplier?'))) {
             await deleteSupplier(id);
         }
     };
@@ -574,10 +574,10 @@ const Contacts = () => {
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                         <div className="relative flex-1 w-full sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input className="pl-9" value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)} placeholder="Search suppliers..." />
+                            <Input className="pl-9" value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)} placeholder={t('contacts.searchSuppliers', 'Search suppliers...')} />
                         </div>
                         <Button onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }} className="w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" /> Add Supplier
+                            <Plus className="w-4 h-4 mr-2" /> {t('contacts.addSupplier', 'Add Supplier')}
                         </Button>
                     </div>
                     <div className="overflow-x-auto">
@@ -585,12 +585,12 @@ const Contacts = () => {
                         <table className="w-full text-sm hidden md:table">
                             <thead>
                                 <tr className="border-b bg-gray-50">
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Contact</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Mobile</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Tax No.</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Balance</th>
-                                    <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('common.name', 'Name')}</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('contacts.supplierContact', 'Contact')}</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('common.mobile', 'Mobile')}</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('contacts.supplierTaxNo', 'Tax No.')}</th>
+                                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('contacts.supplierBalance', 'Balance')}</th>
+                                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('common.actions', 'Actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -614,7 +614,7 @@ const Contacts = () => {
                                     </tr>
                                 ))}
                                 {filteredSuppliers.length === 0 && (
-                                    <tr><td colSpan={6} className="text-center py-8 text-gray-500">No suppliers found</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-8 text-gray-500">{t('contacts.noSuppliersFound', 'No suppliers found')}</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -635,15 +635,15 @@ const Contacts = () => {
                                         </div>
                                     </div>
                                     <div className="text-sm space-y-1">
-                                        <div><span className="text-muted-foreground">Mobile: </span><span>{supplier.mobile}</span></div>
-                                        {supplier.contactPerson && <div><span className="text-muted-foreground">Contact: </span><span>{supplier.contactPerson}</span></div>}
-                                        {supplier.taxNumber && <div><span className="text-muted-foreground">Tax No: </span><span>{supplier.taxNumber}</span></div>}
-                                        <div><span className="text-muted-foreground">Balance: </span><span>₹{(supplier.openingBalance || 0).toLocaleString()}</span></div>
+                                        <div><span className="text-muted-foreground">{t('common.mobile', 'Mobile')}: </span><span>{supplier.mobile}</span></div>
+                                        {supplier.contactPerson && <div><span className="text-muted-foreground">{t('contacts.supplierContact', 'Contact')}: </span><span>{supplier.contactPerson}</span></div>}
+                                        {supplier.taxNumber && <div><span className="text-muted-foreground">{t('contacts.supplierTaxNo', 'Tax No')}: </span><span>{supplier.taxNumber}</span></div>}
+                                        <div><span className="text-muted-foreground">{t('contacts.supplierBalance', 'Balance')}: </span><span>₹{(supplier.openingBalance || 0).toLocaleString()}</span></div>
                                     </div>
                                 </div>
                             ))}
                             {filteredSuppliers.length === 0 && (
-                                <div className="text-center py-8 text-gray-500">No suppliers found</div>
+                                <div className="text-center py-8 text-gray-500">{t('contacts.noSuppliersFound', 'No suppliers found')}</div>
                             )}
                         </div>
                     </div>
@@ -655,9 +655,9 @@ const Contacts = () => {
                 <Card>
                     <CardContent className="p-6 sm:p-8 text-center space-y-4">
                         <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-900">Import Contacts</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{t('contacts.importTitle', 'Import Contacts')}</h3>
                         <p className="text-sm text-gray-500 max-w-md mx-auto">
-                            Import customers and suppliers from a CSV file. Download the sample template to get the correct format.
+                            {t('contacts.importDesc', 'Import customers and suppliers from a CSV file. Download the sample template to get the correct format.')}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <a
@@ -665,10 +665,10 @@ const Contacts = () => {
                                 download="contacts_template.csv"
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
                             >
-                                Download Template
+                                {t('contacts.downloadTemplate', 'Download Template')}
                             </a>
                             <Button onClick={() => setShowImportModal(true)}>
-                                <Upload className="w-4 h-4 mr-2" /> Import CSV
+                                <Upload className="w-4 h-4 mr-2" /> {t('contacts.importCsv', 'Import CSV')}
                             </Button>
                         </div>
                     </CardContent>
@@ -690,7 +690,7 @@ const Contacts = () => {
             <ImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
-                title="Import Contacts"
+                title={t('contacts.importTitle', 'Import Contacts')}
                 templateUrl="/templates/contacts_template.csv"
                 templateFileName="contacts_template.csv"
                 onImport={handleImportContacts}

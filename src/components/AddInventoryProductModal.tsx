@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -27,10 +28,27 @@ interface AddInventoryProductModalProps {
     onAddSubCategory: (sub: Omit<SubCategory, 'id' | 'createdAt'>) => Promise<void>;
 }
 
-type FormTab = 'general' | 'variants';
+type FormTab = 'general' | 'pricing' | 'inventory' | 'variants';
 
 const emptyVariant: Omit<ProductVariant, 'id'> = {
     variantName: '', price: 0, taxType: 'none', skuId: '', warrantyId: undefined,
+    mrp: undefined, purchasePrice: undefined, barcode: undefined, currentStock: undefined,
+};
+
+const defaultFormData = {
+    name: '', sku: '', isActive: true, description: '', image: undefined as string | undefined,
+    categoryId: 0, categoryCode: '', subCategoryId: 0, unitId: 0, branchId: 0,
+    productType: 'physical' as 'physical' | 'service' | 'digital' | 'bundle',
+    brand: '',
+    price: 0, mrp: 0, purchasePrice: 0,
+    taxType: 'none' as 'inclusive' | 'exclusive' | 'none',
+    taxRateId: 0, warrantyId: 0,
+    hsnSacCode: '',
+    currentStock: 0, stockAlert: 0, reorderLevel: 0,
+    trackingType: 'none' as 'none' | 'serial' | 'batch',
+    barcode: '',
+    expiryTracking: false,
+    weight: 0, weightUnit: 'kg' as 'g' | 'kg' | 'lb',
 };
 
 const AddInventoryProductModal = ({
@@ -38,47 +56,54 @@ const AddInventoryProductModal = ({
     categories, subCategories, units, branches, taxRates, warranties,
     onAddCategory, onAddUnit, onAddBranch, onAddTaxRate, onAddSubCategory,
 }: AddInventoryProductModalProps) => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<FormTab>('general');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-
-    // Inline add modals
     const [showInline, setShowInline] = useState<'unit' | 'category' | 'branch' | 'taxRate' | 'subCategory' | null>(null);
-
-    // Form data
-    const [formData, setFormData] = useState({
-        name: '', sku: '', categoryId: 0, categoryCode: '', subCategoryId: 0,
-        branchId: 0, unitId: 0, stockAlert: 0, taxType: 'none' as 'inclusive' | 'exclusive' | 'none',
-        taxRateId: 0, warrantyId: 0, description: '', price: 0, isActive: true, image: undefined as string | undefined,
-    });
-
+    const [formData, setFormData] = useState(defaultFormData);
     const [variants, setVariants] = useState<Omit<ProductVariant, 'id'>[]>([]);
 
     useEffect(() => {
         if (editingProduct) {
             setFormData({
-                name: editingProduct.name, sku: editingProduct.sku,
-                categoryId: editingProduct.categoryId || 0, categoryCode: editingProduct.categoryCode || '',
-                subCategoryId: editingProduct.subCategoryId || 0, branchId: editingProduct.branchId || 0,
-                unitId: editingProduct.unitId || 0, stockAlert: editingProduct.stockAlert || 0,
-                taxType: editingProduct.taxType, taxRateId: editingProduct.taxRateId || 0,
-                warrantyId: editingProduct.warrantyId || 0, description: editingProduct.description || '',
-                price: editingProduct.price, isActive: editingProduct.isActive, image: editingProduct.image,
+                name: editingProduct.name,
+                sku: editingProduct.sku,
+                isActive: editingProduct.isActive,
+                description: editingProduct.description || '',
+                image: editingProduct.image,
+                categoryId: editingProduct.categoryId || 0,
+                categoryCode: editingProduct.categoryCode || '',
+                subCategoryId: editingProduct.subCategoryId || 0,
+                unitId: editingProduct.unitId || 0,
+                branchId: editingProduct.branchId || 0,
+                productType: editingProduct.productType || 'physical',
+                brand: editingProduct.brand || '',
+                price: editingProduct.price,
+                mrp: editingProduct.mrp || 0,
+                purchasePrice: editingProduct.purchasePrice || 0,
+                taxType: editingProduct.taxType,
+                taxRateId: editingProduct.taxRateId || 0,
+                warrantyId: editingProduct.warrantyId || 0,
+                hsnSacCode: editingProduct.hsnSacCode || '',
+                currentStock: editingProduct.currentStock || 0,
+                stockAlert: editingProduct.stockAlert || 0,
+                reorderLevel: editingProduct.reorderLevel || 0,
+                trackingType: editingProduct.trackingType || 'none',
+                barcode: editingProduct.barcode || '',
+                expiryTracking: editingProduct.expiryTracking || false,
+                weight: editingProduct.weight || 0,
+                weightUnit: editingProduct.weightUnit || 'kg',
             });
             setVariants(editingProduct.variants.map(({ id: _id, ...rest }) => rest));
         } else {
-            setFormData({
-                name: '', sku: '', categoryId: 0, categoryCode: '', subCategoryId: 0,
-                branchId: 0, unitId: 0, stockAlert: 0, taxType: 'none',
-                taxRateId: 0, warrantyId: 0, description: '', price: 0, isActive: true, image: undefined,
-            });
+            setFormData(defaultFormData);
             setVariants([]);
         }
         setActiveTab('general');
         setError('');
     }, [editingProduct, isOpen]);
 
-    // Auto-fill category code
     useEffect(() => {
         if (formData.categoryId) {
             const cat = categories.find((c) => c.id === formData.categoryId);
@@ -87,11 +112,12 @@ const AddInventoryProductModal = ({
     }, [formData.categoryId, categories]);
 
     const filteredSubCategories = subCategories.filter((s) => s.categoryId === formData.categoryId);
+    const set = (patch: Partial<typeof formData>) => setFormData((prev) => ({ ...prev, ...patch }));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name.trim()) { setError('Product name is required'); return; }
-        if (!formData.sku.trim()) { setError('SKU is required'); return; }
+        if (!formData.name.trim()) { setError(t('productModal.nameRequired', 'Product name is required')); return; }
+        if (!formData.sku.trim()) { setError(t('productModal.skuRequired', 'SKU is required')); return; }
 
         setSaving(true);
         try {
@@ -105,6 +131,14 @@ const AddInventoryProductModal = ({
                 taxRateId: formData.taxRateId || undefined,
                 warrantyId: formData.warrantyId || undefined,
                 stockAlert: formData.stockAlert || undefined,
+                mrp: formData.mrp || undefined,
+                purchasePrice: formData.purchasePrice || undefined,
+                currentStock: formData.currentStock || undefined,
+                reorderLevel: formData.reorderLevel || undefined,
+                weight: formData.weight || undefined,
+                brand: formData.brand || undefined,
+                hsnSacCode: formData.hsnSacCode || undefined,
+                barcode: formData.barcode || undefined,
                 variants: variants.map((v, i) => ({ ...v, id: i + 1 })),
             };
             if (editingProduct && onUpdate) {
@@ -114,7 +148,7 @@ const AddInventoryProductModal = ({
             }
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save');
+            setError(err instanceof Error ? err.message : t('common.saving'));
         } finally {
             setSaving(false);
         }
@@ -122,9 +156,16 @@ const AddInventoryProductModal = ({
 
     const addVariant = () => setVariants([...variants, { ...emptyVariant }]);
     const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index));
-    const updateVariant = (index: number, field: string, value: string | number | undefined) => {
+    const updateVariant = (index: number, field: string, value: string | number | boolean | undefined) => {
         setVariants(variants.map((v, i) => i === index ? { ...v, [field]: value } : v));
     };
+
+    const tabs: { key: FormTab; label: string }[] = [
+        { key: 'general',   label: t('productModal.tabGeneral', 'General') },
+        { key: 'pricing',   label: t('productModal.tabPricing', 'Pricing & Tax') },
+        { key: 'inventory', label: t('productModal.tabInventory', 'Inventory') },
+        { key: 'variants',  label: `${t('productModal.tabVariants', 'Variants')} (${variants.length})` },
+    ];
 
     if (!isOpen) return null;
 
@@ -132,225 +173,374 @@ const AddInventoryProductModal = ({
         <>
             <Dialog open={isOpen} onClose={onClose} size="xl" closeOnOverlayClick={!saving}>
                 <DialogHeader
-                    title={editingProduct ? 'Edit Product' : 'Add New Product'}
+                    title={editingProduct ? t('productModal.editTitle', 'Edit Product') : t('productModal.addTitle', 'Add New Product')}
                     onClose={onClose}
                 />
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                    {/* Tabs */}
-                    <div className="flex border-b border-gray-200 px-4">
-                        {(['general', 'variants'] as FormTab[]).map((tab) => (
+                    <div className="flex border-b border-gray-200 px-4 overflow-x-auto scrollbar-thin shrink-0">
+                        {tabs.map((tab) => (
                             <button
-                                key={tab}
+                                key={tab.key}
                                 type="button"
-                                onClick={() => setActiveTab(tab)}
+                                onClick={() => setActiveTab(tab.key)}
                                 className={cn(
-                                    'px-4 py-2.5 text-sm font-medium border-b-2 transition-all capitalize',
-                                    activeTab === tab
+                                    'px-4 py-2.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap shrink-0',
+                                    activeTab === tab.key
                                         ? 'border-blue-600 text-blue-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
                                 )}
                             >
-                                {tab === 'general' ? 'General Details' : `Variants (${variants.length})`}
+                                {tab.label}
                             </button>
                         ))}
                     </div>
 
                     <DialogBody className="p-4 sm:p-5">
+
+                        {/* ── GENERAL TAB ── */}
                         {activeTab === 'general' && (
                             <div className="space-y-4">
-                                {/* Row 1: Name + SKU */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Product Name <span className="text-destructive">*</span></label>
-                                        <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Product name" required disabled={saving} />
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.name', 'Product Name')} <span className="text-destructive">*</span></label>
+                                        <Input value={formData.name} onChange={(e) => set({ name: e.target.value })} placeholder={t('productModal.name', 'Product name')} required disabled={saving} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">SKU ID <span className="text-destructive">*</span></label>
-                                        <Input value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} placeholder="e.g. PRD-001" required disabled={saving} />
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.sku', 'SKU ID')} <span className="text-destructive">*</span></label>
+                                        <Input value={formData.sku} onChange={(e) => set({ sku: e.target.value })} placeholder="e.g. PRD-001" required disabled={saving} />
                                     </div>
                                 </div>
 
-                                {/* Row 2: Unit + Category */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.productType', 'Product Type')}</label>
+                                        <Select value={formData.productType} onChange={(e) => set({ productType: e.target.value as typeof formData.productType })} disabled={saving}>
+                                            <option value="physical">{t('productModal.typePhysical', 'Physical Product')}</option>
+                                            <option value="service">{t('productModal.typeService', 'Service')}</option>
+                                            <option value="digital">{t('productModal.typeDigital', 'Digital / Download')}</option>
+                                            <option value="bundle">{t('productModal.typeBundle', 'Bundle / Kit')}</option>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.brand', 'Brand / Manufacturer')}</label>
+                                        <Input value={formData.brand} onChange={(e) => set({ brand: e.target.value })} placeholder={t('productModal.brandPlaceholder', 'e.g. Samsung, Amul, TP-Link')} disabled={saving} />
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">Unit</label>
+                                            <label className="text-sm font-medium">{t('productModal.unit', 'Unit')}</label>
                                             <button type="button" onClick={() => setShowInline('unit')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                <Plus className="w-3 h-3" /> Add
+                                                <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
                                             </button>
                                         </div>
-                                        <Select value={formData.unitId || ''} onChange={(e) => setFormData({ ...formData, unitId: Number(e.target.value) })} disabled={saving}>
-                                            <option value="">Select unit</option>
+                                        <Select value={formData.unitId || ''} onChange={(e) => set({ unitId: Number(e.target.value) })} disabled={saving}>
+                                            <option value="">{t('productModal.selectUnit', 'Select unit')}</option>
                                             {units.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.shortName})</option>)}
                                         </Select>
                                     </div>
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">Category</label>
+                                            <label className="text-sm font-medium">{t('productModal.category', 'Category')}</label>
                                             <button type="button" onClick={() => setShowInline('category')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                <Plus className="w-3 h-3" /> Add
+                                                <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
                                             </button>
                                         </div>
-                                        <Select value={formData.categoryId || ''} onChange={(e) => setFormData({ ...formData, categoryId: Number(e.target.value), subCategoryId: 0 })} disabled={saving}>
-                                            <option value="">Select category</option>
+                                        <Select value={formData.categoryId || ''} onChange={(e) => set({ categoryId: Number(e.target.value), subCategoryId: 0 })} disabled={saving}>
+                                            <option value="">{t('productModal.selectCategory', 'Select category')}</option>
                                             {categories.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
                                         </Select>
                                     </div>
                                 </div>
 
-                                {/* Row 3: Category Code + Sub Category */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Category Code</label>
-                                        <Input value={formData.categoryCode} onChange={(e) => setFormData({ ...formData, categoryCode: e.target.value })} placeholder="Auto-filled" disabled={saving} />
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.categoryCode', 'Category Code')}</label>
+                                        <Input value={formData.categoryCode} onChange={(e) => set({ categoryCode: e.target.value })} placeholder={t('productModal.categoryCode', 'Auto-filled')} disabled={saving} />
                                     </div>
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">Sub Category</label>
+                                            <label className="text-sm font-medium">{t('productModal.subCategory', 'Sub Category')}</label>
                                             {formData.categoryId > 0 && (
                                                 <button type="button" onClick={() => setShowInline('subCategory')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                    <Plus className="w-3 h-3" /> Add
+                                                    <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
                                                 </button>
                                             )}
                                         </div>
-                                        <Select value={formData.subCategoryId || ''} onChange={(e) => setFormData({ ...formData, subCategoryId: Number(e.target.value) })} disabled={saving || !formData.categoryId}>
-                                            <option value="">Select sub-category</option>
+                                        <Select value={formData.subCategoryId || ''} onChange={(e) => set({ subCategoryId: Number(e.target.value) })} disabled={saving || !formData.categoryId}>
+                                            <option value="">{t('productModal.selectSubCategory', 'Select sub-category')}</option>
                                             {filteredSubCategories.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </Select>
                                     </div>
                                 </div>
 
-                                {/* Row 4: Branch + Stock Alert */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">Branch</label>
+                                            <label className="text-sm font-medium">{t('productModal.branch', 'Branch')}</label>
                                             <button type="button" onClick={() => setShowInline('branch')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                <Plus className="w-3 h-3" /> Add
+                                                <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
                                             </button>
                                         </div>
-                                        <Select value={formData.branchId || ''} onChange={(e) => setFormData({ ...formData, branchId: Number(e.target.value) })} disabled={saving}>
-                                            <option value="">Select branch</option>
+                                        <Select value={formData.branchId || ''} onChange={(e) => set({ branchId: Number(e.target.value) })} disabled={saving}>
+                                            <option value="">{t('productModal.selectBranch', 'Select branch')}</option>
                                             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}{b.location ? ` (${b.location})` : ''}</option>)}
                                         </Select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Stock Alert Quantity</label>
-                                        <Input type="number" min="0" value={formData.stockAlert || ''} onChange={(e) => setFormData({ ...formData, stockAlert: Number(e.target.value) })} placeholder="e.g. 10" disabled={saving} />
-                                    </div>
                                 </div>
 
-                                {/* Row 5: Tax Type + Tax Rate */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Tax Type</label>
-                                        <Select value={formData.taxType} onChange={(e) => setFormData({ ...formData, taxType: e.target.value as 'inclusive' | 'exclusive' | 'none' })} disabled={saving}>
-                                            <option value="none">No Tax</option>
-                                            <option value="inclusive">Inclusive</option>
-                                            <option value="exclusive">Exclusive</option>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">Tax Rate</label>
-                                            <button type="button" onClick={() => setShowInline('taxRate')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                <Plus className="w-3 h-3" /> Add
-                                            </button>
-                                        </div>
-                                        <Select value={formData.taxRateId || ''} onChange={(e) => setFormData({ ...formData, taxRateId: Number(e.target.value) })} disabled={saving || formData.taxType === 'none'}>
-                                            <option value="">Select tax rate</option>
-                                            {taxRates.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.rate}%)</option>)}
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                {/* Row 6: Warranty + Price */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Warranty</label>
-                                        <Select value={formData.warrantyId || ''} onChange={(e) => setFormData({ ...formData, warrantyId: Number(e.target.value) })} disabled={saving}>
-                                            <option value="">No warranty</option>
-                                            {warranties.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.duration} {w.durationUnit})</option>)}
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Price <span className="text-destructive">*</span></label>
-                                        <Input type="number" min="0" step="0.01" value={formData.price || ''} onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
-                                    </div>
-                                </div>
-
-                                {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Description</label>
+                                    <label className="block text-sm font-medium mb-1">{t('productModal.description', 'Description')}</label>
                                     <textarea
                                         value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="Product description..."
+                                        onChange={(e) => set({ description: e.target.value })}
+                                        placeholder={t('productModal.descriptionPlaceholder', 'Product description...')}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px] resize-vertical"
                                         disabled={saving}
                                     />
                                 </div>
 
-                                {/* Active */}
                                 <div className="flex items-center gap-2">
-                                    <input type="checkbox" id="productActive" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 rounded border-border" disabled={saving} />
-                                    <label htmlFor="productActive" className="text-sm font-medium">Active (visible in listings)</label>
+                                    <input type="checkbox" id="productActive" checked={formData.isActive} onChange={(e) => set({ isActive: e.target.checked })} className="w-4 h-4 rounded border-border" disabled={saving} />
+                                    <label htmlFor="productActive" className="text-sm font-medium">{t('productModal.active', 'Active (visible in listings)')}</label>
                                 </div>
                             </div>
                         )}
 
+                        {/* ── PRICING & TAX TAB ── */}
+                        {activeTab === 'pricing' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.sellingPrice', 'Selling Price (₹)')} <span className="text-destructive">*</span></label>
+                                        <Input type="number" min="0" step="0.01" value={formData.price || ''} onChange={(e) => set({ price: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            {t('productModal.mrp', 'MRP (₹)')}
+                                            <span className="ml-1 text-xs text-gray-400 font-normal">{t('productModal.mrpHint', 'Max Retail Price')}</span>
+                                        </label>
+                                        <Input type="number" min="0" step="0.01" value={formData.mrp || ''} onChange={(e) => set({ mrp: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.purchasePrice', 'Purchase / Cost Price (₹)')}</label>
+                                        <Input type="number" min="0" step="0.01" value={formData.purchasePrice || ''} onChange={(e) => set({ purchasePrice: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            {t('productModal.hsnSac', 'HSN / SAC Code')}
+                                            <span className="ml-1 text-xs text-amber-600 font-normal">{t('productModal.hsnSacHint', 'GST required')}</span>
+                                        </label>
+                                        <Input value={formData.hsnSacCode} onChange={(e) => set({ hsnSacCode: e.target.value })} placeholder={t('productModal.hsnSacPlaceholder', 'e.g. 998314 (SAC) or 85171200 (HSN)')} disabled={saving} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.taxType', 'Tax Type')}</label>
+                                        <Select value={formData.taxType} onChange={(e) => set({ taxType: e.target.value as typeof formData.taxType })} disabled={saving}>
+                                            <option value="none">{t('productModal.taxNone', 'No Tax')}</option>
+                                            <option value="inclusive">{t('productModal.taxInclusive', 'Inclusive (price includes GST)')}</option>
+                                            <option value="exclusive">{t('productModal.taxExclusive', 'Exclusive (GST added on top)')}</option>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="text-sm font-medium">{t('productModal.taxRate', 'Tax Rate')}</label>
+                                            <button type="button" onClick={() => setShowInline('taxRate')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
+                                                <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
+                                            </button>
+                                        </div>
+                                        <Select value={formData.taxRateId || ''} onChange={(e) => set({ taxRateId: Number(e.target.value) })} disabled={saving || formData.taxType === 'none'}>
+                                            <option value="">{t('productModal.selectTaxRate', 'Select tax rate')}</option>
+                                            {taxRates.map((t2) => <option key={t2.id} value={t2.id}>{t2.name} ({t2.rate}%)</option>)}
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.warranty', 'Warranty')}</label>
+                                        <Select value={formData.warrantyId || ''} onChange={(e) => set({ warrantyId: Number(e.target.value) })} disabled={saving}>
+                                            <option value="">{t('productModal.noWarranty', 'No warranty')}</option>
+                                            {warranties.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.duration} {w.durationUnit})</option>)}
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {formData.price > 0 && formData.purchasePrice > 0 && (
+                                    <div className={cn(
+                                        'p-3 rounded-lg text-sm font-medium',
+                                        formData.price > formData.purchasePrice
+                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                    )}>
+                                        {t('productModal.margin', 'Margin')}: ₹{(formData.price - formData.purchasePrice).toFixed(2)} ({((formData.price - formData.purchasePrice) / formData.purchasePrice * 100).toFixed(1)}%)
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── INVENTORY & TRACKING TAB ── */}
+                        {activeTab === 'inventory' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.currentStock', 'Current Stock (Opening Qty)')}</label>
+                                        <Input type="number" min="0" value={formData.currentStock || ''} onChange={(e) => set({ currentStock: Number(e.target.value) })} placeholder="0" disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            {t('productModal.stockAlert', 'Stock Alert Quantity')}
+                                            <span className="ml-1 text-xs text-gray-400 font-normal">{t('productModal.stockAlertHint', 'notify below this')}</span>
+                                        </label>
+                                        <Input type="number" min="0" value={formData.stockAlert || ''} onChange={(e) => set({ stockAlert: Number(e.target.value) })} placeholder="e.g. 10" disabled={saving} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            {t('productModal.reorderLevel', 'Reorder Level')}
+                                            <span className="ml-1 text-xs text-gray-400 font-normal">{t('productModal.reorderHint', 'trigger PO below this')}</span>
+                                        </label>
+                                        <Input type="number" min="0" value={formData.reorderLevel || ''} onChange={(e) => set({ reorderLevel: Number(e.target.value) })} placeholder="e.g. 20" disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.barcode', 'Barcode (EAN / UPC / Custom)')}</label>
+                                        <Input value={formData.barcode} onChange={(e) => set({ barcode: e.target.value })} placeholder="e.g. 8901234567890" disabled={saving} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.trackingType', 'Tracking Type')}</label>
+                                        <Select value={formData.trackingType} onChange={(e) => set({ trackingType: e.target.value as typeof formData.trackingType })} disabled={saving}>
+                                            <option value="none">{t('productModal.trackingNone', 'None (Generic / FMCG)')}</option>
+                                            <option value="serial">{t('productModal.trackingSerial', 'Serial Number — Electronics, ISP Equipment')}</option>
+                                            <option value="batch">{t('productModal.trackingBatch', 'Batch / Lot Number — Pharma, Food')}</option>
+                                        </Select>
+                                    </div>
+                                    <div className="flex flex-col justify-end pb-1">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.expiryTracking}
+                                                onChange={(e) => set({ expiryTracking: e.target.checked })}
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                                                disabled={saving}
+                                            />
+                                            <span className="text-sm font-medium">{t('productModal.expiryTracking', 'Track Expiry Dates')}</span>
+                                        </label>
+                                        <p className="text-xs text-gray-400 mt-0.5 ml-6">{t('productModal.expiryHint', 'For pharma, dairy, packaged food')}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.weight', 'Weight')}</label>
+                                        <Input type="number" min="0" step="0.001" value={formData.weight || ''} onChange={(e) => set({ weight: Number(e.target.value) })} placeholder="e.g. 0.5" disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.weightUnit', 'Weight Unit')}</label>
+                                        <Select value={formData.weightUnit} onChange={(e) => set({ weightUnit: e.target.value as typeof formData.weightUnit })} disabled={saving}>
+                                            <option value="g">{t('productModal.weightG', 'Grams (g)')}</option>
+                                            <option value="kg">{t('productModal.weightKg', 'Kilograms (kg)')}</option>
+                                            <option value="lb">{t('productModal.weightLb', 'Pounds (lb)')}</option>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                    <p className="text-xs font-semibold text-blue-700 mb-1">{t('productModal.fieldGuideTitle', 'Field Guide by Business Type')}</p>
+                                    <ul className="text-xs text-blue-600 space-y-0.5 list-disc list-inside">
+                                        <li>{t('productModal.guideGrocery', 'Supermarket / Grocery — Stock Alert, Barcode, Expiry Tracking')}</li>
+                                        <li>{t('productModal.guideIsp', 'ISP / Electronics — Serial Number tracking, Reorder Level')}</li>
+                                        <li>{t('productModal.guidePharma', 'Pharmacy — Batch tracking, Expiry Dates, Reorder Level')}</li>
+                                        <li>{t('productModal.guideTextile', 'Textile / Apparel — Variants for size/color, Weight for fabric')}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── VARIANTS TAB ── */}
                         {activeTab === 'variants' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-500">Add product variations (e.g. size, color, storage)</p>
+                                    <p className="text-sm text-gray-500">{t('productModal.variantDesc', 'Add product variations (e.g. size, color, storage, speed plan)')}</p>
                                     <Button type="button" size="sm" onClick={addVariant}>
-                                        <Plus className="w-4 h-4 mr-1" /> Add Variant
+                                        <Plus className="w-4 h-4 mr-1" /> {t('productModal.addVariant', 'Add Variant')}
                                     </Button>
                                 </div>
 
                                 {variants.length === 0 ? (
                                     <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">
-                                        <p className="text-sm">No variants yet. Click "Add Variant" to create one.</p>
+                                        <p className="text-sm">{t('productModal.noVariants', 'No variants yet. Click "Add Variant" to create one.')}</p>
+                                        <p className="text-xs mt-1 text-gray-300">{t('productModal.variantExamples', 'Examples: S/M/L/XL for textile, 50Mbps/100Mbps for ISP, 256GB/512GB for electronics')}</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         {variants.map((variant, index) => (
                                             <div key={index} className="border rounded-lg p-4 bg-gray-50 space-y-3 relative">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-semibold text-gray-700">Variant #{index + 1}</span>
+                                                    <span className="text-sm font-semibold text-gray-700">{t('productModal.tabVariants', 'Variant')} #{index + 1}</span>
                                                     <button type="button" onClick={() => removeVariant(index)} className="p-1 hover:bg-red-50 rounded text-red-500">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">Variant Name <span className="text-destructive">*</span></label>
-                                                        <Input value={variant.variantName} onChange={(e) => updateVariant(index, 'variantName', e.target.value)} placeholder="e.g. 256GB Black" disabled={saving} />
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantName', 'Variant Name')} <span className="text-destructive">*</span></label>
+                                                        <Input value={variant.variantName} onChange={(e) => updateVariant(index, 'variantName', e.target.value)} placeholder={t('productModal.variantNamePlaceholder', 'e.g. 256GB Black / XL Red / 100Mbps')} disabled={saving} />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">SKU ID</label>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.sku', 'SKU ID')}</label>
                                                         <Input value={variant.skuId} onChange={(e) => updateVariant(index, 'skuId', e.target.value)} placeholder="e.g. PRD-001-V1" disabled={saving} />
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">Price</label>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantPrice', 'Selling Price (₹)')}</label>
                                                         <Input type="number" min="0" step="0.01" value={variant.price || ''} onChange={(e) => updateVariant(index, 'price', Number(e.target.value))} placeholder="0.00" disabled={saving} />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">Tax Type</label>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantMrp', 'MRP (₹)')}</label>
+                                                        <Input type="number" min="0" step="0.01" value={variant.mrp || ''} onChange={(e) => updateVariant(index, 'mrp', Number(e.target.value) || undefined)} placeholder="0.00" disabled={saving} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantPurchasePrice', 'Purchase Price (₹)')}</label>
+                                                        <Input type="number" min="0" step="0.01" value={variant.purchasePrice || ''} onChange={(e) => updateVariant(index, 'purchasePrice', Number(e.target.value) || undefined)} placeholder="0.00" disabled={saving} />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.taxType', 'Tax Type')}</label>
                                                         <Select value={variant.taxType} onChange={(e) => updateVariant(index, 'taxType', e.target.value)} disabled={saving}>
-                                                            <option value="none">No Tax</option>
-                                                            <option value="inclusive">Inclusive</option>
-                                                            <option value="exclusive">Exclusive</option>
+                                                            <option value="none">{t('productModal.taxNone', 'No Tax')}</option>
+                                                            <option value="inclusive">{t('productModal.taxInclusive', 'Inclusive')}</option>
+                                                            <option value="exclusive">{t('productModal.taxExclusive', 'Exclusive')}</option>
                                                         </Select>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">Warranty</label>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.warranty', 'Warranty')}</label>
                                                         <Select value={variant.warrantyId || ''} onChange={(e) => updateVariant(index, 'warrantyId', e.target.value ? Number(e.target.value) : undefined)} disabled={saving}>
-                                                            <option value="">No warranty</option>
+                                                            <option value="">{t('productModal.noWarranty', 'No warranty')}</option>
                                                             {warranties.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                                                         </Select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantBarcode', 'Barcode')}</label>
+                                                        <Input value={variant.barcode || ''} onChange={(e) => updateVariant(index, 'barcode', e.target.value || undefined)} placeholder="EAN/UPC" disabled={saving} />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs font-medium mb-1">{t('productModal.variantStock', 'Current Stock')}</label>
+                                                        <Input type="number" min="0" value={variant.currentStock ?? ''} onChange={(e) => updateVariant(index, 'currentStock', Number(e.target.value))} placeholder="0" disabled={saving} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -365,21 +555,20 @@ const AddInventoryProductModal = ({
                         )}
                     </DialogBody>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={onClose} disabled={saving}>{t('common.cancel', 'Cancel')}</Button>
                         <Button type="submit" disabled={saving}>
-                            {saving ? 'Saving...' : editingProduct ? 'Update Product' : 'Add Product'}
+                            {saving ? t('common.saving', 'Saving...') : editingProduct ? t('productModal.editTitle', 'Update Product') : t('productModal.addTitle', 'Add Product')}
                         </Button>
                     </DialogFooter>
                 </form>
             </Dialog>
 
-            {/* Inline Add Modals */}
             <InlineAddModal
                 isOpen={showInline === 'unit'}
                 onClose={() => setShowInline(null)}
-                title="Add Unit"
+                title={t('productModal.unit', 'Add Unit')}
                 fields={[
-                    { name: 'name', label: 'Unit Name', required: true, placeholder: 'e.g. Kilogram' },
+                    { name: 'name', label: t('common.name', 'Unit Name'), required: true, placeholder: 'e.g. Kilogram' },
                     { name: 'shortName', label: 'Short Name', required: true, placeholder: 'e.g. Kg' },
                 ]}
                 onSave={async (data) => {
@@ -389,11 +578,11 @@ const AddInventoryProductModal = ({
             <InlineAddModal
                 isOpen={showInline === 'category'}
                 onClose={() => setShowInline(null)}
-                title="Add Category"
+                title={t('productModal.category', 'Add Category')}
                 fields={[
-                    { name: 'name', label: 'Category Name', required: true, placeholder: 'e.g. Electronics' },
-                    { name: 'code', label: 'Category Code', required: true, placeholder: 'e.g. ELEC' },
-                    { name: 'description', label: 'Description', placeholder: 'Optional description' },
+                    { name: 'name', label: t('productModal.category', 'Category Name'), required: true, placeholder: 'e.g. Electronics' },
+                    { name: 'code', label: t('productModal.categoryCode', 'Category Code'), required: true, placeholder: 'e.g. ELEC' },
+                    { name: 'description', label: t('productModal.description', 'Description'), placeholder: 'Optional description' },
                 ]}
                 onSave={async (data) => {
                     await onAddCategory({ organizationId: '', name: data.name, code: data.code, description: data.description });
@@ -402,9 +591,9 @@ const AddInventoryProductModal = ({
             <InlineAddModal
                 isOpen={showInline === 'branch'}
                 onClose={() => setShowInline(null)}
-                title="Add Branch"
+                title={t('productModal.branch', 'Add Branch')}
                 fields={[
-                    { name: 'name', label: 'Branch Name', required: true, placeholder: 'e.g. Main Branch' },
+                    { name: 'name', label: t('productModal.branch', 'Branch Name'), required: true, placeholder: 'e.g. Main Branch' },
                     { name: 'location', label: 'Location', placeholder: 'e.g. Chennai' },
                 ]}
                 onSave={async (data) => {
@@ -414,10 +603,10 @@ const AddInventoryProductModal = ({
             <InlineAddModal
                 isOpen={showInline === 'taxRate'}
                 onClose={() => setShowInline(null)}
-                title="Add Tax Rate"
+                title={t('productModal.taxRate', 'Add Tax Rate')}
                 fields={[
-                    { name: 'name', label: 'Tax Name', required: true, placeholder: 'e.g. GST 18%' },
-                    { name: 'rate', label: 'Rate (%)', required: true, type: 'number', placeholder: 'e.g. 18' },
+                    { name: 'name', label: t('productModal.taxType', 'Tax Name'), required: true, placeholder: 'e.g. GST 18%' },
+                    { name: 'rate', label: t('productModal.taxRate', 'Rate (%)'), required: true, type: 'number', placeholder: 'e.g. 18' },
                 ]}
                 onSave={async (data) => {
                     await onAddTaxRate({ organizationId: '', name: data.name, rate: Number(data.rate), type: 'exclusive' });
@@ -426,9 +615,9 @@ const AddInventoryProductModal = ({
             <InlineAddModal
                 isOpen={showInline === 'subCategory'}
                 onClose={() => setShowInline(null)}
-                title="Add Sub Category"
+                title={t('productModal.subCategory', 'Add Sub Category')}
                 fields={[
-                    { name: 'name', label: 'Sub Category Name', required: true, placeholder: 'e.g. Mobile Phones' },
+                    { name: 'name', label: t('productModal.subCategory', 'Sub Category Name'), required: true, placeholder: 'e.g. Mobile Phones' },
                 ]}
                 onSave={async (data) => {
                     await onAddSubCategory({ organizationId: '', categoryId: formData.categoryId, name: data.name });

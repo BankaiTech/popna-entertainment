@@ -41,7 +41,7 @@ const PublicLayout = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <Link to="/" className="flex items-center gap-2">
-                <img src="/NexLink.svg" alt="NexLink" className="h-[150px] w-auto object-contain" />
+                <img src="/NexLink.svg" alt="NexLink" className="h-[218px] w-auto object-contain" />
               </Link>
             </div>
 
