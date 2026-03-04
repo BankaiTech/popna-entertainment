@@ -15,7 +15,7 @@ import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare } from 'lucide-react';
 import type { Customer, Supplier, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { cn } from '@/lib/utils';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -296,71 +296,69 @@ const Contacts = () => {
     ];
 
     return (
-        <div className="space-y-4">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h1 className="text-lg sm:text-xl font-bold text-foreground">
-                        {t('contacts.title', 'Contacts')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('contacts.subtitle', 'Manage customers, suppliers, and import contacts')}
-                    </p>
+        <div className="space-y-3">
+            {/* Tabs + Action buttons in one row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-200">
+                <div className="flex flex-wrap gap-1">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
+                                    activeTab === tab.id
+                                        ? 'border-blue-600 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                )}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                                {tab.count !== undefined && (
+                                    <span className={cn(
+                                        'px-2 py-0.5 text-xs rounded-full',
+                                        activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                    )}>
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+                {/* Tab-level action buttons */}
+                <div className="flex gap-2 pb-2 sm:pb-0 px-1 sm:px-0">
+                    {activeTab === 'customers' && !isEmployee && (
+                        <>
+                            <Button onClick={() => {
+                                const pendingCustomers = customers.filter(c => c.paymentStatus === 'not_paid' && c.status === 'Active');
+                                alert(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
+                            }} variant="outline" size="xs">
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                SMS
+                            </Button>
+                            <Button onClick={handleDownloadExcel} variant="outline" size="xs" disabled={filteredCustomers.length === 0}>
+                                <Download className="w-3.5 h-3.5" />
+                                {t('customers.downloadExcel', 'Export')}
+                            </Button>
+                            <Button onClick={handleAddCustomer} size="xs">
+                                <Plus className="w-3.5 h-3.5" />
+                                {t('customers.addCustomer', 'Add')}
+                            </Button>
+                        </>
+                    )}
+                    {activeTab === 'suppliers' && (
+                        <Button onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }} size="xs">
+                            <Plus className="w-3.5 h-3.5" />
+                            {t('contacts.addSupplier', 'Add')}
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex flex-wrap gap-1 border-b border-gray-200">
-                {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-                                activeTab === tab.id
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            )}
-                        >
-                            <Icon className="w-4 h-4" />
-                            {tab.label}
-                            {tab.count !== undefined && (
-                                <span className={cn(
-                                    'px-2 py-0.5 text-xs rounded-full',
-                                    activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                                )}>
-                                    {tab.count}
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* ═══════════ CUSTOMERS TAB ═══════════ */}
             {activeTab === 'customers' && (
                 <div className="space-y-3">
-                    {/* Action bar */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div />
-                        <div className="flex gap-2 w-full sm:w-auto">
-                            {!isEmployee && (
-                                <>
-                                    <Button onClick={handleDownloadExcel} variant="outline" className="flex-1 sm:flex-initial" disabled={filteredCustomers.length === 0}>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        {t('customers.downloadExcel', 'Download Excel')}
-                                    </Button>
-                                    <Button onClick={handleAddCustomer} className="flex-1 sm:flex-initial">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        {t('customers.addCustomer', 'Add Customer')}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Data Grid */}
                     <Card>
                         <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -395,7 +393,7 @@ const Contacts = () => {
                                     onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
                                     className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
                                 >
-                                    <option value="All">{t('customers.allConnections', 'All Connections')}</option>
+                                    <option value="All">{t('customers.allConnections', 'All Categories')}</option>
                                     {Array.isArray(products) && products.length > 0 ? (
                                         products.map((product) => (
                                             <option key={product.id} value={product.name}>
@@ -422,7 +420,7 @@ const Contacts = () => {
                                 <div className="text-center py-12">{t('common.loading', 'Loading...')}</div>
                             ) : filteredCustomers.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
-                                    {t('customers.noResults', 'No customers found matching your criteria.')}
+                                    {t('customers.noResults', 'No records found matching your criteria.')}
                                 </div>
                             ) : (
                                 <>
@@ -431,17 +429,17 @@ const Contacts = () => {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="border-b-2 border-border bg-muted/30">
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('customers.id', 'ID')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('customers.name', 'Name')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.mobile', 'Mobile')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('customers.connectionType', 'Connection Type')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('customers.package', 'Package')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.stbNo', 'STB No')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.canCaf', 'CAN/CAF')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.cin', 'CIN')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.area', 'Area')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.paymentStatus', 'Payment')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('customers.status', 'Status')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('common.id', 'ID')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.name', 'Name')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.mobile', 'Mobile')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.category', 'Category')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.planItem', 'Plan / Item')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.deviceId', 'Device ID')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.refNo', 'Ref No')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.status', 'Status')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

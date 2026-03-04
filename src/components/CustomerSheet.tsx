@@ -8,7 +8,8 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
-import type { Customer, Provider, CustomerStatus } from '@/models/types';
+import { Plus, Trash2 } from 'lucide-react';
+import type { Customer, Provider, CustomerStatus, Address } from '@/models/types';
 import { getConnectionTypeLabel, isCableProvider } from '@/lib/providerUtils';
 
 interface CustomerSheetProps {
@@ -67,7 +68,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
       city: '',
       state: '',
       country: 'India',
-    },
+      pincode: '',
+    } as Address,
+    additionalAddresses: [] as Address[],
   });
 
   // Reset form when dialog opens/closes or customer changes — NOT on availableProviders change
@@ -90,6 +93,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         area: customer.area || '',
         permanentDiscount: customer.permanentDiscount ?? undefined,
         address: customer.address,
+        additionalAddresses: customer.additionalAddresses || [],
       });
     } else {
       // Use prefillData if available, otherwise use empty defaults
@@ -114,7 +118,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
           city: '',
           state: '',
           country: 'India',
+          pincode: '',
         },
+        additionalAddresses: [],
       });
     }
   }, [customer, isOpen, prefillData]);
@@ -460,6 +466,32 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.pincode', 'Pincode')}</label>
+                <Input
+                  value={formData.address.pincode || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, pincode: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.country', 'Country')}</label>
+                <Input
+                  value={formData.address.country}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: { ...formData.address, country: e.target.value },
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span>
                 </label>
@@ -477,24 +509,148 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   disabled={isReadOnly}
                   className="uppercase"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formData.gstin && formData.gstin.length !== 15
-                    ? t('customerSheet.gstinLengthError', 'GSTIN must be 15 characters')
-                    : t('customerSheet.gstinHint', 'Optional GSTIN field for GST invoice support')}
-                </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">{t('customerSheet.country', 'Country')}</label>
-                <Input
-                  value={formData.address.country}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      address: { ...formData.address, country: e.target.value },
-                    })
-                  }
-                  disabled={isReadOnly}
-                />
+
+              {/* Multiple Addresses Section (Edit Mode Only) */}
+              <div className="mt-8 pt-6 border-t border-border col-span-1 md:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold">{t('customerSheet.additionalAddresses', 'Additional Addresses')}</h3>
+                  {!!customer && !isReadOnly && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          additionalAddresses: [
+                            ...formData.additionalAddresses,
+                            { line1: '', line2: '', city: '', state: '', country: 'India', pincode: '' },
+                          ],
+                        })
+                      }
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('customerSheet.addAddress', 'Add Address')}
+                    </Button>
+                  )}
+                </div>
+
+                {!customer && (
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border border-border">
+                    {t('customerSheet.editToAddAddresses', 'You can add multiple addresses after creating the customer. (Edit mode only)')}
+                  </p>
+                )}
+
+                {!!customer && formData.additionalAddresses.map((addr, index) => (
+                  <div key={index} className="p-4 border border-border rounded-lg mb-4 bg-muted/20 relative">
+                    <div className="absolute top-2 right-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newAddresses = [...formData.additionalAddresses];
+                          newAddresses.splice(index, 1);
+                          setFormData({ ...formData, additionalAddresses: newAddresses });
+                        }}
+                        className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                        title={t('common.delete', 'Delete')}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <h4 className="text-sm font-medium mb-3 text-muted-foreground">Address {index + 2}</h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine1', 'Address Line 1')}</label>
+                        <Input
+                          value={addr.line1}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].line1 = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.addressLine2', 'Address Line 2')}</label>
+                        <Input
+                          value={addr.line2}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].line2 = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.city', 'City')}</label>
+                        <Input
+                          value={addr.city}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].city = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.state', 'State')}</label>
+                        <Input
+                          value={addr.state}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].state = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.pincode', 'Pincode')}</label>
+                        <Input
+                          value={addr.pincode || ''}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].pincode = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.country', 'Country')}</label>
+                        <Input
+                          value={addr.country}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].country = e.target.value;
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium mb-2">{t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span></label>
+                        <Input
+                          value={addr.gstin || ''}
+                          onChange={(e) => {
+                            const newAddresses = [...formData.additionalAddresses];
+                            newAddresses[index].gstin = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                            setFormData({ ...formData, additionalAddresses: newAddresses });
+                          }}
+                          placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
+                          maxLength={15}
+                          className="uppercase"
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

@@ -147,15 +147,7 @@ const InventoryProducts = () => {
     const currencySymbol = '₹';
 
     return (
-        <div className="space-y-4">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h1 className="text-lg sm:text-xl font-bold text-foreground">Products</h1>
-                    <p className="text-sm text-muted-foreground">Manage products, print labels, and import data</p>
-                </div>
-            </div>
-
+        <div className="space-y-3">
             {/* Tabs */}
             <div className="flex flex-wrap gap-1 border-b border-gray-200">
                 {tabs.map((tab) => {

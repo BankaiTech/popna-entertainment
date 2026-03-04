@@ -75,29 +75,22 @@ const PurchaseInvoices = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('purchaseInvoices.title', 'Purchase Invoices')}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t('purchaseInvoices.subtitle', 'GST-compliant purchase invoices with CGST/SGST/IGST breakdown')}
-          </p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          {t('purchaseInvoices.newInvoice', 'New Purchase Invoice')}
-        </Button>
-      </div>
-
       <Card>
         <CardHeader className="py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder={t('purchaseInvoices.searchPlaceholder', 'Search by vendor or invoice...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm w-50"
-            />
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder={t('purchaseInvoices.searchPlaceholder', 'Search by vendor or invoice...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm w-full"
+              />
+            </div>
+            <Button onClick={() => setIsModalOpen(true)} size="xs">
+              <Plus className="w-3.5 h-3.5" />
+              {t('purchaseInvoices.newInvoice', 'New Purchase Invoice')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">

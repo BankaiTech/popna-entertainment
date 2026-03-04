@@ -110,17 +110,6 @@ const Complaints = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('complaints.title', 'Complaints')}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">{t('complaints.subtitle', 'Manage and track customer complaints')}</p>
-        </div>
-        <Button onClick={handleAdd} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          {t('complaints.addComplaint', 'Add Complaint')}
-        </Button>
-      </div>
-
       {/* Data Grid */}
       <Card>
         <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -164,6 +153,10 @@ const Complaints = () => {
                 ))
               ) : null}
             </Select>
+            <Button onClick={handleAdd} size="xs">
+              <Plus className="w-3.5 h-3.5" />
+              {t('complaints.addComplaint', 'Add Complaint')}
+            </Button>
           </CardToolbar>
         </CardHeader>
         <CardContent className="p-0">

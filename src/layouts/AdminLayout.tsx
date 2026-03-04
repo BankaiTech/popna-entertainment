@@ -108,7 +108,7 @@ const AdminLayout = () => {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -127,7 +127,7 @@ const AdminLayout = () => {
           >
             <Menu className="w-4.5 h-4.5 text-gray-600" />
           </button>
-          <img src="/NexLink.svg" alt="NexLink" className="h-8 w-auto object-contain shrink-0" />
+          <img src="/NexLink.svg" alt="NexLink" className="h-[72px] w-auto object-contain shrink-0" />
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <LanguageSwitcher />
@@ -225,7 +225,7 @@ const AdminLayout = () => {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col w-full bg-gray-50/30 sm:ml-52">
+        <main className="flex-1 flex flex-col w-full bg-white sm:ml-52">
           <div className="flex-1 overflow-auto p-3 sm:p-5">
             <Outlet />
           </div>

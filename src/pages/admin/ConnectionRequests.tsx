@@ -98,14 +98,7 @@ const ConnectionRequests = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900">{t('connectionRequests.title', 'New Connection Requests')}</h1>
-          <p className="text-sm text-gray-600 mt-1">{t('connectionRequests.subtitle', 'Manage customer plan requests')}</p>
-        </div>
-      </div>
-
+    <div className="space-y-3">
       <Card className="border border-border bg-card shadow-soft rounded-card">
         <CardHeader className="border-b border-border bg-gray-50 py-3">
           {/* Search only - no status filter */}
@@ -235,12 +228,12 @@ const ConnectionRequests = () => {
         prefillData={
           selectedRequest
             ? {
-                name: selectedRequest.name,
-                email: selectedRequest.email || '',
-                mobile: selectedRequest.mobile,
-                connectionType: selectedRequest.productName as any,
-                package: selectedRequest.planName,
-              }
+              name: selectedRequest.name,
+              email: selectedRequest.email || '',
+              mobile: selectedRequest.mobile,
+              connectionType: selectedRequest.productName as any,
+              package: selectedRequest.planName,
+            }
             : undefined
         }
       />

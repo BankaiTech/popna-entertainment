@@ -100,22 +100,9 @@ const Invoices = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-1">{t('invoices.title', 'Sales Invoices')}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t('invoices.subtitle', 'GST-compliant sales invoices for customer billing')}
-          </p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          {t('invoices.newInvoice', 'New Invoice')}
-        </Button>
-      </div>
-
       <Card>
         <CardHeader className="py-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -150,6 +137,14 @@ const Invoices = () => {
                 ))
               ) : null}
             </Select>
+            <Button onClick={() => setIsModalOpen(true)} size="xs" className="hidden sm:flex shrink-0">
+              <Plus className="w-3.5 h-3.5" />
+              {t('invoices.newInvoice', 'New Invoice')}
+            </Button>
+            <Button onClick={() => setIsModalOpen(true)} size="xs" className="sm:hidden w-auto shrink-0">
+              <Plus className="w-3.5 h-3.5" />
+              {t('invoices.newInvoice', 'New Invoice')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">

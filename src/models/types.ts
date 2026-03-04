@@ -68,6 +68,8 @@ export interface Address {
   city: string;
   state: string;
   country: string;
+  pincode?: string;
+  gstin?: string;
 }
 
 export interface Customer {
@@ -83,6 +85,7 @@ export interface Customer {
   status: CustomerStatus;
   description?: string;
   address: Address;
+  additionalAddresses?: Address[];
   createdAt: string;
   // Payment Collection System — SaaS Ready (applies to ALL product types)
   paymentStatus?: PaymentStatus;
@@ -334,6 +337,7 @@ export interface Supplier {
     country?: string;
     pincode?: string;
   };
+  additionalAddresses?: Address[];
   createdAt: string;
 }
 

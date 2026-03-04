@@ -80,20 +80,7 @@ const Catalog = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground mb-2">{t('catalog.title', 'Catalog')}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t('catalog.subtitle', 'Services, plans, pricing, GST, installation charges. Controlled from admin; front site reflects this catalog.')}
-          </p>
-        </div>
-        <Button onClick={handleOpenAdd} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          {t('catalog.addPlan', 'Add Plan')}
-        </Button>
-      </div>
-
-      {/* Product Filter — same as frontsite plans page */}
+      {/* Product Filter + Add Button */}
       <div className="flex flex-wrap items-center gap-2">
         {filterOptions.map((filter) => (
           <button
@@ -109,6 +96,12 @@ const Catalog = () => {
             {filter === 'All' ? t('catalog.filterAll', 'All') : getProviderDisplayName(filter, products)}
           </button>
         ))}
+        <div className="ml-auto">
+          <Button onClick={handleOpenAdd} size="xs">
+            <Plus className="w-3.5 h-3.5" />
+            {t('catalog.addPlan', 'Add Plan')}
+          </Button>
+        </div>
       </div>
 
       {loading ? (
