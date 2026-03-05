@@ -397,7 +397,7 @@ const Contacts = () => {
                                     {Array.isArray(products) && products.length > 0 ? (
                                         products.map((product) => (
                                             <option key={product.id} value={product.name}>
-                                                {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? t('common.cable', 'Cable') : t('common.internet', 'Internet')})
+                                                {product.name}
                                             </option>
                                         ))
                                     ) : null}

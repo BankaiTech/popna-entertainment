@@ -92,9 +92,9 @@ const ProductManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">{t('productManagement.title', 'Product Management')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('productManagement.title', 'Category Management')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {t('productManagement.description', 'Manage products (cable/internet). Multi-tenant ready — backend will isolate by organization.')}
+            {t('productManagement.description', 'Manage service categories and products. Used for filtering customers, complaints, and reports.')}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {products.length}/{FREE_PRODUCT_LIMIT} free products used. Additional products cost ₹{ADDITIONAL_PRODUCT_COST} each.
@@ -150,15 +150,8 @@ const ProductManagement = () => {
                   >
                     {product.isActive ? t('productManagement.active', 'Active') : t('productManagement.inactive', 'Inactive')}
                   </span>
-                  <span
-                    className={cn(
-                      'px-1.5 py-0.5 rounded-full text-[10px] font-medium',
-                      product.productType === 'cable'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
-                    )}
-                  >
-                    {product.productType === 'cable' ? t('productManagement.cable', 'Cable') : t('productManagement.internet', 'Internet')}
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 capitalize">
+                    {product.productType}
                   </span>
                 </div>
                 <div className="flex gap-1.5">

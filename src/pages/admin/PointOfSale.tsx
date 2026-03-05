@@ -88,7 +88,7 @@ const PointOfSale = () => {
                 {/* Mobile cart toggle */}
                 <Button onClick={() => setShowCart(true)} className="md:hidden w-full sm:w-auto relative">
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Cart
+                    {t('pos.mobileCart', 'Cart')}
                     {cart.length > 0 && (
                         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                             {cart.reduce((s, c) => s + c.quantity, 0)}
@@ -106,7 +106,7 @@ const PointOfSale = () => {
                         <Input
                             value={productSearch}
                             onChange={(e) => setProductSearch(e.target.value)}
-                            placeholder="Search products..."
+                            placeholder={t('pos.searchPlaceholder', 'Search products...')}
                             className="pl-9"
                         />
                     </div>
@@ -136,7 +136,7 @@ const PointOfSale = () => {
                             );
                         })}
                         {filteredProducts.length === 0 && (
-                            <div className="col-span-full text-center py-12 text-gray-500">No products found</div>
+                            <div className="col-span-full text-center py-12 text-gray-500">{t('pos.noProducts', 'No products found')}</div>
                         )}
                     </div>
                 </div>
@@ -147,15 +147,15 @@ const PointOfSale = () => {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                 <ShoppingCart className="w-4 h-4" />
-                                Cart ({cart.reduce((s, c) => s + c.quantity, 0)} items)
+                                {t('pos.cart', 'Cart')} ({cart.reduce((s, c) => s + c.quantity, 0)} {t('pos.cartItems', 'items')})
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {/* Customer Selection */}
                             <div>
-                                <label className="text-xs font-medium text-gray-600 mb-1 block">Customer</label>
+                                <label className="text-xs font-medium text-gray-600 mb-1 block">{t('pos.customer', 'Customer')}</label>
                                 <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
-                                    <option value="">Walk-in Customer</option>
+                                    <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
                                     {customers.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>
                                     ))}
@@ -164,7 +164,7 @@ const PointOfSale = () => {
 
                             {/* Cart items */}
                             {cart.length === 0 ? (
-                                <div className="text-center py-8 text-gray-400 text-sm">Cart is empty</div>
+                                <div className="text-center py-8 text-gray-400 text-sm">{t('pos.emptyCart', 'Cart is empty')}</div>
                             ) : (
                                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                                     {cart.map((item) => (
@@ -194,21 +194,21 @@ const PointOfSale = () => {
                             {cart.length > 0 && (
                                 <>
                                     <div>
-                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Discount (%)</label>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
                                         <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} className="text-sm" />
                                     </div>
 
                                     {/* Totals */}
                                     <div className="border-t pt-3 space-y-1 text-sm">
-                                        <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span>{formatCurrencyINR(subtotal)}</span></div>
-                                        <div className="flex justify-between"><span className="text-gray-600">Tax (GST)</span><span>{formatCurrencyINR(taxTotal)}</span></div>
-                                        {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
-                                        <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-600">{t('pos.subtotal', 'Subtotal')}</span><span>{formatCurrencyINR(subtotal)}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-600">{t('pos.tax', 'Tax (GST)')}</span><span>{formatCurrencyINR(taxTotal)}</span></div>
+                                        {discount > 0 && <div className="flex justify-between text-green-600"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
+                                        <div className="flex justify-between font-bold text-base border-t pt-2"><span>{t('pos.total', 'Total')}</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
                                     </div>
 
                                     <Button onClick={handleCheckout} className="w-full" disabled={cart.length === 0}>
                                         <CreditCard className="w-4 h-4 mr-2" />
-                                        Checkout
+                                        {t('pos.checkout', 'Checkout')}
                                     </Button>
                                 </>
                             )}
@@ -224,7 +224,7 @@ const PointOfSale = () => {
                     <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto z-50 p-4 space-y-3">
                         <div className="flex justify-between items-center">
                             <h3 className="font-bold text-lg flex items-center gap-2">
-                                <ShoppingCart className="w-5 h-5" /> Cart
+                                <ShoppingCart className="w-5 h-5" /> {t('pos.mobileCart', 'Cart')}
                             </h3>
                             <button onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 rounded-full">
                                 <X className="w-5 h-5" />
@@ -232,12 +232,12 @@ const PointOfSale = () => {
                         </div>
 
                         <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
-                            <option value="">Walk-in Customer</option>
+                            <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
                             {customers.map((c) => <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>)}
                         </Select>
 
                         {cart.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">Cart is empty</div>
+                            <div className="text-center py-8 text-gray-400">{t('pos.emptyCart', 'Cart is empty')}</div>
                         ) : (
                             <>
                                 <div className="space-y-2">
@@ -258,19 +258,19 @@ const PointOfSale = () => {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-medium text-gray-600 mb-1 block">Discount (%)</label>
+                                    <label className="text-xs font-medium text-gray-600 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
                                     <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
                                 </div>
 
                                 <div className="border-t pt-3 space-y-1 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span>{formatCurrencyINR(subtotal)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Tax (GST)</span><span>{formatCurrencyINR(taxTotal)}</span></div>
-                                    {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
-                                    <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">{t('pos.subtotal', 'Subtotal')}</span><span>{formatCurrencyINR(subtotal)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">{t('pos.tax', 'Tax (GST)')}</span><span>{formatCurrencyINR(taxTotal)}</span></div>
+                                    {discount > 0 && <div className="flex justify-between text-green-600"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
+                                    <div className="flex justify-between font-bold text-lg border-t pt-2"><span>{t('pos.total', 'Total')}</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
                                 </div>
 
                                 <Button onClick={() => { setShowCart(false); handleCheckout(); }} className="w-full" size="lg">
-                                    <CreditCard className="w-4 h-4 mr-2" /> Checkout — {formatCurrencyINR(grandTotal)}
+                                    <CreditCard className="w-4 h-4 mr-2" /> {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
                                 </Button>
                             </>
                         )}
@@ -281,7 +281,7 @@ const PointOfSale = () => {
             {/* ════ Checkout Dialog ════ */}
             {showCheckout && (
                 <Dialog open={showCheckout} onClose={() => setShowCheckout(false)}>
-                    <DialogHeader title="Checkout" onClose={() => setShowCheckout(false)} />
+                    <DialogHeader title={t('pos.checkout', 'Checkout')} onClose={() => setShowCheckout(false)} />
                     <DialogBody>
                         <div className="px-4 sm:px-6 py-4 space-y-4">
                             {selectedCustomer && (
@@ -299,15 +299,15 @@ const PointOfSale = () => {
                                     </div>
                                 ))}
                                 <div className="border-t pt-2 space-y-1">
-                                    <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrencyINR(subtotal)}</span></div>
-                                    <div className="flex justify-between"><span>Tax</span><span>{formatCurrencyINR(taxTotal)}</span></div>
-                                    {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
-                                    <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
+                                    <div className="flex justify-between"><span>{t('pos.subtotal', 'Subtotal')}</span><span>{formatCurrencyINR(subtotal)}</span></div>
+                                    <div className="flex justify-between"><span>{t('pos.tax', 'Tax (GST)')}</span><span>{formatCurrencyINR(taxTotal)}</span></div>
+                                    {discount > 0 && <div className="flex justify-between text-green-600"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
+                                    <div className="flex justify-between font-bold text-lg border-t pt-2"><span>{t('pos.total', 'Total')}</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium mb-2 block">Payment Method</label>
+                                <label className="text-sm font-medium mb-2 block">{t('pos.paymentMethod', 'Payment Method')}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {(['cash', 'upi', 'card', 'bank_transfer'] as const).map((method) => (
                                         <button
@@ -319,7 +319,7 @@ const PointOfSale = () => {
                                                 paymentMethod === method ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'
                                             )}
                                         >
-                                            {method === 'cash' ? '💵 Cash' : method === 'upi' ? '📱 UPI' : method === 'card' ? '💳 Card' : '🏦 Bank Transfer'}
+                                            {method === 'cash' ? `💵 ${t('pos.cash', 'Cash')}` : method === 'upi' ? `📱 ${t('pos.upi', 'UPI')}` : method === 'card' ? `💳 ${t('pos.card', 'Card')}` : `🏦 ${t('pos.bankTransfer', 'Bank Transfer')}`}
                                         </button>
                                     ))}
                                 </div>
@@ -327,9 +327,9 @@ const PointOfSale = () => {
                         </div>
                     </DialogBody>
                     <DialogFooter className="flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={() => setShowCheckout(false)} className="w-full sm:w-auto">Cancel</Button>
+                        <Button variant="outline" onClick={() => setShowCheckout(false)} className="w-full sm:w-auto">{t('pos.cancel', 'Cancel')}</Button>
                         <Button onClick={handleConfirmCheckout} className="w-full sm:w-auto">
-                            <Receipt className="w-4 h-4 mr-2" /> Confirm — {formatCurrencyINR(grandTotal)}
+                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} — {formatCurrencyINR(grandTotal)}
                         </Button>
                     </DialogFooter>
                 </Dialog>
@@ -338,7 +338,7 @@ const PointOfSale = () => {
             {/* ════ Receipt Dialog ════ */}
             {showReceipt && (
                 <Dialog open={showReceipt} onClose={handleNewSale}>
-                    <DialogHeader title="Sale Complete ✓" onClose={handleNewSale} />
+                    <DialogHeader title={`${t('pos.saleComplete', 'Sale Complete')} ✓`} onClose={handleNewSale} />
                     <DialogBody>
                         <div className="px-4 sm:px-6 py-4 space-y-4">
                             <div className="text-center">
@@ -346,12 +346,12 @@ const PointOfSale = () => {
                                     <Receipt className="w-8 h-8 text-green-600" />
                                 </div>
                                 <p className="text-2xl font-bold text-green-600">{formatCurrencyINR(grandTotal)}</p>
-                                <p className="text-sm text-gray-500 mt-1">Payment received via {paymentMethod.replace('_', ' ')}</p>
+                                <p className="text-sm text-gray-500 mt-1">{t('pos.paymentReceived', 'Payment received via')} {paymentMethod.replace('_', ' ')}</p>
                             </div>
 
                             {selectedCustomer && (
                                 <div className="text-center text-sm text-gray-600">
-                                    Customer: <strong>{selectedCustomer.name}</strong>
+                                    {t('pos.customerLabel', 'Customer')}: <strong>{selectedCustomer.name}</strong>
                                 </div>
                             )}
 
@@ -366,7 +366,7 @@ const PointOfSale = () => {
                         </div>
                     </DialogBody>
                     <DialogFooter>
-                        <Button onClick={handleNewSale} className="w-full">New Sale</Button>
+                        <Button onClick={handleNewSale} className="w-full">{t('pos.newSale', 'New Sale')}</Button>
                     </DialogFooter>
                 </Dialog>
             )}

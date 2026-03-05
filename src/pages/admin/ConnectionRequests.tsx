@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { connectionRequestsApi } from '@/api/connectionRequests';
 import { useStore } from '@/store/useStore';
 import { getProviderDisplayName } from '@/lib/providerUtils';
@@ -18,13 +19,15 @@ const ConnectionRequests = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [isCustomerSheetOpen, setIsCustomerSheetOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
     loadRequests();
-  }, []);
+    fetchProducts();
+  }, [fetchProducts]);
 
   const loadRequests = async () => {
     try {
@@ -48,7 +51,7 @@ const ConnectionRequests = () => {
     }
   };
 
-  const { addCustomer } = useStore();
+  const { addCustomer, products, fetchProducts } = useStore();
 
   const handleAddCustomer = (customerData: any) => {
     // Add customer and mark request as converted
@@ -73,9 +76,10 @@ const ConnectionRequests = () => {
         searchQuery === '' ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.mobile.includes(searchQuery);
-      return isNew && matchesSearch;
+      const matchesCategory = categoryFilter === 'All' || request.productName === categoryFilter;
+      return isNew && matchesSearch && matchesCategory;
     });
-  }, [requests, searchQuery]);
+  }, [requests, searchQuery, categoryFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
@@ -87,7 +91,7 @@ const ConnectionRequests = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, categoryFilter]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -101,7 +105,7 @@ const ConnectionRequests = () => {
     <div className="space-y-3">
       <Card className="border border-border bg-card shadow-soft rounded-card">
         <CardHeader className="border-b border-border bg-gray-50 py-3">
-          {/* Search only - no status filter */}
+          {/* Search + Category filter */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-auto sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
@@ -112,6 +116,16 @@ const ConnectionRequests = () => {
                 className="pl-8 h-8 text-xs w-full sm:w-50"
               />
             </div>
+            <Select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="h-8 text-xs w-full sm:w-auto sm:min-w-[160px]"
+            >
+              <option value="All">{t('complaints.allCategories', 'All Categories')}</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.name}>{p.name}</option>
+              ))}
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0" style={{ overflow: 'visible' }}>

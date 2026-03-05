@@ -144,11 +144,11 @@ const Complaints = () => {
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
               className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
-              <option value="All">{t('complaints.allConnections', 'All Connections')}</option>
+              <option value="All">{t('complaints.allCategories', 'All Categories')}</option>
               {Array.isArray(products) && products.length > 0 ? (
                 products.map((product) => (
                   <option key={product.id} value={product.name}>
-                    {getConnectionTypeLabel(product.name, products)} ({product.productType === 'cable' ? t('common.cable', 'Cable') : t('common.internet', 'Internet')})
+                    {product.name}
                   </option>
                 ))
               ) : null}
@@ -174,10 +174,10 @@ const Complaints = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('complaints.id', 'ID')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[10rem]">{t('complaints.customer', 'Customer')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.mobile', 'Mobile')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.connection', 'Connection')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.category', 'Category')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.product', 'Product')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[8rem]">{t('complaints.description', 'Description')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.status', 'Status')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.created', 'Created')}</th>
@@ -193,10 +193,10 @@ const Complaints = () => {
                           idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
                         )}
                       >
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.id}</td>
                         <td className="px-3 py-2 text-sm font-medium text-primary hover:underline">{complaint.customerName}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.mobile}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(complaint.connectionType)}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.connectionType || '—'}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customers.find(c => c.id === complaint.customerId)?.package || '—'}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground max-w-xs truncate">{complaint.customerDescription}</td>
                         <td className="px-3 py-2">
                           <span
@@ -225,7 +225,7 @@ const Complaints = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="text-base font-semibold text-primary">{complaint.customerName}</p>
-                        <p className="text-xs text-muted-foreground mt-1">ID: {complaint.id}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{complaint.mobile}</p>
                       </div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
@@ -238,12 +238,12 @@ const Complaints = () => {
 
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">{t('complaints.mobile', 'Mobile')}: </span>
-                        <span className="font-medium">{complaint.mobile}</span>
+                        <span className="text-muted-foreground">{t('complaints.category', 'Category')}: </span>
+                        <span className="font-medium">{complaint.connectionType || '—'}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{t('complaints.connection', 'Connection')}: </span>
-                        <span className="font-medium">{getConnectionTypeLabel(complaint.connectionType)}</span>
+                        <span className="text-muted-foreground">{t('complaints.product', 'Product')}: </span>
+                        <span className="font-medium">{customers.find(c => c.id === complaint.customerId)?.package || '—'}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">{t('complaints.description', 'Description')}: </span>

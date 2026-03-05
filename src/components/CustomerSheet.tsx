@@ -29,14 +29,15 @@ interface CustomerSheetProps {
 const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: CustomerSheetProps) => {
   const { t } = useTranslation();
   const { role } = useAuthStore();
-  const { products, fetchActiveProducts } = useStore();
+  const { products, fetchActiveProducts, plans, fetchPlans } = useStore();
 
-  // Load products when sheet opens so connection type dropdown is always populated
+  // Load products and plans when sheet opens so dropdowns are always populated
   useEffect(() => {
     if (isOpen) {
       fetchActiveProducts();
+      fetchPlans();
     }
-  }, [isOpen, fetchActiveProducts]);
+  }, [isOpen, fetchActiveProducts, fetchPlans]);
 
   const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address'>('info');
@@ -72,6 +73,12 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     } as Address,
     additionalAddresses: [] as Address[],
   });
+
+  // Plans filtered by selected connectionType (category)
+  const availablePlans = useMemo(
+    () => (Array.isArray(plans) ? plans.filter((p) => !formData.connectionType || p.provider === formData.connectionType) : []),
+    [plans, formData.connectionType]
+  );
 
   // Reset form when dialog opens/closes or customer changes — NOT on availableProviders change
   useEffect(() => {
@@ -330,11 +337,16 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.package', 'Package')}</label>
-                  <Input
+                  <Select
                     value={formData.package}
                     onChange={(e) => setFormData({ ...formData, package: e.target.value })}
                     disabled={isReadOnly}
-                  />
+                  >
+                    <option value="">— {t('customerSheet.selectPlan', 'Select Plan')} —</option>
+                    {availablePlans.map((plan) => (
+                      <option key={plan.id} value={plan.planName}>{plan.planName}</option>
+                    ))}
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
