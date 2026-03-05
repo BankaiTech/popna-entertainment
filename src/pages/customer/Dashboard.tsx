@@ -10,10 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import {
   Plus, AlertCircle, LogOut, FileText, Download, CreditCard,
-  Wallet, IndianRupee, CalendarClock, Wifi, Menu, X, Shield
+  Wallet, IndianRupee, CalendarClock, Wifi
 } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
-import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
 import FooterCredit from '@/components/FooterCredit';
@@ -22,16 +21,16 @@ import { salesInvoicesApi } from '@/api/invoices';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { upiPaymentApi } from '@/api/upiPayment';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
+import { getNextDueDateForCustomer } from '@/lib/billingUtils';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
   const { customerId, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { customers, complaints, products, initialize } = useStore();
+  const { customers, complaints, products, initialize, fetchProducts } = useStore();
   const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
   const [myInvoices, setMyInvoices] = useState<SalesInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // UPI Payment: customer pays org — use organization admin's UPI
   const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
@@ -40,6 +39,7 @@ const CustomerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       await initialize();
+      await fetchProducts();
       if (customerId) {
         try {
           const allInvoices = await salesInvoicesApi.getAll();
@@ -78,19 +78,10 @@ const CustomerDashboard = () => {
   }, [currentCustomer?.organizationId]);
 
   const myComplaints = complaints.filter((c) => c.customerId === customerId);
-
-  const totalPaid = useMemo(
-    () => myInvoices.filter((inv) => inv.status === 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
-    [myInvoices]
-  );
   const totalPending = useMemo(
     () => myInvoices.filter((inv) => inv.status !== 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
     [myInvoices]
   );
-  const nextDueInvoice = useMemo(() => {
-    const unpaid = myInvoices.filter((inv) => inv.status !== 'paid').sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    return unpaid[0] || null;
-  }, [myInvoices]);
 
   const getStatusColor = (status: Complaint['status']) => {
     switch (status) {
@@ -128,7 +119,7 @@ const CustomerDashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/customer/login');
+    navigate('/login');
   };
 
   const canPayViaOrgUpi = !!(orgUpiConfig?.enabled && orgUpiConfig?.upiId);
@@ -144,12 +135,27 @@ const CustomerDashboard = () => {
     );
   }
 
-  // Sidebar menu items for customer
-  const menuItems = [
-    { id: 'dashboard', label: t('customerDashboard.title', 'My Dashboard'), icon: Shield },
-    { id: 'complaints', label: t('customerDashboard.myComplaints', 'My Complaints'), icon: AlertCircle },
-    { id: 'invoices', label: t('customerDashboard.myInvoices', 'My Invoices'), icon: FileText },
-  ];
+  const customerProduct = useMemo(
+    () => products.find((p) => p.name === currentCustomer.connectionType),
+    [products, currentCustomer.connectionType]
+  );
+
+  const nextDueDate = useMemo(
+    () => getNextDueDateForCustomer(currentCustomer, customerProduct),
+    [currentCustomer, customerProduct]
+  );
+
+  const daysUntilDue = useMemo(() => {
+    if (!nextDueDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(nextDueDate);
+    due.setHours(0, 0, 0, 0);
+    return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  }, [nextDueDate]);
+
+  const isRenewWindow = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 7;
+  const isCableCustomer = customerProduct?.productType === 'cable';
 
   // KPI cards — same style as admin dashboard
   const kpiCards = [
@@ -173,7 +179,7 @@ const CustomerDashboard = () => {
     },
     {
       title: t('customerDashboard.nextDueDate', 'Next Due Date'),
-      value: nextDueInvoice ? formatDate(nextDueInvoice.dueDate) : '—',
+      value: nextDueDate ? formatDate(nextDueDate.toISOString()) : '-',
       icon: CalendarClock,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
@@ -192,21 +198,12 @@ const CustomerDashboard = () => {
   return (
     // Sticky header added for customer dashboard
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Mobile overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 sm:hidden" onClick={() => setIsMobileMenuOpen(false)} />
-      )}
-
-      {/* Sticky header — matches admin; mobile: hamburger + language + logout only */}
+      {/* Sticky header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
-          <button onClick={() => setIsMobileMenuOpen(true)} className="sm:hidden p-2 hover:bg-accent rounded-md shrink-0" aria-label={t('openMenu', 'Open Menu')}>
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="hidden sm:block min-w-0">
-            <h2 className="text-base sm:text-lg font-semibold truncate">{t('customerDashboard.welcome')} {currentCustomer.name}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('customerDashboard.title')}</p>
-          </div>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <img src="/NexLink.svg" alt="NexLink" className="h-[65px] w-auto object-contain shrink-0" />
+          <h2 className="text-base sm:text-lg font-semibold truncate">{t('customerDashboard.welcome')} {currentCustomer.name}</h2>
+          <p className="hidden sm:block text-xs text-muted-foreground truncate ml-2"> {t('customerDashboard.title')}</p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <LanguageSwitcher />
@@ -218,56 +215,19 @@ const CustomerDashboard = () => {
       </header>
 
       <div className="flex flex-1 pt-14">
-        {/* Sidebar — matches admin */}
-        <aside className={cn(
-          'fixed top-14 bottom-0 left-0',
-          'z-40 w-56 bg-gray-50 border-r border-gray-200 flex flex-col',
-          'transform transition-transform duration-300 ease-in-out',
-          'sm:translate-x-0',
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        )}>
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-gray-50">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">P</span>
-              </div>
-              <h1 className="text-base font-bold text-gray-900">{t('popna', 'Popna')}</h1>
-            </div>
-            <button onClick={() => setIsMobileMenuOpen(false)} className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors" aria-label={t('closeMenu', 'Close Menu')}>
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { setIsMobileMenuOpen(false); document.getElementById(`section-${item.id}`)?.scrollIntoView({ behavior: 'smooth' }); }}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-700 hover:text-gray-900 hover:bg-gray-100 w-full text-left"
-                >
-                  <Icon className="w-4 h-4 text-gray-600" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 flex flex-col w-full bg-white sm:ml-56">
+        {/* Main content — full width */}
+        <main className="flex-1 flex flex-col w-full bg-white min-w-0">
           <div className="flex-1 overflow-auto p-4 sm:p-6">
-            <div className="space-y-3 animate-fade-in" id="section-dashboard">
-
-              {/* Top KPI Cards — same style as admin */}
+            <div className="space-y-6 animate-fade-in">
+              {/* Overview + actions */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('customerDashboard.overview', 'Overview')}</h2>
-                </div>
-                <div className="flex gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('customerDashboard.overview', 'Overview')}</h2>
+                <div className="flex flex-wrap gap-2">
                   <Button onClick={() => setIsUpiDialogOpen(true)} className="shadow-lg">
                     <IndianRupee className="w-4 h-4 mr-2" />
-                    {t('customerDashboard.payNow', 'Pay Now')}
+                    {isRenewWindow
+                      ? t('customerDashboard.renewNow', 'Renew Subscription')
+                      : t('customerDashboard.payNow', 'Pay Now')}
                   </Button>
                   <Button variant="outline" onClick={() => setIsComplaintModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -276,6 +236,7 @@ const CustomerDashboard = () => {
                 </div>
               </div>
 
+              {/* KPI cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {kpiCards.map((stat, index) => {
                   const Icon = stat.icon;
@@ -297,97 +258,47 @@ const CustomerDashboard = () => {
                 })}
               </div>
 
-              {/* Plan Details + Payment Summary — side by side on desktop */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-                {/* Plan Details Card */}
-                <Card className="overflow-hidden animate-slide-up">
-                  <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Wifi className="w-4 h-4" />
-                      {t('customerDashboard.planDetails', 'Plan Details')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('customerDashboard.planName', 'Plan Name')}</span>
-                        <span className="text-sm font-bold">{currentCustomer.package || t('common.na', 'N/A')}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('customerDashboard.connectionType', 'Connection Type')}</span>
-                        <span className="text-sm font-bold">{getConnectionTypeLabel(currentCustomer.connectionType, products)}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('common.status', 'Status')}</span>
-                        <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', currentCustomer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                          {currentCustomer.status}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {isCableCustomer && customerProduct?.cutoffDate && (
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    'customerDashboard.cableCutoffInfo',
+                    'Your cable service renews on day {{day}} of every month.',
+                    { day: customerProduct.cutoffDate }
+                  )}
+                </p>
+              )}
 
-                {/* Payment Summary Card */}
-                <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.05s' }}>
-                  <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <IndianRupee className="w-4 h-4" />
-                      {t('customerDashboard.paymentSummary', 'Payment Summary')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('customerDashboard.totalPaid', 'Total Paid')}</span>
-                        <span className="text-sm font-bold text-green-600">{formatCurrencyINR(totalPaid)}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('customerDashboard.totalPending', 'Total Pending')}</span>
-                        <span className="text-sm font-bold text-red-600">{formatCurrencyINR(totalPending)}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50">
-                        <span className="text-sm font-medium text-muted-foreground">{t('customerDashboard.lastPaymentDate', 'Last Payment Date')}</span>
-                        <span className="text-sm font-bold text-amber-600">
-                          {(() => {
-                            const paidInvoices = myInvoices.filter((inv) => inv.status === 'paid');
-                            if (paidInvoices.length === 0) return '—';
-                            const lastPaid = paidInvoices.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())[0];
-                            return formatDate(lastPaid.issueDate);
-                          })()}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* My Complaints Section */}
+              {/* Complaints section */}
               <div id="section-complaints">
-                <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                  <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                <Card className="overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500" />
                   <CardHeader className="py-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
                         {t('customerDashboard.myComplaints')}
                       </CardTitle>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
-                        {myComplaints.length}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
+                          {myComplaints.length}
+                        </span>
+                        <Button size="sm" variant="outline" onClick={() => setIsComplaintModalOpen(true)}>
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          {t('customerDashboard.addComplaint')}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="py-2">
                     {myComplaints.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
+                      <div className="text-center py-12 text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p className="text-sm font-medium">{t('customerDashboard.noComplaints')}</p>
                         <p className="text-xs mt-1">{t('customerDashboard.noComplaintsSub')}</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {myComplaints.slice(0, 5).map((complaint) => (
+                        {myComplaints.map((complaint) => (
                           <div key={complaint.id} className="flex items-start justify-between p-3 rounded-lg border border-border/50 hover:shadow-md transition-all duration-300">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-foreground truncate">{complaint.customerDescription}</p>
@@ -404,10 +315,10 @@ const CustomerDashboard = () => {
                 </Card>
               </div>
 
-              {/* Payment History Table */}
+              {/* Invoices section */}
               <div id="section-invoices">
-                <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.15s' }}>
-                  <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                <Card className="overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
                   <CardHeader className="py-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
@@ -420,94 +331,91 @@ const CustomerDashboard = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {loadingInvoices ? (
-                      <div className="text-center py-8 text-muted-foreground text-sm">{t('customerDashboard.loadingInvoices')}</div>
-                    ) : myInvoices.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">{t('customerDashboard.noInvoices')}</p>
-                        <p className="text-xs mt-1">{t('customerDashboard.noInvoicesSub')}</p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b-2 border-border bg-muted/30">
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.invoiceNo', 'Invoice #')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.plan')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.amount')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.issueDate')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.dueDate')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('common.status', 'Status')}</th>
-                                <th className="text-left px-3 py-2 text-sm font-medium text-foreground"></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {myInvoices.map((invoice, idx) => (
-                                <tr key={invoice.id} className={cn('border-b border-gray-200 hover:bg-gray-50 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                                  <td className="px-3 py-2 text-sm font-medium text-gray-900">{invoice.invoiceNumber}</td>
-                                  <td className="px-3 py-2 text-sm text-gray-600">{invoice.planName}</td>
-                                  <td className="px-3 py-2 text-sm font-semibold text-gray-900">{formatCurrencyINR(invoice.totalAmount)}</td>
-                                  <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.issueDate)}</td>
-                                  <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.dueDate)}</td>
-                                  <td className="px-3 py-2 text-sm">
-                                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
-                                      {invoice.status.toUpperCase()}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <button onClick={() => handleDownloadInvoice(invoice)} className="p-1.5 hover:bg-accent rounded-md transition-colors" title={t('customerDashboard.download')}>
-                                      <Download className="w-4 h-4 text-muted-foreground" />
-                                    </button>
-                                  </td>
+                      {loadingInvoices ? (
+                        <div className="text-center py-12 text-muted-foreground text-sm">{t('customerDashboard.loadingInvoices')}</div>
+                      ) : myInvoices.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-medium">{t('customerDashboard.noInvoices')}</p>
+                          <p className="text-xs mt-1">{t('customerDashboard.noInvoicesSub')}</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b-2 border-border bg-muted/30">
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.invoiceNo', 'Invoice #')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.plan')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.amount')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.issueDate')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.dueDate')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('common.status', 'Status')}</th>
+                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground"></th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Mobile Card View */}
-                        <div className="md:hidden space-y-3 p-3">
-                          {myInvoices.map((invoice) => (
-                            <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="text-sm font-bold text-foreground">{invoice.invoiceNumber}</p>
-                                  <p className="text-sm text-muted-foreground">{invoice.planName}</p>
+                              </thead>
+                              <tbody>
+                                {myInvoices.map((invoice, idx) => (
+                                  <tr key={invoice.id} className={cn('border-b border-gray-200 hover:bg-gray-50 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                    <td className="px-3 py-2 text-sm font-medium text-gray-900">{invoice.invoiceNumber}</td>
+                                    <td className="px-3 py-2 text-sm text-gray-600">{invoice.planName}</td>
+                                    <td className="px-3 py-2 text-sm font-semibold text-gray-900">{formatCurrencyINR(invoice.totalAmount)}</td>
+                                    <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.issueDate)}</td>
+                                    <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.dueDate)}</td>
+                                    <td className="px-3 py-2 text-sm">
+                                      <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
+                                        {invoice.status.toUpperCase()}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <button onClick={() => handleDownloadInvoice(invoice)} className="p-1.5 hover:bg-accent rounded-md transition-colors" title={t('customerDashboard.download')}>
+                                        <Download className="w-4 h-4 text-muted-foreground" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="md:hidden space-y-3 p-3">
+                            {myInvoices.map((invoice) => (
+                              <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <p className="text-sm font-bold text-foreground">{invoice.invoiceNumber}</p>
+                                    <p className="text-sm text-muted-foreground">{invoice.planName}</p>
+                                  </div>
+                                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
+                                    {invoice.status.toUpperCase()}
+                                  </span>
                                 </div>
-                                <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
-                                  {invoice.status.toUpperCase()}
-                                </span>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.amount')}</p>
+                                    <p className="font-bold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.issueDate')}</p>
+                                    <p className="font-medium">{formatDate(invoice.issueDate)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.dueDate')}</p>
+                                    <p className="font-medium">{formatDate(invoice.dueDate)}</p>
+                                  </div>
+                                </div>
+                                <div className="flex justify-end pt-2 border-t border-border">
+                                  <button onClick={() => handleDownloadInvoice(invoice)} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                                    <Download className="w-4 h-4" />
+                                    {t('customerDashboard.download')}
+                                  </button>
+                                </div>
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <p className="text-xs text-muted-foreground">{t('customerDashboard.amount')}</p>
-                                  <p className="font-bold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground">{t('customerDashboard.issueDate')}</p>
-                                  <p className="font-medium">{formatDate(invoice.issueDate)}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground">{t('customerDashboard.dueDate')}</p>
-                                  <p className="font-medium">{formatDate(invoice.dueDate)}</p>
-                                </div>
-                              </div>
-                              <div className="flex justify-end pt-2 border-t border-border">
-                                <button onClick={() => handleDownloadInvoice(invoice)} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
-                                  <Download className="w-4 h-4" />
-                                  {t('customerDashboard.download')}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
               </div>
             </div>
           </div>

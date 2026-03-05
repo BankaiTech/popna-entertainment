@@ -18,11 +18,12 @@ import {
 import { customersApi } from '@/api/api';
 import { salesInvoicesApi } from '@/api/invoices';
 import { organizationsApi } from '@/api/organizations';
-import type { Customer, SalesInvoice, Organization } from '@/models/types';
+import type { Customer, SalesInvoice, Organization, Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import Button from '@/components/ui/Button';
+import { getNextDueDateForCustomer } from '@/lib/billingUtils';
 
 // Finance chart time filter type
 type TimeFilter = 'this_month' | 'last_month' | 'last_6_months' | 'this_year';
@@ -180,9 +181,101 @@ const AdminDashboard = () => {
     },
   ];
 
-  // Payment KPI cards — Total Amount first; overdue and avg invoice value removed
+  // Payment KPI cards — revamped based on product type and cut-off logic
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const oneWeekFromNow = new Date(today);
+  oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+
+  const customersWithProducts: { customer: Customer; product: Product }[] =
+    Array.isArray(products) && products.length > 0
+      ? customers
+          .map((c) => {
+            const product = products.find((p) => p.name === c.connectionType);
+            return product ? { customer: c, product } : null;
+          })
+          .filter((cp): cp is { customer: Customer; product: Product } => cp !== null)
+      : [];
+
+  const cablePairs = customersWithProducts.filter((cp) => cp.product.productType === 'cable');
+  const internetPairs = customersWithProducts.filter((cp) => cp.product.productType === 'internet');
+
+  const isDueSoon = (d: Date | null) =>
+    !!d && d.getTime() >= today.getTime() && d.getTime() <= oneWeekFromNow.getTime();
+
+  const cableDueSoon = cablePairs.filter(({ customer, product }) =>
+    isDueSoon(getNextDueDateForCustomer(customer, product))
+  );
+  const internetDueSoon = internetPairs.filter(({ customer, product }) =>
+    isDueSoon(getNextDueDateForCustomer(customer, product))
+  );
+
+  const cableOverdue = cablePairs.filter(({ customer, product }) => {
+    const due = getNextDueDateForCustomer(customer, product);
+    return !!due && due.getTime() < today.getTime() && customer.paymentStatus !== 'paid';
+  });
+  const internetOverdue = internetPairs.filter(({ customer, product }) => {
+    const due = getNextDueDateForCustomer(customer, product);
+    return !!due && due.getTime() < today.getTime() && customer.paymentStatus !== 'paid';
+  });
+
+  const outstandingCable = cablePairs
+    .filter(({ customer }) => customer.paymentStatus !== 'paid')
+    .reduce((sum, { customer }) => sum + (customer.balanceAmount ?? 0), 0);
+  const outstandingInternet = internetPairs
+    .filter(({ customer }) => customer.paymentStatus !== 'paid')
+    .reduce((sum, { customer }) => sum + (customer.balanceAmount ?? 0), 0);
+
   const totalAmount = (dashboardStats.totalAmountCollected ?? 0) + (dashboardStats.totalPendingAmount ?? 0);
   const paymentCards = [
+    {
+      title: t('dashboard.cableDueThisWeek', 'Cable due in next 7 days'),
+      value: cableDueSoon.length,
+      icon: Wifi,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.internetDueThisWeek', 'Internet due in next 7 days'),
+      value: internetDueSoon.length,
+      icon: Wifi,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.cableOverdue', 'Cable overdue'),
+      value: cableOverdue.length,
+      icon: AlertCircle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.internetOverdue', 'Internet overdue'),
+      value: internetOverdue.length,
+      icon: AlertCircle,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      isCurrency: false,
+    },
+    {
+      title: t('dashboard.outstandingCable', 'Outstanding (Cable)'),
+      value: outstandingCable,
+      icon: DollarSign,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      isCurrency: true,
+    },
+    {
+      title: t('dashboard.outstandingInternet', 'Outstanding (Internet)'),
+      value: outstandingInternet,
+      icon: DollarSign,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      isCurrency: true,
+    },
     {
       title: t('dashboard.totalAmount', 'Total Amount'),
       value: totalAmount,
@@ -190,86 +283,6 @@ const AdminDashboard = () => {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       isCurrency: true,
-    },
-    {
-      title: t('dashboard.totalCollected', 'Total Collected'),
-      value: dashboardStats.totalAmountCollected,
-      icon: DollarSign,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.totalPending', 'Total Pending'),
-      value: dashboardStats.totalPendingAmount,
-      icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.thisMonthCollection', 'This Month Collection'),
-      value: invoices
-        .filter((inv) => {
-          const d = new Date(inv.issueDate);
-          const now = new Date();
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && inv.status === 'paid';
-        })
-        .reduce((sum, inv) => sum + inv.totalAmount, 0),
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.lastMonthCollection', 'Last Month Collection'),
-      value: invoices
-        .filter((inv) => {
-          const d = new Date(inv.issueDate);
-          const now = new Date();
-          const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-          const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && inv.status === 'paid';
-        })
-        .reduce((sum, inv) => sum + inv.totalAmount, 0),
-      icon: DollarSign,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.avgMonthlyRevenue', 'Avg Monthly Revenue'),
-      value: (() => {
-        const now = new Date();
-        const monthsData = [];
-        for (let i = 0; i < 6; i++) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const monthTotal = invoices
-            .filter((inv) => {
-              const invDate = new Date(inv.issueDate);
-              return invDate.getMonth() === d.getMonth() && invDate.getFullYear() === d.getFullYear() && inv.status === 'paid';
-            })
-            .reduce((sum, inv) => sum + inv.totalAmount, 0);
-          monthsData.push(monthTotal);
-        }
-        return monthsData.length > 0 ? Math.round(monthsData.reduce((a, b) => a + b, 0) / monthsData.length) : 0;
-      })(),
-      icon: TrendingUp,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.collectionRate', 'Collection Rate'),
-      value: invoices.length > 0 
-        ? Math.round((invoices.filter((inv) => inv.status === 'paid').length / invoices.length) * 100)
-        : 0,
-      icon: TrendingUp,
-      color: 'text-cyan-600',
-      bgColor: 'bg-cyan-50',
-      isCurrency: false,
-      suffix: '%',
-      tooltip: 'Percentage of paid invoices vs total invoices',
     },
   ];
 
@@ -383,10 +396,6 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-3 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-bold mb-1 gradient-text">{t('dashboard.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
-        </div>
         {/* Subscription renewal — show only when due within 7 days or expired */}
         {organization && (() => {
           const endDate = new Date(organization.subscriptionEnd);
@@ -429,7 +438,9 @@ const AdminDashboard = () => {
       {renderCardSection(t('dashboard.customerMetrics', 'Customer Metrics'), customerCards)}
 
       {/* Payment Metrics */}
-      {renderCardSection(t('dashboard.paymentMetrics', 'Payment Metrics'), paymentCards)}
+      <div className="space-y-2">
+        {renderCardSection(t('dashboard.paymentMetrics', 'Payment Metrics'), paymentCards)}
+      </div>
 
       {/* Complaint Metrics */}
       {renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}

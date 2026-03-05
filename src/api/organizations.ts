@@ -6,7 +6,7 @@ import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 let organizations: Organization[] = [
     {
         id: 'org_001',
-        name: 'Popna Entertainment',
+        name: 'NexLink',
         status: 'active',
         allowedModules: [...ALL_MODULES],
         allowedSettingsTabs: [...ALL_SETTINGS_TABS],

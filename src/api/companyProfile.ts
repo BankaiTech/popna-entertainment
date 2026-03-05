@@ -15,7 +15,7 @@ let companyProfileData: CompanyProfile | null = {
   country: 'India',
   pincode: '560001',
   contactNumber: '+91 9876543210',
-  email: 'srinivasan@popnaentertainment.com',
+  email: 'contact@nexlink.com',
   updatedAt: new Date().toISOString(),
 };
 

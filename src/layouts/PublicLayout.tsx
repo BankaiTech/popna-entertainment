@@ -28,9 +28,8 @@ const PublicLayout = () => {
     loadData();
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
-  // Multi-tenant ready — company name from settings
-  // SaaS Ready — Fully Dynamic Product: no hardcoded company name
-  const companyName = companyProfile?.companyName || '';
+  // Multi-tenant ready — company name from settings; fallback to NexLink
+  const companyName = companyProfile?.companyName || 'NexLink';
 
   // Multi-tenant ready — company name from settings
 
@@ -40,9 +39,9 @@ const PublicLayout = () => {
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link to="/" className="text-lg sm:text-xl font-bold text-primary">
-                {companyName}
+            <div className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-2">
+                <img src="/NexLink.svg" alt="NexLink" className="h-[218px] w-auto object-contain" />
               </Link>
             </div>
 
@@ -69,10 +68,10 @@ const PublicLayout = () => {
               </Link>
 
               <Link
-                to="/customer/login"
+                to="/login"
                 className={cn(
                   'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/customer/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
                 {t('nav.login')}
@@ -96,7 +95,7 @@ const PublicLayout = () => {
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  'block px-4 py-2 text-sm font-medium',
+                  'block px-4 py-3 text-sm font-medium',
                   location.pathname === '/' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
@@ -107,7 +106,7 @@ const PublicLayout = () => {
                 to="/plans"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  'block px-4 py-2 text-sm font-medium',
+                  'block px-4 py-3 text-sm font-medium',
                   location.pathname === '/plans' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
@@ -115,16 +114,16 @@ const PublicLayout = () => {
               </Link>
 
               <Link
-                to="/customer/login"
+                to="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  'block px-4 py-2 text-sm font-medium',
-                  location.pathname === '/customer/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                  'block px-4 py-3 text-sm font-medium',
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
                 )}
               >
                 {t('nav.login')}
               </Link>
-              <div className="px-4 py-2">
+              <div className="px-4 py-3 border-t border-gray-100">
                 <LanguageSwitcher />
               </div>
             </div>

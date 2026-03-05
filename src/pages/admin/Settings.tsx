@@ -55,17 +55,9 @@ const Settings = () => {
     }
   };
 
-  const activeTabInfo = tabs.find((t) => t.id === activeTab);
-
   return (
     <div className="space-y-4 sm:space-y-6 px-0 sm:px-0 pb-6 sm:pb-0">
       {/* Page header */}
-      <div>
-        <h1 className="text-lg sm:text-xl font-bold text-foreground">{t('settings.title', 'Settings')}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5 max-w-2xl">
-          {t('settings.subtitle', 'Configure products, company information, and billing.')}
-        </p>
-      </div>
 
       {/* Mobile: dropdown for tabs */}
       <div className="sm:hidden w-full">
@@ -121,12 +113,7 @@ const Settings = () => {
       {/* Tab panel */}
       <Card className="overflow-hidden">
         <CardContent className="p-4 sm:p-6">
-          {activeTabInfo && (
-            <div className="mb-4 sm:mb-5 pb-3 border-b border-border">
-              <h2 className="text-base font-semibold text-foreground">{activeTabInfo.label}</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">{activeTabInfo.description}</p>
-            </div>
-          )}
+          
           <div
             role="tabpanel"
             id={`settings-panel-${activeTab}`}

@@ -25,8 +25,9 @@ export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
 
 /** All available modules that can be assigned to an organization */
 export const ALL_MODULES = [
-  'dashboard', 'customers', 'complaints', 'payments', 'catalog',
-  'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests'
+  'dashboard', 'contacts', 'complaints', 'payments',
+  'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
+  'inventory-products', 'products', 'branches', 'pos'
 ] as const;
 
 /** All available settings tabs that can be assigned to an organization */
@@ -67,6 +68,8 @@ export interface Address {
   city: string;
   state: string;
   country: string;
+  pincode?: string;
+  gstin?: string;
 }
 
 export interface Customer {
@@ -82,6 +85,7 @@ export interface Customer {
   status: CustomerStatus;
   description?: string;
   address: Address;
+  additionalAddresses?: Address[];
   createdAt: string;
   // Payment Collection System — SaaS Ready (applies to ALL product types)
   paymentStatus?: PaymentStatus;
@@ -163,6 +167,10 @@ export interface User {
   password: string;
   role: 'admin' | 'employee';
   status: 'active' | 'inactive';
+  /** Module-based access — which sidebar modules this user can access (employees only) */
+  allowedModules?: ModuleKey[];
+  /** Branch assignment */
+  branchId?: number;
   createdAt: string;
 }
 
@@ -307,5 +315,157 @@ export interface ClientConfig {
   allowedTabs: string[];
   status: 'active' | 'inactive';
   createdAt: string;
+}
+
+// ===== Business Management Types =====
+
+/** Supplier for contacts module */
+export interface Supplier {
+  id: number;
+  organizationId: string;
+  name: string;
+  contactPerson?: string;
+  mobile: string;
+  email?: string;
+  taxNumber?: string;
+  openingBalance?: number;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+  };
+  additionalAddresses?: Address[];
+  createdAt: string;
+}
+
+/** Unit of measurement for products */
+export interface Unit {
+  id: number;
+  organizationId: string;
+  name: string;
+  shortName: string;
+  createdAt: string;
+}
+
+/** Product category */
+export interface Category {
+  id: number;
+  organizationId: string;
+  name: string;
+  code: string;
+  description?: string;
+  createdAt: string;
+}
+
+/** Product sub-category */
+export interface SubCategory {
+  id: number;
+  organizationId: string;
+  categoryId: number;
+  name: string;
+  createdAt: string;
+}
+
+/** Business branch/location */
+export interface Branch {
+  id: number;
+  organizationId: string;
+  name: string;
+  location?: string;
+  address?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Tax rate configuration */
+export interface TaxRate {
+  id: number;
+  organizationId: string;
+  name: string;
+  rate: number;
+  type: 'inclusive' | 'exclusive';
+  createdAt: string;
+}
+
+/** Warranty configuration */
+export interface Warranty {
+  id: number;
+  organizationId: string;
+  name: string;
+  duration: number;
+  durationUnit: 'days' | 'months' | 'years';
+  createdAt: string;
+}
+
+/** Product variant */
+export interface ProductVariant {
+  id: number;
+  variantName: string;
+  price: number;
+  taxType: 'inclusive' | 'exclusive' | 'none';
+  skuId: string;
+  warrantyId?: number;
+  mrp?: number;           // Maximum Retail Price per variant
+  purchasePrice?: number; // Cost/purchase price per variant
+  barcode?: string;       // EAN/UPC barcode per variant
+  currentStock?: number;  // Stock on hand per variant
+}
+
+/** Inventory product — full business product (multi-business: supermarket, ISP, textile, pharma, electronics) */
+export interface InventoryProduct {
+  id: number;
+  organizationId: string;
+  name: string;
+  sku: string;
+  categoryId?: number;
+  categoryCode?: string;
+  subCategoryId?: number;
+  branchId?: number;
+  unitId?: number;
+  stockAlert?: number;
+  taxType: 'inclusive' | 'exclusive' | 'none';
+  taxRateId?: number;
+  warrantyId?: number;
+  description?: string;
+  price: number;
+  image?: string;
+  variants: ProductVariant[];
+  isActive: boolean;
+  createdAt: string;
+  // Multi-business fields
+  productType?: 'physical' | 'service' | 'digital' | 'bundle';
+  brand?: string;
+  /** HSN code (goods) or SAC code (services) — mandatory for Indian GST compliance */
+  hsnSacCode?: string;
+  /** Maximum Retail Price — printed on labels; required for FMCG/retail */
+  mrp?: number;
+  /** Cost/purchase price — for margin and profit calculation */
+  purchasePrice?: number;
+  /** Current stock quantity on hand */
+  currentStock?: number;
+  /** Reorder point — triggers alert when stock falls to or below this */
+  reorderLevel?: number;
+  /** none = no tracking | serial = per-unit serial number (electronics, ISP equipment) | batch = batch/lot (pharma, FMCG) */
+  trackingType?: 'none' | 'serial' | 'batch';
+  /** EAN-13, UPC-A, or custom barcode for scanning */
+  barcode?: string;
+  weight?: number;
+  weightUnit?: 'g' | 'kg' | 'lb';
+  /** Enable expiry date tracking — for pharma and FMCG */
+  expiryTracking?: boolean;
+}
+
+/** Label print configuration */
+export interface LabelConfig {
+  showProductName: boolean;
+  showProductVariation: boolean;
+  showProductPrice: boolean;
+  showBusinessName: boolean;
+  showCurrency: boolean;
+  showPackingDate: boolean;
 }
 

@@ -11,7 +11,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
@@ -182,6 +182,87 @@ const AdminCustomers = () => {
 
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
 
+  // Excel Download Function
+  const handleDownloadExcel = () => {
+    // Create CSV content from filtered customers
+    const headers = [
+      t('customers.id', 'ID'),
+      t('customers.name', 'Name'),
+      t('customers.mobile', 'Mobile'),
+      t('customers.email', 'Email'),
+      t('customers.connectionType', 'Connection Type'),
+      t('customers.package', 'Package'),
+      t('customers.stbNo', 'STB No'),
+      t('customers.canCaf', 'CAN/CAF'),
+      t('customers.cin', 'CIN'),
+      t('customers.area', 'Area'),
+      t('customers.status', 'Status'),
+      t('customers.paymentStatus', 'Payment Status'),
+      t('customers.addressLine1', 'Address Line 1'),
+      t('customers.addressLine2', 'Address Line 2'),
+      t('customers.city', 'City'),
+      t('customers.state', 'State'),
+      t('customers.country', 'Country'),
+      t('customers.gstin', 'GSTIN'),
+      t('customers.description', 'Description'),
+    ];
+
+    const rows = filteredCustomers.map((customer) => [
+      customer.id,
+      customer.name,
+      customer.mobile,
+      customer.email || '',
+      getConnectionTypeLabel(customer.connectionType, products),
+      customer.package || '',
+      customer.stbNumber || '',
+      customer.canCafId || '',
+      customer.cin || '',
+      customer.area || '',
+      customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive'),
+      customer.paymentStatus === 'paid' ? t('customers.paid', 'Paid') : t('customers.unpaid', 'Unpaid'),
+      customer.address?.line1 || '',
+      customer.address?.line2 || '',
+      customer.address?.city || '',
+      customer.address?.state || '',
+      customer.address?.country || '',
+      customer.gstin || '',
+      customer.description || '',
+    ]);
+
+    // Create CSV string
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) =>
+        row.map((cell) => {
+          // Escape commas and quotes in cell content
+          const cellStr = String(cell);
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(',')
+      ),
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // Generate filename with current date and filter info
+    const date = new Date().toISOString().split('T')[0];
+    const statusText = statusFilter === 'All' ? 'all' : statusFilter.toLowerCase();
+    const connectionText = connectionFilter === 'All' ? 'all' : connectionFilter.toLowerCase();
+    const filename = `customers_${statusText}_${connectionText}_${date}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -189,12 +270,25 @@ const AdminCustomers = () => {
           <h1 className="text-lg font-bold text-foreground mb-1">{t('customers.title', 'Customers')}</h1>
           <p className="text-sm text-muted-foreground">{t('customers.subtitle', 'Manage your customer database')}</p>
         </div>
-        {!isEmployee && (
-          <Button onClick={handleAdd} className="w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('customers.addCustomer', 'Add Customer')}
-          </Button>
-        )}
+        <div className="flex gap-2 w-full sm:w-auto">
+          {!isEmployee && (
+            <>
+              <Button 
+                onClick={handleDownloadExcel} 
+                variant="outline" 
+                className="flex-1 sm:flex-initial"
+                disabled={filteredCustomers.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {t('customers.downloadExcel', 'Download Excel')}
+              </Button>
+              <Button onClick={handleAdd} className="flex-1 sm:flex-initial">
+                <Plus className="w-4 h-4 mr-2" />
+                {t('customers.addCustomer', 'Add Customer')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Data Grid */}

@@ -2,33 +2,42 @@
 // Client folder removed — SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
+import ErrorShowPage from './pages/ErrorShowPage';
 import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
-import AdminCatalog from './pages/admin/Catalog';
-import AdminCustomers from './pages/admin/Customers';
+// Catalog module removed — merged into Inventory
+// Customers module removed — merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
+import AdminContacts from './pages/admin/Contacts';
+import InventoryProducts from './pages/admin/InventoryProducts';
+import AdminBranches from './pages/admin/Branches';
+import AdminPointOfSale from './pages/admin/PointOfSale';
 import Organizations from './pages/superadmin/Organizations';
-import Login from './pages/admin/Login';
-import CustomerLogin from './pages/customer/Login';
+import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const showErrorPage = location.pathname === '/' && searchParams.has('error_show');
+
   return (
     <>
       <ScrollToTop />
+      {showErrorPage && <ErrorShowPage />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
@@ -36,11 +45,8 @@ function App() {
           <Route path="plans" element={<PlansPage />} />
         </Route>
 
-        {/* Admin Login */}
-        <Route path="/admin/login" element={<Login />} />
-
-        {/* Customer Login */}
-        <Route path="/customer/login" element={<CustomerLogin />} />
+        {/* Single Login — admin/employee/customer determined by credentials */}
+        <Route path="/login" element={<Login />} />
 
         {/* Customer Routes - Protected */}
         <Route
@@ -93,14 +99,9 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="catalog"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminCatalog />
-              </ProtectedRoute>
-            }
-          />
+          {/* Catalog & Products → Inventory redirect for backward compat */}
+          <Route path="products" element={<Navigate to="/admin/inventory-products" replace />} />
+          <Route path="catalog" element={<Navigate to="/admin/inventory-products" replace />} />
           <Route
             path="invoices"
             element={
@@ -117,14 +118,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="customers"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <AdminCustomers />
-              </ProtectedRoute>
-            }
-          />
+          {/* Customers → Contacts redirect for backward compat */}
+          <Route path="customers" element={<Navigate to="/admin/contacts" replace />} />
           <Route
             path="complaints"
             element={
@@ -157,6 +152,38 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="contacts"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <AdminContacts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventory-products"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <InventoryProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="branches"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminBranches />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pos"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <AdminPointOfSale />
+              </ProtectedRoute>
+            }
+          />
           <Route index element={<AdminRedirect />} />
         </Route>
       </Routes>
@@ -169,7 +196,7 @@ function AdminRedirect() {
   const { isAuthenticated, role } = useAuthStore();
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (role === 'customer') {
@@ -184,7 +211,7 @@ function AdminRedirect() {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  return <Navigate to="/admin/customers" replace />;
+  return <Navigate to="/admin/contacts" replace />;
 }
 
 export default App;

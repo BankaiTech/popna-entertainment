@@ -192,12 +192,9 @@ export const generateSalesInvoicePdf = async (
           <th style="width:40px">Sl No</th>
           <th>Description</th>
           <th class="cen" style="width:50px">Qty</th>
-          <th class="num" style="width:90px">Rate</th>
-          <th class="cen" style="width:55px">CGST %</th>
-          <th class="num" style="width:80px">CGST</th>
-          <th class="cen" style="width:55px">SGST %</th>
-          <th class="num" style="width:80px">SGST</th>
-          <th class="num" style="width:100px">Total</th>
+          <th class="num" style="width:100px">Rate</th>
+          <th class="cen" style="width:80px">Tax %</th>
+          <th class="num" style="width:120px">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -206,10 +203,7 @@ export const generateSalesInvoicePdf = async (
           <td>${description}</td>
           <td class="cen">1</td>
           <td class="num">${formatCurrencyINR(invoice.amount)}</td>
-          <td class="cen">${cgstPct}%</td>
-          <td class="num">${formatCurrencyINR(cgstAmt)}</td>
-          <td class="cen">${sgstPct}%</td>
-          <td class="num">${formatCurrencyINR(sgstAmt)}</td>
+          <td class="cen">${invoice.gstRate}%</td>
           <td class="num" style="font-weight:700">${formatCurrencyINR(invoice.totalAmount)}</td>
         </tr>
       </tbody>
@@ -330,11 +324,9 @@ export const generatePurchaseInvoicePdf = async (
           <th style="width:40px">Sl No</th>
           <th>Description</th>
           <th class="cen" style="width:50px">Qty</th>
-          <th class="num" style="width:100px">Rate</th>
-          ${hasCgstSgst ? `<th class="num" style="width:80px">CGST</th><th class="num" style="width:80px">SGST</th>` : ''}
-          ${hasIgst ? `<th class="num" style="width:80px">IGST</th>` : ''}
-          ${!hasCgstSgst && !hasIgst ? `<th class="num" style="width:80px">GST</th>` : ''}
-          <th class="num" style="width:110px">Total</th>
+          <th class="num" style="width:110px">Rate</th>
+          <th class="cen" style="width:80px">Tax %</th>
+          <th class="num" style="width:120px">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -343,9 +335,7 @@ export const generatePurchaseInvoicePdf = async (
           <td>Purchase — ${invoice.reference || invoice.invoiceNumber}</td>
           <td class="cen">1</td>
           <td class="num">${formatCurrencyINR(invoice.amount)}</td>
-          ${hasCgstSgst ? `<td class="num">${formatCurrencyINR(cgst)}</td><td class="num">${formatCurrencyINR(sgst)}</td>` : ''}
-          ${hasIgst ? `<td class="num">${formatCurrencyINR(igst)}</td>` : ''}
-          ${!hasCgstSgst && !hasIgst ? `<td class="num">${formatCurrencyINR(totalGst)}</td>` : ''}
+          <td class="cen">${totalGst > 0 && invoice.amount > 0 ? Math.round((totalGst / invoice.amount) * 100) : 0}%</td>
           <td class="num" style="font-weight:700">${formatCurrencyINR(invoice.totalAmount)}</td>
         </tr>
       </tbody>
