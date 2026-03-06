@@ -22,6 +22,7 @@ import AdminContacts from './pages/admin/Contacts';
 import InventoryProducts from './pages/admin/InventoryProducts';
 import AdminBranches from './pages/admin/Branches';
 import AdminPointOfSale from './pages/admin/PointOfSale';
+import SuperAdminDashboard from './pages/superadmin/Dashboard';
 import Organizations from './pages/superadmin/Organizations';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -72,6 +73,14 @@ function App() {
           }
         >
           <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="organizations"
             element={
               <ProtectedRoute allowedRoles={['superadmin']}>
@@ -79,7 +88,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route index element={<Navigate to="/superadmin/organizations" replace />} />
+          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
         </Route>
 
         {/* Admin Routes - Protected */}
@@ -204,7 +213,7 @@ function AdminRedirect() {
   }
 
   if (role === 'superadmin') {
-    return <Navigate to="/superadmin/organizations" replace />;
+    return <Navigate to="/superadmin/dashboard" replace />;
   }
 
   if (role === 'admin') {

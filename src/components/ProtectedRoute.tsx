@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly }: ProtectedRoute
       return <Navigate to="/customer/dashboard" replace />;
     }
     if (role === 'superadmin') {
-      return <Navigate to="/superadmin/organizations" replace />;
+      return <Navigate to="/superadmin/dashboard" replace />;
     }
     return <Navigate to="/admin/dashboard" replace />;
   }

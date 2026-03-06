@@ -33,7 +33,7 @@ const Login = () => {
       return;
     }
     if (role === 'superadmin') {
-      navigate('/superadmin/organizations', { replace: true });
+      navigate('/superadmin/dashboard', { replace: true });
       return;
     }
     if (role === 'admin') {
@@ -62,7 +62,7 @@ const Login = () => {
       if (userRole === 'customer') {
         navigate('/customer/dashboard', { replace: true });
       } else if (userRole === 'superadmin') {
-        navigate('/superadmin/organizations', { replace: true });
+        navigate('/superadmin/dashboard', { replace: true });
       } else if (userRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else {

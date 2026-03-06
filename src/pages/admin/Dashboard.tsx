@@ -1,6 +1,4 @@
-// SaaS Dashboard KPI cards implemented
-// Finance graph implemented
-// Financial system enhancement completed
+// Admin Dashboard — NexLink: Contacts, Invoices, Complaints, Connection Requests, POS, Branches
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -10,7 +8,8 @@ import Select from '@/components/ui/Select';
 import { Link } from 'react-router-dom';
 import {
   Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle,
-  DollarSign, Clock, MessageSquare, Zap, Package, Layers, RefreshCw
+  DollarSign, Clock, MessageSquare, Zap, Package, Layers, RefreshCw,
+  Contact2, FileText, PhoneCall, ShoppingCart, GitBranch, ArrowRight
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -354,13 +353,23 @@ const AdminDashboard = () => {
     },
   ];
 
+  // Quick links to main modules (project structure: contacts, invoices, complaints, connection-requests, pos, branches)
+  const quickLinks = [
+    { to: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, count: dashboardStats.totalCustomers },
+    { to: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText },
+    { to: '/admin/complaints', labelKey: 'nav.complaints', icon: MessageSquare, count: dashboardStats.totalComplaints },
+    { to: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, count: dashboardStats.newConnectionRequests },
+    { to: '/admin/pos', labelKey: 'nav.pos', icon: ShoppingCart },
+    { to: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch },
+  ];
+
   // Renders a section of KPI cards. cardCols: 2 for side-by-side sections (Connection / Plans), 4 for full-width.
   const renderCardSection = (title: string, cards: typeof customerCards, cardCols: 2 | 4 = 4) => (
     <>
       <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       <div className={cn(
-        'grid gap-2',
-        cardCols === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+        'grid gap-2 sm:gap-3',
+        cardCols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
       )}>
         {cards.map((stat, index) => {
           const Icon = stat.icon;
@@ -394,7 +403,7 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in pb-4 sm:pb-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Subscription renewal — show only when due within 7 days or expired */}
         {organization && (() => {
@@ -406,7 +415,7 @@ const AdminDashboard = () => {
           const showRenewCard = daysUntilEnd <= 7;
           if (!showRenewCard) return null;
           return (
-            <Card className="overflow-hidden border-primary/20 bg-primary/5 sm:w-auto w-full">
+            <Card className="overflow-hidden border-primary/20 bg-primary/5 w-full sm:max-w-md">
               <CardContent className="py-3 px-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-primary/10">
@@ -432,6 +441,38 @@ const AdminDashboard = () => {
             </Card>
           );
         })()}
+      </div>
+
+      {/* Quick links — align with project: Contacts, Invoices, Complaints, Connection Requests, POS, Branches */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('dashboard.quickActions', 'Quick actions')}
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+          {quickLinks.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.to} to={item.to}>
+                <Card className="h-full overflow-hidden hover:shadow-md transition-all duration-200 border-border/80 hover:border-primary/30 group">
+                  <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                    <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors shrink-0">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-foreground truncate">{t(item.labelKey)}</p>
+                      {item.count !== undefined && (
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                          <AnimatedCounter value={item.count} duration={800} />
+                        </p>
+                      )}
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hidden sm:block" />
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Customer Metrics */}
@@ -552,11 +593,17 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Last 5 Customers Table */}
+      {/* Last 5 Customers — link to Contacts */}
       <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
         <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
-        <CardHeader className="py-3">
+        <CardHeader className="py-3 flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle className="text-base">{t('dashboard.last5Customers')}</CardTitle>
+          <Link to="/admin/contacts">
+            <Button variant="outline" size="sm" className="text-xs shrink-0">
+              {t('dashboard.viewAllContacts', 'View all')}
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent className="p-0">
           {/* Desktop Table View */}

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { Building2, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Building2, LogOut, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
@@ -22,6 +22,7 @@ const SuperAdminLayout = () => {
     };
 
     const menuItems = [
+        { path: '/superadmin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/superadmin/organizations', labelKey: 'nav.organizations', icon: Building2, label: 'Organizations' },
     ];
 

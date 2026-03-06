@@ -1,6 +1,4 @@
-// Customer dashboard aligned with SaaS design system
-// Customer dashboard SaaS revamp completed
-// UPI payment integration ready
+// Customer Dashboard — NexLink: Plan, Payment, Complaints, Invoices; mobile-first
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import {
   Plus, AlertCircle, LogOut, FileText, Download, CreditCard,
-  Wallet, IndianRupee, CalendarClock, Wifi
+  Wallet, IndianRupee, CalendarClock, Wifi, MessageSquare
 } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -196,60 +194,72 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    // Sticky header added for customer dashboard
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Sticky header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-8 border-b border-border bg-card gap-2 min-w-0">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <img src="/NexLink.svg" alt="NexLink" className="h-[65px] w-auto object-contain shrink-0" />
-          <h2 className="text-base sm:text-lg font-semibold truncate">{t('customerDashboard.welcome')} {currentCustomer.name}</h2>
-          <p className="hidden sm:block text-xs text-muted-foreground truncate ml-2"> {t('customerDashboard.title')}</p>
+      {/* Sticky header — mobile-optimized, no overflow */}
+      <header className="sticky top-0 left-0 right-0 z-50 h-12 sm:h-14 shrink-0 flex items-center justify-between px-3 sm:px-6 border-b border-border bg-card gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+          <img src="/NexLink.svg" alt="NexLink" className="h-8 sm:h-9 w-auto object-contain shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('customerDashboard.welcome')}</p>
+            <p className="text-sm sm:text-base font-semibold text-foreground truncate">{currentCustomer.name}</p>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <LanguageSwitcher />
-          <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base p-2 sm:px-3 sm:py-2">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 text-sm p-2 sm:px-3 sm:py-2 min-h-[44px] sm:min-h-0">
             <LogOut className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">{t('nav.logout')}</span>
           </Button>
         </div>
       </header>
 
-      <div className="flex flex-1 pt-14">
-        {/* Main content — full width */}
-        <main className="flex-1 flex flex-col w-full bg-white min-w-0">
-          <div className="flex-1 overflow-auto p-4 sm:p-6">
-            <div className="space-y-6 animate-fade-in">
-              {/* Overview + actions */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t('customerDashboard.overview', 'Overview')}</h2>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setIsUpiDialogOpen(true)} className="shadow-lg">
-                    <IndianRupee className="w-4 h-4 mr-2" />
-                    {isRenewWindow
-                      ? t('customerDashboard.renewNow', 'Renew Subscription')
-                      : t('customerDashboard.payNow', 'Pay Now')}
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsComplaintModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('customerDashboard.addComplaint')}
-                  </Button>
-                </div>
+      <main className="flex-1 flex flex-col w-full bg-muted/20 min-w-0">
+        <div className="flex-1 overflow-auto p-3 sm:p-6 pb-6">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto">
+            {/* Quick actions — prominent on mobile */}
+            <div className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('customerDashboard.quickActions', 'Quick actions')}
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button
+                  onClick={() => setIsUpiDialogOpen(true)}
+                  className="flex-1 min-h-[48px] sm:min-h-0 shadow-md text-base sm:text-sm"
+                >
+                  <IndianRupee className="w-5 h-5 sm:w-4 sm:h-4 mr-2 shrink-0" />
+                  {isRenewWindow
+                    ? t('customerDashboard.renewNow', 'Renew Subscription')
+                    : t('customerDashboard.payNow', 'Pay Now')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsComplaintModalOpen(true)}
+                  className="flex-1 min-h-[48px] sm:min-h-0 text-base sm:text-sm"
+                >
+                  <MessageSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-2 shrink-0" />
+                  {t('customerDashboard.addComplaint')}
+                </Button>
               </div>
+            </div>
 
-              {/* KPI cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Overview / KPI cards — 1 col mobile, 2 sm, 4 lg */}
+            <div className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('customerDashboard.overview', 'Overview')}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {kpiCards.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <Card key={index} className="overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                        <CardTitle className="text-[10px] font-semibold uppercase tracking-wider">{stat.title}</CardTitle>
-                        <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className={`w-5 h-5 ${stat.color}`} />
+                    <Card key={index} className="overflow-hidden group hover:shadow-md transition-all duration-200">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3 sm:pt-4 sm:px-4">
+                        <CardTitle className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">{stat.title}</CardTitle>
+                        <div className={cn('p-2 rounded-lg shrink-0', stat.bgColor)}>
+                          <Icon className={cn('w-4 h-4 sm:w-5 sm:h-5', stat.color)} />
                         </div>
                       </CardHeader>
-                      <CardContent className="pb-4 px-4">
-                        <div className={cn('text-xl font-bold text-foreground mb-1', stat.color)}>
+                      <CardContent className="pb-3 px-3 sm:pb-4 sm:px-4">
+                        <div className={cn('text-base sm:text-lg font-bold text-foreground break-words', stat.color)}>
                           {stat.value}
                         </div>
                       </CardContent>
@@ -257,6 +267,7 @@ const CustomerDashboard = () => {
                   );
                 })}
               </div>
+            </div>
 
               {isCableCustomer && customerProduct?.cutoffDate && (
                 <p className="text-xs text-muted-foreground">
@@ -268,68 +279,62 @@ const CustomerDashboard = () => {
                 </p>
               )}
 
-              {/* Complaints section */}
-              <div id="section-complaints">
-                <Card className="overflow-hidden">
-                  <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500" />
-                  <CardHeader className="py-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        {t('customerDashboard.myComplaints')}
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
-                          {myComplaints.length}
-                        </span>
-                        <Button size="sm" variant="outline" onClick={() => setIsComplaintModalOpen(true)}>
-                          <Plus className="w-3.5 h-3.5 mr-1" />
-                          {t('customerDashboard.addComplaint')}
-                        </Button>
-                      </div>
+            {/* My Complaints */}
+            <div id="section-complaints" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('customerDashboard.myComplaints')}
+              </h2>
+              <Card className="overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500" />
+                <CardHeader className="py-3 px-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-orange-500 shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{myComplaints.length} {t('customerDashboard.complaintsCount', 'complaints')}</span>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => setIsComplaintModalOpen(true)} className="w-full sm:w-auto min-h-[44px] sm:min-h-0">
+                    <Plus className="w-4 h-4 mr-2 shrink-0" />
+                    {t('customerDashboard.addComplaint')}
+                  </Button>
+                </CardHeader>
+                <CardContent className="py-2 px-3 sm:px-4 pb-4">
+                  {myComplaints.length === 0 ? (
+                    <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                      <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm font-medium">{t('customerDashboard.noComplaints')}</p>
+                      <p className="text-xs mt-1">{t('customerDashboard.noComplaintsSub')}</p>
                     </div>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    {myComplaints.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">{t('customerDashboard.noComplaints')}</p>
-                        <p className="text-xs mt-1">{t('customerDashboard.noComplaintsSub')}</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {myComplaints.map((complaint) => (
-                          <div key={complaint.id} className="flex items-start justify-between p-3 rounded-lg border border-border/50 hover:shadow-md transition-all duration-300">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-foreground truncate">{complaint.customerDescription}</p>
-                              <p className="text-xs text-muted-foreground mt-1">{t('customerDashboard.created')} {formatDate(complaint.createdAt)}</p>
-                            </div>
-                            <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ml-3', getStatusColor(complaint.status))}>
-                              {getStatusLabel(complaint.status)}
-                            </span>
+                  ) : (
+                    <div className="space-y-2">
+                      {myComplaints.map((complaint) => (
+                        <div key={complaint.id} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 p-3 sm:p-4 rounded-lg border border-border/50 bg-card hover:shadow-sm transition-all min-h-[44px]">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground line-clamp-2 sm:truncate">{complaint.customerDescription}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t('customerDashboard.created')} {formatDate(complaint.createdAt)}</p>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Invoices section */}
-              <div id="section-invoices">
-                <Card className="overflow-hidden">
-                  <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
-                  <CardHeader className="py-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        {t('customerDashboard.paymentHistory', 'Payment History')}
-                      </CardTitle>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
-                        {myInvoices.length}
-                      </span>
+                          <span className={cn('px-2 py-1 rounded-full text-xs font-semibold w-fit', getStatusColor(complaint.status))}>
+                            {getStatusLabel(complaint.status)}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  </CardHeader>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payment history / Invoices */}
+            <div id="section-invoices" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('customerDashboard.paymentHistory', 'Payment History')}
+              </h2>
+              <Card className="overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
+                <CardHeader className="py-3 px-3 sm:px-4 flex flex-row items-center justify-between gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-green-600 shrink-0" />
+                    {myInvoices.length} {t('customerDashboard.invoicesCount', 'invoices')}
+                  </CardTitle>
+                </CardHeader>
                   <CardContent className="p-0">
                       {loadingInvoices ? (
                         <div className="text-center py-12 text-muted-foreground text-sm">{t('customerDashboard.loadingInvoices')}</div>
@@ -379,13 +384,13 @@ const CustomerDashboard = () => {
                           </div>
                           <div className="md:hidden space-y-3 p-3">
                             {myInvoices.map((invoice) => (
-                              <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3">
-                                <div className="flex items-start justify-between">
-                                  <div>
+                              <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3 min-h-[44px]">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
                                     <p className="text-sm font-bold text-foreground">{invoice.invoiceNumber}</p>
-                                    <p className="text-sm text-muted-foreground">{invoice.planName}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{invoice.planName}</p>
                                   </div>
-                                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
+                                  <span className={cn('px-2 py-1 rounded-full text-xs font-semibold shrink-0', getInvoiceStatusColor(invoice.status))}>
                                     {invoice.status.toUpperCase()}
                                   </span>
                                 </div>
@@ -404,7 +409,10 @@ const CustomerDashboard = () => {
                                   </div>
                                 </div>
                                 <div className="flex justify-end pt-2 border-t border-border">
-                                  <button onClick={() => handleDownloadInvoice(invoice)} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                                  <button
+                                    onClick={() => handleDownloadInvoice(invoice)}
+                                    className="flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors touch-manipulation"
+                                  >
                                     <Download className="w-4 h-4" />
                                     {t('customerDashboard.download')}
                                   </button>
@@ -415,16 +423,15 @@ const CustomerDashboard = () => {
                         </>
                       )}
                     </CardContent>
-                  </Card>
-              </div>
+              </Card>
             </div>
           </div>
+        </div>
 
-          <footer className="shrink-0 mt-auto border-t border-gray-200 bg-white py-2 px-4">
-            <FooterCredit />
-          </footer>
-        </main>
-      </div>
+        <footer className="shrink-0 mt-auto border-t border-border bg-card py-3 px-4 sm:px-6">
+          <FooterCredit />
+        </footer>
+      </main>
 
       {/* Customer Complaint Modal */}
       <CustomerComplaintModal
