@@ -32,7 +32,7 @@ const InventoryProducts = () => {
     const {
         products, categories, subCategories, units, branches, taxRates, warranties,
         initialize, addProduct, updateProduct, deleteProduct, importProducts,
-        addCategory, addUnit, addBranch, addTaxRate, addSubCategory,
+        addCategory, addUnit, addBranch, addTaxRate, addSubCategory, addWarranty,
     } = useInventoryStore();
 
     const { companyProfile } = useStore();
@@ -244,75 +244,77 @@ const InventoryProducts = () => {
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex flex-wrap gap-1 border-b border-gray-200">
-                {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => { setActiveTab(tab.id); setSearch(''); }}
-                            className={cn(
-                                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-                                activeTab === tab.id
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            )}
-                        >
-                            <Icon className="w-4 h-4" />
-                            {tab.label}
-                            {tab.count !== undefined && (
-                                <span className={cn(
-                                    'px-2 py-0.5 text-xs rounded-full',
-                                    activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                                )}>
-                                    {tab.count}
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
+            {/* Tabs + Add Product */}
+            <div className="flex items-center border-b border-gray-200">
+                <div className="flex flex-wrap gap-1 flex-1">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => { setActiveTab(tab.id); setSearch(''); }}
+                                className={cn(
+                                    'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
+                                    activeTab === tab.id
+                                        ? 'border-blue-600 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                )}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                                {tab.count !== undefined && (
+                                    <span className={cn(
+                                        'px-2 py-0.5 text-xs rounded-full',
+                                        activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                    )}>
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+                {activeTab === 'list' && (
+                    <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} size="sm" className="shrink-0 h-9 ml-2">
+                        <Plus className="w-4 h-4 mr-1" /> {t('inventory.addProduct', 'Add Product')}
+                    </Button>
+                )}
             </div>
 
             {/* List Products */}
             {activeTab === 'list' && (
                 <div className="space-y-3">
-                    {/* Search + Add Button */}
-                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-                        <div className="relative flex-1 w-full sm:max-w-xs">
+                    {/* Search + Filters in one row */}
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                        <div className="relative w-full sm:max-w-xs shrink-0">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input className="pl-9 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('inventory.searchPlaceholder', 'Search products...')} />
+                            <Input className="pl-9 h-8 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('inventory.searchPlaceholder', 'Search products...')} />
                         </div>
-                        <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} size="sm" className="w-full sm:w-auto h-9">
-                            <Plus className="w-4 h-4 mr-1" /> {t('inventory.addProduct', 'Add Product')}
-                        </Button>
-                    </div>
-
-                    {/* Compact Filters — same style as Customers page */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select value={stockFilter} onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
-                            <option value="all">{t('inventory.filterAll', 'All Stock')}</option>
-                            <option value="in_stock">{t('inventory.filterInStock', 'In Stock')}</option>
-                            <option value="low_stock">{t('inventory.filterLowStock', 'Low Stock')}</option>
-                            <option value="out_of_stock">{t('inventory.filterOutOfStock', 'Out of Stock')}</option>
-                            <option value="needs_reorder">{t('inventory.filterNeedsReorder', 'Needs Reorder')}</option>
-                        </Select>
-                        <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
-                            <option value="all">{t('inventory.allCategories', 'All Categories')}</option>
-                            {categoryOptions.map((c) => (
-                                <option key={c.id} value={c.id}>{c.label}</option>
-                            ))}
-                        </Select>
-                        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="text-xs h-8 py-0 min-w-[130px] w-auto">
-                            <option value="name">{t('inventory.sortName', 'Name (A–Z)')}</option>
-                            <option value="stock_asc">{t('inventory.sortStockAsc', 'Stock (Low→High)')}</option>
-                            <option value="stock_desc">{t('inventory.sortStockDesc', 'Stock (High→Low)')}</option>
-                        </Select>
-                        {(stockFilter !== 'all' || categoryFilter !== 'all' || sortBy !== 'name') && (
-                            <button onClick={() => { setStockFilter('all'); setCategoryFilter('all'); setSortBy('name'); }} className="text-xs text-blue-600 hover:underline px-1">
-                                {t('common.reset', 'Reset')}
-                            </button>
-                        )}
+                        <div className="flex flex-wrap items-center gap-2 ml-auto">
+                            <Select value={stockFilter} onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
+                                <option value="all">{t('inventory.filterAll', 'All Stock')}</option>
+                                <option value="in_stock">{t('inventory.filterInStock', 'In Stock')}</option>
+                                <option value="low_stock">{t('inventory.filterLowStock', 'Low Stock')}</option>
+                                <option value="out_of_stock">{t('inventory.filterOutOfStock', 'Out of Stock')}</option>
+                                <option value="needs_reorder">{t('inventory.filterNeedsReorder', 'Needs Reorder')}</option>
+                            </Select>
+                            <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="text-xs h-8 py-0 min-w-[120px] w-auto">
+                                <option value="all">{t('inventory.allCategories', 'All Categories')}</option>
+                                {categoryOptions.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.label}</option>
+                                ))}
+                            </Select>
+                            <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="text-xs h-8 py-0 min-w-[130px] w-auto">
+                                <option value="name">{t('inventory.sortName', 'Name (A–Z)')}</option>
+                                <option value="stock_asc">{t('inventory.sortStockAsc', 'Stock (Low→High)')}</option>
+                                <option value="stock_desc">{t('inventory.sortStockDesc', 'Stock (High→Low)')}</option>
+                            </Select>
+                            {(stockFilter !== 'all' || categoryFilter !== 'all' || sortBy !== 'name') && (
+                                <button onClick={() => { setStockFilter('all'); setCategoryFilter('all'); setSortBy('name'); }} className="text-xs text-blue-600 hover:underline px-1">
+                                    {t('common.reset', 'Reset')}
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Desktop Table */}
@@ -671,6 +673,7 @@ const InventoryProducts = () => {
                 onAddBranch={addBranch}
                 onAddTaxRate={addTaxRate}
                 onAddSubCategory={addSubCategory}
+                onAddWarranty={addWarranty}
             />
 
             <ImportModal

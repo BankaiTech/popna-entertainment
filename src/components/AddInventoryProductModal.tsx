@@ -26,6 +26,7 @@ interface AddInventoryProductModalProps {
     onAddBranch: (branch: Omit<Branch, 'id' | 'createdAt'>) => Promise<void>;
     onAddTaxRate: (tax: Omit<TaxRate, 'id' | 'createdAt'>) => Promise<void>;
     onAddSubCategory: (sub: Omit<SubCategory, 'id' | 'createdAt'>) => Promise<void>;
+    onAddWarranty?: (w: Omit<Warranty, 'id' | 'createdAt'>) => Promise<void>;
 }
 
 type FormTab = 'general' | 'pricing' | 'inventory' | 'variants';
@@ -54,13 +55,13 @@ const defaultFormData = {
 const AddInventoryProductModal = ({
     isOpen, onClose, onSave, onUpdate, editingProduct,
     categories, subCategories, units, branches, taxRates, warranties,
-    onAddCategory, onAddUnit, onAddBranch, onAddTaxRate, onAddSubCategory,
+    onAddCategory, onAddUnit, onAddBranch, onAddTaxRate, onAddSubCategory, onAddWarranty,
 }: AddInventoryProductModalProps) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<FormTab>('general');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [showInline, setShowInline] = useState<'unit' | 'category' | 'branch' | 'taxRate' | 'subCategory' | null>(null);
+    const [showInline, setShowInline] = useState<'unit' | 'category' | 'branch' | 'taxRate' | 'subCategory' | 'warranty' | null>(null);
     const [formData, setFormData] = useState(defaultFormData);
     const [variants, setVariants] = useState<Omit<ProductVariant, 'id'>[]>([]);
 
@@ -118,6 +119,9 @@ const AddInventoryProductModal = ({
         e.preventDefault();
         if (!formData.name.trim()) { setError(t('productModal.nameRequired', 'Product name is required')); return; }
         if (!formData.sku.trim()) { setError(t('productModal.skuRequired', 'SKU is required')); return; }
+        if (!formData.price || formData.price <= 0) { setError(t('productModal.priceRequired', 'Selling price is required')); setActiveTab('pricing'); return; }
+        if (formData.taxType === 'none') { setError(t('productModal.taxTypeRequired', 'Tax type is required')); setActiveTab('pricing'); return; }
+        if (!formData.taxRateId) { setError(t('productModal.taxRateRequired', 'Tax rate is required when tax type is set')); setActiveTab('pricing'); return; }
 
         setSaving(true);
         try {
@@ -161,10 +165,10 @@ const AddInventoryProductModal = ({
     };
 
     const tabs: { key: FormTab; label: string }[] = [
-        { key: 'general',   label: t('productModal.tabGeneral', 'General') },
-        { key: 'pricing',   label: t('productModal.tabPricing', 'Pricing & Tax') },
+        { key: 'general', label: t('productModal.tabGeneral', 'General') },
+        { key: 'pricing', label: t('productModal.tabPricing', 'Pricing & Tax') },
         { key: 'inventory', label: t('productModal.tabInventory', 'Inventory') },
-        { key: 'variants',  label: `${t('productModal.tabVariants', 'Variants')} (${variants.length})` },
+        { key: 'variants', label: `${t('productModal.tabVariants', 'Variants')} (${variants.length})` },
     ];
 
     if (!isOpen) return null;
@@ -314,7 +318,7 @@ const AddInventoryProductModal = ({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-1">{t('productModal.sellingPrice', 'Selling Price (₹)')} <span className="text-destructive">*</span></label>
-                                        <Input type="number" min="0" step="0.01" value={formData.price || ''} onChange={(e) => set({ price: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
+                                        <Input type="number" min="0" step="0.01" value={formData.price || ''} onChange={(e) => set({ price: Number(e.target.value) })} placeholder="0.00" required disabled={saving} />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-1">
@@ -341,30 +345,40 @@ const AddInventoryProductModal = ({
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">{t('productModal.taxType', 'Tax Type')}</label>
-                                        <Select value={formData.taxType} onChange={(e) => set({ taxType: e.target.value as typeof formData.taxType })} disabled={saving}>
-                                            <option value="none">{t('productModal.taxNone', 'No Tax')}</option>
+                                        <label className="block text-sm font-medium mb-1">{t('productModal.taxType', 'Tax Type')} <span className="text-destructive">*</span></label>
+                                        <Select value={formData.taxType} onChange={(e) => set({ taxType: e.target.value as typeof formData.taxType })} required disabled={saving}>
+                                            <option value="none" disabled>{t('productModal.selectTaxType', 'Select tax type')}</option>
                                             <option value="inclusive">{t('productModal.taxInclusive', 'Inclusive (price includes GST)')}</option>
                                             <option value="exclusive">{t('productModal.taxExclusive', 'Exclusive (GST added on top)')}</option>
                                         </Select>
                                     </div>
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">{t('productModal.taxRate', 'Tax Rate')}</label>
+                                            <label className="text-sm font-medium">{t('productModal.taxRate', 'Tax Rate')} <span className="text-destructive">*</span></label>
                                             <button type="button" onClick={() => setShowInline('taxRate')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
                                                 <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
                                             </button>
                                         </div>
-                                        <Select value={formData.taxRateId || ''} onChange={(e) => set({ taxRateId: Number(e.target.value) })} disabled={saving || formData.taxType === 'none'}>
+                                        <Select value={formData.taxRateId || ''} onChange={(e) => set({ taxRateId: Number(e.target.value) })} required disabled={saving}>
                                             <option value="">{t('productModal.selectTaxRate', 'Select tax rate')}</option>
-                                            {taxRates.map((t2) => <option key={t2.id} value={t2.id}>{t2.name} ({t2.rate}%)</option>)}
+                                            {taxRates.map((t2) => {
+                                                const nameHasRate = t2.name.includes(String(t2.rate));
+                                                return <option key={t2.id} value={t2.id}>{nameHasRate ? t2.name : `${t2.name} (${t2.rate}%)`}</option>;
+                                            })}
                                         </Select>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">{t('productModal.warranty', 'Warranty')}</label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="text-sm font-medium">{t('productModal.warranty', 'Warranty')}</label>
+                                            {onAddWarranty && (
+                                                <button type="button" onClick={() => setShowInline('warranty')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
+                                                    <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
+                                                </button>
+                                            )}
+                                        </div>
                                         <Select value={formData.warrantyId || ''} onChange={(e) => set({ warrantyId: Number(e.target.value) })} disabled={saving}>
                                             <option value="">{t('productModal.noWarranty', 'No warranty')}</option>
                                             {warranties.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.duration} {w.durationUnit})</option>)}
@@ -597,7 +611,7 @@ const AddInventoryProductModal = ({
                     { name: 'location', label: 'Location', placeholder: 'e.g. Chennai' },
                 ]}
                 onSave={async (data) => {
-                    await onAddBranch({ organizationId: '', name: data.name, location: data.location });
+                    await onAddBranch({ organizationId: '', name: data.name, location: data.location, isActive: true });
                 }}
             />
             <InlineAddModal
@@ -623,6 +637,27 @@ const AddInventoryProductModal = ({
                     await onAddSubCategory({ organizationId: '', categoryId: formData.categoryId, name: data.name });
                 }}
             />
+            {onAddWarranty && (
+                <InlineAddModal
+                    isOpen={showInline === 'warranty'}
+                    onClose={() => setShowInline(null)}
+                    title={t('productModal.warranty', 'Add Warranty')}
+                    fields={[
+                        { name: 'name', label: t('productModal.warrantyName', 'Warranty Name'), required: true, placeholder: 'e.g. 1 Year Standard' },
+                        { name: 'duration', label: t('productModal.warrantyDuration', 'Duration'), required: true, type: 'number', placeholder: 'e.g. 12' },
+                        {
+                            name: 'durationUnit', label: t('productModal.warrantyUnit', 'Unit'), required: true, type: 'select', placeholder: 'months', options: [
+                                { value: 'days', label: t('productModal.days', 'Days') },
+                                { value: 'months', label: t('productModal.months', 'Months') },
+                                { value: 'years', label: t('productModal.years', 'Years') },
+                            ]
+                        },
+                    ]}
+                    onSave={async (data) => {
+                        await onAddWarranty({ organizationId: '', name: data.name, duration: Number(data.duration), durationUnit: (data.durationUnit || 'months') as 'days' | 'months' | 'years' });
+                    }}
+                />
+            )}
         </>
     );
 };

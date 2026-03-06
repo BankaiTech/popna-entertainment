@@ -19,7 +19,8 @@ const Invoices = () => {
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'All'>('All');
-  const [serviceFilter, setServiceFilter] = useState<Provider | 'All'>('All');
+  const [categoryFilter, setCategoryFilter] = useState<'All' | 'cable' | 'internet'>('All');
+  const [productFilter, setProductFilter] = useState<Provider | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,13 +48,17 @@ const Invoices = () => {
   const filtered = useMemo(() => {
     return invoices.filter((inv) => {
       const byStatus = statusFilter === 'All' || inv.status === statusFilter;
-      const byService = serviceFilter === 'All' || inv.serviceProvider === serviceFilter;
+
+      const invoiceProduct = products.find(p => p.name === inv.serviceProvider);
+      const byCategory = categoryFilter === 'All' || (invoiceProduct && invoiceProduct.productType === categoryFilter);
+      const byProduct = productFilter === 'All' || inv.serviceProvider === productFilter;
+
       const bySearch = searchQuery.trim() === '' ||
         inv.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase());
-      return byStatus && byService && bySearch;
+      return byStatus && byCategory && byProduct && bySearch;
     });
-  }, [invoices, statusFilter, serviceFilter, searchQuery]);
+  }, [invoices, products, statusFilter, categoryFilter, productFilter, searchQuery]);
 
   // Pagination logic
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -65,7 +70,7 @@ const Invoices = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, serviceFilter]);
+  }, [searchQuery, statusFilter, categoryFilter, productFilter]);
 
   const statusBadge = (status: InvoiceStatus) => {
     const styles: Record<InvoiceStatus, string> = {
@@ -124,17 +129,28 @@ const Invoices = () => {
               <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
             </Select>
             <Select
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value as Provider | 'All')}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
               className="h-9 text-sm"
             >
-              <option value="All">{t('invoices.allServices', 'All Services')}</option>
+              <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
+              <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
+              <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+            </Select>
+            <Select
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
+              className="h-9 text-sm"
+            >
+              <option value="All">{t('invoices.allProducts', 'All Products')}</option>
               {Array.isArray(products) && products.length > 0 ? (
-                products.map((product) => (
-                  <option key={product.id} value={product.name}>
-                    {getProviderDisplayName(product.name, products)}
-                  </option>
-                ))
+                products
+                  .filter(p => categoryFilter === 'All' || p.productType === categoryFilter)
+                  .map((product) => (
+                    <option key={product.id} value={product.name}>
+                      {getProviderDisplayName(product.name, products)}
+                    </option>
+                  ))
               ) : null}
             </Select>
             <div className="flex justify-end">

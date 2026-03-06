@@ -129,7 +129,7 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
         <DialogHeader title={t('purchaseInvoiceModal.title', 'Create Purchase Invoice')} onClose={onClose} />
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <DialogBody>
-            <div className="p-4 sm:p-6 space-y-4">
+            <div className="p-4 py-0 sm:p-6 space-y-2">
               {/* 1. Vendor list with Add Vendor */}
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
                 <div className="flex-1">
@@ -218,9 +218,6 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
                         value={amount}
                         onChange={(e) => setAmount(Number(e.target.value))}
                         placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                        required
                       />
                     </div>
                     <div>
