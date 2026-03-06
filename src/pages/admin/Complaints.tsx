@@ -10,7 +10,6 @@ import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import { Plus, AlertCircle, Search } from 'lucide-react';
 import type { Complaint, ComplaintStatus, Provider } from '@/models/types';
-import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import ComplaintModal from '@/components/ComplaintModal';
 import { cn } from '@/lib/utils';
 

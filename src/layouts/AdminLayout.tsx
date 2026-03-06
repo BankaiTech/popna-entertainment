@@ -169,7 +169,6 @@ const AdminLayout = () => {
           <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 scrollbar-thin">
             {filteredGroups.map((group) => {
               const isCollapsed = collapsedGroups[group.labelKey];
-              const hasActiveItem = group.items.some((item) => location.pathname === item.path);
               const groupLabel = t(group.labelKey, group.labelKey.split('.').pop() || '');
 
               return (

@@ -1,4 +1,4 @@
-// Admin Dashboard — NexLink: Contacts, Invoices, Complaints, Connection Requests, POS, Branches
+// Admin Dashboard — multi-business: dynamic by categories/products
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -7,9 +7,8 @@ import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import Select from '@/components/ui/Select';
 import { Link } from 'react-router-dom';
 import {
-  Users, Wifi, TrendingUp, UserCheck, UserX, AlertCircle,
-  DollarSign, Clock, MessageSquare, Zap, Package, Layers, RefreshCw,
-  Contact2, FileText, PhoneCall, ShoppingCart, GitBranch, ArrowRight
+  Users, TrendingUp, UserCheck, UserX, AlertCircle,
+  DollarSign, Clock, MessageSquare, Zap, Package, Layers, RefreshCw, ArrowRight
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -19,7 +18,6 @@ import { salesInvoicesApi } from '@/api/invoices';
 import { organizationsApi } from '@/api/organizations';
 import type { Customer, SalesInvoice, Organization, Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import { getNextDueDateForCustomer } from '@/lib/billingUtils';
@@ -121,24 +119,25 @@ const AdminDashboard = () => {
   }
   if (!dashboardStats) return null;
 
-  // Multi-tenant ready — generate product stat cards dynamically
+  // Dynamic by category: one card per product/category (multi-business)
+  const categoryColors = [
+    { text: 'text-blue-600', bg: 'bg-blue-50' },
+    { text: 'text-orange-600', bg: 'bg-orange-50' },
+    { text: 'text-green-600', bg: 'bg-green-50' },
+    { text: 'text-purple-600', bg: 'bg-purple-50' },
+    { text: 'text-pink-600', bg: 'bg-pink-50' },
+    { text: 'text-indigo-600', bg: 'bg-indigo-50' },
+  ];
   const productStatCards = Array.isArray(products) && products.length > 0 ? products.map((product) => {
     const productCustomers = customers.filter((c) => c.connectionType === product.name);
-    const colors = [
-      { text: 'text-blue-600', bg: 'bg-blue-50' },
-      { text: 'text-orange-600', bg: 'bg-orange-50' },
-      { text: 'text-green-600', bg: 'bg-green-50' },
-      { text: 'text-purple-600', bg: 'bg-purple-50' },
-      { text: 'text-pink-600', bg: 'bg-pink-50' },
-      { text: 'text-indigo-600', bg: 'bg-indigo-50' },
-    ];
-    const colorIndex = product.id % colors.length;
+    const colorIndex = product.id % categoryColors.length;
+    const { text, bg } = categoryColors[colorIndex];
     return {
-      title: `${product.productType === 'cable' ? t('dashboard.cable') : t('dashboard.internet')} — ${getConnectionTypeLabel(product.name)}`,
+      title: t('dashboard.customersByCategory', 'Customers — {{name}}', { name: product.name }),
       value: productCustomers.length,
-      icon: Wifi,
-      color: colors[colorIndex].text,
-      bgColor: colors[colorIndex].bg,
+      icon: Users,
+      color: text,
+      bgColor: bg,
       isCurrency: false,
     };
   }) : [];
@@ -196,87 +195,49 @@ const AdminDashboard = () => {
           .filter((cp): cp is { customer: Customer; product: Product } => cp !== null)
       : [];
 
-  const cablePairs = customersWithProducts.filter((cp) => cp.product.productType === 'cable');
-  const internetPairs = customersWithProducts.filter((cp) => cp.product.productType === 'internet');
-
   const isDueSoon = (d: Date | null) =>
     !!d && d.getTime() >= today.getTime() && d.getTime() <= oneWeekFromNow.getTime();
 
-  const cableDueSoon = cablePairs.filter(({ customer, product }) =>
+  const dueSoonTotal = customersWithProducts.filter(({ customer, product }) =>
     isDueSoon(getNextDueDateForCustomer(customer, product))
-  );
-  const internetDueSoon = internetPairs.filter(({ customer, product }) =>
-    isDueSoon(getNextDueDateForCustomer(customer, product))
-  );
-
-  const cableOverdue = cablePairs.filter(({ customer, product }) => {
+  ).length;
+  const overdueTotal = customersWithProducts.filter(({ customer, product }) => {
     const due = getNextDueDateForCustomer(customer, product);
     return !!due && due.getTime() < today.getTime() && customer.paymentStatus !== 'paid';
-  });
-  const internetOverdue = internetPairs.filter(({ customer, product }) => {
-    const due = getNextDueDateForCustomer(customer, product);
-    return !!due && due.getTime() < today.getTime() && customer.paymentStatus !== 'paid';
-  });
-
-  const outstandingCable = cablePairs
+  }).length;
+  const totalOutstanding = customersWithProducts
     .filter(({ customer }) => customer.paymentStatus !== 'paid')
     .reduce((sum, { customer }) => sum + (customer.balanceAmount ?? 0), 0);
-  const outstandingInternet = internetPairs
-    .filter(({ customer }) => customer.paymentStatus !== 'paid')
-    .reduce((sum, { customer }) => sum + (customer.balanceAmount ?? 0), 0);
-
   const totalAmount = (dashboardStats.totalAmountCollected ?? 0) + (dashboardStats.totalPendingAmount ?? 0);
-  const paymentCards = [
+
+  // Payment summary cards (multi-business, no cable/internet)
+  const paymentSummaryCards = [
     {
-      title: t('dashboard.cableDueThisWeek', 'Cable due in next 7 days'),
-      value: cableDueSoon.length,
-      icon: Wifi,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      title: t('dashboard.dueIn7Days', 'Due in next 7 days'),
+      value: dueSoonTotal,
+      icon: Clock,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
       isCurrency: false,
     },
     {
-      title: t('dashboard.internetDueThisWeek', 'Internet due in next 7 days'),
-      value: internetDueSoon.length,
-      icon: Wifi,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      isCurrency: false,
-    },
-    {
-      title: t('dashboard.cableOverdue', 'Cable overdue'),
-      value: cableOverdue.length,
+      title: t('dashboard.overdue', 'Overdue'),
+      value: overdueTotal,
       icon: AlertCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       isCurrency: false,
     },
     {
-      title: t('dashboard.internetOverdue', 'Internet overdue'),
-      value: internetOverdue.length,
-      icon: AlertCircle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      isCurrency: false,
-    },
-    {
-      title: t('dashboard.outstandingCable', 'Outstanding (Cable)'),
-      value: outstandingCable,
+      title: t('dashboard.totalOutstanding', 'Total outstanding'),
+      value: totalOutstanding,
       icon: DollarSign,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       isCurrency: true,
     },
     {
-      title: t('dashboard.outstandingInternet', 'Outstanding (Internet)'),
-      value: outstandingInternet,
-      icon: DollarSign,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-50',
-      isCurrency: true,
-    },
-    {
-      title: t('dashboard.totalAmount', 'Total Amount'),
+      title: t('dashboard.totalAmount', 'Total amount'),
       value: totalAmount,
       icon: DollarSign,
       color: 'text-blue-600',
@@ -284,6 +245,51 @@ const AdminDashboard = () => {
       isCurrency: true,
     },
   ];
+
+  // Dynamic payment cards by category (one set per product)
+  const paymentByCategoryCards = products.flatMap((product) => {
+    const pairs = customersWithProducts.filter((cp) => cp.product.id === product.id);
+    const dueSoon = pairs.filter(({ customer, product: prod }) =>
+      isDueSoon(getNextDueDateForCustomer(customer, prod))
+    ).length;
+    const overdue = pairs.filter(({ customer, product: prod }) => {
+      const due = getNextDueDateForCustomer(customer, prod);
+      return !!due && due.getTime() < today.getTime() && customer.paymentStatus !== 'paid';
+    }).length;
+    const outstanding = pairs
+      .filter(({ customer }) => customer.paymentStatus !== 'paid')
+      .reduce((sum, { customer }) => sum + (customer.balanceAmount ?? 0), 0);
+    const colorIndex = product.id % categoryColors.length;
+    const { text, bg } = categoryColors[colorIndex];
+    return [
+      {
+        title: t('dashboard.dueSoonCategory', 'Due soon — {{name}}', { name: product.name }),
+        value: dueSoon,
+        icon: Clock,
+        color: text,
+        bgColor: bg,
+        isCurrency: false,
+      },
+      {
+        title: t('dashboard.overdueCategory', 'Overdue — {{name}}', { name: product.name }),
+        value: overdue,
+        icon: AlertCircle,
+        color: text,
+        bgColor: bg,
+        isCurrency: false,
+      },
+      {
+        title: t('dashboard.outstandingCategory', 'Outstanding — {{name}}', { name: product.name }),
+        value: outstanding,
+        icon: DollarSign,
+        color: text,
+        bgColor: bg,
+        isCurrency: true,
+      },
+    ];
+  });
+
+  const paymentCards = [...paymentSummaryCards, ...paymentByCategoryCards];
 
   // Complaint KPI cards
   const complaintCards = [
@@ -351,16 +357,6 @@ const AdminDashboard = () => {
       bgColor: 'bg-teal-50',
       isCurrency: false,
     },
-  ];
-
-  // Quick links to main modules (project structure: contacts, invoices, complaints, connection-requests, pos, branches)
-  const quickLinks = [
-    { to: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, count: dashboardStats.totalCustomers },
-    { to: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText },
-    { to: '/admin/complaints', labelKey: 'nav.complaints', icon: MessageSquare, count: dashboardStats.totalComplaints },
-    { to: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, count: dashboardStats.newConnectionRequests },
-    { to: '/admin/pos', labelKey: 'nav.pos', icon: ShoppingCart },
-    { to: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch },
   ];
 
   // Renders a section of KPI cards. cardCols: 2 for side-by-side sections (Connection / Plans), 4 for full-width.
@@ -443,38 +439,6 @@ const AdminDashboard = () => {
         })()}
       </div>
 
-      {/* Quick links — align with project: Contacts, Invoices, Complaints, Connection Requests, POS, Branches */}
-      <div className="space-y-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t('dashboard.quickActions', 'Quick actions')}
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-          {quickLinks.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.to} to={item.to}>
-                <Card className="h-full overflow-hidden hover:shadow-md transition-all duration-200 border-border/80 hover:border-primary/30 group">
-                  <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                    <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors shrink-0">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-center sm:text-left">
-                      <p className="text-xs sm:text-sm font-medium text-foreground truncate">{t(item.labelKey)}</p>
-                      {item.count !== undefined && (
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                          <AnimatedCounter value={item.count} duration={800} />
-                        </p>
-                      )}
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hidden sm:block" />
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Customer Metrics */}
       {renderCardSection(t('dashboard.customerMetrics', 'Customer Metrics'), customerCards)}
 
@@ -546,12 +510,12 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Provider Breakdown */}
+      {/* By category — dynamic per product (multi-business) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="overflow-hidden animate-slide-up">
           <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
           <CardHeader className="py-3">
-            <CardTitle className="text-base">{t('dashboard.activeByService')}</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.activeByCategory', 'Active by category')}</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
@@ -561,7 +525,7 @@ const AdminDashboard = () => {
                 ).length;
                 return (
                   <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-all duration-300">
-                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name, products)}</span>
+                    <span className="text-sm font-medium">{product.name}</span>
                     <span className="text-lg font-bold text-green-600">{count}</span>
                   </div>
                 );
@@ -573,7 +537,7 @@ const AdminDashboard = () => {
         <Card className="overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
           <CardHeader className="py-3">
-            <CardTitle className="text-base">{t('dashboard.inactiveByService')}</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.inactiveByCategory', 'Inactive by category')}</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
@@ -583,7 +547,7 @@ const AdminDashboard = () => {
                 ).length;
                 return (
                   <div key={product.id} className="flex justify-between items-center p-2 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:shadow-md transition-all duration-300">
-                    <span className="text-sm font-medium">{getConnectionTypeLabel(product.name, products)}</span>
+                    <span className="text-sm font-medium">{product.name}</span>
                     <span className="text-lg font-bold text-red-600">{count}</span>
                   </div>
                 );
@@ -635,7 +599,7 @@ const AdminDashboard = () => {
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.id}</td>
                       <td className="px-3 py-2 text-sm font-medium text-gray-900">{customer.name}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
-                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{getConnectionTypeLabel(customer.connectionType, products)}</td>
+                      <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.connectionType}</td>
                       <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
                       <td className="px-3 py-2 text-sm">
                         <span
@@ -680,7 +644,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">{t('customers.connectionType', 'Connection Type')}</p>
-                      <p className="font-medium">{getConnectionTypeLabel(customer.connectionType, products)}</p>
+                      <p className="font-medium">{customer.connectionType}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">{t('customers.package', 'Package Rate')}</p>
