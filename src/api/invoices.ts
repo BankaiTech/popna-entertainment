@@ -32,7 +32,7 @@ let invoicesData: SalesInvoice[] = [
     organizationId: MOCK_ORGANIZATION_ID,
     invoiceNumber: 'INV-2024-002',
     customerId: 2,
-    customerName: 'Priya Sharma',
+    customerName: 'Naresh',
     serviceProvider: 'Internet 1',
     planName: 'Internet 1 Fiber Basic',
     amount: 449,

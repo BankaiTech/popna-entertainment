@@ -576,9 +576,6 @@ const Contacts = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input className="pl-9" value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)} placeholder={t('contacts.searchSuppliers', 'Search suppliers...')} />
                         </div>
-                        <Button onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }} className="w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" /> {t('contacts.addSupplier', 'Add Supplier')}
-                        </Button>
                     </div>
                     <div className="overflow-x-auto">
                         {/* Desktop table */}

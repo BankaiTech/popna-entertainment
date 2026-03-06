@@ -10,7 +10,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
 
   // Generate 20+ realistic mock entries
   const names = [
-    'Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
+    'Rajesh Kumar', 'Naresh', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
     'Anjali Mehta', 'Rahul Gupta', 'Kavita Desai', 'Suresh Iyer', 'Meera Nair',
     'Arjun Menon', 'Divya Krishnan', 'Kiran Pillai', 'Lakshmi Nair', 'Gopal Rao',
     'Sunita Devi', 'Mohan Das', 'Sarita Joshi', 'Naveen Kumar', 'Rekha Agarwal',

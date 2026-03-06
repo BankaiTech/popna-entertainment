@@ -9,7 +9,7 @@ let suppliersData: Supplier[] = [
         createdAt: new Date().toISOString(),
     },
     {
-        id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'XYZ Traders', contactPerson: 'Priya S',
+        id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'XYZ Traders', contactPerson: 'Naresh',
         mobile: '9123456789', email: 'priya@xyztraders.com', taxNumber: 'GSTIN002',
         openingBalance: 12000, address: { line1: '45 Anna Nagar', city: 'Coimbatore', state: 'Tamil Nadu', country: 'India', pincode: '641001' },
         createdAt: new Date().toISOString(),

@@ -24,10 +24,22 @@ const ConnectionRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(null);
   const itemsPerPage = 10;
 
+  const { addCustomer, products, fetchProducts } = useStore();
+
   useEffect(() => {
     loadRequests();
     fetchProducts();
   }, [fetchProducts]);
+
+  const handleAddCustomer = (customerData: any) => {
+    // Add customer and mark request as converted
+    addCustomer(customerData);
+    if (selectedRequest) {
+      handleStatusUpdate(selectedRequest.id, 'Converted');
+    }
+    setIsCustomerSheetOpen(false);
+    setSelectedRequest(null);
+  };
 
   const loadRequests = async () => {
     try {
@@ -51,17 +63,6 @@ const ConnectionRequests = () => {
     }
   };
 
-  const { addCustomer, products, fetchProducts } = useStore();
-
-  const handleAddCustomer = (customerData: any) => {
-    // Add customer and mark request as converted
-    addCustomer(customerData);
-    if (selectedRequest) {
-      handleStatusUpdate(selectedRequest.id, 'Converted');
-    }
-    setIsCustomerSheetOpen(false);
-    setSelectedRequest(null);
-  };
 
   const handleNewBadgeClick = (request: ConnectionRequest) => {
     setSelectedRequest(request);

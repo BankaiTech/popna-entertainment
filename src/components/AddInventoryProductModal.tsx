@@ -260,27 +260,6 @@ const AddInventoryProductModal = ({
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">{t('productModal.categoryCode', 'Category Code')}</label>
-                                        <Input value={formData.categoryCode} onChange={(e) => set({ categoryCode: e.target.value })} placeholder={t('productModal.categoryCode', 'Auto-filled')} disabled={saving} />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <label className="text-sm font-medium">{t('productModal.subCategory', 'Sub Category')}</label>
-                                            {formData.categoryId > 0 && (
-                                                <button type="button" onClick={() => setShowInline('subCategory')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
-                                                    <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
-                                                </button>
-                                            )}
-                                        </div>
-                                        <Select value={formData.subCategoryId || ''} onChange={(e) => set({ subCategoryId: Number(e.target.value) })} disabled={saving || !formData.categoryId}>
-                                            <option value="">{t('productModal.selectSubCategory', 'Select sub-category')}</option>
-                                            {filteredSubCategories.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
                                         <div className="flex items-center justify-between mb-1">
                                             <label className="text-sm font-medium">{t('productModal.branch', 'Branch')}</label>
                                             <button type="button" onClick={() => setShowInline('branch')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
@@ -291,6 +270,26 @@ const AddInventoryProductModal = ({
                                             <option value="">{t('productModal.selectBranch', 'Select branch')}</option>
                                             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}{b.location ? ` (${b.location})` : ''}</option>)}
                                         </Select>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-1/3">
+                                            <label className="block text-sm font-medium mb-1">{t('productModal.categoryCode', 'Category Code')}</label>
+                                            <Input value={formData.categoryCode} onChange={(e) => set({ categoryCode: e.target.value })} placeholder="Auto" disabled={saving} />
+                                        </div>
+                                        <div className="w-2/3">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="text-sm font-medium">{t('productModal.subCategory', 'Sub Category')}</label>
+                                                {formData.categoryId > 0 && (
+                                                    <button type="button" onClick={() => setShowInline('subCategory')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">
+                                                        <Plus className="w-3 h-3" /> {t('common.create', 'Add')}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <Select value={formData.subCategoryId || ''} onChange={(e) => set({ subCategoryId: Number(e.target.value) })} disabled={saving || !formData.categoryId}>
+                                                <option value="">{t('productModal.selectSubCategory', 'Select sub-category')}</option>
+                                                {filteredSubCategories.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </Select>
+                                        </div>
                                     </div>
                                 </div>
 
