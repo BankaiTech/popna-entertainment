@@ -45,6 +45,13 @@
       "description": "View and create GST invoices",
       "url": "/admin/invoices",
       "icons": [{ "src": "/Product Logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Point of Sale",
+      "short_name": "POS",
+      "description": "Quick billing and sales",
+      "url": "/admin/pos",
+      "icons": [{ "src": "/Product Logo.png", "sizes": "96x96" }]
     }
   ]
 }

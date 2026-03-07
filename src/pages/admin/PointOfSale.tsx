@@ -1,4 +1,4 @@
-// Point of Sale Module
+// Point of Sale Module — PWA: offline notice and checkout disabled when offline
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Receipt, X } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Receipt, X, WifiOff } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 
 const PointOfSale = () => {
@@ -25,6 +25,18 @@ const PointOfSale = () => {
     const [showCheckout, setShowCheckout] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
     const [showCart, setShowCart] = useState(false); // Mobile cart drawer
+    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+    useEffect(() => {
+        const onOnline = () => setIsOnline(true);
+        const onOffline = () => setIsOnline(false);
+        window.addEventListener('online', onOnline);
+        window.addEventListener('offline', onOffline);
+        return () => {
+            window.removeEventListener('online', onOnline);
+            window.removeEventListener('offline', onOffline);
+        };
+    }, []);
 
     useEffect(() => {
         const load = async () => {
@@ -79,6 +91,13 @@ const PointOfSale = () => {
 
     return (
         <div className="space-y-4">
+            {/* Offline notice — PWA: clear message for POS */}
+            {!isOnline && (
+                <div className="flex items-center gap-2 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 py-2 px-3 text-sm" role="status">
+                    <WifiOff className="w-4 h-4 shrink-0" />
+                    <span>{t('pos.offlineNotice', 'You are offline. Connect to the internet to complete checkout.')}</span>
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -284,6 +303,12 @@ const PointOfSale = () => {
                     <DialogHeader title={t('pos.checkout', 'Checkout')} onClose={() => setShowCheckout(false)} />
                     <DialogBody>
                         <div className="px-4 sm:px-6 py-4 space-y-4">
+                            {!isOnline && (
+                                <div className="flex items-center gap-2 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 py-2 px-3 text-sm">
+                                    <WifiOff className="w-4 h-4 shrink-0" />
+                                    <span>{t('pos.offlineCheckout', 'Connect to the internet to complete checkout.')}</span>
+                                </div>
+                            )}
                             {selectedCustomer && (
                                 <div className="p-3 bg-blue-50 rounded-lg">
                                     <p className="text-sm font-medium text-blue-900">{selectedCustomer.name}</p>
@@ -328,7 +353,7 @@ const PointOfSale = () => {
                     </DialogBody>
                     <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button variant="outline" onClick={() => setShowCheckout(false)} className="w-full sm:w-auto">{t('pos.cancel', 'Cancel')}</Button>
-                        <Button onClick={handleConfirmCheckout} className="w-full sm:w-auto">
+                        <Button onClick={handleConfirmCheckout} disabled={!isOnline} className="w-full sm:w-auto min-h-[44px] sm:min-h-0" title={!isOnline ? t('pos.offlineCheckout', 'Connect to the internet to complete checkout.') : undefined}>
                             <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} — {formatCurrencyINR(grandTotal)}
                         </Button>
                     </DialogFooter>

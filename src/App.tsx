@@ -28,6 +28,7 @@ import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
+import { PWAFeatures } from './components/PWAFeatures';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <PWAFeatures />
       {showErrorPage && <ErrorShowPage />}
       <Routes>
         {/* Public Routes */}

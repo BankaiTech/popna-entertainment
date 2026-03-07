@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // so we can show "New version available. Reload?" via useRegisterSW
       includeAssets: ['NexLink.svg', 'Product Logo.png', 'Product Logo.svg'],
       manifest: false, // Managed manually via public/manifest.json
       workbox: {
@@ -20,10 +20,17 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60, // 1 hour
-              },
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 10,
+            },
+          },
+          // Production API: cache list/data for offline; set VITE_API_ORIGIN or use same origin
+          {
+            urlPattern: /^\/(api|v1)\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
               networkTimeoutSeconds: 10,
             },
           },

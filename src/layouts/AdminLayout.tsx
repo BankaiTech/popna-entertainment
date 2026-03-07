@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle,
-  UserCog, Settings, LogOut, Menu, X, PhoneCall, Contact2,
-  GitBranch, Store, ChevronDown
+  UserCog, Settings, LogOut, Menu, PhoneCall, Contact2,
+  GitBranch, Store, ChevronDown, ChevronLeft
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -32,7 +32,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
-  const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
+  const { fetchOrganization, isModuleAllowed } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
@@ -144,29 +144,25 @@ const AdminLayout = () => {
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed top-13 bottom-0 left-0',
+            'fixed top-13 left-0',
+            'bottom-16 sm:bottom-0', // stop above bottom nav on mobile so last section is visible
             'z-40 w-52 bg-white border-r border-gray-200/80 flex flex-col',
             'transform transition-transform duration-200 ease-out',
             'sm:translate-x-0',
             isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'
           )}
         >
-          {/* Sidebar header — org name and close button */}
-          <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between shrink-0">
-            <h1 className="text-xs font-semibold text-gray-800 uppercase tracking-wider truncate">
-              {currentOrganization?.name || t('nexlink', 'NexLink')}
-            </h1>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="sm:hidden p-1 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Close menu"
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-
           {/* Navigation with groups */}
-          <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 scrollbar-thin">
+          <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 scrollbar-thin relative">
+            {/* Mobile only: arrow in corner, no separate section */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="sm:hidden absolute top-0 right-0 z-10 p-2 rounded-bl-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors touch-manipulation"
+              aria-label={t('closeMenu', 'Close menu')}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
             {filteredGroups.map((group) => {
               const isCollapsed = collapsedGroups[group.labelKey];
               const groupLabel = t(group.labelKey, group.labelKey.split('.').pop() || '');
