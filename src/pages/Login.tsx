@@ -88,11 +88,9 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
-        <div className="flex justify-center mb-6 sm:mb-8 w-full max-w-md logo-login-wrap">
-          <img src="/Logo.svg" alt="Nexora" className="logo-login" />
-        </div>
-        <Card className="w-full max-w-md">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-6 sm:gap-8">
+        
+        <Card className="w-full max-w-md flex-shrink-0">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-3 w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-full flex items-center justify-center">
               <Lock className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
