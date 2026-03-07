@@ -44,7 +44,9 @@ const SuperAdminLayout = () => {
                     >
                         <Menu className="w-5 h-5" />
                     </button>
-                    <img src="/NexLink.svg" alt="NexLink" className="h-[65px] w-auto object-contain shrink-0" />
+                    <div className="logo-header-wrap shrink-0">
+                    <img src="/Logo.svg" alt="Nexora" className="logo-header" />
+                  </div>
                     <div className="hidden sm:block min-w-0">
                         <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('superAdmin.masterController', 'Master Controller')}</p>
@@ -70,7 +72,7 @@ const SuperAdminLayout = () => {
                     )}
                 >
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-gray-50">
-                        <h1 className="text-base font-bold text-gray-900">{t('nexlink', 'NexLink')}</h1>
+                        <h1 className="text-base font-bold text-gray-900">{t('Nexora', 'Nexora')}</h1>
                         <button
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="sm:hidden p-1.5 hover:bg-gray-200 rounded transition-colors"

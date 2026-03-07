@@ -1,4 +1,4 @@
-// Customer Dashboard — NexLink: Plan, Payment, Complaints, Invoices; mobile-first
+// Customer Dashboard — Nexora: Plan, Payment, Complaints, Invoices; mobile-first
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -198,7 +198,7 @@ const CustomerDashboard = () => {
       {/* Sticky header — mobile-optimized, no overflow */}
       <header className="sticky top-0 left-0 right-0 z-50 h-12 sm:h-14 shrink-0 flex items-center justify-between px-3 sm:px-6 border-b border-border bg-card gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-          <img src="/NexLink.svg" alt="NexLink" className="h-8 sm:h-9 w-auto object-contain shrink-0" />
+          <img src="/Nexora.svg" alt="Nexora" className="h-8 sm:h-9 w-auto object-contain shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('customerDashboard.welcome')}</p>
             <p className="text-sm sm:text-base font-semibold text-foreground truncate">{currentCustomer.name}</p>

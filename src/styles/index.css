@@ -48,6 +48,49 @@ body {
 }
 /* Use .safe-area-inset-* on fixed/sticky elements (headers, footers, banners) as needed */
 
+/* Logo: fit full image in container so it’s always visible (no cropping) */
+.logo-nav-wrap {
+  height: 16rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-nav {
+  max-height: 14rem;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
+}
+.logo-login-wrap {
+  min-height: 20rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-login {
+  max-height: 20rem;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
+}
+.logo-header-wrap {
+  height: 11rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-header {
+  max-height: 10rem;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
+}
+@media (min-width: 640px) {
+  .logo-nav { max-height: 16rem; }
+  .logo-login { max-height: 24rem; }
+  .logo-header { max-height: 11rem; }
+}
+
 /* ─── Scrollbar styling ─── */
 .scrollbar-thin {
   scrollbar-width: thin;

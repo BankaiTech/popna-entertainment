@@ -28,8 +28,8 @@ const PublicLayout = () => {
     loadData();
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
-  // Multi-tenant ready — company name from settings; fallback to NexLink
-  const companyName = companyProfile?.companyName || 'NexLink';
+  // Multi-tenant ready — company name from settings; fallback to Nexora
+  const companyName = companyProfile?.companyName || 'Nexora';
 
   // Multi-tenant ready — company name from settings
 
@@ -39,9 +39,9 @@ const PublicLayout = () => {
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <Link to="/" className="flex items-center gap-2">
-                <img src="/NexLink.svg" alt="NexLink" className="h-[218px] w-auto object-contain" />
+            <div className="flex items-center gap-2 min-h-0 flex-shrink-0 logo-nav-wrap">
+              <Link to="/" className="flex items-center justify-center h-full w-full">
+                <img src="/Logo.svg" alt="Nexora" className="logo-nav" />
               </Link>
             </div>
 

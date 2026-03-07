@@ -126,7 +126,9 @@ const AdminLayout = () => {
           >
             <Menu className="w-4.5 h-4.5 text-gray-600" />
           </button>
-          <img src="/NexLink.svg" alt="NexLink" className="h-[104px] w-auto object-contain shrink-0" />
+          <div className="logo-header-wrap shrink-0">
+          <img src="/Logo.svg" alt="Nexora" className="logo-header" />
+        </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <LanguageSwitcher />

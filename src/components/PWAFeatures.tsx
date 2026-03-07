@@ -114,7 +114,7 @@ export function PWAFeatures() {
         <div className="fixed bottom-4 left-4 right-4 z-[99] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
           <div className="flex items-start gap-2">
             <p className="text-sm text-foreground flex-1">
-              {t('pwa.installMessage', 'Install NexLink for a better experience')}
+              {t('pwa.installMessage', 'Install Nexora for a better experience')}
             </p>
             <button
               type="button"

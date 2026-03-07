@@ -1,6 +1,6 @@
 {
-  "name": "NexLink Business Manager",
-  "short_name": "NexLink",
+  "name": "Nexora Business Manager",
+  "short_name": "Nexora",
   "description": "Multi-business admin dashboard for ISP, supermarket, textile, pharmacy, and more.",
   "start_url": "/admin/dashboard",
   "display": "standalone",
