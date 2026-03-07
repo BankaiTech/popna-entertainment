@@ -218,7 +218,7 @@ const AdminLayout = () => {
 
           {/* Sidebar footer */}
           <div className="shrink-0 px-3 py-2 border-t border-gray-100">
-            <p className="text-[9px] text-gray-400 text-center">v1.0 • GST Ready</p>
+            <p className="text-[9px] text-gray-400 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
           </div>
         </aside>
 

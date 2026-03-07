@@ -14,20 +14,20 @@ import { MOCK_ORGANIZATION_ID, ALL_MODULES } from '@/models/types';
 import { Plus, UserCog, Shield } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 
-// User-friendly labels for module keys
-const MODULE_LABELS: Record<string, string> = {
-  'dashboard': 'Dashboard',
-  'contacts': 'Contacts',
-  'complaints': 'Complaints',
-  'payments': 'Payments',
-  'invoices': 'Invoices',
-  'purchase-invoices': 'Purchase Invoices',
-  'users': 'Users',
-  'settings': 'Settings',
-  'connection-requests': 'New Connections',
-  'inventory-products': 'Inventory Products',
-  'branches': 'Branches',
-  'pos': 'Point of Sale',
+// Module key to i18n key mapping
+const MODULE_I18N_KEYS: Record<string, string> = {
+  'dashboard': 'users.modules.dashboard',
+  'contacts': 'users.modules.contacts',
+  'complaints': 'users.modules.complaints',
+  'payments': 'users.modules.payments',
+  'invoices': 'users.modules.invoices',
+  'purchase-invoices': 'users.modules.purchaseInvoices',
+  'users': 'users.modules.users',
+  'settings': 'users.modules.settings',
+  'connection-requests': 'users.modules.connectionRequests',
+  'inventory-products': 'users.modules.inventoryProducts',
+  'branches': 'users.modules.branches',
+  'pos': 'users.modules.pos',
 };
 
 const AdminUsers = () => {
@@ -234,7 +234,7 @@ const AdminUsers = () => {
               onChange={() => toggleModule(modules, setModules, mod)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <span className="truncate">{MODULE_LABELS[mod] || mod}</span>
+            <span className="truncate">{t(MODULE_I18N_KEYS[mod] || mod, mod)}</span>
           </label>
         ))}
       </div>
@@ -385,12 +385,12 @@ const AdminUsers = () => {
                             <div className="flex flex-wrap gap-1">
                               {u.allowedModules.map((mod) => (
                                 <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
-                                  {MODULE_LABELS[mod] || mod}
+                                  {t(MODULE_I18N_KEYS[mod] || mod, mod)}
                                 </span>
                               ))}
                             </div>
                           ) : u.role === 'admin' ? (
-                            <span className="text-xs text-gray-400 italic">All modules</span>
+                            <span className="text-xs text-gray-400 italic">{t('users.allModules', 'All modules')}</span>
                           ) : (
                             <span className="text-xs text-gray-400">—</span>
                           )}
@@ -430,11 +430,11 @@ const AdminUsers = () => {
                     </div>
                     {u.role === 'employee' && u.allowedModules && u.allowedModules.length > 0 && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground block mb-1">Modules:</span>
+                        <span className="text-muted-foreground block mb-1">{t('users.modulesLabel', 'Modules:')}</span>
                         <div className="flex flex-wrap gap-1">
                           {u.allowedModules.map((mod) => (
                             <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
-                              {MODULE_LABELS[mod] || mod}
+                              {t(MODULE_I18N_KEYS[mod] || mod, mod)}
                             </span>
                           ))}
                         </div>

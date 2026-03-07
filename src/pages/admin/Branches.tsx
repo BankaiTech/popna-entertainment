@@ -191,7 +191,7 @@ const AdminBranches = () => {
                                         <div className="flex justify-between items-start">
                                             <span className="font-medium text-foreground">{b.name}</span>
                                             <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                                {b.isActive ? 'Active' : 'Inactive'}
+                                                {b.isActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                                             </span>
                                         </div>
                                         {b.address && (

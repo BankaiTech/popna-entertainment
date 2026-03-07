@@ -1,4 +1,5 @@
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ERROR_STORAGE_KEY } from '@/utils/errorPage';
 
 interface StoredError {
@@ -13,6 +14,7 @@ interface StoredError {
  * After an error we redirect to home with ?error_show so they land here and see what happened.
  */
 export default function ErrorShowPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const hasParam = searchParams.has('error_show');
   const messageFromUrl = searchParams.get('message');
@@ -27,7 +29,7 @@ export default function ErrorShowPage() {
     }
   }
 
-  const message = data?.message ?? messageFromUrl ?? 'An error occurred.';
+  const message = data?.message ?? messageFromUrl ?? t('errorPage.fallbackMessage', 'An error occurred.');
   const stack = data?.stack ?? '';
   const time = data?.time ?? '';
   const context = data?.context ?? '';
@@ -40,14 +42,14 @@ export default function ErrorShowPage() {
     <div className="fixed inset-0 z-[100] min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
         <div className="bg-red-600 text-white px-5 py-4 font-semibold text-lg">
-          Something went wrong
+          {t('errorPage.title', 'Something went wrong')}
         </div>
         <div className="p-5 space-y-4">
           {time && (
             <p className="text-sm text-slate-500">{new Date(time).toLocaleString()}</p>
           )}
           {context && (
-            <p className="text-sm text-slate-600"><span className="font-medium">Context:</span> {context}</p>
+            <p className="text-sm text-slate-600"><span className="font-medium">{t('errorPage.context', 'Context:')}</span> {context}</p>
           )}
           <p className="text-slate-800 whitespace-pre-wrap break-words font-medium">{message}</p>
           {stack && (
@@ -60,7 +62,7 @@ export default function ErrorShowPage() {
               to="/"
               className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-white font-medium hover:opacity-90 transition-opacity"
             >
-              Back to home
+              {t('errorPage.backToHome', 'Back to home')}
             </Link>
             <button
               type="button"
@@ -74,7 +76,7 @@ export default function ErrorShowPage() {
               }}
               className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
             >
-              Dismiss and go home
+              {t('errorPage.dismissAndGoHome', 'Dismiss and go home')}
             </button>
           </div>
         </div>
