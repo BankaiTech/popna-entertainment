@@ -106,63 +106,57 @@ const Invoices = () => {
   return (
     <div className="space-y-3">
       <Card>
-        <CardHeader className="py-3">
-          <div className="flex flex-col gap-2">
-            {/* Top row: search + new invoice button */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder={t('invoices.searchPlaceholder', 'Search by customer or invoice...')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm"
-                />
-              </div>
-              <Button onClick={() => setIsModalOpen(true)} size="xs" className="w-fit shrink-0">
-                <Plus className="w-3.5 h-3.5" />
-                {t('invoices.newInvoice', 'New Invoice')}
-              </Button>
+        <CardHeader className="py-2.5 px-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-48 shrink-0">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder={t('invoices.searchPlaceholder', 'Search...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs"
+              />
             </div>
-            {/* Filters row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | 'All')}
-                className="h-9 text-sm"
-              >
-                <option value="All">{t('invoices.allStatus', 'All Status')}</option>
-                <option value="draft">{t('invoices.statusDraft', 'Draft')}</option>
-                <option value="sent">{t('invoices.statusSent', 'Sent')}</option>
-                <option value="paid">{t('invoices.statusPaid', 'Paid')}</option>
-                <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
-              </Select>
-              <Select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
-                className="h-9 text-sm"
-              >
-                <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
-                <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
-                <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
-              </Select>
-              <Select
-                value={productFilter}
-                onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
-                className="h-9 text-sm"
-              >
-                <option value="All">{t('invoices.allProducts', 'All Products')}</option>
-                {Array.isArray(products) && products.length > 0 ? (
-                  products
-                    .filter(p => categoryFilter === 'All' || p.productType === categoryFilter)
-                    .map((product) => (
-                      <option key={product.id} value={product.name}>
-                        {getProviderDisplayName(product.name, products)}
-                      </option>
-                    ))
-                ) : null}
-              </Select>
-            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | 'All')}
+              className="h-8 text-xs w-full sm:w-28"
+            >
+              <option value="All">{t('invoices.allStatus', 'All Status')}</option>
+              <option value="draft">{t('invoices.statusDraft', 'Draft')}</option>
+              <option value="sent">{t('invoices.statusSent', 'Sent')}</option>
+              <option value="paid">{t('invoices.statusPaid', 'Paid')}</option>
+              <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
+            </Select>
+            <Select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-32"
+            >
+              <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
+              <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
+              <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+            </Select>
+            <Select
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-32"
+            >
+              <option value="All">{t('invoices.allProducts', 'All Products')}</option>
+              {Array.isArray(products) && products.length > 0 ? (
+                products
+                  .filter(p => categoryFilter === 'All' || p.productType === categoryFilter)
+                  .map((product) => (
+                    <option key={product.id} value={product.name}>
+                      {getProviderDisplayName(product.name, products)}
+                    </option>
+                  ))
+              ) : null}
+            </Select>
+            <Button onClick={() => setIsModalOpen(true)} size="xs" className="ml-auto shrink-0 w-full sm:w-auto">
+              <Plus className="w-3.5 h-3.5" />
+              {t('invoices.newInvoice', 'New Invoice')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">

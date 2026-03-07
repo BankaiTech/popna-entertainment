@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import {
   Users, AlertCircle, TrendingUp, IndianRupee,
   DollarSign, Clock, MessageSquare, Package, RefreshCw, ArrowRight,
-  AlertTriangle, BarChart3, Tag, Percent, ShoppingBag,
+  AlertTriangle, Tag, Percent, ShoppingBag, CalendarClock,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -171,15 +171,53 @@ const AdminDashboard = () => {
     return { totalInvoiced, collected, pending, collectionRate, avgOrderValue, totalGst };
   }, [invoices]);
 
-  // ── Category-wise revenue pie chart data ──
-  const categoryPieData = useMemo(() => {
-    return categoryStats.map(stat => ({
-      name: stat.category.name,
-      value: stat.totalStockValue,
-    })).filter(d => d.value > 0);
-  }, [categoryStats]);
+  // ── Payment aging ──
+  const paymentAging = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekFromNow = new Date(today.getTime() + 7 * 86400000);
+    const monthFromNow = new Date(today.getTime() + 30 * 86400000);
+    const unpaid = invoices.filter(i => i.status !== 'paid');
 
-  const PIE_COLORS = ['#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ec4899', '#6366f1', '#14b8a6', '#f59e0b'];
+    const overdue = unpaid.filter(i => new Date(i.dueDate) < today);
+    const dueThisWeek = unpaid.filter(i => {
+      const d = new Date(i.dueDate);
+      return d >= today && d <= weekFromNow;
+    });
+    const dueThisMonth = unpaid.filter(i => {
+      const d = new Date(i.dueDate);
+      return d >= today && d <= monthFromNow;
+    });
+
+    return {
+      overdue: { count: overdue.length, total: overdue.reduce((s, i) => s + i.totalAmount, 0) },
+      dueThisWeek: { count: dueThisWeek.length, total: dueThisWeek.reduce((s, i) => s + i.totalAmount, 0) },
+      dueThisMonth: { count: dueThisMonth.length, total: dueThisMonth.reduce((s, i) => s + i.totalAmount, 0) },
+    };
+  }, [invoices]);
+
+  // ── Top products by revenue ──
+  const topProducts = useMemo(() => {
+    const grouped: Record<string, { name: string; revenue: number; count: number }> = {};
+    invoices.forEach(inv => {
+      const key = inv.planName || inv.serviceProvider;
+      if (!grouped[key]) grouped[key] = { name: key, revenue: 0, count: 0 };
+      grouped[key].revenue += inv.totalAmount;
+      grouped[key].count += 1;
+    });
+    return Object.values(grouped).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  }, [invoices]);
+
+  // ── Invoice status breakdown for pie chart ──
+  const invoiceStatusData = useMemo(() => {
+    const counts: Record<string, number> = { paid: 0, sent: 0, draft: 0, overdue: 0 };
+    invoices.forEach(inv => { counts[inv.status] = (counts[inv.status] || 0) + 1; });
+    return Object.entries(counts)
+      .filter(([, v]) => v > 0)
+      .map(([status, value]) => ({ name: status, value }));
+  }, [invoices]);
+
+  const STATUS_COLORS: Record<string, string> = { paid: '#22c55e', sent: '#3b82f6', draft: '#9ca3af', overdue: '#ef4444' };
 
   // ── Loading states ──
   if (!dashboardStats && loading) {
@@ -407,34 +445,41 @@ const AdminDashboard = () => {
 
       {/* ── Sales & Revenue ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start">
-        {/* Revenue by Category */}
+        {/* Top Products by Revenue */}
         <Card className="overflow-hidden animate-slide-up">
           <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
           <CardHeader className="py-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm sm:text-base">{t('dashboard.revenueByCategory', 'Revenue by Category')}</CardTitle>
-            <BarChart3 className="w-4 h-4 text-muted-foreground" />
+            <CardTitle className="text-sm sm:text-base">{t('dashboard.topProducts', 'Top Products by Revenue')}</CardTitle>
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
-              {categoryStats.length === 0 ? (
+              {topProducts.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  {t('dashboard.noCategories', 'No categories found')}
+                  {t('dashboard.noProductData', 'No product data available')}
                 </p>
               ) : (
-                categoryStats.map((stat) => {
-                  const maxValue = Math.max(...categoryStats.map(s => s.totalStockValue), 1);
-                  const percentage = (stat.totalStockValue / maxValue) * 100;
+                topProducts.map((product, idx) => {
+                  const maxRevenue = topProducts[0]?.revenue || 1;
+                  const percentage = (product.revenue / maxRevenue) * 100;
+                  const color = categoryColors[idx % categoryColors.length];
                   return (
-                    <div key={stat.category.id} className="space-y-1">
+                    <div key={product.name} className="space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs sm:text-sm font-medium">{stat.category.name}</span>
-                        <span className={`text-xs sm:text-sm font-bold ${stat.colors.text}`}>
-                          {formatCurrencyINR(stat.totalStockValue)}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={cn('text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shrink-0', color.bg, color.text)}>
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs sm:text-sm font-medium truncate">{product.name}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">({product.count})</span>
+                        </div>
+                        <span className={`text-xs sm:text-sm font-bold ${color.text} shrink-0 ml-2`}>
+                          {formatCurrencyINR(product.revenue)}
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
                         <div
-                          className={`h-2 rounded-full bg-gradient-to-r ${stat.colors.gradient} transition-all duration-700`}
+                          className={`h-2 rounded-full bg-gradient-to-r ${color.gradient} transition-all duration-700`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -536,6 +581,46 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* ── Payment Aging ── */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('dashboard.paymentAging', 'Payment Alerts')}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          {[
+            { label: t('dashboard.dueThisWeek', 'Due This Week'), data: paymentAging.dueThisWeek, icon: CalendarClock, color: 'text-green-600', bg: 'bg-green-50', gradient: 'from-green-500 to-emerald-500' },
+            { label: t('dashboard.dueThisMonth', 'Due This Month'), data: paymentAging.dueThisMonth, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', gradient: 'from-amber-500 to-yellow-500' },
+            { label: t('dashboard.overdue', 'Overdue'), data: paymentAging.overdue, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50', gradient: 'from-red-500 to-rose-500' },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Card key={item.label} className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
+                <div className={`h-1 bg-gradient-to-r ${item.gradient}`}></div>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`p-1.5 rounded-lg ${item.bg} group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                      <Icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
+                    <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-lg sm:text-xl font-bold text-foreground">
+                        <AnimatedCounter value={item.data.count} duration={1200} />
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{t('dashboard.invoicesLabel', 'invoices')}</p>
+                    </div>
+                    <p className={`text-sm sm:text-base font-bold ${item.color}`}>
+                      {formatCurrencyINR(item.data.total)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Complaint Metrics ── */}
@@ -646,16 +731,16 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Category Distribution — Donut Chart */}
+          {/* Invoice Status Breakdown — Donut Chart */}
           <Card className="overflow-hidden animate-slide-up lg:col-span-2" style={{ animationDelay: '0.1s' }}>
             <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
             <CardHeader className="py-3">
-              <CardTitle className="text-sm sm:text-base">{t('dashboard.categoryDistribution', 'Category Distribution')}</CardTitle>
+              <CardTitle className="text-sm sm:text-base">{t('dashboard.invoiceStatusBreakdown', 'Invoice Status')}</CardTitle>
             </CardHeader>
             <CardContent className="py-2">
-              {categoryPieData.length === 0 ? (
+              {invoiceStatusData.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  {t('dashboard.noCategories', 'No categories found')}
+                  {t('dashboard.noInvoices', 'No invoices found')}
                 </p>
               ) : (
                 <>
@@ -663,7 +748,7 @@ const AdminDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={categoryPieData}
+                          data={invoiceStatusData}
                           cx="50%"
                           cy="50%"
                           innerRadius="50%"
@@ -672,12 +757,12 @@ const AdminDashboard = () => {
                           dataKey="value"
                           stroke="none"
                         >
-                          {categoryPieData.map((_entry, index) => (
-                            <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          {invoiceStatusData.map((entry) => (
+                            <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || '#9ca3af'} />
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value) => formatCurrencyINR(Number(value ?? 0))}
+                          formatter={(value) => [Number(value ?? 0)]}
                           contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
                         />
                       </PieChart>
@@ -685,13 +770,15 @@ const AdminDashboard = () => {
                   </div>
                   {/* Legend */}
                   <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 justify-center">
-                    {categoryPieData.map((entry, index) => (
+                    {invoiceStatusData.map((entry) => (
                       <div key={entry.name} className="flex items-center gap-1.5">
                         <div
                           className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                          style={{ backgroundColor: STATUS_COLORS[entry.name] || '#9ca3af' }}
                         />
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">{entry.name}</span>
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">
+                          {t(`invoices.status${entry.name.charAt(0).toUpperCase() + entry.name.slice(1)}`, entry.name)} ({entry.value})
+                        </span>
                       </div>
                     ))}
                   </div>

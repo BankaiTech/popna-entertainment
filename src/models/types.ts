@@ -184,6 +184,7 @@ export interface SalesInvoice {
   id: number;
   organizationId: string;
   invoiceNumber: string;
+  branchId?: number;
   customerId: number;
   customerName: string;
   serviceProvider: Provider;
@@ -375,8 +376,16 @@ export interface Branch {
   organizationId: string;
   name: string;
   location?: string;
+  /** @deprecated Use structured address fields instead */
   address?: string;
   phone?: string;
+  gstin?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pincode?: string;
   isActive: boolean;
   createdAt: string;
 }
