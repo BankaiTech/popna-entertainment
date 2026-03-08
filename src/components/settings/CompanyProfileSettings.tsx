@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Building2, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { CompanyProfile } from '@/models/types';
 
 const CompanyProfileSettings = () => {
@@ -75,11 +75,7 @@ const CompanyProfileSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Building2 className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">{t('companyProfile.companyInformation', 'Company Information')}</h2>
-      </div>
-
+      
       <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
@@ -93,8 +89,9 @@ const CompanyProfileSettings = () => {
               </div>
             )}
 
+            {/* Mobile: 1 column. Web (md+): 2 columns per row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
                   {t('companyProfile.companyName', 'Company Name')} <span className="text-destructive">*</span>
                 </label>
@@ -102,6 +99,18 @@ const CompanyProfileSettings = () => {
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   placeholder={t('companyProfile.companyNamePlaceholder', 'Enter company name')}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">
+                  {t('companyProfile.contactNumber', 'Contact Number')} <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  value={formData.contactNumber}
+                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                  placeholder={t('companyProfile.contactNumberPlaceholder', '+91 9876543210')}
                   required
                 />
               </div>
@@ -137,18 +146,6 @@ const CompanyProfileSettings = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
-                  {t('companyProfile.contactNumber', 'Contact Number')} <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  value={formData.contactNumber}
-                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  placeholder={t('companyProfile.contactNumberPlaceholder', '+91 9876543210')}
-                  required
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2 text-foreground">
                   {t('companyProfile.addressLine1', 'Address Line 1')} <span className="text-destructive">*</span>
                 </label>
                 <Input
@@ -159,7 +156,7 @@ const CompanyProfileSettings = () => {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
                   {t('companyProfile.addressLine2', 'Address Line 2')}
                 </label>

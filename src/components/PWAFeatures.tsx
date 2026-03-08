@@ -1,5 +1,5 @@
 // PWA: Install prompt, Offline banner, Update prompt (new version available)
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import Button from '@/components/ui/Button';
@@ -22,6 +22,7 @@ export function PWAFeatures() {
   );
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [installDismissed, setInstallDismissed] = useState(false);
+  const swCleanupRef = useRef<(() => void) | null>(null);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -30,7 +31,31 @@ export function PWAFeatures() {
     onRegisterError(error) {
       console.error('SW registration error', error);
     },
+    // Check for new version when user returns to the app tab, and periodically (e.g. every 1h)
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const checkForUpdates = () => {
+        if (registration.installing || !navigator.onLine) return;
+        registration.update();
+      };
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') checkForUpdates();
+      };
+      document.addEventListener('visibilitychange', onVisible);
+      const intervalMs = 60 * 60 * 1000; // 1 hour
+      const interval = setInterval(checkForUpdates, intervalMs);
+      swCleanupRef.current = () => {
+        document.removeEventListener('visibilitychange', onVisible);
+        clearInterval(interval);
+      };
+    },
   });
+
+  // Clean up SW update checks when component unmounts
+  useEffect(() => () => {
+    swCleanupRef.current?.();
+    swCleanupRef.current = null;
+  }, []);
 
   // Detect if running as installed PWA (standalone) — don't show install when already app
   useEffect(() => {
