@@ -88,12 +88,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-6 sm:gap-8">
-        
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-4">
         <Card className="w-full max-w-md flex-shrink-0">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-3 w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-full flex items-center justify-center">
-              <Lock className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
+            <div className="mx-auto mb-3 flex justify-center">
+              <img src="/Nexora.png" alt="Nexora" className="h-14 w-32 object-cover object-center sm:h-16 sm:w-36" />
             </div>
             <CardTitle className="text-xl sm:text-2xl">{t('login.title', 'Login')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">

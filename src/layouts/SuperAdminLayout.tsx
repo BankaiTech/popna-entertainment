@@ -45,7 +45,7 @@ const SuperAdminLayout = () => {
                         <Menu className="w-5 h-5" />
                     </button>
                     <div className="logo-header-wrap shrink-0">
-                    <img src="/Logo.svg" alt="Nexora" className="logo-header" />
+                    <img src="/Nexora.png" alt="Nexora" className="logo-header" />
                   </div>
                     <div className="hidden sm:block min-w-0">
                         <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>

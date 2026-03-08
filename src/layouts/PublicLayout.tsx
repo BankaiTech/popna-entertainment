@@ -41,7 +41,7 @@ const PublicLayout = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2 min-h-0 flex-shrink-0 logo-nav-wrap">
               <Link to="/" className="flex items-center justify-center h-full w-full">
-                <img src="/Logo.svg" alt="Nexora" className="logo-nav" />
+                <img src="/Nexora.png" alt="Nexora" className="logo-nav" />
               </Link>
             </div>
 

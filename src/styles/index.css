@@ -48,50 +48,51 @@ body {
 }
 /* Use .safe-area-inset-* on fixed/sticky elements (headers, footers, banners) as needed */
 
-/* Logo: fit full image in container so it’s always visible (no cropping) */
+/* Logo: Nexora.png (with name) in nav/login/dashboards. Sizes doubled for frontsite and dashboards. */
 .logo-nav-wrap {
-  height: 16rem;
+  height: 8rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .logo-nav {
-  max-height: 14rem;
+  max-height: 7rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
-/* Login page: logo prominent but layout stays balanced */
+/* Login: compact so form is not pushed down */
 .logo-login-wrap {
-  height: 7rem;
+  height: 4rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .logo-login {
-  max-height: 6.5rem;
+  max-height: 3.5rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
 .logo-header-wrap {
-  height: 11rem;
+  height: 5.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .logo-header {
-  max-height: 10rem;
+  max-height: 5rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
 @media (min-width: 640px) {
-  .logo-nav { max-height: 16rem; }
-  .logo-login-wrap { height: 8rem; }
-  .logo-login { max-height: 7.5rem; }
-  .logo-header { max-height: 11rem; }
+  .logo-nav { max-height: 8rem; }
+  .logo-login-wrap { height: 4.5rem; }
+  .logo-login { max-height: 4rem; }
+  .logo-header-wrap { height: 6rem; }
+  .logo-header { max-height: 5.5rem; }
 }
 
 /* ─── Scrollbar styling ─── */
