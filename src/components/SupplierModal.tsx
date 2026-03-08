@@ -59,7 +59,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim() || !formData.mobile.trim()) {
-            setError('Name and mobile are required');
+            setError(t('contacts.nameAndMobileRequired', 'Name and mobile are required'));
             return;
         }
         setSaving(true);
@@ -75,7 +75,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
             }
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save');
+            setError(err instanceof Error ? err.message : t('contacts.saveFailed', 'Failed to save'));
         } finally {
             setSaving(false);
         }
@@ -95,41 +95,41 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-foreground">
-                                    Name <span className="text-destructive">*</span>
+                                    {t('common.name', 'Name')} <span className="text-destructive">*</span>
                                 </label>
-                                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Supplier name" required disabled={saving} />
+                                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder={t('contacts.supplierNamePlaceholder', 'Supplier name')} required disabled={saving} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Contact Person</label>
-                                <Input value={formData.contactPerson} onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })} placeholder="Contact person" disabled={saving} />
+                                <label className="block text-sm font-medium mb-1 text-foreground">{t('contacts.contactPerson', 'Contact Person')}</label>
+                                <Input value={formData.contactPerson} onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })} placeholder={t('contacts.contactPersonPlaceholder', 'Contact person')} disabled={saving} />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-foreground">
-                                    Mobile <span className="text-destructive">*</span>
+                                    {t('common.mobile', 'Mobile')} <span className="text-destructive">*</span>
                                 </label>
-                                <Input value={formData.mobile} onChange={(e) => setFormData({ ...formData, mobile: e.target.value })} placeholder="Mobile number" required disabled={saving} />
+                                <Input value={formData.mobile} onChange={(e) => setFormData({ ...formData, mobile: e.target.value })} placeholder={t('contacts.mobilePlaceholder', 'Mobile number')} required disabled={saving} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
-                                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Email" disabled={saving} />
+                                <label className="block text-sm font-medium mb-1 text-foreground">{t('common.email', 'Email')}</label>
+                                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder={t('common.email', 'Email')} disabled={saving} />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Tax Number (GSTIN)</label>
-                                <Input value={formData.taxNumber} onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })} placeholder="GSTIN / Tax Number" disabled={saving} />
+                                <label className="block text-sm font-medium mb-1 text-foreground">{t('companyProfile.gstin', 'GSTIN')}</label>
+                                <Input value={formData.taxNumber} onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })} placeholder={t('contacts.taxNumberPlaceholder', 'GSTIN / Tax Number')} disabled={saving} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Opening Balance</label>
-                                <Input type="number" value={formData.openingBalance || ''} onChange={(e) => setFormData({ ...formData, openingBalance: Number(e.target.value) })} placeholder="0.00" disabled={saving} />
+                                <label className="block text-sm font-medium mb-1 text-foreground">{t('contacts.openingBalance', 'Opening Balance')}</label>
+                                <Input type="number" value={formData.openingBalance || ''} onChange={(e) => setFormData({ ...formData, openingBalance: Number(e.target.value) })} placeholder={t('contacts.openingBalancePlaceholder', '0.00')} disabled={saving} />
                             </div>
                         </div>
 
                         <div className="border-t pt-4">
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-semibold text-foreground">Address</h3>
+                                <h3 className="text-sm font-semibold text-foreground">{t('customerSheet.address', 'Address')}</h3>
                                 {!!editingSupplier && (
                                     <Button
                                         type="button"
@@ -146,27 +146,27 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
                                         }
                                     >
                                         <Plus className="w-3.5 h-3.5 mr-1.5" />
-                                        Add Address
+                                        {t('contacts.addAddress', 'Add Address')}
                                     </Button>
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Input value={formData.address.line1} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line1: e.target.value } })} placeholder="Address Line 1" disabled={saving} />
-                                <Input value={formData.address.line2} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line2: e.target.value } })} placeholder="Address Line 2" disabled={saving} />
+                                <Input value={formData.address.line1} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line1: e.target.value } })} placeholder={t('companyProfile.addressLine1', 'Address Line 1')} disabled={saving} />
+                                <Input value={formData.address.line2} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line2: e.target.value } })} placeholder={t('companyProfile.addressLine2', 'Address Line 2')} disabled={saving} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    <Input value={formData.address.city} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })} placeholder="City" disabled={saving} />
-                                    <Input value={formData.address.state} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })} placeholder="State" disabled={saving} />
-                                    <Input value={formData.address.pincode} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, pincode: e.target.value } })} placeholder="Pincode" disabled={saving} />
+                                    <Input value={formData.address.city} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })} placeholder={t('companyProfile.city', 'City')} disabled={saving} />
+                                    <Input value={formData.address.state} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })} placeholder={t('companyProfile.state', 'State')} disabled={saving} />
+                                    <Input value={formData.address.pincode} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, pincode: e.target.value } })} placeholder={t('companyProfile.pincode', 'Pincode')} disabled={saving} />
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    <Input value={formData.address.country} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value } })} placeholder="Country" disabled={saving} />
+                                    <Input value={formData.address.country} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value } })} placeholder={t('companyProfile.country', 'Country')} disabled={saving} />
                                 </div>
                             </div>
                         </div>
 
                         {!editingSupplier && (
                             <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border border-border">
-                                You can add multiple addresses after creating the supplier. (Edit mode only)
+                                {t('contacts.multipleAddressesHint', 'You can add multiple addresses after creating the supplier. (Edit mode only)')}
                             </p>
                         )}
 
@@ -180,24 +180,25 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
                                             newAddresses.splice(index, 1);
                                             setFormData({ ...formData, additionalAddresses: newAddresses });
                                         }}
-                                        className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                                        title="Delete"
+                                        className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
+                                        title={t('common.delete', 'Delete')}
+                                        aria-label={t('common.delete', 'Delete')}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
-                                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Address {index + 2}</h4>
+                                <h4 className="text-sm font-medium mb-3 text-muted-foreground">{t('contacts.addressNumber', 'Address {{number}}', { number: index + 2 })}</h4>
                                 <div className="space-y-3">
-                                    <Input value={addr.line1} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].line1 = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="Address Line 1" disabled={saving} />
-                                    <Input value={addr.line2} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].line2 = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="Address Line 2" disabled={saving} />
+                                    <Input value={addr.line1} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].line1 = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.addressLine1', 'Address Line 1')} disabled={saving} />
+                                    <Input value={addr.line2} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].line2 = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.addressLine2', 'Address Line 2')} disabled={saving} />
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        <Input value={addr.city} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].city = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="City" disabled={saving} />
-                                        <Input value={addr.state} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].state = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="State" disabled={saving} />
-                                        <Input value={addr.pincode || ''} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].pincode = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="Pincode" disabled={saving} />
+                                        <Input value={addr.city} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].city = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.city', 'City')} disabled={saving} />
+                                        <Input value={addr.state} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].state = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.state', 'State')} disabled={saving} />
+                                        <Input value={addr.pincode || ''} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].pincode = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.pincode', 'Pincode')} disabled={saving} />
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        <Input value={addr.country} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].country = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="Country" disabled={saving} />
-                                        <Input value={addr.gstin || ''} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].gstin = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder="GSTIN" disabled={saving} />
+                                        <Input value={addr.country} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].country = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.country', 'Country')} disabled={saving} />
+                                        <Input value={addr.gstin || ''} onChange={(e) => { const newAddresses = [...formData.additionalAddresses]; newAddresses[index].gstin = e.target.value; setFormData({ ...formData, additionalAddresses: newAddresses }); }} placeholder={t('companyProfile.gstin', 'GSTIN')} disabled={saving} />
                                     </div>
                                 </div>
                             </div>
@@ -209,9 +210,9 @@ const SupplierModal = ({ isOpen, onClose, onSave, onUpdate, editingSupplier }: S
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={onClose} disabled={saving}>{t('common.cancel', 'Cancel')}</Button>
                     <Button type="submit" disabled={saving}>
-                        {saving ? 'Saving...' : editingSupplier ? 'Update Supplier' : 'Add Supplier'}
+                        {saving ? t('common.saving', 'Saving...') : editingSupplier ? t('contacts.updateSupplier', 'Update Supplier') : t('contacts.addSupplier', 'Add Supplier')}
                     </Button>
                 </DialogFooter>
             </form>

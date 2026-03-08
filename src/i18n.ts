@@ -25,7 +25,7 @@ function getStoredLanguage(): string {
   try {
     const stored = localStorage.getItem(LANGUAGE_KEY);
     if (stored && supportedLanguages.some((l) => l.code === stored)) return stored;
-  } catch (_) {}
+  } catch (_) { }
   return DEFAULT_LANG;
 }
 
@@ -34,7 +34,7 @@ export function setLanguage(lang: string): void {
   const code = supportedLanguages.some((l) => l.code === lang) ? lang : DEFAULT_LANG;
   try {
     localStorage.setItem(LANGUAGE_KEY, code);
-  } catch (_) {}
+  } catch (_) { }
   i18n.changeLanguage(code);
 }
 
@@ -51,6 +51,7 @@ i18n
     },
     react: { useSuspense: false },
     interpolation: { escapeValue: false },
+    keySeparator: false,
   });
 
 export default i18n;

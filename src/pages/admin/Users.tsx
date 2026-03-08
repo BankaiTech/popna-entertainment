@@ -209,7 +209,7 @@ const AdminUsers = () => {
   const activeCount = users.filter((u) => u.status === 'active').length;
   const inactiveCount = users.filter((u) => u.status === 'inactive').length;
 
-  // Module access checkboxes component
+  // Module access checkboxes component — mobile: single column + large touch targets for multi-select
   const ModuleAccessCheckboxes = ({ modules, setModules }: { modules: ModuleKey[]; setModules: (m: ModuleKey[]) => void }) => (
     <div>
       <label className="block text-sm font-medium mb-2">
@@ -217,12 +217,12 @@ const AdminUsers = () => {
         {t('users.fields.moduleAccess', 'Module Access')}
       </label>
       <p className="text-xs text-muted-foreground mb-3">{t('users.hints.moduleAccess', 'Select which modules this employee can access')}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {ALL_MODULES.filter((mod) => mod !== 'users' && mod !== 'settings').map((mod) => (
           <label
             key={mod}
             className={cn(
-              'flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all text-sm',
+              'flex items-center gap-3 p-3 sm:p-2 rounded-lg border cursor-pointer transition-all text-sm min-h-[48px] sm:min-h-0 touch-manipulation',
               modules.includes(mod)
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -232,7 +232,7 @@ const AdminUsers = () => {
               type="checkbox"
               checked={modules.includes(mod)}
               onChange={() => toggleModule(modules, setModules, mod)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0"
             />
             <span className="truncate">{t(MODULE_I18N_KEYS[mod] || mod, mod)}</span>
           </label>

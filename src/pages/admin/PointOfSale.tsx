@@ -69,6 +69,16 @@ const PointOfSale = () => {
         return customers.find((c) => c.id === selectedCustomerId) || null;
     }, [customers, selectedCustomerId]);
 
+    const getPaymentMethodLabel = (method: string) => {
+        switch (method) {
+            case 'cash': return t('pos.cash', 'Cash');
+            case 'upi': return t('pos.upi', 'UPI');
+            case 'card': return t('pos.card', 'Card');
+            case 'bank_transfer': return t('pos.bankTransfer', 'Bank Transfer');
+            default: return method.replace('_', ' ');
+        }
+    };
+
     const handleCheckout = () => {
         if (cart.length === 0) return;
         setShowCheckout(true);
@@ -236,62 +246,68 @@ const PointOfSale = () => {
                 </div>
             </div>
 
-            {/* ════ Mobile Cart Drawer ════ */}
+            {/* ════ Mobile Cart Drawer — ends above bottom nav (bottom-16), nav stays visible, Checkout always visible ════ */}
             {showCart && (
-                <div className="fixed inset-0 z-50 md:hidden">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => setShowCart(false)} />
-                    <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto z-50 p-4 space-y-3">
-                        <div className="flex justify-between items-center">
+                <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label={t('pos.mobileCart', 'Cart')}>
+                    <div className="fixed inset-0 bg-black/50" onClick={() => setShowCart(false)} aria-hidden="true" />
+                    <div className="fixed left-0 right-0 bottom-16 bg-white rounded-t-2xl max-h-[85dvh] flex flex-col pb-4">
+                        <div className="shrink-0 flex justify-between items-center p-4 border-b border-gray-100">
                             <h3 className="font-bold text-lg flex items-center gap-2">
                                 <ShoppingCart className="w-5 h-5" /> {t('pos.mobileCart', 'Cart')}
                             </h3>
-                            <button onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                            <button type="button" onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label={t('common.close', 'Close')}>
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
-                            <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
-                            {customers.map((c) => <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>)}
-                        </Select>
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-3 space-y-3">
+                            <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
+                                <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
+                                {customers.map((c) => <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>)}
+                            </Select>
 
-                        {cart.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">{t('pos.emptyCart', 'Cart is empty')}</div>
-                        ) : (
-                            <>
-                                <div className="space-y-2">
-                                    {cart.map((item) => (
-                                        <div key={item.productId} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{item.name}</p>
-                                                <p className="text-xs text-gray-500">{formatCurrencyINR(item.price)} × {item.quantity} = {formatCurrencyINR(item.price * item.quantity)}</p>
+                            {cart.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400">{t('pos.emptyCart', 'Cart is empty')}</div>
+                            ) : (
+                                <>
+                                    <div className="space-y-2">
+                                        {cart.map((item) => (
+                                            <div key={item.productId} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{item.name}</p>
+                                                    <p className="text-xs text-gray-500">{formatCurrencyINR(item.price)} × {item.quantity} = {formatCurrencyINR(item.price * item.quantity)}</p>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button type="button" onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="min-w-[44px] min-h-[44px] p-2 rounded-lg bg-gray-200 touch-manipulation flex items-center justify-center" aria-label={t('common.previous', 'Decrease')}><Minus className="w-4 h-4" /></button>
+                                                    <span className="text-sm font-medium w-8 text-center flex items-center justify-center min-h-[44px]">{item.quantity}</span>
+                                                    <button type="button" onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="min-w-[44px] min-h-[44px] p-2 rounded-lg bg-gray-200 touch-manipulation flex items-center justify-center" aria-label={t('common.next', 'Increase')}><Plus className="w-4 h-4" /></button>
+                                                    <button type="button" onClick={() => removeFromCart(item.productId)} className="min-w-[44px] min-h-[44px] p-2 rounded-lg bg-red-50 text-red-500 ml-1 touch-manipulation flex items-center justify-center" aria-label={t('common.delete', 'Remove')}><Trash2 className="w-4 h-4" /></button>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1.5 rounded-lg bg-gray-200"><Minus className="w-4 h-4" /></button>
-                                                <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1.5 rounded-lg bg-gray-200"><Plus className="w-4 h-4" /></button>
-                                                <button onClick={() => removeFromCart(item.productId)} className="p-1.5 rounded-lg bg-red-50 text-red-500 ml-1"><Trash2 className="w-4 h-4" /></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
 
-                                <div>
-                                    <label className="text-xs font-medium text-gray-600 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
-                                    <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
-                                </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
+                                        <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
+                                    </div>
 
-                                <div className="border-t pt-3 space-y-1 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-600">{t('pos.subtotal', 'Subtotal')}</span><span>{formatCurrencyINR(subtotal)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">{t('pos.tax', 'Tax (GST)')}</span><span>{formatCurrencyINR(taxTotal)}</span></div>
-                                    {discount > 0 && <div className="flex justify-between text-green-600"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
-                                    <div className="flex justify-between font-bold text-lg border-t pt-2"><span>{t('pos.total', 'Total')}</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
-                                </div>
+                                    <div className="border-t pt-3 space-y-1 text-sm">
+                                        <div className="flex justify-between"><span className="text-gray-600">{t('pos.subtotal', 'Subtotal')}</span><span>{formatCurrencyINR(subtotal)}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-600">{t('pos.tax', 'Tax (GST)')}</span><span>{formatCurrencyINR(taxTotal)}</span></div>
+                                        {discount > 0 && <div className="flex justify-between text-green-600"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
+                                        <div className="flex justify-between font-bold text-lg border-t pt-2"><span>{t('pos.total', 'Total')}</span><span className="text-blue-600">{formatCurrencyINR(grandTotal)}</span></div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
-                                <Button onClick={() => { setShowCart(false); handleCheckout(); }} className="w-full" size="lg">
+                        {cart.length > 0 && (
+                            <div className="shrink-0 p-4 pt-3 border-t border-gray-200 bg-white">
+                                <Button onClick={() => { setShowCart(false); handleCheckout(); }} className="w-full min-h-[56px] touch-manipulation text-base font-semibold shadow-md" size="lg">
                                     <CreditCard className="w-4 h-4 mr-2" /> {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
                                 </Button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -299,7 +315,7 @@ const PointOfSale = () => {
 
             {/* ════ Checkout Dialog ════ */}
             {showCheckout && (
-                <Dialog open={showCheckout} onClose={() => setShowCheckout(false)}>
+                <Dialog open={showCheckout} onClose={() => setShowCheckout(false)} size="lg">
                     <DialogHeader title={t('pos.checkout', 'Checkout')} onClose={() => setShowCheckout(false)} />
                     <DialogBody>
                         <div className="px-4 sm:px-6 py-4 space-y-4">
@@ -371,7 +387,7 @@ const PointOfSale = () => {
                                     <Receipt className="w-8 h-8 text-green-600" />
                                 </div>
                                 <p className="text-2xl font-bold text-green-600">{formatCurrencyINR(grandTotal)}</p>
-                                <p className="text-sm text-gray-500 mt-1">{t('pos.paymentReceived', 'Payment received via')} {paymentMethod.replace('_', ' ')}</p>
+                                <p className="text-sm text-gray-500 mt-1">{t('pos.paymentReceived', 'Payment received via')} {getPaymentMethodLabel(paymentMethod)}</p>
                             </div>
 
                             {selectedCustomer && (

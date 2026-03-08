@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt', // so we can show "New version available. Reload?" via useRegisterSW
-      includeAssets: ['Logo.svg', 'Product Logo.png', 'Product Logo.svg'],
+      includeAssets: ['Nexora.svg', 'Nexora Logo.png', 'Nexora Logo.svg'],
       manifest: false, // Managed manually via public/manifest.json
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],

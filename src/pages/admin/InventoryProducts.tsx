@@ -514,9 +514,9 @@ const InventoryProducts = () => {
                                 </div>
                             )}
 
-                            {/* Checkboxes */}
-                            <div className="space-y-3 pt-2">
-                                <p className="text-sm font-medium text-gray-700">{t('inventory.labelShowInfo', 'Information to show on label')}:</p>
+                            {/* Checkboxes — mobile: large touch targets for multi-select */}
+                            <div className="space-y-1 pt-2">
+                                <p className="text-sm font-medium text-gray-700 mb-2">{t('inventory.labelShowInfo', 'Information to show on label')}:</p>
                                 {[
                                     { key: 'showProductName' as const, label: t('inventory.labelProductName', 'Product Name') },
                                     { key: 'showProductVariation' as const, label: t('inventory.labelProductVariation', 'Product Variation') },
@@ -525,12 +525,12 @@ const InventoryProducts = () => {
                                     { key: 'showCurrency' as const, label: t('inventory.labelCurrency', 'Currency Symbol') },
                                     { key: 'showPackingDate' as const, label: t('inventory.labelPackingDate', 'Packing Date') },
                                 ].map((opt) => (
-                                    <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
+                                    <label key={opt.key} className="flex items-center gap-3 py-3 sm:py-1.5 min-h-[48px] sm:min-h-0 cursor-pointer touch-manipulation">
                                         <input
                                             type="checkbox"
                                             checked={labelConfig[opt.key]}
                                             onChange={(e) => setLabelConfig({ ...labelConfig, [opt.key]: e.target.checked })}
-                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            className="w-5 h-5 sm:w-4 sm:h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                                         />
                                         <span className="text-sm text-gray-700">{opt.label}</span>
                                     </label>

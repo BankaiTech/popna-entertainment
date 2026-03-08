@@ -2,6 +2,7 @@
 // Client folder removed — SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
+import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
@@ -35,6 +36,21 @@ function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const showErrorPage = location.pathname === '/' && searchParams.has('error_show');
+
+  // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames)
+  useEffect(() => {
+    const el = document.getElementById('app-loading');
+    let rafId: number;
+    const remove = () => {
+      if (el?.parentNode) el.remove();
+    };
+    rafId = requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(remove);
+    });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   return (
     <>

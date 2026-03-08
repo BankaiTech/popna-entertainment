@@ -203,6 +203,26 @@ body {
   }
 }
 
+/* Mobile: multi-select / checkboxes — larger touch targets so multiple selection is easy */
+@media (max-width: 640px) {
+  label:has(input[type="checkbox"]) {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  label:has(input[type="checkbox"]) input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    flex-shrink: 0;
+  }
+}
+
 /* ─── Compact spacing override ─── */
 .space-y-4 > * + * { margin-top: 0.625rem !important; }
 .space-y-6 > * + * { margin-top: 0.875rem !important; }
