@@ -1,4 +1,4 @@
-// Point of Sale — supermarket-style barcode-first table layout
+﻿// Point of Sale ΓÇö supermarket-style barcode-first table layout
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -11,8 +11,8 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
-    Search, Plus, Minus, CreditCard, Receipt, X,
-    WifiOff, ScanBarcode, UserPlus,
+    Search, ShoppingCart, Plus, Minus, CreditCard, Receipt, X,
+    WifiOff, ScanBarcode, UserPlus, Package, Check,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import {
@@ -38,6 +38,9 @@ const PointOfSale = () => {
     const [showReceipt, setShowReceipt] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
+    const [showProductLookup, setShowProductLookup] = useState(false);
+    const [lookupSearch, setLookupSearch] = useState('');
+    const [lookupCategory, setLookupCategory] = useState<number | null>(null);
     const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
     const [lastInvoiceNumber, setLastInvoiceNumber] = useState('');
     const barcodeBufferRef = useRef('');
@@ -125,7 +128,7 @@ const PointOfSale = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleBarcodeScan]);
 
-    // Search input — Enter key scans barcode or adds first matching product
+    // Search input ΓÇö Enter key scans barcode or adds first matching product
     const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key !== 'Enter' || !productSearch.trim()) return;
         const q = productSearch.trim().toLowerCase();
@@ -175,7 +178,10 @@ const PointOfSale = () => {
         }
     };
 
-
+    const handleCheckout = () => {
+        if (cart.length === 0) return;
+        setShowCheckout(true);
+    };
 
     const handleConfirmCheckout = () => {
         const invoiceNumber = generatePOSInvoiceNumber();
@@ -236,10 +242,28 @@ const PointOfSale = () => {
         setTimeout(() => searchInputRef.current?.focus(), 100);
     };
 
+    // Product lookup filtered list
+    const lookupProducts = useMemo(() => {
+        let items = inventoryStore.products.filter((p) => p.isActive);
+        if (lookupCategory !== null) {
+            items = items.filter((p) => p.categoryId === lookupCategory);
+        }
+        if (lookupSearch.trim()) {
+            const q = lookupSearch.toLowerCase();
+            items = items.filter((p) =>
+                p.name.toLowerCase().includes(q) ||
+                p.sku.toLowerCase().includes(q) ||
+                (p.barcode && p.barcode.toLowerCase().includes(q))
+            );
+        }
+        return items;
+    }, [inventoryStore.products, lookupSearch, lookupCategory]);
+
     const subtotal = getSubtotal();
     const taxTotal = getTaxTotal();
     const discountAmount = getDiscountAmount();
     const grandTotal = getGrandTotal();
+    const cartItemCount = cart.reduce((s, c) => s + c.quantity, 0);
 
     return (
         <div className="space-y-3 pb-20 md:pb-4">
@@ -259,7 +283,7 @@ const PointOfSale = () => {
 
             {/* Search + Scan + Product Lookup bar */}
             <div className="flex gap-2 sticky top-0 z-10 bg-gray-50 dark:bg-gray-950 py-2 -mx-1 px-1">
-                <div className="relative flex-1 mt-1">
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                     <Input
                         ref={searchInputRef}
@@ -278,47 +302,18 @@ const PointOfSale = () => {
                 >
                     <ScanBarcode className="w-5 h-5" />
                 </button>
-                {/* Product Search Auto-List Dropdown */}
-                {productSearch.trim().length > 0 && (
-                    <div className="absolute top-full left-0 right-[48px] mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
-                        {(() => {
-                            const q = productSearch.trim().toLowerCase();
-                            const matches = inventoryStore.products.filter(
-                                (p) => p.isActive && (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode && p.barcode.toLowerCase().includes(q)))
-                            );
-                            if (matches.length === 0) {
-                                return <div className="p-3 text-sm text-gray-500 text-center">{t('pos.noProductsFound', 'No products found')}</div>;
-                            }
-                            return matches.map((product) => {
-                                const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
-                                return (
-                                    <button
-                                        key={product.id}
-                                        type="button"
-                                        disabled={outOfStock}
-                                        onClick={() => { handleAddProduct(product); setProductSearch(''); }}
-                                        className={cn(
-                                            "w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors flex justify-between items-center",
-                                            outOfStock && "opacity-50 cursor-not-allowed"
-                                        )}
-                                    >
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{product.name}</p>
-                                            <p className="text-xs text-gray-500">{product.sku} {product.barcode && `• ${product.barcode}`}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrencyINR(product.price)}</p>
-                                            {outOfStock && <p className="text-xs text-red-500">{t('pos.outOfStock', 'Out of stock')}</p>}
-                                        </div>
-                                    </button>
-                                );
-                            });
-                        })()}
-                    </div>
-                )}
+                <button
+                    type="button"
+                    onClick={() => setShowProductLookup(true)}
+                    className="flex items-center justify-center gap-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-primary transition-colors min-h-[44px] touch-manipulation text-sm font-medium"
+                    title={t('pos.productLookup', 'Browse Products')}
+                >
+                    <Package className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('pos.browse', 'Browse')}</span>
+                </button>
             </div>
 
-            {/* ════ Cart Table ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Cart Table ΓòÉΓòÉΓòÉΓòÉ */}
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {cart.length === 0 ? (
                     <div className="text-center py-16 text-gray-400 dark:text-gray-500">
@@ -401,7 +396,7 @@ const PointOfSale = () => {
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                    {formatCurrencyINR(item.price)} {item.tax > 0 && <span className="text-gray-400 dark:text-gray-500">• GST {item.tax}%</span>}
+                                                    {formatCurrencyINR(item.price)} {item.tax > 0 && <span className="text-gray-400 dark:text-gray-500">ΓÇó GST {item.tax}%</span>}
                                                 </p>
                                             </div>
                                             <button
@@ -441,7 +436,7 @@ const PointOfSale = () => {
                 )}
             </div>
 
-            {/* ════ Summary + Checkout Section ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Summary + Checkout Section ΓòÉΓòÉΓòÉΓòÉ */}
             {cart.length > 0 && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
                     <div className="flex flex-col md:flex-row gap-4">
@@ -499,16 +494,34 @@ const PointOfSale = () => {
                             </div>
                         </div>
                     </div>
-                    <Button onClick={() => setShowCheckout(true)} disabled={!isOnline || cart.length === 0} className="w-full min-h-[48px] text-base font-semibold" size="lg">
+
+                    {/* Checkout button */}
+                    <Button onClick={handleCheckout} className="w-full min-h-[48px] text-base font-semibold" size="lg" disabled={!isOnline}>
                         <CreditCard className="w-5 h-5 mr-2" />
-                        {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
+                        {t('pos.checkout', 'Checkout')} ΓÇö {formatCurrencyINR(grandTotal)}
                     </Button>
                 </div>
             )}
 
-            {/* Mobile Bottom Cart Summary Removed as checkout explicitly moved directly below cart */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Mobile Bottom Cart Summary ΓòÉΓòÉΓòÉΓòÉ */}
+            {cart.length > 0 && (
+                <div className="fixed left-0 right-0 bottom-16 z-40 md:hidden px-3 pb-2">
+                    <button
+                        type="button"
+                        onClick={handleCheckout}
+                        className="w-full flex items-center justify-between bg-primary text-white rounded-xl px-4 py-3 shadow-lg touch-manipulation"
+                        disabled={!isOnline}
+                    >
+                        <div className="flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5" />
+                            <span className="font-semibold">{cartItemCount} {t('pos.cartItems', 'items')}</span>
+                        </div>
+                        <span className="font-bold text-lg">{formatCurrencyINR(grandTotal)}</span>
+                    </button>
+                </div>
+            )}
 
-            {/* ════ Barcode Scanner ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Barcode Scanner ΓòÉΓòÉΓòÉΓòÉ */}
             {showScanner && (
                 <BarcodeScanner
                     onScan={handleBarcodeScan}
@@ -516,16 +529,116 @@ const PointOfSale = () => {
                 />
             )}
 
-            {/* ════ Add Customer Modal ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Add Customer Modal ΓòÉΓòÉΓòÉΓòÉ */}
             <CustomerSheet
                 isOpen={showAddCustomer}
                 onClose={() => setShowAddCustomer(false)}
                 onSave={handleAddCustomerSave}
             />
 
-            {/* ════ Product Lookup Dialog logic kept implicitly, but no trigger button now. ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Product Lookup Dialog ΓòÉΓòÉΓòÉΓòÉ */}
+            {showProductLookup && (
+                <Dialog open={showProductLookup} onClose={() => setShowProductLookup(false)} size="lg">
+                    <DialogHeader title={t('pos.productLookup', 'Browse Products')} onClose={() => setShowProductLookup(false)} />
+                    <DialogBody>
+                        <div className="px-4 sm:px-6 py-3 space-y-3">
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input
+                                    value={lookupSearch}
+                                    onChange={(e) => setLookupSearch(e.target.value)}
+                                    placeholder={t('pos.searchProducts', 'Search products...')}
+                                    className="pl-9"
+                                    autoFocus
+                                />
+                            </div>
 
-            {/* ════ Checkout Dialog ════ */}
+                            {/* Category pills */}
+                            {inventoryStore.categories.length > 0 && (
+                                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLookupCategory(null)}
+                                        className={cn(
+                                            'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
+                                            lookupCategory === null
+                                                ? 'bg-primary text-white border-primary'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                                        )}
+                                    >
+                                        {t('pos.allProducts', 'All')}
+                                    </button>
+                                    {inventoryStore.categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setLookupCategory(cat.id)}
+                                            className={cn(
+                                                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
+                                                lookupCategory === cat.id
+                                                    ? 'bg-primary text-white border-primary'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                                            )}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Product list */}
+                            <div className="max-h-[50vh] overflow-y-auto space-y-1">
+                                {lookupProducts.length === 0 && (
+                                    <div className="text-center py-8 text-gray-400">
+                                        <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                                        <p className="text-sm">{t('pos.noProducts', 'No products found')}</p>
+                                    </div>
+                                )}
+                                {lookupProducts.map((product) => {
+                                    const inCart = cart.find((c) => c.productId === product.id);
+                                    const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
+                                    return (
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            disabled={outOfStock}
+                                            onClick={() => handleAddProduct(product)}
+                                            className={cn(
+                                                'w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors',
+                                                outOfStock
+                                                    ? 'opacity-50 cursor-not-allowed'
+                                                    : inCart
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
+                                            )}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{product.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{product.sku} {product.barcode && `ΓÇó ${product.barcode}`}</p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrencyINR(product.price)}</p>
+                                                {inCart && (
+                                                    <p className="text-xs text-blue-500 flex items-center gap-0.5 justify-end">
+                                                        <Check className="w-3 h-3" /> {inCart.quantity} in cart
+                                                    </p>
+                                                )}
+                                                {outOfStock && <p className="text-xs text-red-500">{t('pos.outOfStock', 'Out of stock')}</p>}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowProductLookup(false)}>{t('pos.done', 'Done')}</Button>
+                    </DialogFooter>
+                </Dialog>
+            )}
+
+            {/* ΓòÉΓòÉΓòÉΓòÉ Checkout Dialog ΓòÉΓòÉΓòÉΓòÉ */}
             {showCheckout && (
                 <Dialog open={showCheckout} onClose={() => setShowCheckout(false)} size="lg">
                     <DialogHeader title={t('pos.checkout', 'Checkout')} onClose={() => setShowCheckout(false)} />
@@ -549,7 +662,7 @@ const PointOfSale = () => {
                                     const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
                                     return (
                                         <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
-                                            <span className="text-gray-700 dark:text-gray-300">{item.name} × {item.quantity}</span>
+                                            <span className="text-gray-700 dark:text-gray-300">{item.name} ├ù {item.quantity}</span>
                                             <span className="font-medium text-gray-900 dark:text-gray-100 tabular-nums">{formatCurrencyINR(itemTotal)}</span>
                                         </div>
                                     );
@@ -590,16 +703,16 @@ const PointOfSale = () => {
                     <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button variant="outline" onClick={() => setShowCheckout(false)} className="w-full sm:w-auto">{t('pos.cancel', 'Cancel')}</Button>
                         <Button onClick={handleConfirmCheckout} disabled={!isOnline} className="w-full sm:w-auto min-h-[44px] sm:min-h-0">
-                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} — {formatCurrencyINR(grandTotal)}
+                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} ΓÇö {formatCurrencyINR(grandTotal)}
                         </Button>
                     </DialogFooter>
                 </Dialog>
             )}
 
-            {/* ════ Receipt Dialog ════ */}
+            {/* ΓòÉΓòÉΓòÉΓòÉ Receipt Dialog ΓòÉΓòÉΓòÉΓòÉ */}
             {showReceipt && (
                 <Dialog open={showReceipt} onClose={handleNewSale}>
-                    <DialogHeader title={`${t('pos.saleComplete', 'Sale Complete')} ✓`} onClose={handleNewSale} />
+                    <DialogHeader title={`${t('pos.saleComplete', 'Sale Complete')} Γ£ô`} onClose={handleNewSale} />
                     <DialogBody>
                         <div className="px-4 sm:px-6 py-4 space-y-4">
                             <div className="text-center">
@@ -622,7 +735,7 @@ const PointOfSale = () => {
                                     const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
                                     return (
                                         <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
-                                            <span className="text-gray-700 dark:text-gray-300">{item.name} × {item.quantity}</span>
+                                            <span className="text-gray-700 dark:text-gray-300">{item.name} ├ù {item.quantity}</span>
                                             <span className="text-gray-900 dark:text-gray-200 tabular-nums">{formatCurrencyINR(itemTotal)}</span>
                                         </div>
                                     );

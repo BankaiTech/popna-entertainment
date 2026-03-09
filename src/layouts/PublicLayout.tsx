@@ -127,6 +127,7 @@ const PublicLayout = () => {
                 {t('nav.login')}
               </Link>
               <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <ThemeSwitcher />
                 <LanguageSwitcher />
               </div>
             </div>

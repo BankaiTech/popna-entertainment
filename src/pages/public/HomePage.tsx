@@ -56,19 +56,19 @@ const HomePage = () => {
     : '';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16 sm:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      <section className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950/20 dark:via-gray-950 dark:to-purple-950/20 py-16 sm:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-[0.02]"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {heroTitle}
             </h1>
-            <p className="text-lg sm:text-xl text-gray-700 mb-6 font-medium">
+            <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-6 font-medium">
               {heroSubtitle}
             </p>
-            <p className="text-base sm:text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
               {heroDescription}
             </p>
             <a href="#services">
@@ -82,16 +82,16 @@ const HomePage = () => {
       </section>
 
       {/* Services Section — reads only from active Products (Admin → Settings → Products). No fallback list. */}
-      <section id="services" className="py-16 sm:py-20 bg-white">
+      <section id="services" className="py-16 sm:py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{t('home.services.title')}</h2>
-            <p className="text-lg text-gray-600">{t('home.services.subtitle')}</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('home.services.title')}</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400">{t('home.services.subtitle')}</p>
           </div>
 
           {allActiveProducts.length === 0 ? (
-            <div className="text-center py-12 px-4 rounded-xl bg-gray-50 border border-gray-200">
-              <p className="text-gray-600">{t('home.services.noServices')}</p>
+            <div className="text-center py-12 px-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+              <p className="text-gray-600 dark:text-gray-400">{t('home.services.noServices')}</p>
             </div>
           ) : (
             <div className="overflow-hidden">
@@ -108,7 +108,7 @@ const HomePage = () => {
                         to={`/plans?productName=${encodeURIComponent(product.name)}`}
                         className="group block h-full"
                       >
-                        <Card className="hover:shadow-xl transition-all duration-300 h-full overflow-hidden hover:-translate-y-1 border border-gray-200 flex flex-col">
+                        <Card className="hover:shadow-xl dark:hover:shadow-black/50 transition-all duration-300 h-full overflow-hidden hover:-translate-y-1 border border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
                           <div className={`h-2 bg-gradient-to-r ${gradient} flex-shrink-0`}></div>
                           <CardHeader className="flex-shrink-0 pb-3">
                             <div className="flex items-center justify-center mb-4 h-16">
@@ -118,16 +118,16 @@ const HomePage = () => {
                                 <Icon className="w-10 h-10 text-white" />
                               </div>
                             </div>
-                            <CardTitle className="text-center text-xl text-gray-900 h-12 flex items-center justify-center line-clamp-2 px-2">
+                            <CardTitle className="text-center text-xl text-gray-900 dark:text-white h-12 flex items-center justify-center line-clamp-2 px-2">
                               {product.name}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
-                            <CardDescription className="text-center text-sm text-gray-600 line-clamp-3 mb-4 flex-shrink-0 min-h-[60px] px-2">
+                            <CardDescription className="text-center text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-shrink-0 min-h-[60px] px-2">
                               {t('home.services.viewPlansDesc', { name: product.name })}
                             </CardDescription>
                             <div className="mt-auto pt-4 text-center">
-                              <span className="text-primary font-medium group-hover:underline">{t('home.services.viewPlans')}</span>
+                              <span className="text-primary dark:text-primary/90 font-medium group-hover:underline">{t('home.services.viewPlans')}</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -142,16 +142,16 @@ const HomePage = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: About Text */}
             <div className="order-2 lg:order-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{t('home.about.title')}</h2>
-              <p className="text-lg text-gray-600 mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('home.about.title')}</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
                 {t('home.about.p1')}
               </p>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
                 {t('home.about.p2')}
               </p>
               <a href="#services">
@@ -164,7 +164,7 @@ const HomePage = () => {
 
             {/* Right: Image (Desktop) / Top (Mobile) */}
             <div className="order-1 lg:order-2">
-              <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg dark:shadow-none hover:shadow-xl dark:border dark:border-gray-800 transition-shadow duration-300">
                 <img
                   src={BusinexaHomeImage}
                   alt="Businexa Home Image"
@@ -178,36 +178,36 @@ const HomePage = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{t('home.contact.title')}</h2>
-            <p className="text-lg text-gray-600">{t('home.contact.subtitle')}</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('home.contact.title')}</h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400">{t('home.contact.subtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-6 h-6 text-blue-600" />
+            <div className="text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-black/50 transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.phone')}</h3>
-              <p className="text-gray-600">{companyPhone}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('home.contact.phone')}</h3>
+              <p className="text-gray-600 dark:text-gray-400">{companyPhone}</p>
             </div>
 
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-6 h-6 text-green-600" />
+            <div className="text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-black/50 transition-shadow">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.email')}</h3>
-              <p className="text-gray-600">{companyEmail}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('home.contact.email')}</h3>
+              <p className="text-gray-600 dark:text-gray-400">{companyEmail}</p>
             </div>
 
-            <div className="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-6 h-6 text-purple-600" />
+            <div className="text-center p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-lg dark:hover:shadow-black/50 transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('home.contact.address')}</h3>
-              <p className="text-gray-600 text-sm">{companyAddress}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('home.contact.address')}</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">{companyAddress}</p>
             </div>
           </div>
         </div>
