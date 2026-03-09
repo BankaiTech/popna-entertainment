@@ -11,7 +11,7 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
-    Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Receipt, X,
+    Search, ShoppingCart, Plus, Minus, CreditCard, Receipt, X,
     WifiOff, ScanBarcode, UserPlus, Package, Check,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -290,7 +290,7 @@ const PointOfSale = () => {
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
-                        placeholder={t('pos.searchPlaceholder', 'Scan barcode or search product...')}
+                        placeholder={t('pos.searchPlaceholder', 'Search products...')}
                         className="pl-9"
                     />
                 </div>
@@ -390,38 +390,44 @@ const PointOfSale = () => {
                             {cart.map((item) => {
                                 const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
                                 return (
-                                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex items-center gap-3 p-3">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrencyINR(item.price)} × {item.quantity} {item.tax > 0 && `+ ${item.tax}% tax`}</p>
-                                        </div>
-                                        <div className="flex items-center gap-1">
+                                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="p-3 space-y-2">
+                                        {/* Row 1: Name + delete */}
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    {formatCurrencyINR(item.price)} {item.tax > 0 && <span className="text-gray-400 dark:text-gray-500">• GST {item.tax}%</span>}
+                                                </p>
+                                            </div>
                                             <button
                                                 type="button"
-                                                onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
-                                                className="min-w-[36px] min-h-[36px] rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation"
+                                                onClick={() => removeFromCart(item.productId, item.variantId)}
+                                                className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 touch-manipulation shrink-0"
                                             >
-                                                <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                                            </button>
-                                            <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-gray-100">{item.quantity}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
-                                                className="min-w-[36px] min-h-[36px] rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation"
-                                            >
-                                                <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                                <X className="w-4 h-4" />
                                             </button>
                                         </div>
-                                        <div className="text-right min-w-[70px]">
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatCurrencyINR(itemTotal)}</p>
+                                        {/* Row 2: Qty controls + total */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+                                                    className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation active:scale-95 transition-transform"
+                                                >
+                                                    <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                                </button>
+                                                <span className="w-10 text-center text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums">{item.quantity}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+                                                    className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation active:scale-95 transition-transform"
+                                                >
+                                                    <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                                </button>
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatCurrencyINR(itemTotal)}</p>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeFromCart(item.productId, item.variantId)}
-                                            className="min-w-[36px] min-h-[36px] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 flex items-center justify-center touch-manipulation"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
                                     </div>
                                 );
                             })}
