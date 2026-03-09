@@ -1,5 +1,4 @@
 import React from 'react';
-import { sendErrorToPage } from '@/utils/errorPage';
 
 interface State {
   hasError: boolean;
@@ -18,7 +17,10 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    sendErrorToPage(error, 'React ErrorBoundary: ' + (errorInfo?.componentStack?.split('\n')[1]?.trim() || ''));
+    // Only log — do NOT redirect via sendErrorToPage because we already show
+    // a fallback UI.  Redirecting causes a full reload that loses the
+    // error context and often creates a confusing "Something went wrong"
+    // page with no details.
   }
 
   render() {

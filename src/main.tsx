@@ -13,12 +13,36 @@ import { sendErrorToPage } from './utils/errorPage';
 // Initialize auth synchronously (reads from localStorage only)
 useAuthStore.getState().initialize();
 
-// Global handlers: send uncaught errors to error.html
+// Global handlers: log uncaught errors but only redirect for fatal ones.
+// Benign browser errors (ResizeObserver, Script error, etc.) are logged silently.
+const BENIGN_PATTERNS = [
+  'ResizeObserver',
+  'Script error',
+  'Loading chunk',
+  'Loading CSS chunk',
+  'Failed to fetch dynamically imported module',
+  'NetworkError',
+  'Load failed',
+  'cancelled',
+];
+function isBenignError(msg: string): boolean {
+  return BENIGN_PATTERNS.some((p) => msg.includes(p));
+}
 window.addEventListener('error', (event) => {
+  const msg = event.error?.message ?? event.message ?? '';
+  if (isBenignError(msg)) {
+    console.warn('[Benign error ignored]', msg);
+    return;
+  }
   const err = event.error ?? new Error(event.message);
   sendErrorToPage(err, 'Uncaught error');
 });
 window.addEventListener('unhandledrejection', (event) => {
+  const msg = event.reason instanceof Error ? event.reason.message : String(event.reason);
+  if (isBenignError(msg)) {
+    console.warn('[Benign rejection ignored]', msg);
+    return;
+  }
   const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
   sendErrorToPage(err, 'Unhandled promise rejection');
 });
