@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InfiniteCarousel } from '@/components/ui/InfiniteCarousel';
 import Button from '@/components/ui/Button';
 import { Wifi, Radio, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
-import NexoraHomeImage from '@/assets/images/popna-home.png';
+import BusinexaHomeImage from '@/assets/images/popna-home.png';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -166,8 +166,8 @@ const HomePage = () => {
             <div className="order-1 lg:order-2">
               <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <img
-                  src={NexoraHomeImage}
-                  alt="Nexora Home Image"
+                  src={BusinexaHomeImage}
+                  alt="Businexa Home Image"
                   className="w-full h-auto object-cover aspect-[4/3] rounded-2xl"
                   loading="lazy"
                 />

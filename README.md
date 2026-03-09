@@ -1,4 +1,4 @@
-# Nexora - ISP Management Platform
+# Businexa - ISP Management Platform
 
 A complete Internet Service Provider (ISP) Management Platform built with React 18+, TypeScript, and Vite. This system manages multiple ISP providers (GTPL, BSNL, Railwire, Krishiinet) with a public-facing website and a comprehensive admin dashboard.
 
@@ -52,7 +52,7 @@ A complete Internet Service Provider (ISP) Management Platform built with React 
 ## Project Structure
 
 ```
-Nexora-react/
+Businexa-react/
 ├── src/
 │   ├── api/              # API service layer
 │   │   └── api.ts
@@ -235,4 +235,4 @@ npm run preview
 
 ## License
 
-This project is proprietary software for Nexora.
+This project is proprietary software for Businexa.

@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 import type { ModuleKey } from '@/models/types';
 
 // Sidebar group definition
@@ -107,7 +108,7 @@ const AdminLayout = () => {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -117,7 +118,7 @@ const AdminLayout = () => {
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-13 shrink-0 flex items-center justify-between px-3 sm:px-5 border-b border-gray-200/80 bg-white/95 backdrop-blur-md shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 h-13 shrink-0 flex items-center justify-between px-3 sm:px-5 border-b border-gray-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shadow-sm">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -127,14 +128,15 @@ const AdminLayout = () => {
             <Menu className="w-4.5 h-4.5 text-gray-600" />
           </button>
           <div className="logo-header-wrap shrink-0">
-          <img src="/Nexora.png" alt="Nexora" className="logo-header" />
+          <img src="/Businexa.png" alt="Businexa" className="logo-header" />
         </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{t('nav.logout')}</span>

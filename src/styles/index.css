@@ -4,6 +4,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Light mode (default) ─── */
+:root {
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #7c3aed;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #f8fafc;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0f172a;
+  --color-destructive: #ef4444;
+}
+
+/* ─── Dark mode ─── */
+.dark {
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #8b5cf6;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #334155;
+  --color-background: #0f172a;
+  --color-foreground: #f1f5f9;
+  --color-card: #1e293b;
+  --color-card-foreground: #f1f5f9;
+  --color-accent: #1e293b;
+  --color-accent-foreground: #f1f5f9;
+  --color-destructive: #f87171;
+  color-scheme: dark;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -11,8 +48,8 @@
 }
 
 html {
-  color: #0f172a;
-  background-color: #f8fafc;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
   scroll-behavior: smooth;
 }
 
@@ -22,9 +59,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f8fafc;
+  background: var(--color-background);
   min-height: 100vh;
-  color: #0f172a;
+  color: var(--color-foreground);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -48,51 +85,51 @@ body {
 }
 /* Use .safe-area-inset-* on fixed/sticky elements (headers, footers, banners) as needed */
 
-/* Logo: Nexora.png (with name) in nav/login/dashboards. Sizes doubled for frontsite and dashboards. */
+/* Logo: Businexa.png (with name) in nav/login/dashboards. */
 .logo-nav-wrap {
-  height: 8rem;
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .logo-nav {
-  max-height: 7rem;
+  max-height: 3rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
 /* Login: compact so form is not pushed down */
 .logo-login-wrap {
-  height: 4rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .logo-login {
-  max-height: 3.5rem;
+  max-height: 2.5rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
 .logo-header-wrap {
-  height: 5.5rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .logo-header {
-  max-height: 5rem;
+  max-height: 2.5rem;
   width: auto;
   object-fit: contain;
   object-position: center;
 }
 @media (min-width: 640px) {
-  .logo-nav { max-height: 8rem; }
-  .logo-login-wrap { height: 4.5rem; }
-  .logo-login { max-height: 4rem; }
-  .logo-header-wrap { height: 6rem; }
-  .logo-header { max-height: 5.5rem; }
+  .logo-nav { max-height: 3.5rem; }
+  .logo-login-wrap { height: 3.5rem; }
+  .logo-login { max-height: 3rem; }
+  .logo-header-wrap { height: 3.5rem; }
+  .logo-header { max-height: 3rem; }
 }
 
 /* ─── Scrollbar styling ─── */
@@ -230,7 +267,31 @@ body {
 
 /* ─── Focus ring for accessibility ─── */
 *:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ─── Dark mode overrides ─── */
+.dark .glass-effect {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(51, 65, 85, 0.3);
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: #475569 transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark .bg-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }

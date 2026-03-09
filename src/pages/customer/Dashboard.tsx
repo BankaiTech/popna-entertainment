@@ -1,4 +1,4 @@
-// Customer Dashboard — Nexora: Plan, Payment, Complaints, Invoices; mobile-first
+// Customer Dashboard — Businexa: Plan, Payment, Complaints, Invoices; mobile-first
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { cn, formatCurrencyINR } from '@/lib/utils';
 import CustomerComplaintModal from '@/components/CustomerComplaintModal';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 import { salesInvoicesApi } from '@/api/invoices';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { upiPaymentApi } from '@/api/upiPayment';
@@ -83,10 +84,10 @@ const CustomerDashboard = () => {
 
   const getStatusColor = (status: Complaint['status']) => {
     switch (status) {
-      case 'active': return 'bg-blue-100 text-blue-800';
-      case 'on-hold': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'on-hold': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
@@ -101,10 +102,10 @@ const CustomerDashboard = () => {
 
   const getInvoiceStatusColor = (status: SalesInvoice['status']) => {
     switch (status) {
-      case 'paid': return 'bg-green-100 text-green-800';
-      case 'sent': return 'bg-blue-100 text-blue-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'paid': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      case 'sent': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'overdue': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
@@ -194,17 +195,18 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       {/* Sticky header — mobile-optimized, no overflow */}
       <header className="sticky top-0 left-0 right-0 z-50 h-12 sm:h-14 shrink-0 flex items-center justify-between px-3 sm:px-6 border-b border-border bg-card gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-          <img src="/Nexora.png" alt="Nexora" className="h-[4.5rem] sm:h-[5rem] w-auto object-contain shrink-0" />
+          <img src="/Businexa.png" alt="Businexa" className="h-8 sm:h-10 w-auto object-contain shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('customerDashboard.welcome')}</p>
             <p className="text-sm sm:text-base font-semibold text-foreground truncate">{currentCustomer.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 text-sm p-2 sm:px-3 sm:py-2 min-h-[44px] sm:min-h-0">
             <LogOut className="w-4 h-4 shrink-0" />
@@ -361,12 +363,12 @@ const CustomerDashboard = () => {
                               </thead>
                               <tbody>
                                 {myInvoices.map((invoice, idx) => (
-                                  <tr key={invoice.id} className={cn('border-b border-gray-200 hover:bg-gray-50 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                                    <td className="px-3 py-2 text-sm font-medium text-gray-900">{invoice.invoiceNumber}</td>
-                                    <td className="px-3 py-2 text-sm text-gray-600">{invoice.planName}</td>
-                                    <td className="px-3 py-2 text-sm font-semibold text-gray-900">{formatCurrencyINR(invoice.totalAmount)}</td>
-                                    <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.issueDate)}</td>
-                                    <td className="px-3 py-2 text-sm text-gray-600">{formatDate(invoice.dueDate)}</td>
+                                  <tr key={invoice.id} className={cn('border-b border-border hover:bg-muted/50 transition-colors', idx % 2 === 0 ? 'bg-card' : 'bg-muted/30')}>
+                                    <td className="px-3 py-2 text-sm font-medium text-foreground">{invoice.invoiceNumber}</td>
+                                    <td className="px-3 py-2 text-sm text-muted-foreground">{invoice.planName}</td>
+                                    <td className="px-3 py-2 text-sm font-semibold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</td>
+                                    <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.issueDate)}</td>
+                                    <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.dueDate)}</td>
                                     <td className="px-3 py-2 text-sm">
                                       <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
                                         {invoice.status.toUpperCase()}

@@ -15,7 +15,7 @@ let companyProfileData: CompanyProfile | null = {
   country: 'India',
   pincode: '560001',
   contactNumber: '+91 9876543210',
-  email: 'contact@Nexora.com',
+  email: 'contact@Businexa.com',
   updatedAt: new Date().toISOString(),
 };
 

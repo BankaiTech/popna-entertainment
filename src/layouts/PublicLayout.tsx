@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 
 const PublicLayout = () => {
   const { t } = useTranslation();
@@ -28,20 +29,20 @@ const PublicLayout = () => {
     loadData();
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
-  // Multi-tenant ready — company name from settings; fallback to Nexora
-  const companyName = companyProfile?.companyName || 'Nexora';
+  // Multi-tenant ready — company name from settings; fallback to Businexa
+  const companyName = companyProfile?.companyName || 'Businexa';
 
   // Multi-tenant ready — company name from settings
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       {/* Navbar — Dynamic based on active products — Sticky header */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm transition-shadow">
+      <nav className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2 min-h-0 flex-shrink-0 logo-nav-wrap">
               <Link to="/" className="flex items-center justify-center h-full w-full">
-                <img src="/Nexora.png" alt="Nexora" className="logo-nav" />
+                <img src="/Businexa.png" alt="Businexa" className="logo-nav" />
               </Link>
             </div>
 
@@ -51,7 +52,7 @@ const PublicLayout = () => {
                 to="/"
                 className={cn(
                   'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  location.pathname === '/' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 )}
               >
                 {t('nav.home')}
@@ -61,7 +62,7 @@ const PublicLayout = () => {
                 to="/plans"
                 className={cn(
                   'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/plans' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  location.pathname === '/plans' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 )}
               >
                 {t('nav.plans')}
@@ -71,11 +72,12 @@ const PublicLayout = () => {
                 to="/login"
                 className={cn(
                   'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/login' ? 'bg-primary text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 )}
               >
                 {t('nav.login')}
               </Link>
+              <ThemeSwitcher />
               <LanguageSwitcher />
             </div>
 
@@ -90,13 +92,13 @@ const PublicLayout = () => {
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-2 bg-white">
+            <div className="md:hidden border-t border-gray-200 dark:border-gray-800 py-2 bg-white dark:bg-gray-950">
               <Link
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                  location.pathname === '/' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
                 )}
               >
                 {t('nav.home')}
@@ -107,7 +109,7 @@ const PublicLayout = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/plans' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                  location.pathname === '/plans' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
                 )}
               >
                 {t('nav.plans')}
@@ -118,12 +120,12 @@ const PublicLayout = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/login' ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
                 )}
               >
                 {t('nav.login')}
               </Link>
-              <div className="px-4 py-3 border-t border-gray-100">
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
                 <LanguageSwitcher />
               </div>
             </div>
@@ -137,38 +139,38 @@ const PublicLayout = () => {
       </main>
 
       {/* Footer — Sticky at bottom */}
-      <footer className="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 mt-auto shrink-0">
+      <footer className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">{companyName}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{companyName}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('footer.tagline')}
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('nav.quickLinks')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('nav.quickLinks')}</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link to="/" className="text-sm text-gray-600 hover:text-primary transition-colors">
+                  <Link to="/" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
                     {t('nav.home')}
                   </Link>
                 </li>
                 <li>
-                  <Link to="/plans" className="text-sm text-gray-600 hover:text-primary transition-colors">
+                  <Link to="/plans" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
                     {t('nav.plans')}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('nav.contact')}</h3>
-              <p className="text-sm text-gray-600">{companyProfile?.contactNumber || ''}</p>
-              <p className="text-sm text-gray-600">{companyProfile?.email || ''}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('nav.contact')}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{companyProfile?.contactNumber || ''}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{companyProfile?.email || ''}</p>
             </div>
           </div>
-          <div className="border-t border-gray-200 pt-6">
-            <div className="text-center text-sm text-gray-600 space-y-2">
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
               <p>&copy; 2024 {companyName}. {t('footer.rightsReserved')}</p>
               <FooterCredit />
             </div>

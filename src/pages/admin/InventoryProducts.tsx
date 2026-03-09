@@ -275,7 +275,7 @@ const InventoryProducts = () => {
                     })}
                 </div>
                 {activeTab === 'list' && (
-                    <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} size="sm" className="shrink-0 h-9 ml-2">
+                    <Button onClick={() => { setEditingProduct(null); setShowProductModal(true); }} size="xs" className="shrink-0 ml-2">
                         <Plus className="w-4 h-4 mr-1" /> {t('inventory.addProduct', 'Add Product')}
                     </Button>
                 )}

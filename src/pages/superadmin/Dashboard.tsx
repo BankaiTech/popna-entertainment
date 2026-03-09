@@ -1,4 +1,4 @@
-// Super Admin Dashboard — Nexora: Organizations, subscriptions, tenant overview
+// Super Admin Dashboard — Businexa: Organizations, subscriptions, tenant overview
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';

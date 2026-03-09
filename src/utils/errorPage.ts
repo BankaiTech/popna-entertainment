@@ -2,7 +2,7 @@
  * On error: redirect to home. Persist error in sessionStorage.
  * When user visits the same URL with ?error_show, the app shows the error details.
  */
-export const ERROR_STORAGE_KEY = '__Nexora_error__';
+export const ERROR_STORAGE_KEY = '__Businexa_error__';
 
 export function sendErrorToPage(error: Error, context?: string): void {
   try {

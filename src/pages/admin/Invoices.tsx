@@ -108,7 +108,7 @@ const Invoices = () => {
       <Card>
         <CardHeader className="py-2.5 px-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-48 shrink-0">
+            <div className="relative w-full sm:w-56 shrink-0">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={t('invoices.searchPlaceholder', 'Search...')}
@@ -120,7 +120,7 @@ const Invoices = () => {
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | 'All')}
-              className="h-8 text-xs w-full sm:w-28"
+              className="h-8 ml-auto text-xs w-full sm:w-32"
             >
               <option value="All">{t('invoices.allStatus', 'All Status')}</option>
               <option value="draft">{t('invoices.statusDraft', 'Draft')}</option>
@@ -131,7 +131,7 @@ const Invoices = () => {
             <Select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
-              className="h-8 text-xs w-[calc(50%-4px)] sm:w-32"
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
             >
               <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
               <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
@@ -140,7 +140,7 @@ const Invoices = () => {
             <Select
               value={productFilter}
               onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
-              className="h-8 text-xs w-[calc(50%-4px)] sm:w-32"
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
             >
               <option value="All">{t('invoices.allProducts', 'All Products')}</option>
               {Array.isArray(products) && products.length > 0 ? (
@@ -153,7 +153,7 @@ const Invoices = () => {
                   ))
               ) : null}
             </Select>
-            <Button onClick={() => setIsModalOpen(true)} size="xs" className="ml-auto shrink-0 w-full sm:w-auto">
+            <Button onClick={() => setIsModalOpen(true)} size="xs" className="shrink-0 w-full sm:w-auto">
               <Plus className="w-3.5 h-3.5" />
               {t('invoices.newInvoice', 'New Invoice')}
             </Button>

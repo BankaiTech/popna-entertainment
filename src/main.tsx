@@ -7,6 +7,7 @@ import './styles/index.css';
 import { useAuthStore } from './store/useAuthStore';
 import { useStore } from './store/useStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ThemeProvider } from './components/ThemeProvider';
 import { sendErrorToPage } from './utils/errorPage';
 
 // Initialize auth synchronously (reads from localStorage only)
@@ -27,11 +28,13 @@ const rootEl = document.getElementById('root');
 if (rootEl) {
   ReactDOM.createRoot(rootEl).render(
     <React.StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ErrorBoundary>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ErrorBoundary>
+      </ThemeProvider>
     </React.StrictMode>
   );
   // Run store init after React has mounted (app already has mock data in initial state)

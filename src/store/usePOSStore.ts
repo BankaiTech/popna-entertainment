@@ -1,9 +1,12 @@
-// POS State Management
+// POS State Management — uses InventoryProduct data
 import { create } from 'zustand';
 
 export interface CartItem {
     productId: number;
+    variantId?: number;
     name: string;
+    sku: string;
+    barcode?: string;
     price: number;
     quantity: number;
     tax: number; // percentage
@@ -15,8 +18,8 @@ interface POSState {
     discount: number; // percentage
     paymentMethod: 'cash' | 'upi' | 'card' | 'bank_transfer';
     addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-    removeFromCart: (productId: number) => void;
-    updateQuantity: (productId: number, quantity: number) => void;
+    removeFromCart: (productId: number, variantId?: number) => void;
+    updateQuantity: (productId: number, quantity: number, variantId?: number) => void;
     setCustomer: (customerId: number | null) => void;
     setDiscount: (discount: number) => void;
     setPaymentMethod: (method: 'cash' | 'upi' | 'card' | 'bank_transfer') => void;
@@ -27,6 +30,9 @@ interface POSState {
     getGrandTotal: () => number;
 }
 
+const matchItem = (c: CartItem, productId: number, variantId?: number) =>
+    c.productId === productId && c.variantId === variantId;
+
 export const usePOSStore = create<POSState>((set, get) => ({
     cart: [],
     selectedCustomerId: null,
@@ -35,24 +41,24 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
     addToCart: (item) => {
         const { cart } = get();
-        const existing = cart.find((c) => c.productId === item.productId);
+        const existing = cart.find((c) => matchItem(c, item.productId, item.variantId));
         if (existing) {
-            set({ cart: cart.map((c) => c.productId === item.productId ? { ...c, quantity: c.quantity + 1 } : c) });
+            set({ cart: cart.map((c) => matchItem(c, item.productId, item.variantId) ? { ...c, quantity: c.quantity + 1 } : c) });
         } else {
             set({ cart: [...cart, { ...item, quantity: 1 }] });
         }
     },
 
-    removeFromCart: (productId) => {
-        set({ cart: get().cart.filter((c) => c.productId !== productId) });
+    removeFromCart: (productId, variantId) => {
+        set({ cart: get().cart.filter((c) => !matchItem(c, productId, variantId)) });
     },
 
-    updateQuantity: (productId, quantity) => {
+    updateQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
-            get().removeFromCart(productId);
+            get().removeFromCart(productId, variantId);
             return;
         }
-        set({ cart: get().cart.map((c) => c.productId === productId ? { ...c, quantity } : c) });
+        set({ cart: get().cart.map((c) => matchItem(c, productId, variantId) ? { ...c, quantity } : c) });
     },
 
     setCustomer: (customerId) => set({ selectedCustomerId: customerId }),

@@ -439,7 +439,6 @@ const Contacts = () => {
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.status', 'Status')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -486,11 +485,6 @@ const Contacts = () => {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-3 py-2 text-sm">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                                {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                                                            </span>
-                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -512,9 +506,6 @@ const Contacts = () => {
                                                         )}
                                                         <p className="text-xs text-muted-foreground mt-1">{t('customers.id', 'ID')}: {customer.id}</p>
                                                     </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${customer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                                                    </span>
                                                 </div>
                                                 <div className="space-y-2 text-sm">
                                                     <div>
