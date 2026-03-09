@@ -159,6 +159,10 @@
       }
 
       var data = getFromUrl() || getFromStorage();
+      if (!data || (!data.message && !data.stack)) {
+        window.location.replace('/login');
+        return;
+      }
       render(data);
 
       document.getElementById('btnRetry').onclick = function() {

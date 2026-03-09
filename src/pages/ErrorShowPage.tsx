@@ -1,4 +1,4 @@
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ERROR_STORAGE_KEY } from '@/utils/errorPage';
 
@@ -36,6 +36,10 @@ export default function ErrorShowPage() {
 
   if (!hasParam) {
     return null;
+  }
+
+  if (!data && !messageFromUrl) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
