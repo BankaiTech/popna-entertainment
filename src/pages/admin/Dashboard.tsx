@@ -28,14 +28,14 @@ import Button from '@/components/ui/Button';
 type TimeFilter = 'this_month' | 'last_month' | 'last_6_months' | 'this_year';
 
 const categoryColors = [
-  { text: 'text-blue-600', bg: 'bg-blue-50', gradient: 'from-blue-500 to-blue-600' },
-  { text: 'text-orange-600', bg: 'bg-orange-50', gradient: 'from-orange-500 to-orange-600' },
-  { text: 'text-green-600', bg: 'bg-green-50', gradient: 'from-green-500 to-green-600' },
-  { text: 'text-purple-600', bg: 'bg-purple-50', gradient: 'from-purple-500 to-purple-600' },
-  { text: 'text-pink-600', bg: 'bg-pink-50', gradient: 'from-pink-500 to-pink-600' },
-  { text: 'text-indigo-600', bg: 'bg-indigo-50', gradient: 'from-indigo-500 to-indigo-600' },
-  { text: 'text-teal-600', bg: 'bg-teal-50', gradient: 'from-teal-500 to-teal-600' },
-  { text: 'text-amber-600', bg: 'bg-amber-50', gradient: 'from-amber-500 to-amber-600' },
+  { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', gradient: 'from-blue-500 to-blue-600' },
+  { text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30', gradient: 'from-orange-500 to-orange-600' },
+  { text: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30', gradient: 'from-green-500 to-green-600' },
+  { text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', gradient: 'from-purple-500 to-purple-600' },
+  { text: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-50 dark:bg-pink-900/30', gradient: 'from-pink-500 to-pink-600' },
+  { text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/30', gradient: 'from-indigo-500 to-indigo-600' },
+  { text: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/30', gradient: 'from-teal-500 to-teal-600' },
+  { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30', gradient: 'from-amber-500 to-amber-600' },
 ];
 
 const AdminDashboard = () => {
@@ -232,40 +232,40 @@ const AdminDashboard = () => {
       title: t('dashboard.totalContacts', 'Total Contacts'),
       value: dashboardStats.totalCustomers,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/30',
       isCurrency: false,
     },
     {
       title: t('dashboard.totalInventoryProducts', 'Total Products'),
       value: totalInventoryProducts,
       icon: Package,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/30',
       isCurrency: false,
     },
     {
       title: t('dashboard.lowStockAlerts', 'Low Stock Alerts'),
       value: lowStockTotal,
       icon: AlertTriangle,
-      color: lowStockTotal > 0 ? 'text-red-600' : 'text-green-600',
-      bgColor: lowStockTotal > 0 ? 'bg-red-50' : 'bg-green-50',
+      color: lowStockTotal > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400',
+      bgColor: lowStockTotal > 0 ? 'bg-red-50 dark:bg-red-900/30' : 'bg-green-50 dark:bg-green-900/30',
       isCurrency: false,
     },
     {
       title: t('dashboard.totalRevenue', 'Total Revenue'),
       value: totalRevenue,
       icon: DollarSign,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-900/30',
       isCurrency: true,
     },
     {
       title: t('dashboard.totalPending', 'Total Pending'),
       value: totalPending,
       icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-50 dark:bg-amber-900/30',
       isCurrency: true,
     },
   ];
@@ -276,24 +276,24 @@ const AdminDashboard = () => {
       title: t('dashboard.totalComplaints', 'Total Complaints'),
       value: dashboardStats.totalComplaints,
       icon: MessageSquare,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/30',
       isCurrency: false,
     },
     {
       title: t('dashboard.activeComplaints'),
       value: dashboardStats.activeComplaints,
       icon: AlertCircle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-50 dark:bg-orange-900/30',
       isCurrency: false,
     },
     {
       title: t('dashboard.onHoldComplaints', 'On Hold'),
       value: dashboardStats.onHoldComplaints,
       icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/30',
       isCurrency: false,
     },
   ];
@@ -323,7 +323,7 @@ const AdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent className="pb-2 px-3">
-                <div className="text-sm sm:text-base font-bold text-foreground">
+                <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">
                   {stat.isCurrency ? (
                     formatCurrencyINR(stat.value)
                   ) : (
@@ -360,7 +360,7 @@ const AdminDashboard = () => {
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {t('dashboard.subscription', 'Subscription')}
                     </p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {daysUntilEnd <= 0
                         ? t('dashboard.subscriptionExpired', 'Expired')
                         : t('dashboard.validUntil', 'Valid until') + ' ' + organization.subscriptionEnd}
@@ -412,7 +412,7 @@ const AdminDashboard = () => {
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                         {t('dashboard.products', 'Products')}
                       </p>
-                      <p className="text-base sm:text-lg font-bold text-foreground">
+                      <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
                         <AnimatedCounter value={stat.productCount} duration={1200} />
                       </p>
                     </div>
@@ -420,7 +420,7 @@ const AdminDashboard = () => {
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                         {t('dashboard.stockValue', 'Stock Value')}
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-foreground truncate">
+                      <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
                         {formatCurrencyINR(stat.totalStockValue)}
                       </p>
                     </div>
@@ -477,7 +477,7 @@ const AdminDashboard = () => {
                           {formatCurrencyINR(product.revenue)}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full bg-gradient-to-r ${color.gradient} transition-all duration-700`}
                           style={{ width: `${percentage}%` }}
@@ -509,10 +509,10 @@ const AdminDashboard = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('invoices.number', 'Invoice')}</th>
-                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('invoices.customer', 'Customer')}</th>
-                    <th className="text-right px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('invoices.amount', 'Amount')}</th>
-                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('invoices.status', 'Status')}</th>
+                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.number', 'Invoice')}</th>
+                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.customer', 'Customer')}</th>
+                    <th className="text-right px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.amount', 'Amount')}</th>
+                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.status', 'Status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -528,7 +528,7 @@ const AdminDashboard = () => {
                         "border-b border-gray-200 hover:bg-gray-50 transition-colors",
                         idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                       )}>
-                        <td className="px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{inv.invoiceNumber}</td>
+                        <td className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm text-gray-600">{inv.customerName}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm text-right font-medium">{formatCurrencyINR(inv.totalAmount)}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm">
@@ -559,21 +559,21 @@ const AdminDashboard = () => {
                 recentInvoices.map((inv) => (
                   <div key={inv.id} className="bg-card border border-border rounded-lg p-3 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">{inv.invoiceNumber}</span>
+                      <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{inv.invoiceNumber}</span>
                       <span className={cn(
                         'px-2 py-0.5 rounded-full text-[10px] font-semibold',
                         inv.status === 'paid'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                           : inv.status === 'sent'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       )}>
                         {inv.status === 'paid' ? t('common.paid', 'Paid') : inv.status === 'sent' ? t('common.sent', 'Sent') : t('common.draft', 'Draft')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{inv.customerName}</span>
-                      <span className="text-sm font-bold text-foreground">{formatCurrencyINR(inv.totalAmount)}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrencyINR(inv.totalAmount)}</span>
                     </div>
                   </div>
                 ))
@@ -590,9 +590,9 @@ const AdminDashboard = () => {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           {[
-            { label: t('dashboard.dueThisWeek', 'Due This Week'), data: paymentAging.dueThisWeek, icon: CalendarClock, color: 'text-green-600', bg: 'bg-green-50', gradient: 'from-green-500 to-emerald-500' },
-            { label: t('dashboard.dueThisMonth', 'Due This Month'), data: paymentAging.dueThisMonth, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', gradient: 'from-amber-500 to-yellow-500' },
-            { label: t('dashboard.overdue', 'Overdue'), data: paymentAging.overdue, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50', gradient: 'from-red-500 to-rose-500' },
+            { label: t('dashboard.dueThisWeek', 'Due This Week'), data: paymentAging.dueThisWeek, icon: CalendarClock, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30', gradient: 'from-green-500 to-emerald-500' },
+            { label: t('dashboard.dueThisMonth', 'Due This Month'), data: paymentAging.dueThisMonth, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30', gradient: 'from-amber-500 to-yellow-500' },
+            { label: t('dashboard.overdue', 'Overdue'), data: paymentAging.overdue, icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/30', gradient: 'from-red-500 to-rose-500' },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -607,7 +607,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-lg sm:text-xl font-bold text-foreground">
+                      <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
                         <AnimatedCounter value={item.data.count} duration={1200} />
                       </p>
                       <p className="text-[10px] text-muted-foreground">{t('dashboard.invoicesLabel', 'invoices')}</p>
@@ -635,12 +635,12 @@ const AdminDashboard = () => {
         {/* Mini KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {[
-            { label: t('dashboard.totalInvoiced', 'Total Invoiced'), value: financeKpis.totalInvoiced, icon: IndianRupee, color: 'text-blue-600', bg: 'bg-blue-50', isCurrency: true },
-            { label: t('dashboard.collected', 'Collected'), value: financeKpis.collected, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50', isCurrency: true },
-            { label: t('dashboard.pending', 'Pending'), value: financeKpis.pending, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', isCurrency: true },
-            { label: t('dashboard.collectionRate', 'Collection Rate'), value: financeKpis.collectionRate, icon: Percent, color: 'text-emerald-600', bg: 'bg-emerald-50', isCurrency: false, suffix: '%' },
-            { label: t('dashboard.avgOrderValue', 'Avg. Order Value'), value: financeKpis.avgOrderValue, icon: ShoppingBag, color: 'text-purple-600', bg: 'bg-purple-50', isCurrency: true },
-            { label: t('dashboard.totalGst', 'GST Collected'), value: financeKpis.totalGst, icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-50', isCurrency: true },
+            { label: t('dashboard.totalInvoiced', 'Total Invoiced'), value: financeKpis.totalInvoiced, icon: IndianRupee, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', isCurrency: true },
+            { label: t('dashboard.collected', 'Collected'), value: financeKpis.collected, icon: TrendingUp, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30', isCurrency: true },
+            { label: t('dashboard.pending', 'Pending'), value: financeKpis.pending, icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30', isCurrency: true },
+            { label: t('dashboard.collectionRate', 'Collection Rate'), value: financeKpis.collectionRate, icon: Percent, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30', isCurrency: false, suffix: '%' },
+            { label: t('dashboard.avgOrderValue', 'Avg. Order Value'), value: financeKpis.avgOrderValue, icon: ShoppingBag, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', isCurrency: true },
+            { label: t('dashboard.totalGst', 'GST Collected'), value: financeKpis.totalGst, icon: DollarSign, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/30', isCurrency: true },
           ].map((kpi, i) => {
             const Icon = kpi.icon;
             return (
@@ -654,7 +654,7 @@ const AdminDashboard = () => {
                       {kpi.label}
                     </p>
                   </div>
-                  <p className="text-sm sm:text-base font-bold text-foreground">
+                  <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">
                     {kpi.isCurrency ? formatCurrencyINR(kpi.value) : (
                       <><AnimatedCounter value={kpi.value} duration={1200} />{kpi.suffix && <span className="text-xs ml-0.5">{kpi.suffix}</span>}</>
                     )}
@@ -807,11 +807,11 @@ const AdminDashboard = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-border bg-muted/30">
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('customers.id', 'ID')}</th>
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('customers.name', 'Name')}</th>
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('customers.mobile', 'Mobile')}</th>
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('customers.connectionType', 'Type')}</th>
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-foreground">{t('customers.status', 'Status')}</th>
+                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.id', 'ID')}</th>
+                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.name', 'Name')}</th>
+                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.mobile', 'Mobile')}</th>
+                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.connectionType', 'Type')}</th>
+                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.status', 'Status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -859,7 +859,7 @@ const AdminDashboard = () => {
                 <div key={customer.id} className="bg-card border border-border rounded-lg p-3 space-y-1.5">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{customer.name}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{customer.name}</p>
                       <p className="text-xs text-muted-foreground">{customer.mobile}</p>
                     </div>
                     <span

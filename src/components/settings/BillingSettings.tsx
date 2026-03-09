@@ -113,124 +113,120 @@ const BillingSettings = () => {
   return (
     <div className="space-y-6">
       {/* Pay to renew subscription — monthly */}
-      <div className="border border-border rounded-lg p-4 bg-muted/30">
-        <div className="flex items-center gap-2 mb-2">
-          <RefreshCw className="w-5 h-5 text-primary" />
-          <h3 className="text-base font-semibold">{t('settings.renewSubscription', 'Renew your subscription')}</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t('settings.renewSubscriptionDesc', 'Pay every month to keep your plan active. Payment can be made via UPI apps (Google Pay, PhonePe, Paytm, etc.).')}
-        </p>
-        <div className="space-y-4">
-          {organization && (
-            <p className="text-sm text-foreground">
-              {t('settings.validUntil', 'Current plan valid until')} <strong>{organization.subscriptionEnd}</strong>.
-            </p>
-          )}
-          <Button onClick={handlePayToRenew} disabled={renewLoading}>
-            <CreditCard className="w-4 h-4 mr-2" />
-            {renewLoading ? t('settings.creatingPayment', 'Creating payment...') : t('settings.payViaUpi', 'Pay via UPI (monthly renewal)')}
-          </Button>
-          {renewMessage && (
-            <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${renewSuccess === true
-              ? 'bg-green-50 border border-green-200 text-green-800'
-              : renewSuccess === false
-                ? 'bg-red-50 border border-red-200 text-red-800'
-                : 'bg-muted/50 text-muted-foreground'
-              }`}>
-              {renewSuccess === true && <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />}
-              {renewSuccess === false && <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
-              <p>{renewMessage}</p>
-            </div>
-          )}
-          <div className="rounded-lg p-3 bg-muted/30 border border-border text-xs text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">{t('settings.howConfirmationWorks', 'How payment confirmation works')}</p>
-            <p>{t('settings.confirmationNote', 'After you pay, share the payment screenshot or UTR number with support. We will verify and extend your subscription. With direct UPI there is no automatic confirmation — a payment gateway can be added later for instant verification.')}</p>
+      <div className="flex items-center gap-2 mb-2">
+        <RefreshCw className="w-5 h-5 text-primary" />
+        <h3 className="text-base font-semibold">{t('settings.renewSubscription', 'Renew your subscription')}</h3>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        {t('settings.renewSubscriptionDesc', 'Pay every month to keep your plan active. Payment can be made via UPI apps (Google Pay, PhonePe, Paytm, etc.).')}
+      </p>
+      <div className="space-y-4">
+        {organization && (
+          <p className="text-sm text-foreground">
+            {t('settings.validUntil', 'Current plan valid until')} <strong>{organization.subscriptionEnd}</strong>.
+          </p>
+        )}
+        <Button onClick={handlePayToRenew} disabled={renewLoading}>
+          <CreditCard className="w-4 h-4 mr-2" />
+          {renewLoading ? t('settings.creatingPayment', 'Creating payment...') : t('settings.payViaUpi', 'Pay via UPI (monthly renewal)')}
+        </Button>
+        {renewMessage && (
+          <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${renewSuccess === true
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-300'
+            : renewSuccess === false
+              ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300'
+              : 'bg-muted/50 text-muted-foreground'
+            }`}>
+            {renewSuccess === true && <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+            {renewSuccess === false && <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+            <p>{renewMessage}</p>
           </div>
+        )}
+        <div className="rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">{t('settings.howConfirmationWorks', 'How payment confirmation works')}</p>
+          <p>{t('settings.confirmationNote', 'After you pay, share the payment screenshot or UTR number with support. We will verify and extend your subscription. With direct UPI there is no automatic confirmation — a payment gateway can be added later for instant verification.')}</p>
         </div>
       </div>
 
-      <div className="border border-border rounded-lg p-4 bg-muted/30">
-        <div className="flex items-center gap-2 mb-2">
-          <Smartphone className="w-5 h-5 text-primary" />
-          <h3 className="text-base font-semibold">{t('settings.payByUpi', 'Pay by UPI apps')}</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready — replace with real payment gateway.')}
-        </p>
-        <div className="space-y-4">
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="upi-enabled"
-                checked={form.enabled}
-                onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))}
-                className="rounded border-border"
-              />
-              <label htmlFor="upi-enabled" className="text-sm font-medium">
-                {t('settings.enableUpi', 'Enable UPI payments')}
-              </label>
-            </div>
+      <div className="flex items-center gap-2 mb-2">
+        <Smartphone className="w-5 h-5 text-primary" />
+        <h3 className="text-base font-semibold">{t('settings.payByUpi', 'Pay by UPI apps')}</h3>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready — replace with real payment gateway.')}
+      </p>
+      <div className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4">
+          <label htmlFor="upi-enabled" className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              id="upi-enabled"
+              checked={form.enabled}
+              onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))}
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-600 focus:ring-blue-500 accent-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {t('settings.enableUpi', 'Enable UPI payments')}
+            </span>
+          </label>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                {t('settings.upiId', 'UPI ID')} <span className="text-muted-foreground">(e.g. yourname@paytm)</span>
-              </label>
-              <Input
-                value={form.upiId}
-                onChange={(e) => setForm((p) => ({ ...p, upiId: e.target.value }))}
-                placeholder="yourname@paytm"
-                className="max-w-xs"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              {t('settings.upiId', 'UPI ID')} <span className="text-muted-foreground">(e.g. yourname@paytm)</span>
+            </label>
+            <Input
+              value={form.upiId}
+              onChange={(e) => setForm((p) => ({ ...p, upiId: e.target.value }))}
+              placeholder="yourname@paytm"
+              className="max-w-xs"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                {t('settings.upiDisplayName', 'Display name (for customer)')}
-              </label>
-              <Input
-                value={form.upiDisplayName}
-                onChange={(e) => setForm((p) => ({ ...p, upiDisplayName: e.target.value }))}
-                placeholder="Your Business Name"
-                className="max-w-xs"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              {t('settings.upiDisplayName', 'Display name (for customer)')}
+            </label>
+            <Input
+              value={form.upiDisplayName}
+              onChange={(e) => setForm((p) => ({ ...p, upiDisplayName: e.target.value }))}
+              placeholder="Your Business Name"
+              className="max-w-xs"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t('settings.supportedUpiApps', 'Supported UPI apps')}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {UPI_APPS.map((app) => (
-                  <label
-                    key={app.id}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-sm cursor-pointer hover:bg-muted/50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.supportedApps.includes(app.id)}
-                      onChange={() => toggleApp(app.id)}
-                      className="rounded border-border"
-                    />
-                    {app.label}
-                  </label>
-                ))}
-              </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              {t('settings.supportedUpiApps', 'Supported UPI apps')}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {UPI_APPS.map((app) => (
+                <label
+                  key={app.id}
+                  className="inline-flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.supportedApps.includes(app.id)}
+                    onChange={() => toggleApp(app.id)}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                  />
+                  <span className="text-gray-900 dark:text-gray-100">{app.label}</span>
+                </label>
+              ))}
             </div>
+          </div>
 
-            {success && (
-              <p className="text-sm text-green-600">{t('settings.saved', 'Settings saved.')}</p>
-            )}
+          {success && (
+            <p className="text-sm text-green-600">{t('settings.saved', 'Settings saved.')}</p>
+          )}
 
-            <div className="flex items-center gap-2">
-              <Button type="submit" disabled={saving}>
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save')}
-              </Button>
-            </div>
-          </form>
-        </div>
+          <div className="flex items-center gap-2">
+            <Button type="submit" disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save')}
+            </Button>
+          </div>
+        </form>
       </div>
 
       <p className="text-xs text-muted-foreground">

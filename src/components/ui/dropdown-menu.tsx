@@ -169,7 +169,7 @@ export function DropdownMenuContent({ children, className }: { children: React.R
       ref={contentRef}
       role="listbox"
       className={cn(
-        'fixed z-[9999] rounded-lg border border-border bg-background shadow-lg py-1',
+        'fixed z-[9999] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg py-1',
         'max-h-[250px] overflow-y-auto overscroll-contain',
         '-webkit-overflow-scrolling-touch',
         'transition-opacity duration-75',
@@ -203,7 +203,8 @@ export function DropdownMenuItem({
       role="option"
       className={cn(
         'flex cursor-pointer select-none items-center px-3 py-2.5 text-sm outline-none transition-colors',
-        'hover:bg-muted focus:bg-muted active:bg-muted/80',
+        'text-gray-900 dark:text-gray-100',
+        'hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600',
         'touch-manipulation',
         disabled && 'pointer-events-none opacity-50',
         className

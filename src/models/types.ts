@@ -32,7 +32,7 @@ export const ALL_MODULES = [
 
 /** All available settings tabs that can be assigned to an organization */
 export const ALL_SETTINGS_TABS = [
-  'company', 'products', 'billing'
+  'company', 'products', 'billing', 'pos'
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];

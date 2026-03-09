@@ -13,6 +13,7 @@ import { useOrganizationStore } from '@/store/useOrganizationStore';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
+import Logo from '@/components/Logo';
 import type { ModuleKey } from '@/models/types';
 
 // Sidebar group definition
@@ -122,16 +123,17 @@ const AdminLayout = () => {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="sm:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            className="sm:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label={t('openMenu')}
           >
-            <Menu className="w-4.5 h-4.5 text-gray-600" />
+            <Menu className="w-4.5 h-4.5 text-gray-600 dark:text-gray-300" />
           </button>
           <div className="logo-header-wrap shrink-0">
-          <img src="/Businexa.png" alt="Businexa" className="logo-header" />
+            <Logo className="logo-header sm:hidden" variant="icon" />
+            <Logo className="logo-header hidden sm:block" />
+          </div>
         </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <ThemeSwitcher />
           <LanguageSwitcher />
           <button
@@ -150,7 +152,7 @@ const AdminLayout = () => {
           className={cn(
             'fixed top-13 left-0',
             'bottom-16 sm:bottom-0', // stop above bottom nav on mobile so last section is visible
-            'z-40 w-52 bg-white border-r border-gray-200/80 flex flex-col',
+            'z-40 w-52 bg-white dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800 flex flex-col',
             'transform transition-transform duration-200 ease-out',
             'sm:translate-x-0',
             isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'
@@ -162,7 +164,7 @@ const AdminLayout = () => {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="sm:hidden absolute top-0 right-0 z-10 p-2 rounded-bl-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors touch-manipulation"
+              className="sm:hidden absolute top-0 right-0 z-10 p-2 rounded-bl-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-manipulation"
               aria-label={t('closeMenu', 'Close menu')}
             >
               <ChevronLeft className="w-5 h-5" />
@@ -176,7 +178,7 @@ const AdminLayout = () => {
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(group.labelKey)}
-                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
+                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     <span>{groupLabel}</span>
                     <ChevronDown
@@ -200,11 +202,11 @@ const AdminLayout = () => {
                             className={cn(
                               'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
                               isActive
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-l-2 border-blue-600 dark:border-blue-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
                             )}
                           >
-                            <Icon className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-blue-600' : 'text-gray-400')} />
+                            <Icon className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500')} />
                             <span className="truncate">{t(item.labelKey)}</span>
                           </Link>
                         );
@@ -217,24 +219,24 @@ const AdminLayout = () => {
           </nav>
 
           {/* Sidebar footer */}
-          <div className="shrink-0 px-3 py-2 border-t border-gray-100">
-            <p className="text-[9px] text-gray-400 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
+          <div className="shrink-0 px-3 py-2 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-[9px] text-gray-400 dark:text-gray-500 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
           </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col w-full bg-white sm:ml-52">
+        <main className="flex-1 flex flex-col w-full bg-white dark:bg-gray-950 sm:ml-52">
           <div className="flex-1 overflow-auto p-3 sm:p-5 pb-20 sm:pb-5">
             <Outlet />
           </div>
-          <footer className="shrink-0 mt-auto border-t border-gray-200/80 bg-white py-1.5 px-3 hidden sm:block">
+          <footer className="shrink-0 mt-auto border-t border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-950 py-1.5 px-3 hidden sm:block">
             <FooterCredit />
           </footer>
         </main>
       </div>
 
       {/* Mobile Bottom Navigation — PWA-style */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200/80 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white dark:bg-gray-900 border-t border-gray-200/80 dark:border-gray-800 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around px-1 py-1.5">
           {([
             { path: '/admin/dashboard', icon: LayoutDashboard, label: t('nav.bottomHome', 'Home') },
@@ -250,7 +252,7 @@ const AdminLayout = () => {
                 to={path}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all duration-150 min-w-0',
-                  isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                  isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 )}
               >
                 <Icon className={cn('w-5 h-5 shrink-0', isActive && 'scale-110')} />

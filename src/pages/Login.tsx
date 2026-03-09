@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Lock, User } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
+import Logo from '@/components/Logo';
 
 /**
  * Single login page: username + password.
@@ -92,7 +93,7 @@ const Login = () => {
         <Card className="w-full max-w-md flex-shrink-0">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-3 flex justify-center">
-              <img src="/Businexa.png" alt="Businexa" className="h-10 w-auto object-contain object-center sm:h-12" />
+              <Logo className="h-10 w-auto object-contain object-center sm:h-12" />
             </div>
             <CardTitle className="text-xl sm:text-2xl">{t('login.title', 'Login')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">

@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
+import Logo from '@/components/Logo';
 
 const SuperAdminLayout = () => {
     const { t } = useTranslation();
@@ -46,8 +47,8 @@ const SuperAdminLayout = () => {
                         <Menu className="w-5 h-5" />
                     </button>
                     <div className="logo-header-wrap shrink-0">
-                    <img src="/Businexa.png" alt="Businexa" className="logo-header" />
-                  </div>
+                        <Logo className="logo-header" />
+                    </div>
                     <div className="hidden sm:block min-w-0">
                         <h2 className="text-base sm:text-lg font-semibold truncate">{t('superAdmin.welcome', 'Welcome')} {username || t('superAdmin.roleName', 'Super Admin')}</h2>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('superAdmin.masterController', 'Master Controller')}</p>

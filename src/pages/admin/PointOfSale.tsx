@@ -1,10 +1,9 @@
-// Point of Sale Module — uses InventoryProducts, barcode scanner, mobile-optimized
+// Point of Sale — supermarket-style barcode-first table layout
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useInventoryStore } from '@/store/useInventoryStore';
 import { usePOSStore } from '@/store/usePOSStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -13,14 +12,19 @@ import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Receipt, X,
-    WifiOff, ScanBarcode, UserPlus, Package,
+    WifiOff, ScanBarcode, UserPlus, Package, Check,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
+import {
+    generatePOSReceipt, generatePOSInvoice,
+    generatePOSInvoiceNumber, getPOSSettings,
+    type POSReceiptData,
+} from '@/lib/posReceiptUtils';
 import type { InventoryProduct, Customer } from '@/models/types';
 
 const PointOfSale = () => {
     const { t } = useTranslation();
-    const { customers, fetchCustomers, addCustomer } = useStore();
+    const { customers, fetchCustomers, addCustomer, companyProfile } = useStore();
     const inventoryStore = useInventoryStore();
     const {
         cart, selectedCustomerId, discount, paymentMethod,
@@ -30,15 +34,18 @@ const PointOfSale = () => {
     } = usePOSStore();
 
     const [productSearch, setProductSearch] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [showCheckout, setShowCheckout] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
-    const [showCart, setShowCart] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
+    const [showProductLookup, setShowProductLookup] = useState(false);
+    const [lookupSearch, setLookupSearch] = useState('');
+    const [lookupCategory, setLookupCategory] = useState<number | null>(null);
     const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [lastInvoiceNumber, setLastInvoiceNumber] = useState('');
     const barcodeBufferRef = useRef('');
     const barcodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const onOnline = () => setIsOnline(true);
@@ -56,6 +63,11 @@ const PointOfSale = () => {
         fetchCustomers();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Auto-focus search input on mount
+    useEffect(() => {
+        searchInputRef.current?.focus();
+    }, []);
+
     // Get tax rate for a product
     const getTaxRate = useCallback((product: InventoryProduct): number => {
         if (product.taxRateId) {
@@ -64,35 +76,6 @@ const PointOfSale = () => {
         }
         return 0;
     }, [inventoryStore.taxRates]);
-
-    // Get category name
-    const getCategoryName = useCallback((categoryId?: number): string => {
-        if (!categoryId) return t('pos.uncategorized', 'General');
-        const cat = inventoryStore.categories.find((c) => c.id === categoryId);
-        return cat?.name || t('pos.uncategorized', 'General');
-    }, [inventoryStore.categories, t]);
-
-    // Filter products
-    const filteredProducts = useMemo(() => {
-        let items = inventoryStore.products.filter((p) => p.isActive);
-        if (selectedCategory !== null) {
-            items = items.filter((p) => p.categoryId === selectedCategory);
-        }
-        if (productSearch.trim()) {
-            const q = productSearch.toLowerCase();
-            items = items.filter((p) =>
-                p.name.toLowerCase().includes(q) ||
-                p.sku.toLowerCase().includes(q) ||
-                (p.barcode && p.barcode.toLowerCase().includes(q))
-            );
-        }
-        return items;
-    }, [inventoryStore.products, productSearch, selectedCategory]);
-
-    const selectedCustomer = useMemo(() => {
-        if (!selectedCustomerId) return null;
-        return customers.find((c) => c.id === selectedCustomerId) || null;
-    }, [customers, selectedCustomerId]);
 
     // Add inventory product to cart
     const handleAddProduct = useCallback((product: InventoryProduct) => {
@@ -105,6 +88,8 @@ const PointOfSale = () => {
             price: product.price,
             tax,
         });
+        // Re-focus search after adding
+        setTimeout(() => searchInputRef.current?.focus(), 50);
     }, [addToCart, getTaxRate]);
 
     // Barcode scan result handler
@@ -143,6 +128,29 @@ const PointOfSale = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleBarcodeScan]);
 
+    // Search input — Enter key scans barcode or adds first matching product
+    const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key !== 'Enter' || !productSearch.trim()) return;
+        const q = productSearch.trim().toLowerCase();
+        // Try barcode match first
+        const barcodeMatch = inventoryStore.products.find(
+            (p) => p.isActive && p.barcode && p.barcode.toLowerCase() === q
+        );
+        if (barcodeMatch) {
+            handleAddProduct(barcodeMatch);
+            setProductSearch('');
+            return;
+        }
+        // Try name/SKU match
+        const nameMatch = inventoryStore.products.find(
+            (p) => p.isActive && (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+        );
+        if (nameMatch) {
+            handleAddProduct(nameMatch);
+            setProductSearch('');
+        }
+    }, [productSearch, inventoryStore.products, handleAddProduct]);
+
     // Add customer and auto-select
     const handleAddCustomerSave = useCallback(async (customerData: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => {
         await addCustomer(customerData as Parameters<typeof addCustomer>[0]);
@@ -154,6 +162,11 @@ const PointOfSale = () => {
         }
         setShowAddCustomer(false);
     }, [addCustomer, fetchCustomers, setCustomer]);
+
+    const selectedCustomer = useMemo(() => {
+        if (!selectedCustomerId) return null;
+        return customers.find((c) => c.id === selectedCustomerId) || null;
+    }, [customers, selectedCustomerId]);
 
     const getPaymentMethodLabel = (method: string) => {
         switch (method) {
@@ -171,111 +184,86 @@ const PointOfSale = () => {
     };
 
     const handleConfirmCheckout = () => {
+        const invoiceNumber = generatePOSInvoiceNumber();
+        setLastInvoiceNumber(invoiceNumber);
+        const settings = getPOSSettings();
+
+        const receiptData: POSReceiptData = {
+            items: [...cart],
+            subtotal: getSubtotal(),
+            taxTotal: getTaxTotal(),
+            discountPercent: discount,
+            discountAmount: getDiscountAmount(),
+            grandTotal: getGrandTotal(),
+            paymentMethod,
+            customerName: selectedCustomer?.name,
+            customerMobile: selectedCustomer?.mobile,
+            invoiceNumber,
+            date: new Date(),
+        };
+
+        if (settings.autoPrint) {
+            if (settings.invoiceFormat === 'thermal') {
+                generatePOSReceipt(receiptData, companyProfile);
+            } else {
+                generatePOSInvoice(receiptData, companyProfile);
+            }
+        }
+
         setShowCheckout(false);
         setShowReceipt(true);
+    };
+
+    const handlePrintAgain = () => {
+        const settings = getPOSSettings();
+        const receiptData: POSReceiptData = {
+            items: [...cart],
+            subtotal: getSubtotal(),
+            taxTotal: getTaxTotal(),
+            discountPercent: discount,
+            discountAmount: getDiscountAmount(),
+            grandTotal: getGrandTotal(),
+            paymentMethod,
+            customerName: selectedCustomer?.name,
+            customerMobile: selectedCustomer?.mobile,
+            invoiceNumber: lastInvoiceNumber,
+            date: new Date(),
+        };
+        if (settings.invoiceFormat === 'thermal') {
+            generatePOSReceipt(receiptData, companyProfile);
+        } else {
+            generatePOSInvoice(receiptData, companyProfile);
+        }
     };
 
     const handleNewSale = () => {
         clearCart();
         setShowReceipt(false);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
     };
+
+    // Product lookup filtered list
+    const lookupProducts = useMemo(() => {
+        let items = inventoryStore.products.filter((p) => p.isActive);
+        if (lookupCategory !== null) {
+            items = items.filter((p) => p.categoryId === lookupCategory);
+        }
+        if (lookupSearch.trim()) {
+            const q = lookupSearch.toLowerCase();
+            items = items.filter((p) =>
+                p.name.toLowerCase().includes(q) ||
+                p.sku.toLowerCase().includes(q) ||
+                (p.barcode && p.barcode.toLowerCase().includes(q))
+            );
+        }
+        return items;
+    }, [inventoryStore.products, lookupSearch, lookupCategory]);
 
     const subtotal = getSubtotal();
     const taxTotal = getTaxTotal();
     const discountAmount = getDiscountAmount();
     const grandTotal = getGrandTotal();
     const cartItemCount = cart.reduce((s, c) => s + c.quantity, 0);
-
-    // ── Customer selector with add button ──
-    const CustomerSelector = ({ className }: { className?: string }) => (
-        <div className={cn('flex gap-2', className)}>
-            <div className="flex-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{t('pos.customer', 'Customer')}</label>
-                <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
-                    <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
-                    {customers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>
-                    ))}
-                </Select>
-            </div>
-            <div className="flex items-end">
-                <button
-                    type="button"
-                    onClick={() => setShowAddCustomer(true)}
-                    className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                    title={t('pos.addCustomer', 'Add Customer')}
-                >
-                    <UserPlus className="w-4 h-4" />
-                </button>
-            </div>
-        </div>
-    );
-
-    // ── Cart items list ──
-    const CartItems = ({ mobile }: { mobile?: boolean }) => (
-        <>
-            {cart.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
-                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    {t('pos.emptyCart', 'Cart is empty')}
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    {cart.map((item) => (
-                        <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate dark:text-gray-100">{item.name}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrencyINR(item.price)} × {item.quantity}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
-                                    className={cn("rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation",
-                                        mobile ? "min-w-[44px] min-h-[44px] p-2" : "p-1"
-                                    )}
-                                >
-                                    <Minus className={mobile ? "w-4 h-4" : "w-3.5 h-3.5"} />
-                                </button>
-                                <span className={cn("text-sm font-medium text-center dark:text-gray-100", mobile ? "w-8 min-h-[44px] flex items-center justify-center" : "w-6")}>{item.quantity}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
-                                    className={cn("rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation",
-                                        mobile ? "min-w-[44px] min-h-[44px] p-2" : "p-1"
-                                    )}
-                                >
-                                    <Plus className={mobile ? "w-4 h-4" : "w-3.5 h-3.5"} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => removeFromCart(item.productId, item.variantId)}
-                                    className={cn("rounded-lg bg-red-50 dark:bg-red-900/30 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center justify-center touch-manipulation ml-1",
-                                        mobile ? "min-w-[44px] min-h-[44px] p-2" : "p-1"
-                                    )}
-                                >
-                                    <Trash2 className={mobile ? "w-4 h-4" : "w-3.5 h-3.5"} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </>
-    );
-
-    // ── Totals section ──
-    const Totals = ({ large }: { large?: boolean }) => (
-        <div className={cn("border-t dark:border-gray-700 pt-3 space-y-1", large ? "text-base" : "text-sm")}>
-            <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{t('pos.subtotal', 'Subtotal')}</span><span className="dark:text-gray-100">{formatCurrencyINR(subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{t('pos.tax', 'Tax (GST)')}</span><span className="dark:text-gray-100">{formatCurrencyINR(taxTotal)}</span></div>
-            {discount > 0 && <div className="flex justify-between text-green-600 dark:text-green-400"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
-            <div className={cn("flex justify-between font-bold border-t dark:border-gray-700 pt-2", large ? "text-lg" : "text-base")}>
-                <span className="dark:text-gray-100">{t('pos.total', 'Total')}</span>
-                <span className="text-blue-600 dark:text-blue-400">{formatCurrencyINR(grandTotal)}</span>
-            </div>
-        </div>
-    );
 
     return (
         <div className="space-y-3 pb-20 md:pb-4">
@@ -289,18 +277,20 @@ const PointOfSale = () => {
 
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-foreground">{t('pos.title', 'Point of Sale')}</h1>
-                <p className="text-xs text-muted-foreground">{t('pos.subtitle', 'Quick billing and sales')}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('pos.title', 'Point of Sale')}</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('pos.subtitle', 'Scan barcode or search to add items')}</p>
             </div>
 
-            {/* Search + Scan bar */}
-            <div className="flex gap-2 sticky top-0 z-10 bg-background py-2 -mx-1 px-1">
+            {/* Search + Scan + Product Lookup bar */}
+            <div className="flex gap-2 sticky top-0 z-10 bg-gray-50 dark:bg-gray-950 py-2 -mx-1 px-1">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                     <Input
+                        ref={searchInputRef}
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
-                        placeholder={t('pos.searchPlaceholder', 'Search by name, SKU, barcode...')}
+                        onKeyDown={handleSearchKeyDown}
+                        placeholder={t('pos.searchPlaceholder', 'Scan barcode or search product...')}
                         className="pl-9"
                     />
                 </div>
@@ -312,133 +302,209 @@ const PointOfSale = () => {
                 >
                     <ScanBarcode className="w-5 h-5" />
                 </button>
+                <button
+                    type="button"
+                    onClick={() => setShowProductLookup(true)}
+                    className="flex items-center justify-center gap-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-primary transition-colors min-h-[44px] touch-manipulation text-sm font-medium"
+                    title={t('pos.productLookup', 'Browse Products')}
+                >
+                    <Package className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('pos.browse', 'Browse')}</span>
+                </button>
             </div>
 
-            {/* Category filter pills */}
-            {inventoryStore.categories.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                    <button
-                        type="button"
-                        onClick={() => setSelectedCategory(null)}
-                        className={cn(
-                            'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
-                            selectedCategory === null
-                                ? 'bg-primary text-white border-primary'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        )}
-                    >
-                        {t('pos.allProducts', 'All')}
-                    </button>
-                    {inventoryStore.categories.map((cat) => (
-                        <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => setSelectedCategory(cat.id)}
-                            className={cn(
-                                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
-                                selectedCategory === cat.id
-                                    ? 'bg-primary text-white border-primary'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
+            {/* ════ Cart Table ════ */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                {cart.length === 0 ? (
+                    <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+                        <ScanBarcode className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                        <p className="text-sm font-medium">{t('pos.emptyCart', 'No items yet')}</p>
+                        <p className="text-xs mt-1">{t('pos.scanToAdd', 'Scan a barcode or browse products to begin')}</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Desktop table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                        <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-10">#</th>
+                                        <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{t('pos.item', 'Item')}</th>
+                                        <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-24">{t('pos.price', 'Price')}</th>
+                                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-32">{t('pos.qty', 'Qty')}</th>
+                                        <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-16">{t('pos.taxPercent', 'Tax')}</th>
+                                        <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-24">{t('pos.total', 'Total')}</th>
+                                        <th className="w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {cart.map((item, idx) => {
+                                        const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
+                                        return (
+                                            <tr key={`${item.productId}-${item.variantId ?? ''}`} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                                <td className="py-2.5 px-3 text-gray-400 dark:text-gray-500 text-xs">{idx + 1}</td>
+                                                <td className="py-2.5 px-3">
+                                                    <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
+                                                    {item.sku && <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{item.sku}</span>}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300 tabular-nums">{formatCurrencyINR(item.price)}</td>
+                                                <td className="py-2.5 px-3">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+                                                            className="w-7 h-7 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors"
+                                                        >
+                                                            <Minus className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" />
+                                                        </button>
+                                                        <span className="w-8 text-center font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{item.quantity}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+                                                            className="w-7 h-7 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td className="py-2.5 px-3 text-center text-gray-500 dark:text-gray-400 text-xs">{item.tax}%</td>
+                                                <td className="py-2.5 px-3 text-right font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{formatCurrencyINR(itemTotal)}</td>
+                                                <td className="py-2.5 px-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeFromCart(item.productId, item.variantId)}
+                                                        className="w-7 h-7 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile list */}
+                        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                            {cart.map((item) => {
+                                const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
+                                return (
+                                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex items-center gap-3 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrencyINR(item.price)} × {item.quantity} {item.tax > 0 && `+ ${item.tax}% tax`}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+                                                className="min-w-[36px] min-h-[36px] rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation"
+                                            >
+                                                <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                            </button>
+                                            <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-gray-100">{item.quantity}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+                                                className="min-w-[36px] min-h-[36px] rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center touch-manipulation"
+                                            >
+                                                <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                            </button>
+                                        </div>
+                                        <div className="text-right min-w-[70px]">
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatCurrencyINR(itemTotal)}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFromCart(item.productId, item.variantId)}
+                                            className="min-w-[36px] min-h-[36px] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 flex items-center justify-center touch-manipulation"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* ════ Summary + Checkout Section ════ */}
+            {cart.length > 0 && (
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Left: Customer + Discount */}
+                        <div className="flex-1 space-y-3">
+                            {/* Customer Selector */}
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{t('pos.customer', 'Customer')}</label>
+                                    <Select value={selectedCustomerId ?? ''} onChange={(e) => setCustomer(e.target.value ? Number(e.target.value) : null)} className="text-sm">
+                                        <option value="">{t('pos.walkIn', 'Walk-in Customer')}</option>
+                                        {customers.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.name} - {c.mobile}</option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                <div className="flex items-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddCustomer(true)}
+                                        className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                                        title={t('pos.addCustomer', 'Add Customer')}
+                                    >
+                                        <UserPlus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Discount */}
+                            <div>
+                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
+                                <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} className="text-sm" />
+                            </div>
+                        </div>
+
+                        {/* Right: Totals */}
+                        <div className="md:w-72 lg:w-80 space-y-1.5 md:text-right">
+                            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                <span>{t('pos.subtotal', 'Subtotal')}</span>
+                                <span className="tabular-nums text-gray-900 dark:text-gray-100">{formatCurrencyINR(subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                <span>{t('pos.tax', 'Tax (GST)')}</span>
+                                <span className="tabular-nums text-gray-900 dark:text-gray-100">{formatCurrencyINR(taxTotal)}</span>
+                            </div>
+                            {discount > 0 && (
+                                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                    <span>{t('pos.discount', 'Discount')} ({discount}%)</span>
+                                    <span className="tabular-nums">-{formatCurrencyINR(discountAmount)}</span>
+                                </div>
                             )}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
+                            <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-900 dark:text-gray-100">{t('pos.grandTotal', 'Grand Total')}</span>
+                                <span className="text-blue-600 dark:text-blue-400 tabular-nums">{formatCurrencyINR(grandTotal)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Checkout button */}
+                    <Button onClick={handleCheckout} className="w-full min-h-[48px] text-base font-semibold" size="lg" disabled={!isOnline}>
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
+                    </Button>
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row gap-4">
-                {/* ════ Product Grid ════ */}
-                <div className="flex-1">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
-                        {filteredProducts.map((product) => {
-                            const inCart = cart.find((c) => c.productId === product.id);
-                            const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
-                            return (
-                                <button
-                                    key={product.id}
-                                    onClick={() => !outOfStock && handleAddProduct(product)}
-                                    disabled={outOfStock}
-                                    className={cn(
-                                        "relative p-3 sm:p-4 rounded-xl border-2 transition-all text-left min-h-[100px]",
-                                        outOfStock
-                                            ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 opacity-60 cursor-not-allowed'
-                                            : inCart
-                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 hover:shadow-md'
-                                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
-                                    )}
-                                >
-                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{product.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{getCategoryName(product.categoryId)}</div>
-                                    <div className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1.5">{formatCurrencyINR(product.price)}</div>
-
-                                    {product.productType !== 'service' && (
-                                        <div className={cn(
-                                            "text-[10px] mt-1 flex items-center gap-0.5",
-                                            outOfStock ? 'text-red-500' : (product.currentStock ?? 0) <= (product.stockAlert ?? 5) ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'
-                                        )}>
-                                            <Package className="w-3 h-3" />
-                                            {outOfStock ? t('pos.outOfStock', 'Out of stock') : `${product.currentStock ?? 0} ${t('pos.inStock', 'in stock')}`}
-                                        </div>
-                                    )}
-
-                                    {inCart && (
-                                        <span className="absolute top-1.5 right-1.5 bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                                            {inCart.quantity}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                        {filteredProducts.length === 0 && (
-                            <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-                                <Package className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                                {t('pos.noProducts', 'No products found')}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* ════ Cart Sidebar (Desktop) ════ */}
-                <div className="hidden md:block w-80 lg:w-96">
-                    <Card className="sticky top-20">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <ShoppingCart className="w-4 h-4" />
-                                {t('pos.cart', 'Cart')} ({cartItemCount} {t('pos.cartItems', 'items')})
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <CustomerSelector />
-                            <div className="max-h-[300px] overflow-y-auto">
-                                <CartItems />
-                            </div>
-
-                            {cart.length > 0 && (
-                                <>
-                                    <div>
-                                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
-                                        <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} className="text-sm" />
-                                    </div>
-                                    <Totals />
-                                    <Button onClick={handleCheckout} className="w-full" disabled={cart.length === 0 || !isOnline}>
-                                        <CreditCard className="w-4 h-4 mr-2" />
-                                        {t('pos.checkout', 'Checkout')}
-                                    </Button>
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            {/* ════ Mobile Bottom Cart Bar ════ */}
-            {cart.length > 0 && !showCart && (
+            {/* ════ Mobile Bottom Cart Summary ════ */}
+            {cart.length > 0 && (
                 <div className="fixed left-0 right-0 bottom-16 z-40 md:hidden px-3 pb-2">
                     <button
                         type="button"
-                        onClick={() => setShowCart(true)}
+                        onClick={handleCheckout}
                         className="w-full flex items-center justify-between bg-primary text-white rounded-xl px-4 py-3 shadow-lg touch-manipulation"
+                        disabled={!isOnline}
                     >
                         <div className="flex items-center gap-2">
                             <ShoppingCart className="w-5 h-5" />
@@ -446,54 +512,6 @@ const PointOfSale = () => {
                         </div>
                         <span className="font-bold text-lg">{formatCurrencyINR(grandTotal)}</span>
                     </button>
-                </div>
-            )}
-
-            {/* ════ Mobile Cart Drawer ════ */}
-            {showCart && (
-                <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
-                    <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setShowCart(false)} />
-                    <div className="fixed left-0 right-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-2xl max-h-[90dvh] flex flex-col animate-slide-up">
-                        <div className="flex justify-center pt-2 pb-1">
-                            <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                        </div>
-                        <div className="shrink-0 flex justify-between items-center px-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-                            <h3 className="font-bold text-lg flex items-center gap-2 dark:text-gray-100">
-                                <ShoppingCart className="w-5 h-5" /> {t('pos.cart', 'Cart')} ({cartItemCount})
-                            </h3>
-                            <button type="button" onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center">
-                                <X className="w-5 h-5 dark:text-gray-300" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3 space-y-3">
-                            <CustomerSelector />
-                            <CartItems mobile />
-
-                            {cart.length > 0 && (
-                                <>
-                                    <div>
-                                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{t('pos.discount', 'Discount (%)')}</label>
-                                        <Input type="number" min={0} max={100} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
-                                    </div>
-                                    <Totals large />
-                                </>
-                            )}
-                        </div>
-
-                        {cart.length > 0 && (
-                            <div className="shrink-0 p-4 pt-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                                <Button
-                                    onClick={() => { setShowCart(false); handleCheckout(); }}
-                                    className="w-full min-h-[56px] touch-manipulation text-base font-semibold shadow-md"
-                                    size="lg"
-                                    disabled={!isOnline}
-                                >
-                                    <CreditCard className="w-5 h-5 mr-2" /> {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
                 </div>
             )}
 
@@ -511,6 +529,108 @@ const PointOfSale = () => {
                 onClose={() => setShowAddCustomer(false)}
                 onSave={handleAddCustomerSave}
             />
+
+            {/* ════ Product Lookup Dialog ════ */}
+            {showProductLookup && (
+                <Dialog open={showProductLookup} onClose={() => setShowProductLookup(false)} size="lg">
+                    <DialogHeader title={t('pos.productLookup', 'Browse Products')} onClose={() => setShowProductLookup(false)} />
+                    <DialogBody>
+                        <div className="px-4 sm:px-6 py-3 space-y-3">
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input
+                                    value={lookupSearch}
+                                    onChange={(e) => setLookupSearch(e.target.value)}
+                                    placeholder={t('pos.searchProducts', 'Search products...')}
+                                    className="pl-9"
+                                    autoFocus
+                                />
+                            </div>
+
+                            {/* Category pills */}
+                            {inventoryStore.categories.length > 0 && (
+                                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLookupCategory(null)}
+                                        className={cn(
+                                            'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
+                                            lookupCategory === null
+                                                ? 'bg-primary text-white border-primary'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                                        )}
+                                    >
+                                        {t('pos.allProducts', 'All')}
+                                    </button>
+                                    {inventoryStore.categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setLookupCategory(cat.id)}
+                                            className={cn(
+                                                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border',
+                                                lookupCategory === cat.id
+                                                    ? 'bg-primary text-white border-primary'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                                            )}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Product list */}
+                            <div className="max-h-[50vh] overflow-y-auto space-y-1">
+                                {lookupProducts.length === 0 && (
+                                    <div className="text-center py-8 text-gray-400">
+                                        <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                                        <p className="text-sm">{t('pos.noProducts', 'No products found')}</p>
+                                    </div>
+                                )}
+                                {lookupProducts.map((product) => {
+                                    const inCart = cart.find((c) => c.productId === product.id);
+                                    const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
+                                    return (
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            disabled={outOfStock}
+                                            onClick={() => handleAddProduct(product)}
+                                            className={cn(
+                                                'w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors',
+                                                outOfStock
+                                                    ? 'opacity-50 cursor-not-allowed'
+                                                    : inCart
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
+                                            )}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{product.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{product.sku} {product.barcode && `• ${product.barcode}`}</p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrencyINR(product.price)}</p>
+                                                {inCart && (
+                                                    <p className="text-xs text-blue-500 flex items-center gap-0.5 justify-end">
+                                                        <Check className="w-3 h-3" /> {inCart.quantity} in cart
+                                                    </p>
+                                                )}
+                                                {outOfStock && <p className="text-xs text-red-500">{t('pos.outOfStock', 'Out of stock')}</p>}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowProductLookup(false)}>{t('pos.done', 'Done')}</Button>
+                    </DialogFooter>
+                </Dialog>
+            )}
 
             {/* ════ Checkout Dialog ════ */}
             {showCheckout && (
@@ -532,17 +652,28 @@ const PointOfSale = () => {
                             )}
 
                             <div className="space-y-2 text-sm">
-                                {cart.map((item) => (
-                                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
-                                        <span className="dark:text-gray-200">{item.name} × {item.quantity}</span>
-                                        <span className="font-medium dark:text-gray-100">{formatCurrencyINR(item.price * item.quantity)}</span>
+                                {cart.map((item) => {
+                                    const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
+                                    return (
+                                        <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
+                                            <span className="text-gray-700 dark:text-gray-300">{item.name} × {item.quantity}</span>
+                                            <span className="font-medium text-gray-900 dark:text-gray-100 tabular-nums">{formatCurrencyINR(itemTotal)}</span>
+                                        </div>
+                                    );
+                                })}
+                                <div className="border-t dark:border-gray-700 pt-3 space-y-1">
+                                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{t('pos.subtotal', 'Subtotal')}</span><span className="dark:text-gray-100">{formatCurrencyINR(subtotal)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{t('pos.tax', 'Tax (GST)')}</span><span className="dark:text-gray-100">{formatCurrencyINR(taxTotal)}</span></div>
+                                    {discount > 0 && <div className="flex justify-between text-green-600 dark:text-green-400"><span>{t('pos.discount', 'Discount')} ({discount}%)</span><span>-{formatCurrencyINR(discountAmount)}</span></div>}
+                                    <div className="flex justify-between font-bold text-base border-t dark:border-gray-700 pt-2">
+                                        <span className="text-gray-900 dark:text-gray-100">{t('pos.total', 'Total')}</span>
+                                        <span className="text-blue-600 dark:text-blue-400">{formatCurrencyINR(grandTotal)}</span>
                                     </div>
-                                ))}
-                                <Totals large />
+                                </div>
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium mb-2 block dark:text-gray-200">{t('pos.paymentMethod', 'Payment Method')}</label>
+                                <label className="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">{t('pos.paymentMethod', 'Payment Method')}</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {(['cash', 'upi', 'card', 'bank_transfer'] as const).map((method) => (
                                         <button
@@ -553,10 +684,10 @@ const PointOfSale = () => {
                                                 'p-3 rounded-lg border-2 text-sm font-medium transition-all min-h-[48px] touch-manipulation',
                                                 paymentMethod === method
                                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
                                             )}
                                         >
-                                            {method === 'cash' ? `💵 ${t('pos.cash', 'Cash')}` : method === 'upi' ? `📱 ${t('pos.upi', 'UPI')}` : method === 'card' ? `💳 ${t('pos.card', 'Card')}` : `🏦 ${t('pos.bankTransfer', 'Bank Transfer')}`}
+                                            {getPaymentMethodLabel(method)}
                                         </button>
                                     ))}
                                 </div>
@@ -584,26 +715,33 @@ const PointOfSale = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrencyINR(grandTotal)}</p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('pos.paymentReceived', 'Payment received via')} {getPaymentMethodLabel(paymentMethod)}</p>
+                                {lastInvoiceNumber && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Invoice: {lastInvoiceNumber}</p>}
                             </div>
 
                             {selectedCustomer && (
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-                                    {t('pos.customerLabel', 'Customer')}: <strong className="dark:text-gray-200">{selectedCustomer.name}</strong>
+                                    {t('pos.customerLabel', 'Customer')}: <strong className="text-gray-900 dark:text-gray-200">{selectedCustomer.name}</strong>
                                 </div>
                             )}
 
                             <div className="border dark:border-gray-700 rounded-lg p-3 space-y-1 text-sm bg-gray-50 dark:bg-gray-800">
-                                {cart.map((item) => (
-                                    <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
-                                        <span className="dark:text-gray-300">{item.name} × {item.quantity}</span>
-                                        <span className="dark:text-gray-200">{formatCurrencyINR(item.price * item.quantity)}</span>
-                                    </div>
-                                ))}
+                                {cart.map((item) => {
+                                    const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
+                                    return (
+                                        <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between">
+                                            <span className="text-gray-700 dark:text-gray-300">{item.name} × {item.quantity}</span>
+                                            <span className="text-gray-900 dark:text-gray-200 tabular-nums">{formatCurrencyINR(itemTotal)}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </DialogBody>
-                    <DialogFooter>
-                        <Button onClick={handleNewSale} className="w-full">{t('pos.newSale', 'New Sale')}</Button>
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button variant="outline" onClick={handlePrintAgain} className="w-full sm:w-auto">
+                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.printAgain', 'Print Again')}
+                        </Button>
+                        <Button onClick={handleNewSale} className="w-full sm:w-auto">{t('pos.newSale', 'New Sale')}</Button>
                     </DialogFooter>
                 </Dialog>
             )}

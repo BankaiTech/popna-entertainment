@@ -7,6 +7,7 @@ import { Menu, X } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
+import Logo from '@/components/Logo';
 
 const PublicLayout = () => {
   const { t } = useTranslation();
@@ -42,7 +43,7 @@ const PublicLayout = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2 min-h-0 flex-shrink-0 logo-nav-wrap">
               <Link to="/" className="flex items-center justify-center h-full w-full">
-                <img src="/Businexa.png" alt="Businexa" className="logo-nav" />
+                <Logo className="logo-nav" />
               </Link>
             </div>
 

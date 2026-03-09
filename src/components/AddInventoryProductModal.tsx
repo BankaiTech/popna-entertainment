@@ -389,8 +389,8 @@ const AddInventoryProductModal = ({
                                     <div className={cn(
                                         'p-3 rounded-lg text-sm font-medium',
                                         formData.price > formData.purchasePrice
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                                            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
                                     )}>
                                         {t('productModal.margin', 'Margin')}: ₹{(formData.price - formData.purchasePrice).toFixed(2)} ({((formData.price - formData.purchasePrice) / formData.purchasePrice * 100).toFixed(1)}%)
                                     </div>
@@ -468,9 +468,9 @@ const AddInventoryProductModal = ({
                                     </div>
                                 </div>
 
-                                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                    <p className="text-xs font-semibold text-blue-700 mb-1">{t('productModal.fieldGuideTitle', 'Field Guide by Business Type')}</p>
-                                    <ul className="text-xs text-blue-600 space-y-0.5 list-disc list-inside">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg">
+                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">{t('productModal.fieldGuideTitle', 'Field Guide by Business Type')}</p>
+                                    <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-0.5 list-disc list-inside">
                                         <li>{t('productModal.guideGrocery', 'Supermarket / Grocery — Stock Alert, Barcode, Expiry Tracking')}</li>
                                         <li>{t('productModal.guideIsp', 'ISP / Electronics — Serial Number tracking, Reorder Level')}</li>
                                         <li>{t('productModal.guidePharma', 'Pharmacy — Batch tracking, Expiry Dates, Reorder Level')}</li>

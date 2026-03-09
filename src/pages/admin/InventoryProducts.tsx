@@ -207,40 +207,40 @@ const InventoryProducts = () => {
         <div className="space-y-3">
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <div className="bg-white rounded-lg border border-gray-200/80 p-3 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200/80 dark:border-gray-700 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <Package className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className="text-xs text-gray-500 font-medium truncate">{t('inventory.totalProducts', 'Total Products')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.totalProducts', 'Total Products')}</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-900">{totalProducts}</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{totalProducts}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-amber-200/80 p-3 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-amber-200/80 dark:border-amber-700/50 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span className="text-xs text-gray-500 font-medium truncate">{t('inventory.lowStock', 'Low Stock')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.lowStock', 'Low Stock')}</span>
                     </div>
-                    <p className="text-xl font-bold text-amber-600">{lowStockItems}</p>
+                    <p className="text-xl font-bold text-amber-600 dark:text-amber-400 truncate">{lowStockItems}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-red-200/80 p-3 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-red-200/80 dark:border-red-700/50 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                        <span className="text-xs text-gray-500 font-medium truncate">{t('inventory.outOfStock', 'Out of Stock')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.outOfStock', 'Out of Stock')}</span>
                     </div>
-                    <p className="text-xl font-bold text-red-600">{outOfStockItems}</p>
+                    <p className="text-xl font-bold text-red-600 dark:text-red-400 truncate">{outOfStockItems}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-green-200/80 p-3 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-green-200/80 dark:border-green-700/50 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <TrendingUp className="w-4 h-4 text-green-500 shrink-0" />
-                        <span className="text-xs text-gray-500 font-medium truncate">{t('inventory.inventoryValue', 'Inventory Value')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.inventoryValue', 'Inventory Value')}</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-900">{formatCurrencyINR(totalInventoryValue)}</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{formatCurrencyINR(totalInventoryValue)}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-orange-200/80 p-3 shadow-sm">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-orange-200/80 dark:border-orange-700/50 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <ShoppingCart className="w-4 h-4 text-orange-500 shrink-0" />
-                        <span className="text-xs text-gray-500 font-medium truncate">{t('inventory.needsReorder', 'Needs Reorder')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.needsReorder', 'Needs Reorder')}</span>
                     </div>
-                    <p className="text-xl font-bold text-orange-600">{needsReorderItems}</p>
+                    <p className="text-xl font-bold text-orange-600 dark:text-orange-400 truncate">{needsReorderItems}</p>
                 </div>
             </div>
 
@@ -334,7 +334,7 @@ const InventoryProducts = () => {
                             </thead>
                             <tbody>
                                 {filteredProducts.map((product, idx) => (
-                                    <tr key={product.id} className={cn("border-b hover:bg-gray-50 transition-colors", idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30')}>
+                                    <tr key={product.id} className={cn("border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors", idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/30 dark:bg-gray-800/20')}>
                                         <td className="px-3 py-2.5">
                                             <button
                                                 onClick={() => { setEditingProduct(product); setShowProductModal(true); }}
@@ -404,27 +404,27 @@ const InventoryProducts = () => {
                     {/* Mobile Card View */}
                     <div className="sm:hidden space-y-2">
                         {filteredProducts.map((product) => (
-                            <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-3 space-y-2 shadow-sm">
+                            <div key={product.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2 shadow-sm">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
                                         <button
                                             onClick={() => { setEditingProduct(product); setShowProductModal(true); }}
-                                            className="text-sm font-semibold text-blue-600 hover:underline text-left truncate block w-full"
+                                            className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline text-left truncate block w-full"
                                         >
                                             {product.name}
                                         </button>
-                                        <p className="text-xs text-gray-400 font-mono">{product.sku}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{product.sku}</p>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
                                         {!product.isActive && (
-                                            <span className="px-1.5 py-0.5 text-[10px] bg-red-100 text-red-600 rounded">{t('common.inactive', 'Inactive')}</span>
+                                            <span className="px-1.5 py-0.5 text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">{t('common.inactive', 'Inactive')}</span>
                                         )}
                                         {product.productType === 'service' && (
-                                            <span className="px-1.5 py-0.5 text-[10px] bg-blue-100 text-blue-600 rounded">{t('inventory.service', 'Service')}</span>
+                                            <span className="px-1.5 py-0.5 text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">{t('inventory.service', 'Service')}</span>
                                         )}
                                         <button
                                             onClick={() => { if (confirm(t('inventory.deleteConfirm', 'Delete this product?'))) deleteProduct(product.id); }}
-                                            className="p-1 hover:bg-red-50 rounded text-red-400"
+                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-red-400 dark:text-red-500"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -432,32 +432,32 @@ const InventoryProducts = () => {
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.colPrice', 'Price')}</p>
-                                        <p className="font-semibold text-gray-900">₹{product.price.toLocaleString()}</p>
+                                        <p className="text-gray-400 dark:text-gray-500">{t('inventory.colPrice', 'Price')}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-gray-100">₹{product.price.toLocaleString()}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.colCategory', 'Category')}</p>
-                                        <p className="font-medium text-gray-700 truncate">{getCategoryName(product.categoryId)}</p>
+                                        <p className="text-gray-400 dark:text-gray-500">{t('inventory.colCategory', 'Category')}</p>
+                                        <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{getCategoryName(product.categoryId)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.colTax', 'Tax')}</p>
-                                        <p className="font-medium text-gray-700 truncate">{getTaxRateName(product.taxRateId)}</p>
+                                        <p className="text-gray-400 dark:text-gray-500">{t('inventory.colTax', 'Tax')}</p>
+                                        <p className="font-medium text-gray-700 dark:text-gray-300 truncate">{getTaxRateName(product.taxRateId)}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.colStock', 'Stock')}</p>
+                                        <p className="text-gray-400 dark:text-gray-500">{t('inventory.colStock', 'Stock')}</p>
                                         {product.productType === 'service' ? (
-                                            <p className="text-gray-400">—</p>
+                                            <p className="text-gray-400 dark:text-gray-500">—</p>
                                         ) : (
                                             <button
                                                 onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
                                                 className={cn(
                                                     'font-semibold cursor-pointer hover:opacity-75',
-                                                    product.currentStock === undefined ? 'text-gray-400' :
-                                                        product.currentStock === 0 ? 'text-red-600' :
-                                                            (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'text-amber-600' :
-                                                                'text-green-600'
+                                                    product.currentStock === undefined ? 'text-gray-400 dark:text-gray-500' :
+                                                        product.currentStock === 0 ? 'text-red-600 dark:text-red-400' :
+                                                            (product.stockAlert !== undefined && product.currentStock <= product.stockAlert) ? 'text-amber-600 dark:text-amber-400' :
+                                                                'text-green-600 dark:text-green-400'
                                                 )}
                                             >
                                                 {product.currentStock ?? '—'}
@@ -465,10 +465,10 @@ const InventoryProducts = () => {
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-gray-400">{t('inventory.colVariants', 'Variants')}</p>
-                                        <p className="font-medium text-gray-700">
+                                        <p className="text-gray-400 dark:text-gray-500">{t('inventory.colVariants', 'Variants')}</p>
+                                        <p className="font-medium text-gray-700 dark:text-gray-300">
                                             {product.variants.length > 0 ? (
-                                                <span className="text-purple-600">{product.variants.length}</span>
+                                                <span className="text-purple-600 dark:text-purple-400">{product.variants.length}</span>
                                             ) : '—'}
                                         </p>
                                     </div>
