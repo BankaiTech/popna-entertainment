@@ -39,7 +39,7 @@ export default function ErrorShowPage() {
   }
 
   if (!data && !messageFromUrl) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return (

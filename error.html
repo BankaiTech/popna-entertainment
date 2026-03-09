@@ -160,7 +160,7 @@
 
       var data = getFromUrl() || getFromStorage();
       if (!data || (!data.message && !data.stack)) {
-        window.location.replace('/login');
+        window.location.replace('/');
         return;
       }
       render(data);
