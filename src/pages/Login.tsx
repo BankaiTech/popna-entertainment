@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -6,7 +6,6 @@ import { Lock, User, ArrowRight, Building2, ArrowLeft, Eye, EyeOff, Mail, Phone,
 import FooterCredit from '@/components/FooterCredit';
 import Logo from '@/components/Logo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
 import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -42,6 +41,28 @@ const Login = () => {
     businessType: '',
     businessName: '',
   });
+
+  // Force light mode while on the login page and restore previous theme on unmount
+  const prevThemeRef = useRef<'light' | 'dark' | null>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    prevThemeRef.current = root.classList.contains('dark') ? 'dark' : 'light';
+    root.classList.remove('dark');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', '#2563eb');
+    }
+    return () => {
+      if (prevThemeRef.current === 'dark') {
+        root.classList.add('dark');
+        const metaTag = document.querySelector('meta[name="theme-color"]');
+        if (metaTag) {
+          metaTag.setAttribute('content', '#0f172a');
+        }
+      }
+    };
+  }, []);
 
   useEffect(() => {
     initialize();
@@ -147,12 +168,13 @@ const Login = () => {
     setTimeout(() => setShaking(false), 600);
   }
 
-  const inputClass = "w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 transition-all";
+  const inputClass =
+    'w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
 
   return (
     <div className="min-h-screen flex">
       {/* Left panel (decorative, hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 dark:from-blue-950 dark:via-indigo-950 dark:to-violet-950">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-violet-400/15 rounded-full blur-3xl animate-float-delayed" />
         <div
@@ -197,17 +219,16 @@ const Login = () => {
       </div>
 
       {/* Right panel (form) */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-gray-950">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex-1 flex flex-col bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('login.backToHome', 'Back to Home')}
           </Link>
           <div className="flex items-center gap-1">
-            <ThemeSwitcher />
             <LanguageSwitcher />
           </div>
         </div>
@@ -222,10 +243,10 @@ const Login = () => {
               <>
                 {/* Login Form */}
                 <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
                     {t('login.title', 'Login')}
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500">
                     {t('login.subtitle', 'Enter your username and password. You will be directed to the right dashboard.')}
                   </p>
                 </div>
@@ -235,14 +256,14 @@ const Login = () => {
                   className={`space-y-5 ${shaking ? 'animate-shake' : ''}`}
                 >
                   {error && (
-                    <div className="flex items-start gap-2.5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+                    <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
                       <span className="shrink-0 mt-px">⚠</span>
                       {error}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       {t('login.usernameOrMobile', 'Username or mobile')}
                     </label>
                     <div className="relative">
@@ -263,7 +284,7 @@ const Login = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       {t('login.password')}
                     </label>
                     <div className="relative">
@@ -275,7 +296,7 @@ const Login = () => {
                         value={password}
                         onChange={(e) => { setPassword(e.target.value); setError(''); }}
                         placeholder={t('login.placeholderPassword')}
-                        className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 transition-all"
+                        className="w-full pl-10 pr-11 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                         disabled={isLoading}
                         autoComplete="current-password"
@@ -283,7 +304,7 @@ const Login = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         tabIndex={-1}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -315,12 +336,12 @@ const Login = () => {
 
                 {/* Sign up link */}
                 <div className="mt-6 text-center">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500">
                     {t('login.noAccount', "Don't have an account?")}{' '}
                     <button
                       type="button"
                       onClick={() => setIsSignup(true)}
-                      className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                      className="text-blue-600 font-semibold hover:underline"
                     >
                       {t('login.signUp', 'Sign Up')}
                     </button>
@@ -328,14 +349,16 @@ const Login = () => {
                 </div>
 
                 {/* Demo credentials */}
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     {t('login.demoCredentials')}
                   </p>
                   <div className="space-y-1">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{t('login.demoAdmin')}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{t('login.demoEmployee')}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{t('login.demoCustomer', 'Customer: use your 10-digit mobile and password')}</p>
+                    <p className="text-xs text-gray-600">{t('login.demoAdmin')}</p>
+                    <p className="text-xs text-gray-600">{t('login.demoEmployee')}</p>
+                    <p className="text-xs text-gray-600">
+                      {t('login.demoCustomer', 'Customer: use your 10-digit mobile and password')}
+                    </p>
                   </div>
                 </div>
               </>
@@ -343,10 +366,10 @@ const Login = () => {
               <>
                 {/* Sign Up Form */}
                 <div className="mb-6">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
                     {t('signup.title', 'Sign Up')}
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500">
                     {t('signup.subtitle', 'Fill in your details. Our team will get in touch with you.')}
                   </p>
                 </div>
@@ -354,7 +377,7 @@ const Login = () => {
                 <form onSubmit={handleSignupSubmit} className="space-y-4">
                   {/* Name */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.name', 'Name')} *
                     </label>
                     <div className="relative">
@@ -374,7 +397,7 @@ const Login = () => {
 
                   {/* Mobile */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.mobile', 'Mobile')} *
                     </label>
                     <div className="relative">
@@ -394,7 +417,7 @@ const Login = () => {
 
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.email', 'Email')} *
                     </label>
                     <div className="relative">
@@ -414,7 +437,7 @@ const Login = () => {
 
                   {/* Business Type */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.businessType', 'Business / Company Type')} *
                     </label>
                     <div className="relative">
@@ -437,7 +460,7 @@ const Login = () => {
 
                   {/* Business Name */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.businessName', 'Business / Company Name')} *
                     </label>
                     <div className="relative">
@@ -494,7 +517,7 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="shrink-0 py-4 px-6 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+        <div className="shrink-0 py-4 px-6 border-t border-gray-100 flex justify-center">
           <FooterCredit />
         </div>
       </div>

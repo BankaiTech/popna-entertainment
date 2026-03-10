@@ -258,6 +258,26 @@ body {
   }
 }
 
+/* Hide scrollbar on mobile only (entire project) */
+@media (max-width: 767px) {
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Touch-friendly tap targets */
 @media (pointer: coarse) {
   [role="option"] {

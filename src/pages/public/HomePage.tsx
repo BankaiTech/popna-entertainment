@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import Button from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import {
   ShoppingCart, FileText, Package, Users, MessageSquare, Building2,
   Globe, Cloud, BarChart3, Shield, ArrowRight, Mail,
@@ -56,6 +57,33 @@ const HomePage = () => {
   const benefitsRef = useScrollReveal();
   const contactRef = useScrollReveal();
 
+  const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute('data-index'));
+            setActiveShowcaseIdx(index);
+          }
+        });
+      },
+      { threshold: 0.5, rootMargin: "-10% 0px -20% 0px" }
+    );
+    
+    // Slight delay to allow DOM to render before observing
+    const timer = setTimeout(() => {
+      const blocks = document.querySelectorAll('.showcase-trigger');
+      blocks.forEach((block) => observer.observe(block));
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -76,7 +104,7 @@ const HomePage = () => {
   ];
 
   return (
-    /* Root: white in light, true-black in dark */
+    /* Root: public frontsite uses light mode */
     <div className="min-h-screen bg-white ">
 
       {/* ════ Hero - black background both modes ════ */}
@@ -160,7 +188,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Wave divider - fills gap between hero black and features white/dark */}
+        {/* Wave divider - fills gap between hero and features section */}
         <div className="absolute bottom-0 left-0 right-0 leading-none">
           <svg
             viewBox="0 0 1440 60"
@@ -196,7 +224,7 @@ const HomePage = () => {
               return (
                 <div
                   key={feature.titleKey}
-                  className="scroll-reveal opacity-0 group relative p-5 sm:p-7 bg-gray-50 rounded-2xl border border-gray-200 hover:bg-white :bg-white/8 hover:shadow-xl :shadow-black/60 hover:border-black/20 :border-white/20 hover:-translate-y-1 transition-all duration-300 cursor-default overflow-hidden"
+                  className="scroll-reveal opacity-0 group relative p-5 sm:p-7 bg-gray-50 rounded-2xl border border-gray-200 hover:bg-white hover:shadow-xl hover:border-black/20 hover:-translate-y-1 transition-all duration-300 cursor-default overflow-hidden"
                   style={{ animationDelay: `${idx * 0.07}s` }}
                 >
                   {/* Hover top accent line */}
@@ -214,6 +242,108 @@ const HomePage = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ════ Module Showcase — In-Place Scroll Alternating ════ */}
+      <section id="showcase" className="relative bg-black text-white">
+        {/* Track for scroll height - roughly 3 viewport heights */}
+        <div className="relative h-[300vh]">
+          
+          {/* Sticky container that locks into view */}
+          <div className="sticky top-0 h-screen w-full flex items-center overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col justify-center py-12 md:py-24">
+              
+              <div className="text-center mb-8 md:mb-12">
+                <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+                  {t('home.showcase.title', 'Platform Features')}
+                </h2>
+              </div>
+
+              {/* In-place content wrapper */}
+              <div className="relative w-full h-[65vh] md:h-[70vh]">
+                {[
+                  {
+                    title: t('dashboard.title', 'Dashboard'),
+                    desc: t('dashboard.subtitle', 'Overview of your business management system in real-time.'),
+                    img: '/Dashboard.png',
+                    icon: BarChart3,
+                  },
+                  {
+                    title: t('home.features.contacts', 'Contacts Management'),
+                    desc: t('home.features.contactsDesc', 'Manage customers and their subscription plans efficiently.'),
+                    img: '/Contacts Module.png',
+                    icon: Users,
+                  },
+                  {
+                    title: t('home.features.pos', 'Point of Sale'),
+                    desc: t('home.features.posDesc', 'Quick and easy billing system for your retail operations.'),
+                    img: '/POS Module.png',
+                    icon: ShoppingCart,
+                  },
+                ].map((item, idx) => {
+                  const Icon = item.icon;
+                  const isActive = activeShowcaseIdx === idx;
+                  const isEven = idx % 2 === 0;
+                  
+                  return (
+                    <div 
+                      key={idx}
+                      className={cn(
+                        "absolute inset-0 flex flex-col items-center gap-8 lg:gap-16 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] w-full h-full",
+                        isEven ? "md:flex-row" : "md:flex-row-reverse",
+                        isActive ? "opacity-100 z-10 translate-y-0 scale-100" : "opacity-0 z-0 translate-y-12 scale-[0.98] pointer-events-none"
+                      )}
+                    >
+                      {/* Image - No Card, Bigger Size */}
+                      <div className="w-full md:w-[60%] h-[40vh] md:h-full flex items-center justify-center relative">
+                        {/* Subtle background glow for image */}
+                        <div className="absolute inset-0 bg-white/5 rounded-full blur-[80px] scale-75 pointer-events-none"></div>
+                        <img
+                          src={item.img}
+                          alt={item.title}
+                          className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(255,255,255,0.15)] relative z-10"
+                          loading="lazy"
+                        />
+                      </div>
+
+                      {/* Text Content */}
+                      <div className={cn(
+                        "w-full md:w-[40%] flex flex-col justify-center",
+                        isEven ? "md:text-left md:items-start" : "md:text-right md:items-end",
+                        "text-center items-center" // Mobile styling defaults
+                      )}>
+                        <div className={cn(
+                          "inline-flex items-center gap-4 mb-4 sm:mb-6",
+                          isEven ? "md:flex-row" : "md:flex-row-reverse"
+                        )}>
+                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shrink-0 shadow-xl">
+                             <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                           </div>
+                           <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+                             {item.title}
+                           </h3>
+                        </div>
+                        <p className="text-lg sm:text-xl lg:text-2xl text-white/70 leading-relaxed font-light max-w-sm sm:max-w-none md:mx-0">
+                          {item.desc}
+                        </p>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          </div>
+
+          {/* Invisible Scroll Triggers placed along the track */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col">
+            {[0, 1, 2].map((idx) => (
+              <div key={idx} className="h-screen w-full showcase-trigger" data-index={idx} />
+            ))}
+          </div>
+          
         </div>
       </section>
 
@@ -239,7 +369,7 @@ const HomePage = () => {
               return (
                 <div
                   key={benefit.titleKey}
-                  className="scroll-reveal opacity-0 group text-center p-5 sm:p-7 rounded-2xl bg-white border border-gray-200 hover:shadow-lg :shadow-black/40 hover:border-black/20 :border-white/20 transition-all duration-300 hover:-translate-y-1"
+                  className="scroll-reveal opacity-0 group text-center p-5 sm:p-7 rounded-2xl bg-white border border-gray-200 hover:shadow-lg hover:border-black/20 transition-all duration-300 hover:-translate-y-1"
                   style={{ animationDelay: `${idx * 0.08}s` }}
                 >
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 group-hover:scale-110 transition-transform duration-300">
@@ -298,7 +428,7 @@ const HomePage = () => {
               {t('home.about.description', 'Popna is an application software designed to take your business to the next level.')}
             </p>
 
-            <div className="inline-flex flex-col items-center w-full max-w-md p-8 sm:p-12 rounded-3xl bg-gray-50 border border-gray-200 shadow-xl shadow-gray-200/50 group hover:border-black/20 :border-white/20 transition-all duration-300">
+            <div className="inline-flex flex-col items-center w-full max-w-md p-8 sm:p-12 rounded-3xl bg-gray-50 border border-gray-200 shadow-xl shadow-gray-200/50 group hover:border-black/20 transition-all duration-300">
               <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Mail className="w-8 h-8 text-white " />
               </div>
@@ -310,7 +440,7 @@ const HomePage = () => {
               </p>
               <a
                 href="mailto:bankai.tech12@gmail.com"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-black text-white hover:bg-gray-800 :bg-gray-100 font-semibold transition-colors text-sm sm:text-base"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-black text-white hover:bg-gray-800 font-semibold transition-colors text-sm sm:text-base"
               >
                 bankai.tech12@gmail.com
               </a>
