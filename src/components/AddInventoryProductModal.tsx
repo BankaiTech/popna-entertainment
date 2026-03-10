@@ -434,8 +434,8 @@ const AddInventoryProductModal = ({
                                         <label className="block text-sm font-medium mb-1">{t('productModal.trackingType', 'Tracking Type')}</label>
                                         <Select value={formData.trackingType} onChange={(e) => set({ trackingType: e.target.value as typeof formData.trackingType })} disabled={saving}>
                                             <option value="none">{t('productModal.trackingNone', 'None (Generic / FMCG)')}</option>
-                                            <option value="serial">{t('productModal.trackingSerial', 'Serial Number — Electronics, ISP Equipment')}</option>
-                                            <option value="batch">{t('productModal.trackingBatch', 'Batch / Lot Number — Pharma, Food')}</option>
+                                            <option value="serial">{t('productModal.trackingSerial', 'Serial Number - Electronics, ISP Equipment')}</option>
+                                            <option value="batch">{t('productModal.trackingBatch', 'Batch / Lot Number - Pharma, Food')}</option>
                                         </Select>
                                     </div>
                                     <div className="flex flex-col justify-end pb-1">
@@ -471,10 +471,10 @@ const AddInventoryProductModal = ({
                                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg">
                                     <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">{t('productModal.fieldGuideTitle', 'Field Guide by Business Type')}</p>
                                     <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-0.5 list-disc list-inside">
-                                        <li>{t('productModal.guideGrocery', 'Supermarket / Grocery — Stock Alert, Barcode, Expiry Tracking')}</li>
-                                        <li>{t('productModal.guideIsp', 'ISP / Electronics — Serial Number tracking, Reorder Level')}</li>
-                                        <li>{t('productModal.guidePharma', 'Pharmacy — Batch tracking, Expiry Dates, Reorder Level')}</li>
-                                        <li>{t('productModal.guideTextile', 'Textile / Apparel — Variants for size/color, Weight for fabric')}</li>
+                                        <li>{t('productModal.guideGrocery', 'Supermarket / Grocery - Stock Alert, Barcode, Expiry Tracking')}</li>
+                                        <li>{t('productModal.guideIsp', 'ISP / Electronics - Serial Number tracking, Reorder Level')}</li>
+                                        <li>{t('productModal.guidePharma', 'Pharmacy - Batch tracking, Expiry Dates, Reorder Level')}</li>
+                                        <li>{t('productModal.guideTextile', 'Textile / Apparel - Variants for size/color, Weight for fabric')}</li>
                                     </ul>
                                 </div>
                             </div>

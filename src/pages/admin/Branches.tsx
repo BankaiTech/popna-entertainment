@@ -75,7 +75,7 @@ const AdminBranches = () => {
 
     const getBranchDisplayAddress = (b: Branch) => {
         const parts = [b.addressLine1, b.city, b.state].filter(Boolean);
-        return parts.length > 0 ? parts.join(', ') : b.address || '—';
+        return parts.length > 0 ? parts.join(', ') : b.address || '-';
     };
 
     const handleOpenAdd = () => {
@@ -213,8 +213,8 @@ const AdminBranches = () => {
                                                 <td className="px-3 py-2 text-sm text-gray-600">{b.id}</td>
                                                 <td className="px-3 py-2 text-sm font-medium text-foreground">{b.name}</td>
                                                 <td className="px-3 py-2 text-sm text-gray-600">{getBranchDisplayAddress(b)}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-600 font-mono">{b.gstin || '—'}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-600">{b.phone || '—'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-600 font-mono">{b.gstin || '-'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-600">{b.phone || '-'}</td>
                                                 <td className="px-3 py-2">
                                                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                                         {b.isActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}

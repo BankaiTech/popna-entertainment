@@ -130,8 +130,8 @@ const InventoryProducts = () => {
         setStockUpdateProduct(null);
     };
 
-    const getCategoryName = (id?: number) => categories.find((c) => c.id === id)?.name || '—';
-    const getTaxRateName = (id?: number) => taxRates.find((tr) => tr.id === id)?.name || '—';
+    const getCategoryName = (id?: number) => categories.find((c) => c.id === id)?.name || '-';
+    const getTaxRateName = (id?: number) => taxRates.find((tr) => tr.id === id)?.name || '-';
 
     // Filtered + sorted products
     const filteredProducts = useMemo(() => {
@@ -358,7 +358,7 @@ const InventoryProducts = () => {
                                         <td className="px-3 py-2.5 text-gray-500 font-mono text-xs hidden md:table-cell">{product.sku}</td>
                                         <td className="px-3 py-2.5 text-center hidden md:table-cell">
                                             {product.productType === 'service' ? (
-                                                <span className="text-xs text-gray-400">—</span>
+                                                <span className="text-xs text-gray-400">-</span>
                                             ) : product.currentStock !== undefined ? (
                                                 <button
                                                     onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
@@ -373,14 +373,14 @@ const InventoryProducts = () => {
                                                     {product.currentStock}
                                                 </button>
                                             ) : (
-                                                <span className="text-xs text-gray-400">—</span>
+                                                <span className="text-xs text-gray-400">-</span>
                                             )}
                                         </td>
                                         <td className="px-3 py-2.5 text-center hidden lg:table-cell">
                                             {product.variants.length > 0 ? (
                                                 <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">{product.variants.length}</span>
                                             ) : (
-                                                <span className="text-xs text-gray-400">—</span>
+                                                <span className="text-xs text-gray-400">-</span>
                                             )}
                                         </td>
                                         <td className="px-2 py-2.5 text-center">
@@ -448,7 +448,7 @@ const InventoryProducts = () => {
                                     <div>
                                         <p className="text-gray-400 dark:text-gray-500">{t('inventory.colStock', 'Stock')}</p>
                                         {product.productType === 'service' ? (
-                                            <p className="text-gray-400 dark:text-gray-500">—</p>
+                                            <p className="text-gray-400 dark:text-gray-500">-</p>
                                         ) : (
                                             <button
                                                 onClick={() => { setStockUpdateProduct(product); setNewStockValue(String(product.currentStock ?? 0)); }}
@@ -460,7 +460,7 @@ const InventoryProducts = () => {
                                                                 'text-green-600 dark:text-green-400'
                                                 )}
                                             >
-                                                {product.currentStock ?? '—'}
+                                                {product.currentStock ?? '-'}
                                             </button>
                                         )}
                                     </div>
@@ -469,7 +469,7 @@ const InventoryProducts = () => {
                                         <p className="font-medium text-gray-700 dark:text-gray-300">
                                             {product.variants.length > 0 ? (
                                                 <span className="text-purple-600 dark:text-purple-400">{product.variants.length}</span>
-                                            ) : '—'}
+                                            ) : '-'}
                                         </p>
                                     </div>
                                 </div>
@@ -514,7 +514,7 @@ const InventoryProducts = () => {
                                 </div>
                             )}
 
-                            {/* Checkboxes — mobile: large touch targets for multi-select */}
+                            {/* Checkboxes - mobile: large touch targets for multi-select */}
                             <div className="space-y-1 pt-2">
                                 <p className="text-sm font-medium text-gray-700 mb-2">{t('inventory.labelShowInfo', 'Information to show on label')}:</p>
                                 {[

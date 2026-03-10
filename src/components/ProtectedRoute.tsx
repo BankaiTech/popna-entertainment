@@ -1,4 +1,4 @@
-// Client folder removed — SaaS multi-tenant only
+// Client folder removed - SaaS multi-tenant only
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, UserRole } from '@/store/useAuthStore';
 

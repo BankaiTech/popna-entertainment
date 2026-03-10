@@ -13,6 +13,7 @@ import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
+import { showError } from '@/utils/toast';
 
 const Invoices = () => {
   const { t } = useTranslation();
@@ -99,7 +100,7 @@ const Invoices = () => {
       await generateSalesInvoicePdf(inv, customer || null, companyProfile);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
+      showError(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
     }
   };
 

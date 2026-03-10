@@ -1,4 +1,4 @@
-// Reusable Dialog for all modals — consistent overlay, sizing, and accessibility
+// Reusable Dialog for all modals - consistent overlay, sizing, and accessibility
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-// API ready — replace with real payment gateway / backend API
+// API ready - replace with real payment gateway / backend API
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
 export interface UpiPaymentConfig {
@@ -11,7 +11,7 @@ export interface UpiPaymentConfig {
   updatedAt: string;
 }
 
-// Mock config — replace with real API later
+// Mock config - replace with real API later
 let upiConfig: UpiPaymentConfig = {
   organizationId: MOCK_ORGANIZATION_ID,
   upiId: '',
@@ -24,7 +24,7 @@ let upiConfig: UpiPaymentConfig = {
 export const upiPaymentApi = {
   /**
    * Get UPI payment config for current organization
-   * API ready — replace with real backend
+   * API ready - replace with real backend
    */
   getConfig: async (organizationId?: string): Promise<UpiPaymentConfig> => {
     const id = organizationId ?? MOCK_ORGANIZATION_ID;
@@ -36,7 +36,7 @@ export const upiPaymentApi = {
 
   /**
    * Update UPI payment config
-   * API ready — replace with real backend (e.g. Stripe, Razorpay UPI, Paytm)
+   * API ready - replace with real backend (e.g. Stripe, Razorpay UPI, Paytm)
    */
   updateConfig: async (payload: Partial<Omit<UpiPaymentConfig, 'organizationId' | 'updatedAt'>>): Promise<UpiPaymentConfig> => {
     upiConfig = {
@@ -49,7 +49,7 @@ export const upiPaymentApi = {
 
   /**
    * Create payment request (e.g. generate UPI link / intent)
-   * API ready — backend will integrate with UPI apps / payment gateway
+   * API ready - backend will integrate with UPI apps / payment gateway
    */
   createPaymentRequest: async (params: {
     amount: number;
@@ -67,8 +67,8 @@ export const upiPaymentApi = {
   },
 
   /**
-   * Create subscription renewal payment — monthly payment to extend subscription
-   * API ready — backend will create payment link/intent and extend subscription on success
+   * Create subscription renewal payment - monthly payment to extend subscription
+   * API ready - backend will create payment link/intent and extend subscription on success
    */
   createRenewalPayment: async (params: { organizationId?: string }): Promise<{
     orderId: string;
@@ -80,7 +80,7 @@ export const upiPaymentApi = {
     const id = params.organizationId ?? MOCK_ORGANIZATION_ID;
     const orderId = `renew_${id}_${Date.now()}`;
     // Replace with real API: get monthly plan amount from backend, create payment, return link
-    const monthlyAmount = 999; // Mock — backend should return plan price
+    const monthlyAmount = 999; // Mock - backend should return plan price
     return Promise.resolve({
       orderId,
       amount: monthlyAmount,

@@ -1,4 +1,4 @@
-// POS State Management — uses InventoryProduct data
+// POS State Management - uses InventoryProduct data
 import { create } from 'zustand';
 
 export interface CartItem {

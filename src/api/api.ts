@@ -7,7 +7,7 @@ import { connectionRequestsApi } from './connectionRequests';
 import { salesInvoicesApi } from './invoices';
 import { productsApi } from './products';
 
-// Multi-tenant ready — backend will enforce org isolation. All data scoped by organizationId.
+// Multi-tenant ready - backend will enforce org isolation. All data scoped by organizationId.
 // In-memory storage for mock data (simulates backend)
 let plansData: Plan[] = [...mockPlans];
 let customersData: Customer[] = [...mockCustomers];
@@ -76,7 +76,7 @@ export const customersApi = {
     return Promise.resolve(newCustomer);
   },
   update: async (id: number, customer: Partial<Customer>): Promise<Customer> => {
-    // SaaS Ready — Payment Collection System: collectedAmount, balanceAmount, paymentStatus apply to ALL product types.
+    // SaaS Ready - Payment Collection System: collectedAmount, balanceAmount, paymentStatus apply to ALL product types.
     const index = customersData.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     customersData[index] = { ...customersData[index], ...customer };
@@ -94,11 +94,11 @@ export const customersApi = {
 // Dashboard API
 // Note: DashboardStats type is kept for backward compatibility.
 // The Dashboard UI component now calculates stats dynamically from products.
-// Multi-tenant ready — backend will calculate stats per organization.
+// Multi-tenant ready - backend will calculate stats per organization.
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
     // Replace with real API call later
-    // Multi-tenant ready — backend will isolate by organization
+    // Multi-tenant ready - backend will isolate by organization
     const [customers, complaints, connectionRequests, invoices, plans, products] = await Promise.all([
       customersApi.getAll(),
       complaintsApi.getAll(),
@@ -129,7 +129,7 @@ export const dashboardApi = {
       }
     });
 
-    // Payment Metrics — from invoices
+    // Payment Metrics - from invoices
     const totalAmountCollected = invoices
       .filter((inv) => inv.status === 'paid')
       .reduce((sum, inv) => sum + inv.totalAmount, 0);

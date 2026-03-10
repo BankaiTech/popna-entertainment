@@ -1,5 +1,5 @@
-// Multi-tenant SaaS Isolation — backend will isolate by organization
-// SaaS Ready — Admin Full Control: website settings configurable per organization
+// Multi-tenant SaaS Isolation - backend will isolate by organization
+// SaaS Ready - Admin Full Control: website settings configurable per organization
 import type { WebsiteSettings } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 

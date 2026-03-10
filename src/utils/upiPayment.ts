@@ -1,4 +1,5 @@
 // UPI Payment Utility Functions - Zero cost payment solution
+import { showInfo } from '@/utils/toast';
 
 export interface UpiPaymentOptions {
   upiId: string;
@@ -93,7 +94,7 @@ export const openUpiPayment = (url: string) => {
     window.location.href = url;
   } else {
     // For desktop, show QR code
-    alert('Please scan the QR code with your mobile device to pay');
+    showInfo('Please scan the QR code with your mobile device to pay');
   }
 };
 

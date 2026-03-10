@@ -135,12 +135,12 @@ export const generateSalesInvoicePdf = async (
   const cityLine = [companyProfile?.city, companyProfile?.state, companyProfile?.pincode].filter(Boolean).join(', ');
   if (cityLine) companyLines.push(cityLine);
 
-  const gstin = companyProfile?.gstin || '—';
+  const gstin = companyProfile?.gstin || '-';
   const contact = companyProfile?.contactNumber || '';
   const email = companyProfile?.email || '';
   const issueDate = formatDateDMY(invoice.issueDate);
   const dueDate = formatDateDMY(invoice.dueDate);
-  const description = `${invoice.planName} — ${getProviderDisplayName(invoice.serviceProvider)}`;
+  const description = `${invoice.planName} - ${getProviderDisplayName(invoice.serviceProvider)}`;
   const cgstPct = invoice.gstRate / 2;
   const sgstPct = invoice.gstRate / 2;
   const cgstAmt = invoice.gstAmount / 2;
@@ -149,7 +149,7 @@ export const generateSalesInvoicePdf = async (
 
   const customerAddr = customer
     ? [customer.address.line1, customer.address.line2, [customer.address.city, customer.address.state, customer.address.country].filter(Boolean).join(', ')].filter(Boolean).join(', ')
-    : '—';
+    : '-';
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -276,7 +276,7 @@ export const generatePurchaseInvoicePdf = async (
   const cityLine = [companyProfile?.city, companyProfile?.state, companyProfile?.pincode].filter(Boolean).join(', ');
   if (cityLine) companyLines.push(cityLine);
 
-  const gstin = companyProfile?.gstin || '—';
+  const gstin = companyProfile?.gstin || '-';
   const issueDate = formatDateDMY(invoice.issueDate);
   const amountWords = numberToWords(invoice.totalAmount);
 
@@ -332,7 +332,7 @@ export const generatePurchaseInvoicePdf = async (
       <tbody>
         <tr>
           <td class="cen">1</td>
-          <td>Purchase — ${invoice.reference || invoice.invoiceNumber}</td>
+          <td>Purchase - ${invoice.reference || invoice.invoiceNumber}</td>
           <td class="cen">1</td>
           <td class="num">${formatCurrencyINR(invoice.amount)}</td>
           <td class="cen">${totalGst > 0 && invoice.amount > 0 ? Math.round((totalGst / invoice.amount) * 100) : 0}%</td>

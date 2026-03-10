@@ -1,5 +1,5 @@
-// SaaS Ready — Fully Dynamic Product
-/** Connection type = product name from Admin → Settings → Products. Products fully dynamic — no hardcoded service names. */
+// SaaS Ready - Fully Dynamic Product
+/** Connection type = product name from Admin → Settings → Products. Products fully dynamic - no hardcoded service names. */
 export type Provider = string;
 
 /** Service separation: Cable vs Internet. Do NOT mix cable with internet providers. */
@@ -7,17 +7,17 @@ export type ServiceCategory = 'cable' | 'internet';
 
 export type CustomerStatus = 'Active' | 'Inactive';
 
-// SaaS Ready — Payment applies to ALL product types (cable, internet, future products)
+// SaaS Ready - Payment applies to ALL product types (cable, internet, future products)
 export type PaymentStatus = 'paid' | 'not_paid';
 
-/** How the payment was collected — e.g. UPI, Cash, Card. For reporting and reconciliation. */
+/** How the payment was collected - e.g. UPI, Cash, Card. For reporting and reconciliation. */
 export type PaymentMethod = 'cash' | 'upi' | 'card' | 'other';
 
 export type ComplaintStatus = 'active' | 'on-hold' | 'completed';
 
 export type ConnectionRequestStatus = 'New' | 'Converted';
 
-// Multi-tenant SaaS Isolation — backend will enforce org isolation
+// Multi-tenant SaaS Isolation - backend will enforce org isolation
 export const MOCK_ORGANIZATION_ID = 'org_001';
 
 // SaaS Master Controller created
@@ -37,6 +37,31 @@ export const ALL_SETTINGS_TABS = [
 
 export type ModuleKey = typeof ALL_MODULES[number];
 export type SettingsTabKey = typeof ALL_SETTINGS_TABS[number];
+
+// ── Super Admin Permission System ──
+export const ALL_SA_PERMISSIONS = [
+  'sa_dashboard',
+  'sa_organizations_view',
+  'sa_organizations_add',
+  'sa_organizations_edit',
+  'sa_organizations_inactive',
+  'sa_signup_requests',
+  'sa_users',
+] as const;
+
+export type SAPermissionKey = typeof ALL_SA_PERMISSIONS[number];
+export type SuperAdminRole = 'super_admin' | 'manager';
+
+export interface SuperAdminUser {
+  id: number;
+  name: string;
+  username: string;
+  password: string;
+  role: SuperAdminRole;
+  status: 'active' | 'inactive';
+  allowedPermissions?: SAPermissionKey[];
+  createdAt: string;
+}
 
 export interface Organization {
   id: string;
@@ -87,7 +112,7 @@ export interface Customer {
   address: Address;
   additionalAddresses?: Address[];
   createdAt: string;
-  // Payment Collection System — SaaS Ready (applies to ALL product types)
+  // Payment Collection System - SaaS Ready (applies to ALL product types)
   paymentStatus?: PaymentStatus;
   paymentDescription?: string;
   paymentUpdatedAt?: string;
@@ -99,7 +124,7 @@ export interface Customer {
   balanceAmount?: number;
   /** Optional GSTIN field for GST invoice support */
   gstin?: string | null;
-  /** Box number — only for cable product customers */
+  /** Box number - only for cable product customers */
   boxNumber?: string;
   /** STB No/User ID - Set-Top Box number or User ID */
   stbNumber?: string;
@@ -167,14 +192,14 @@ export interface User {
   password: string;
   role: 'admin' | 'employee';
   status: 'active' | 'inactive';
-  /** Module-based access — which sidebar modules this user can access (employees only) */
+  /** Module-based access - which sidebar modules this user can access (employees only) */
   allowedModules?: ModuleKey[];
   /** Branch assignment */
   branchId?: number;
   createdAt: string;
 }
 
-/** Sales invoice (mock structure — PDF ready). GST-compliant fields supported. */
+/** Sales invoice (mock structure - PDF ready). GST-compliant fields supported. */
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 
 /** Invoice type as per GST: Tax Invoice (with GST) or Bill of Supply (exempt/compounding). */
@@ -236,7 +261,7 @@ export interface Vendor {
   createdAt: string;
 }
 
-/** Dynamic Product - Multi-tenant ready — backend will isolate by organization */
+/** Dynamic Product - Multi-tenant ready - backend will isolate by organization */
 // Product cut-off configuration added
 export interface Product {
   id: number;
@@ -245,13 +270,13 @@ export interface Product {
   productType: 'cable' | 'internet';
   isActive: boolean;
   createdAt: string;
-  /** Cut-off date (day of month, 1-28) — only for cable products */
+  /** Cut-off date (day of month, 1-28) - only for cable products */
   cutoffDate?: number;
-  /** Cut-off days (days after due date) — only for internet products */
+  /** Cut-off days (days after due date) - only for internet products */
   cutoffDays?: number;
 }
 
-/** Company Profile - Multi-tenant ready — backend will isolate by organization */
+/** Company Profile - Multi-tenant ready - backend will isolate by organization */
 export interface CompanyProfile {
   id: number;
   organizationId: string;
@@ -268,7 +293,7 @@ export interface CompanyProfile {
   updatedAt: string;
 }
 
-/** Website Settings - Multi-tenant ready — backend will isolate by organization */
+/** Website Settings - Multi-tenant ready - backend will isolate by organization */
 export interface HighlightCard {
   title: string;
   description: string;
@@ -304,7 +329,7 @@ export interface ConnectionRequest {
   createdAt: string;
 }
 
-// SaaS Ready — Client/Partner dashboard access configuration
+// SaaS Ready - Client/Partner dashboard access configuration
 /** Defines which sidebar tabs a client/partner company can access */
 export interface ClientConfig {
   id: number;
@@ -312,7 +337,7 @@ export interface ClientConfig {
   clientName: string;
   username: string;
   password: string;
-  /** Allowed sidebar tab keys — admin controls this per client */
+  /** Allowed sidebar tab keys - admin controls this per client */
   allowedTabs: string[];
   status: 'active' | 'inactive';
   createdAt: string;
@@ -424,7 +449,7 @@ export interface ProductVariant {
   currentStock?: number;  // Stock on hand per variant
 }
 
-/** Inventory product — full business product (multi-business: supermarket, ISP, textile, pharma, electronics) */
+/** Inventory product - full business product (multi-business: supermarket, ISP, textile, pharma, electronics) */
 export interface InventoryProduct {
   id: number;
   organizationId: string;
@@ -448,15 +473,15 @@ export interface InventoryProduct {
   // Multi-business fields
   productType?: 'physical' | 'service' | 'digital' | 'bundle';
   brand?: string;
-  /** HSN code (goods) or SAC code (services) — mandatory for Indian GST compliance */
+  /** HSN code (goods) or SAC code (services) - mandatory for Indian GST compliance */
   hsnSacCode?: string;
-  /** Maximum Retail Price — printed on labels; required for FMCG/retail */
+  /** Maximum Retail Price - printed on labels; required for FMCG/retail */
   mrp?: number;
-  /** Cost/purchase price — for margin and profit calculation */
+  /** Cost/purchase price - for margin and profit calculation */
   purchasePrice?: number;
   /** Current stock quantity on hand */
   currentStock?: number;
-  /** Reorder point — triggers alert when stock falls to or below this */
+  /** Reorder point - triggers alert when stock falls to or below this */
   reorderLevel?: number;
   /** none = no tracking | serial = per-unit serial number (electronics, ISP equipment) | batch = batch/lot (pharma, FMCG) */
   trackingType?: 'none' | 'serial' | 'batch';
@@ -464,7 +489,7 @@ export interface InventoryProduct {
   barcode?: string;
   weight?: number;
   weightUnit?: 'g' | 'kg' | 'lb';
-  /** Enable expiry date tracking — for pharma and FMCG */
+  /** Enable expiry date tracking - for pharma and FMCG */
   expiryTracking?: boolean;
 }
 

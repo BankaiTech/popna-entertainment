@@ -1,4 +1,4 @@
-// Super Admin Dashboard — Businexa: Organizations, subscriptions, tenant overview
+// Super Admin Dashboard - Popna: Organizations, subscriptions, tenant overview
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -142,7 +142,7 @@ const SuperAdminDashboard = () => {
         </Link>
       </div>
 
-      {/* KPI cards — mobile: 2 cols, tablet: 4 cols */}
+      {/* KPI cards */}
       <div className="space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t('superadminDashboard.overview', 'Overview')}
@@ -237,7 +237,7 @@ const SuperAdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-3 py-2 text-sm text-muted-foreground">
-                          {org.subscriptionStart} — {org.subscriptionEnd}
+                          {org.subscriptionStart} - {org.subscriptionEnd}
                         </td>
                         <td className="px-3 py-2 text-sm text-muted-foreground">
                           {org.allowedModules.length} / {ALL_MODULES.length}
@@ -266,7 +266,7 @@ const SuperAdminDashboard = () => {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} — {org.subscriptionEnd}
+                        {t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} - {org.subscriptionEnd}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {t('organizations.modules', 'Modules')}: {org.allowedModules.length}

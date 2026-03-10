@@ -96,7 +96,7 @@ const UpiPaymentModal = ({
 
   if (!isOpen) return null;
 
-  // Guard: UPI not configured — still use Dialog for consistency
+  // Guard: UPI not configured - still use Dialog for consistency
   if (!upiId?.trim()) {
     return (
       <Dialog open={isOpen} onClose={onClose} size="sm">
@@ -167,7 +167,7 @@ const UpiPaymentModal = ({
             </div>
           </div>
 
-          {/* Payment apps — mobile */}
+          {/* Payment apps - mobile */}
           {isMobile && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -211,7 +211,7 @@ const UpiPaymentModal = ({
             </div>
           )}
 
-          {/* Instructions — common for mobile and web, key by language for re-render */}
+          {/* Instructions - common for mobile and web, key by language for re-render */}
           <div key={i18n.language} className="rounded-lg p-3 pb-0 bg-primary/5 border border-primary/20">
             <p className="text-sm font-medium text-foreground mb-1.5">{t('upiPaymentModal.instructions', 'Payment instructions')}</p>
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">

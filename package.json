@@ -1,5 +1,5 @@
 {
-  "name": "Businexa-isp-management",
+  "name": "Popna-isp-management",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -19,6 +19,7 @@
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.5.4",
     "react-router-dom": "^6.26.0",
     "recharts": "^3.7.0",

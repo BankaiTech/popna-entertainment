@@ -1,4 +1,4 @@
-// SaaS Master Controller — Organizations mock API
+// SaaS Master Controller - Organizations mock API
 import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 
@@ -6,7 +6,7 @@ import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 let organizations: Organization[] = [
     {
         id: 'org_001',
-        name: 'Businexa',
+        name: 'Popna',
         status: 'active',
         allowedModules: [...ALL_MODULES],
         allowedSettingsTabs: [...ALL_SETTINGS_TABS],
@@ -79,7 +79,7 @@ export const organizationsApi = {
 
         const currentEnd = new Date(organizations[index].subscriptionEnd);
         const today = new Date();
-        // Start from whichever is later — today or current expiry
+        // Start from whichever is later - today or current expiry
         const base = currentEnd > today ? currentEnd : today;
         base.setMonth(base.getMonth() + months);
         const newEnd = base.toISOString().split('T')[0];

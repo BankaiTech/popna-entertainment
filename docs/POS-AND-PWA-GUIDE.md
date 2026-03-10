@@ -1,4 +1,4 @@
-# POS Machine Connection & PWA on Mobile — Guide
+# POS Machine Connection & PWA on Mobile - Guide
 
 This document explains **how to connect a POS machine** to this project and **how to use the PWA effectively on mobile**.
 
@@ -126,7 +126,7 @@ So **using the PWA effectively** = **install it**, then use the **shortcuts** an
 ### 2.3 Making the PWA more effective on mobile *(implemented)*
 
 1. **Install prompt (optional)** ✅  
-   - Listen for `beforeinstallprompt`, store the event, and show your own “Install Businexa” button (e.g. in header or after login).  
+   - Listen for `beforeinstallprompt`, store the event, and show your own “Install Popna” button (e.g. in header or after login).  
    - On tap, call `prompt()` and then `userChoice` to track install.  
    - Improves install rate on Android.
 

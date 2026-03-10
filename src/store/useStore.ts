@@ -8,7 +8,7 @@ import { companyProfileApi } from '@/api/companyProfile';
 import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
 
-// Products fully dynamic — initial mock data for dashboard and catalog to work out-of-the-box
+// Products fully dynamic - initial mock data for dashboard and catalog to work out-of-the-box
 const mockProducts: Product[] = [
   { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Cable', productType: 'cable', isActive: true, createdAt: new Date().toISOString(), cutoffDate: 10 },
   { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 1', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
@@ -16,7 +16,7 @@ const mockProducts: Product[] = [
   { id: 4, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 3', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
 ];
 
-// SaaS Ready — Admin Full Control: company profile loaded from API, no static defaults in production
+// SaaS Ready - Admin Full Control: company profile loaded from API, no static defaults in production
 const mockCompanyProfile: CompanyProfile = {
   id: 1,
   organizationId: MOCK_ORGANIZATION_ID,
@@ -33,7 +33,7 @@ const mockCompanyProfile: CompanyProfile = {
   updatedAt: new Date().toISOString(),
 };
 
-// SaaS Ready — Admin Full Control: website settings loaded from API, no static defaults in production
+// SaaS Ready - Admin Full Control: website settings loaded from API, no static defaults in production
 const mockWebsiteSettings: WebsiteSettings = {
   id: 1,
   organizationId: MOCK_ORGANIZATION_ID,
@@ -53,7 +53,7 @@ interface AppState {
   customers: Customer[];
   complaints: Complaint[];
   dashboardStats: DashboardStats | null;
-  // Multi-tenant ready — backend will isolate by organization
+  // Multi-tenant ready - backend will isolate by organization
   products: Product[];
   companyProfile: CompanyProfile | null;
   websiteSettings: WebsiteSettings | null;
@@ -130,7 +130,7 @@ export const useStore = create<AppState>((set, get) => ({
         // Ignore localStorage errors
       }
       // Sync with API (which has the same mock data initially, but will have updates)
-      // Multi-tenant ready — backend will isolate by organization
+      // Multi-tenant ready - backend will isolate by organization
       try {
         const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile, apiWebsiteSettings] = await Promise.all([
           plansApi.getAll(),
@@ -253,7 +253,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   addCustomer: async (customer) => {
-    // Multi-tenant ready — backend will enforce org isolation
+    // Multi-tenant ready - backend will enforce org isolation
     set({ loading: true, error: null });
     try {
       const newCustomer = await customersApi.create({
@@ -277,7 +277,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateCustomer: async (id, customer) => {
-    // SaaS Ready — Payment Collection System: both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt, collectedAmount, balanceAmount) for ALL product types.
+    // SaaS Ready - Payment Collection System: both admin and employee may update payment fields (paymentStatus, paymentDescription, paymentUpdatedAt, collectedAmount, balanceAmount) for ALL product types.
     // TODO: In real implementation, validate role and allowed fields in API
     set({ loading: true, error: null });
     try {
@@ -382,7 +382,7 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Product Management - Multi-tenant ready — backend will isolate by organization
+  // Product Management - Multi-tenant ready - backend will isolate by organization
   fetchProducts: async () => {
     set({ loading: true, error: null });
     try {
@@ -444,7 +444,7 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Company Profile - Multi-tenant ready — backend will isolate by organization
+  // Company Profile - Multi-tenant ready - backend will isolate by organization
   fetchCompanyProfile: async () => {
     set({ loading: true, error: null });
     try {
@@ -466,7 +466,7 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Website Settings - Multi-tenant ready — backend will isolate by organization
+  // Website Settings - Multi-tenant ready - backend will isolate by organization
   fetchWebsiteSettings: async () => {
     set({ loading: true, error: null });
     try {

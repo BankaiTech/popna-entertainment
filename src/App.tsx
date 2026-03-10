@@ -1,5 +1,5 @@
 // SaaS Product Fully Completed
-// Client folder removed — SaaS multi-tenant architecture used
+// Client folder removed - SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
 import { useEffect } from 'react';
@@ -10,8 +10,8 @@ import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
 import ErrorShowPage from './pages/ErrorShowPage';
 import AdminDashboard from './pages/admin/Dashboard';
-// Catalog module removed — merged into Inventory
-// Customers module removed — merged into Contacts
+// Catalog module removed - merged into Inventory
+// Customers module removed - merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
@@ -24,6 +24,8 @@ import AdminBranches from './pages/admin/Branches';
 import AdminPointOfSale from './pages/admin/PointOfSale';
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
 import Organizations from './pages/superadmin/Organizations';
+import SignupRequests from './pages/superadmin/SignupRequests';
+import SuperAdminUsers from './pages/superadmin/Users';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -62,7 +64,7 @@ function App() {
           <Route index element={<HomePage />} />
         </Route>
 
-        {/* Single Login — admin/employee/customer determined by credentials */}
+        {/* Single Login - admin/employee/customer determined by credentials */}
         <Route path="/login" element={<Login />} />
 
         {/* Customer Routes - Protected */}
@@ -79,7 +81,7 @@ function App() {
           element={<Navigate to="/customer/dashboard" replace />}
         />
 
-        {/* Super Admin Routes — SaaS Master Controller */}
+        {/* Super Admin Routes - SaaS Master Controller */}
         <Route
           path="/superadmin"
           element={
@@ -101,6 +103,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['superadmin']}>
                 <Organizations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="signup-requests"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SignupRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperAdminUsers />
               </ProtectedRoute>
             }
           />

@@ -10,6 +10,7 @@ import { purchaseInvoicesApi, vendorsApi } from '@/api/purchaseInvoices';
 import PurchaseInvoiceModal from '@/components/PurchaseInvoiceModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { generatePurchaseInvoicePdf } from '@/lib/pdfUtils';
+import { showError } from '@/utils/toast';
 import { useStore } from '@/store/useStore';
 
 const PurchaseInvoices = () => {
@@ -60,7 +61,7 @@ const PurchaseInvoices = () => {
     if (g.cgst != null) parts.push(`${t('invoices.cgst', 'CGST')}: ${formatCurrencyINR(g.cgst)}`);
     if (g.sgst != null) parts.push(`${t('invoices.sgst', 'SGST')}: ${formatCurrencyINR(g.sgst)}`);
     if (g.igst != null) parts.push(`${t('invoices.igst', 'IGST')}: ${formatCurrencyINR(g.igst)}`);
-    return parts.length ? parts.join(', ') : '—';
+    return parts.length ? parts.join(', ') : '-';
   };
 
   const handleDownloadPdf = async (inv: PurchaseInvoice) => {
@@ -69,7 +70,7 @@ const PurchaseInvoices = () => {
       await generatePurchaseInvoicePdf(inv, companyProfile, vendor ?? undefined);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
+      showError(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
     }
   };
 
@@ -123,7 +124,7 @@ const PurchaseInvoices = () => {
                       )}>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.vendorName}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.reference ?? '—'}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.reference ?? '-'}</td>
                         <td className="px-3 py-2 text-right text-sm font-normal text-gray-600 dark:text-foreground">{formatCurrencyINR(inv.amount)}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{gstBreakupStr(inv.gstBreakup)}</td>
                         <td className="px-3 py-2 text-right text-sm font-medium text-foreground">{formatCurrencyINR(inv.totalAmount)}</td>

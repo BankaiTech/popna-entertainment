@@ -1,4 +1,4 @@
-// Point of Sale — supermarket-style barcode-first table layout
+// Point of Sale - supermarket-style barcode-first table layout
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -125,7 +125,7 @@ const PointOfSale = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleBarcodeScan]);
 
-    // Search input — Enter key scans barcode or adds first matching product
+    // Search input - Enter key scans barcode or adds first matching product
     const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key !== 'Enter' || !productSearch.trim()) return;
         const q = productSearch.trim().toLowerCase();
@@ -501,7 +501,7 @@ const PointOfSale = () => {
                     </div>
                     <Button onClick={() => setShowCheckout(true)} disabled={!isOnline || cart.length === 0} className="w-full min-h-[48px] text-base font-semibold" size="lg">
                         <CreditCard className="w-5 h-5 mr-2" />
-                        {t('pos.checkout', 'Checkout')} — {formatCurrencyINR(grandTotal)}
+                        {t('pos.checkout', 'Checkout')} - {formatCurrencyINR(grandTotal)}
                     </Button>
                 </div>
             )}
@@ -590,7 +590,7 @@ const PointOfSale = () => {
                     <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button variant="outline" onClick={() => setShowCheckout(false)} className="w-full sm:w-auto">{t('pos.cancel', 'Cancel')}</Button>
                         <Button onClick={handleConfirmCheckout} disabled={!isOnline} className="w-full sm:w-auto min-h-[44px] sm:min-h-0">
-                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} — {formatCurrencyINR(grandTotal)}
+                            <Receipt className="w-4 h-4 mr-2" /> {t('pos.confirmCheckout', 'Confirm')} - {formatCurrencyINR(grandTotal)}
                         </Button>
                     </DialogFooter>
                 </Dialog>

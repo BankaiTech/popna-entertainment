@@ -209,7 +209,7 @@ const AdminUsers = () => {
   const activeCount = users.filter((u) => u.status === 'active').length;
   const inactiveCount = users.filter((u) => u.status === 'inactive').length;
 
-  // Module access checkboxes component — mobile: single column + large touch targets for multi-select
+  // Module access checkboxes component - mobile: single column + large touch targets for multi-select
   const ModuleAccessCheckboxes = ({ modules, setModules }: { modules: ModuleKey[]; setModules: (m: ModuleKey[]) => void }) => (
     <div>
       <label className="block text-sm font-medium mb-2">
@@ -392,11 +392,11 @@ const AdminUsers = () => {
                           ) : u.role === 'admin' ? (
                             <span className="text-xs text-gray-400 italic">{t('users.allModules', 'All modules')}</span>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-gray-400">-</span>
                           )}
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">
-                          {u.role === 'employee' ? formatCurrencyINR(collectedByUsername[u.username] ?? 0) : '—'}
+                          {u.role === 'employee' ? formatCurrencyINR(collectedByUsername[u.username] ?? 0) : '-'}
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{formatDate(u.createdAt)}</td>
                         <td className="px-3 py-2">
@@ -496,7 +496,7 @@ const AdminUsers = () => {
                     </Select>
                   </div>
 
-                  {/* Module access — only for employees */}
+                  {/* Module access - only for employees */}
                   {addRole === 'employee' && (
                     <ModuleAccessCheckboxes modules={addAllowedModules} setModules={setAddAllowedModules} />
                   )}
@@ -556,7 +556,7 @@ const AdminUsers = () => {
                     <p className="text-xs text-muted-foreground mt-1">{t('users.hints.inactiveLogin', 'Inactive users cannot login')}</p>
                   </div>
 
-                  {/* Module access — only for employees */}
+                  {/* Module access - only for employees */}
                   {editRole === 'employee' && (
                     <ModuleAccessCheckboxes modules={editAllowedModules} setModules={setEditAllowedModules} />
                   )}

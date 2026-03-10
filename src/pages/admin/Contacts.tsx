@@ -1,4 +1,4 @@
-// Contacts Module — Unified: Customers + Suppliers + Import
+// Contacts Module - Unified: Customers + Suppliers + Import
 // Customers tab now has full features from the standalone Customers page
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword } from '@/lib/utils';
 import { organizationsApi } from '@/api/organizations';
+import { showError, showSuccess, showInfo } from '@/utils/toast';
 
 type ContactTab = 'customers' | 'suppliers' | 'import';
 
@@ -102,7 +103,7 @@ const Contacts = () => {
     // ─── Customer Handlers ───
     const handleAddCustomer = () => {
         if (isEmployee) {
-            alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+            showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
             return;
         }
         setShowCustomerSheet(false);
@@ -119,7 +120,7 @@ const Contacts = () => {
 
     const handleSaveCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => {
         if (isEmployee) {
-            alert(editingCustomer
+            showError(editingCustomer
                 ? t('customers.noPermissionEdit', 'You do not have permission to edit customer details.')
                 : t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
             return;
@@ -170,7 +171,7 @@ const Contacts = () => {
         if (data.paymentStatus === 'paid') {
             const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
             if (renewed) {
-                alert(t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', { date: renewed.subscriptionEnd }));
+                showSuccess(t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', { date: renewed.subscriptionEnd }));
             }
         }
     };
@@ -333,7 +334,7 @@ const Contacts = () => {
                         <>
                             <Button onClick={() => {
                                 const pendingCustomers = customers.filter(c => c.paymentStatus === 'not_paid' && c.status === 'Active');
-                                alert(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
+                                showInfo(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
                             }} variant="outline" size="xs">
                                 <MessageSquare className="w-3.5 h-3.5" />
                                 SMS
@@ -466,10 +467,10 @@ const Contacts = () => {
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{getConnectionTypeLabel(customer.connectionType)}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.stbNumber || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '—'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.stbNumber || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '-'}</td>
                                                         <td className="px-3 py-2 text-sm">
                                                             {customer.paymentStatus !== 'paid' ? (
                                                                 <button

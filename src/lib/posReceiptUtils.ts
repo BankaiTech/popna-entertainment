@@ -1,4 +1,4 @@
-// POS Receipt & Invoice generation — thermal (80mm) and A4 tax invoice
+// POS Receipt & Invoice generation - thermal (80mm) and A4 tax invoice
 import type { CompanyProfile } from '@/models/types';
 import type { CartItem } from '@/store/usePOSStore';
 import { formatCurrencyINR } from './utils';
@@ -179,7 +179,7 @@ export function generatePOSInvoice(data: POSReceiptData, companyProfile: Company
   if (addr) companyLines.push(addr);
   const cityLine = [companyProfile?.city, companyProfile?.state, companyProfile?.pincode].filter(Boolean).join(', ');
   if (cityLine) companyLines.push(cityLine);
-  const gstin = companyProfile?.gstin || '—';
+  const gstin = companyProfile?.gstin || '-';
   const contact = companyProfile?.contactNumber || '';
   const email = companyProfile?.email || '';
   const dateStr = formatDateTime(data.date);

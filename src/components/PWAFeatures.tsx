@@ -57,7 +57,7 @@ export function PWAFeatures() {
     swCleanupRef.current = null;
   }, []);
 
-  // Detect if running as installed PWA (standalone) — don't show install when already app
+  // Detect if running as installed PWA (standalone) - don't show install when already app
   useEffect(() => {
     const standalone =
       (window.matchMedia('(display-mode: standalone)').matches) ||
@@ -78,7 +78,7 @@ export function PWAFeatures() {
     if (isMobileView && !isInstalled && !installDismissed) setShowInstallBanner(true);
   }, [isMobileView, isInstalled, installDismissed]);
 
-  // Install prompt (beforeinstallprompt) — Android Chrome; iOS Safari never fires this
+  // Install prompt (beforeinstallprompt) - Android Chrome; iOS Safari never fires this
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
@@ -122,7 +122,7 @@ export function PWAFeatures() {
 
   return (
     <>
-      {/* Offline banner — fixed at top */}
+      {/* Offline banner - fixed at top */}
       {!isOnline && (
         <div
           className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 bg-amber-500 text-white py-2 px-4 text-sm font-medium safe-area-inset-top"
@@ -134,12 +134,12 @@ export function PWAFeatures() {
         </div>
       )}
 
-      {/* Install app banner — mobile only, hidden when update banner is showing */}
+      {/* Install app banner - mobile only, hidden when update banner is showing */}
       {showInstallBanner && !isInstalled && isMobileView && !needRefresh && (
         <div className="fixed bottom-20 left-4 right-4 z-[99] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
           <div className="flex items-start gap-2">
             <p className="text-sm text-foreground flex-1">
-              {t('pwa.installMessage', 'Install Businexa for a better experience')}
+              {t('pwa.installMessage', 'Install Popna for a better experience')}
             </p>
             <button
               type="button"
@@ -163,7 +163,7 @@ export function PWAFeatures() {
         </div>
       )}
 
-      {/* Update available — new version — positioned above mobile bottom nav */}
+      {/* Update available - new version - positioned above mobile bottom nav */}
       {needRefresh && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[101] flex items-center gap-3 bg-primary text-primary-foreground shadow-xl rounded-lg p-3 safe-area-inset-bottom animate-slide-up">
           <p className="text-sm flex-1">

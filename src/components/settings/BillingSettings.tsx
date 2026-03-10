@@ -1,4 +1,4 @@
-// Billing & UPI payment settings — API ready
+// Billing & UPI payment settings - API ready
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import type { Organization } from '@/models/types';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
+import { showError } from '@/utils/toast';
 
 const UPI_APPS = [
   { id: 'gpay', label: 'Google Pay' },
@@ -88,11 +89,11 @@ const BillingSettings = () => {
   };
 
   const handlePayToRenew = async () => {
-    // Renewal: org pays platform — use our (platform) UPI/QR only
+    // Renewal: org pays platform - use our (platform) UPI/QR only
     if (hasPlatformUpi()) {
       setShowUpiModal(true);
     } else {
-      alert(t('settings.renewalUpiNotConfigured', 'Renewal payment is not configured. Please contact support.'));
+      showError(t('settings.renewalUpiNotConfigured', 'Renewal payment is not configured. Please contact support.'));
     }
   };
 
@@ -112,7 +113,7 @@ const BillingSettings = () => {
 
   return (
     <div className="space-y-6">
-      {/* Pay to renew subscription — monthly */}
+      {/* Pay to renew subscription - monthly */}
       <div className="flex items-center gap-2 mb-2">
         <RefreshCw className="w-5 h-5 text-primary" />
         <h3 className="text-base font-semibold">{t('settings.renewSubscription', 'Renew your subscription')}</h3>
@@ -144,7 +145,7 @@ const BillingSettings = () => {
         )}
         <div className="rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-xs text-muted-foreground">
           <p className="font-medium text-foreground mb-1">{t('settings.howConfirmationWorks', 'How payment confirmation works')}</p>
-          <p>{t('settings.confirmationNote', 'After you pay, share the payment screenshot or UTR number with support. We will verify and extend your subscription. With direct UPI there is no automatic confirmation — a payment gateway can be added later for instant verification.')}</p>
+          <p>{t('settings.confirmationNote', 'After you pay, share the payment screenshot or UTR number with support. We will verify and extend your subscription. With direct UPI there is no automatic confirmation - a payment gateway can be added later for instant verification.')}</p>
         </div>
       </div>
 
@@ -153,7 +154,7 @@ const BillingSettings = () => {
         <h3 className="text-base font-semibold">{t('settings.payByUpi', 'Pay by UPI apps')}</h3>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready — replace with real payment gateway.')}
+        {t('settings.upiDesc', 'Accept subscription and one-time payments via UPI apps. API ready - replace with real payment gateway.')}
       </p>
       <div className="space-y-4">
         <form onSubmit={handleSave} className="space-y-4">
@@ -233,7 +234,7 @@ const BillingSettings = () => {
         {t('settings.apiReadyNote', 'Configure your UPI ID above to accept direct UPI payments without any payment gateway fees.')}
       </p>
 
-      {/* UPI Payment Modal — renewal uses platform (our) UPI only; note includes org id, name, Subscription Renewal */}
+      {/* UPI Payment Modal - renewal uses platform (our) UPI only; note includes org id, name, Subscription Renewal */}
       {hasPlatformUpi() && (
         <UpiPaymentModal
           isOpen={showUpiModal}

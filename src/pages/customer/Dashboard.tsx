@@ -1,4 +1,4 @@
-// Customer Dashboard — Businexa: Plan, Payment, Complaints, Invoices; mobile-first
+// Customer Dashboard - Popna: Plan, Payment, Complaints, Invoices; mobile-first
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import { upiPaymentApi } from '@/api/upiPayment';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { getNextDueDateForCustomer } from '@/lib/billingUtils';
+import { showInfo } from '@/utils/toast';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
@@ -32,7 +33,7 @@ const CustomerDashboard = () => {
   const [myInvoices, setMyInvoices] = useState<SalesInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
 
-  // UPI Payment: customer pays org — use organization admin's UPI
+  // UPI Payment: customer pays org - use organization admin's UPI
   const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
   const [orgUpiConfig, setOrgUpiConfig] = useState<{ upiId: string; upiDisplayName: string; enabled: boolean } | null>(null);
 
@@ -55,7 +56,7 @@ const CustomerDashboard = () => {
     loadData();
   }, [initialize, customerId]);
 
-  // Load org (admin) UPI config for customer "Pay Now" — customer pays organization
+  // Load org (admin) UPI config for customer "Pay Now" - customer pays organization
   const currentCustomer = customers.find((c) => c.id === customerId);
   useEffect(() => {
     if (!currentCustomer?.organizationId) {
@@ -114,7 +115,7 @@ const CustomerDashboard = () => {
     new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const handleDownloadInvoice = (invoice: SalesInvoice) => {
-    alert(t('customerDashboard.downloadingInvoice', { number: invoice.invoiceNumber }));
+    showInfo(t('customerDashboard.downloadingInvoice', { number: invoice.invoiceNumber }));
   };
 
   const handleLogout = () => {
@@ -157,7 +158,7 @@ const CustomerDashboard = () => {
   const isRenewWindow = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 7;
   const isCableCustomer = customerProduct?.productType === 'cable';
 
-  // KPI cards — same style as admin dashboard
+  // KPI cards - same style as admin dashboard
   const kpiCards = [
     {
       title: t('customerDashboard.activePlan', 'Active Plan'),
@@ -197,7 +198,7 @@ const CustomerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
-      {/* Sticky header — mobile-optimized, no overflow */}
+      {/* Sticky header - mobile-optimized, no overflow */}
       <header className="sticky top-0 left-0 right-0 z-50 h-12 sm:h-14 shrink-0 flex items-center justify-between px-3 sm:px-6 border-b border-border bg-card gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           <Logo className="h-8 sm:h-10 w-auto object-contain shrink-0" />
@@ -219,7 +220,7 @@ const CustomerDashboard = () => {
       <main className="flex-1 flex flex-col w-full bg-muted/20 min-w-0">
         <div className="flex-1 overflow-auto p-3 sm:p-6 pb-6">
           <div className="space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto">
-            {/* Quick actions — prominent on mobile */}
+            {/* Quick actions - prominent on mobile */}
             <div className="space-y-2">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('customerDashboard.quickActions', 'Quick actions')}
@@ -245,7 +246,7 @@ const CustomerDashboard = () => {
               </div>
             </div>
 
-            {/* Overview / KPI cards — 1 col mobile, 2 sm, 4 lg */}
+            {/* Overview / KPI cards - 1 col mobile, 2 sm, 4 lg */}
             <div className="space-y-2">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('customerDashboard.overview', 'Overview')}
@@ -272,15 +273,15 @@ const CustomerDashboard = () => {
               </div>
             </div>
 
-              {isCableCustomer && customerProduct?.cutoffDate && (
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    'customerDashboard.cableCutoffInfo',
-                    'Your cable service renews on day {{day}} of every month.',
-                    { day: customerProduct.cutoffDate }
-                  )}
-                </p>
-              )}
+            {isCableCustomer && customerProduct?.cutoffDate && (
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  'customerDashboard.cableCutoffInfo',
+                  'Your cable service renews on day {{day}} of every month.',
+                  { day: customerProduct.cutoffDate }
+                )}
+              </p>
+            )}
 
             {/* My Complaints */}
             <div id="section-complaints" className="space-y-2">
@@ -338,94 +339,94 @@ const CustomerDashboard = () => {
                     {myInvoices.length} {t('customerDashboard.invoicesCount', 'invoices')}
                   </CardTitle>
                 </CardHeader>
-                  <CardContent className="p-0">
-                      {loadingInvoices ? (
-                        <div className="text-center py-12 text-muted-foreground text-sm">{t('customerDashboard.loadingInvoices')}</div>
-                      ) : myInvoices.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm font-medium">{t('customerDashboard.noInvoices')}</p>
-                          <p className="text-xs mt-1">{t('customerDashboard.noInvoicesSub')}</p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b-2 border-border bg-muted/30">
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.invoiceNo', 'Invoice #')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.plan')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.amount')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.issueDate')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.dueDate')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('common.status', 'Status')}</th>
-                                  <th className="text-left px-3 py-2 text-sm font-medium text-foreground"></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {myInvoices.map((invoice, idx) => (
-                                  <tr key={invoice.id} className={cn('border-b border-border hover:bg-muted/50 transition-colors', idx % 2 === 0 ? 'bg-card' : 'bg-muted/30')}>
-                                    <td className="px-3 py-2 text-sm font-medium text-foreground">{invoice.invoiceNumber}</td>
-                                    <td className="px-3 py-2 text-sm text-muted-foreground">{invoice.planName}</td>
-                                    <td className="px-3 py-2 text-sm font-semibold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</td>
-                                    <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.issueDate)}</td>
-                                    <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.dueDate)}</td>
-                                    <td className="px-3 py-2 text-sm">
-                                      <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
-                                        {invoice.status.toUpperCase()}
-                                      </span>
-                                    </td>
-                                    <td className="px-3 py-2">
-                                      <button onClick={() => handleDownloadInvoice(invoice)} className="p-1.5 hover:bg-accent rounded-md transition-colors" title={t('customerDashboard.download')}>
-                                        <Download className="w-4 h-4 text-muted-foreground" />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                          <div className="md:hidden space-y-3 p-3">
-                            {myInvoices.map((invoice) => (
-                              <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3 min-h-[44px]">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-foreground">{invoice.invoiceNumber}</p>
-                                    <p className="text-sm text-muted-foreground truncate">{invoice.planName}</p>
-                                  </div>
-                                  <span className={cn('px-2 py-1 rounded-full text-xs font-semibold shrink-0', getInvoiceStatusColor(invoice.status))}>
+                <CardContent className="p-0">
+                  {loadingInvoices ? (
+                    <div className="text-center py-12 text-muted-foreground text-sm">{t('customerDashboard.loadingInvoices')}</div>
+                  ) : myInvoices.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm font-medium">{t('customerDashboard.noInvoices')}</p>
+                      <p className="text-xs mt-1">{t('customerDashboard.noInvoicesSub')}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b-2 border-border bg-muted/30">
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.invoiceNo', 'Invoice #')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.plan')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.amount')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.issueDate')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.dueDate')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('common.status', 'Status')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {myInvoices.map((invoice, idx) => (
+                              <tr key={invoice.id} className={cn('border-b border-border hover:bg-muted/50 transition-colors', idx % 2 === 0 ? 'bg-card' : 'bg-muted/30')}>
+                                <td className="px-3 py-2 text-sm font-medium text-foreground">{invoice.invoiceNumber}</td>
+                                <td className="px-3 py-2 text-sm text-muted-foreground">{invoice.planName}</td>
+                                <td className="px-3 py-2 text-sm font-semibold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</td>
+                                <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.issueDate)}</td>
+                                <td className="px-3 py-2 text-sm text-muted-foreground">{formatDate(invoice.dueDate)}</td>
+                                <td className="px-3 py-2 text-sm">
+                                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold', getInvoiceStatusColor(invoice.status))}>
                                     {invoice.status.toUpperCase()}
                                   </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.amount')}</p>
-                                    <p className="font-bold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.issueDate')}</p>
-                                    <p className="font-medium">{formatDate(invoice.issueDate)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">{t('customerDashboard.dueDate')}</p>
-                                    <p className="font-medium">{formatDate(invoice.dueDate)}</p>
-                                  </div>
-                                </div>
-                                <div className="flex justify-end pt-2 border-t border-border">
-                                  <button
-                                    onClick={() => handleDownloadInvoice(invoice)}
-                                    className="flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors touch-manipulation"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                    {t('customerDashboard.download')}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <button onClick={() => handleDownloadInvoice(invoice)} className="p-1.5 hover:bg-accent rounded-md transition-colors" title={t('customerDashboard.download')}>
+                                    <Download className="w-4 h-4 text-muted-foreground" />
                                   </button>
-                                </div>
-                              </div>
+                                </td>
+                              </tr>
                             ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="md:hidden space-y-3 p-3">
+                        {myInvoices.map((invoice) => (
+                          <div key={invoice.id} className="bg-card border border-border rounded-lg p-4 space-y-3 min-h-[44px]">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-foreground">{invoice.invoiceNumber}</p>
+                                <p className="text-sm text-muted-foreground truncate">{invoice.planName}</p>
+                              </div>
+                              <span className={cn('px-2 py-1 rounded-full text-xs font-semibold shrink-0', getInvoiceStatusColor(invoice.status))}>
+                                {invoice.status.toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <p className="text-xs text-muted-foreground">{t('customerDashboard.amount')}</p>
+                                <p className="font-bold text-foreground">{formatCurrencyINR(invoice.totalAmount)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">{t('customerDashboard.issueDate')}</p>
+                                <p className="font-medium">{formatDate(invoice.issueDate)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">{t('customerDashboard.dueDate')}</p>
+                                <p className="font-medium">{formatDate(invoice.dueDate)}</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-end pt-2 border-t border-border">
+                              <button
+                                onClick={() => handleDownloadInvoice(invoice)}
+                                className="flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors touch-manipulation"
+                              >
+                                <Download className="w-4 h-4" />
+                                {t('customerDashboard.download')}
+                              </button>
+                            </div>
                           </div>
-                        </>
-                      )}
-                    </CardContent>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
               </Card>
             </div>
           </div>
@@ -443,7 +444,7 @@ const CustomerDashboard = () => {
         customer={currentCustomer}
       />
 
-      {/* Pay Now: customer pays org — show organization admin's UPI/QR */}
+      {/* Pay Now: customer pays org - show organization admin's UPI/QR */}
       {canPayViaOrgUpi && orgUpiConfig && (
         <UpiPaymentModal
           isOpen={isUpiDialogOpen}

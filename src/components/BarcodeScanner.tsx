@@ -1,4 +1,4 @@
-// Barcode Scanner — camera-based using BarcodeDetector API + manual input fallback
+// Barcode Scanner - camera-based using BarcodeDetector API + manual input fallback
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';

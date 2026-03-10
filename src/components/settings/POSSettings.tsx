@@ -1,4 +1,4 @@
-// POS Settings — invoice format, auto-print, logo toggle
+// POS Settings - invoice format, auto-print, logo toggle
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getPOSSettings, savePOSSettings, type POSSettingsData } from '@/lib/posReceiptUtils';

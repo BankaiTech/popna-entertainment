@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './i18n';
 import './styles/index.css';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/useAuthStore';
 import { useStore } from './store/useStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -56,6 +57,7 @@ if (rootEl) {
         <ErrorBoundary>
           <BrowserRouter>
             <App />
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           </BrowserRouter>
         </ErrorBoundary>
       </ThemeProvider>

@@ -1,5 +1,5 @@
-// Multi-tenant ready — backend will isolate by organization
-// Products fully dynamic — no hardcoded service names. All product references come from Admin → Settings → Products.
+// Multi-tenant ready - backend will isolate by organization
+// Products fully dynamic - no hardcoded service names. All product references come from Admin → Settings → Products.
 import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -13,11 +13,11 @@ let productsData: Product[] = [
 
 export const productsApi = {
   getAll: async (): Promise<Product[]> => {
-    // API ready — replace mock with real backend
+    // API ready - replace mock with real backend
     return Promise.resolve([...productsData]);
   },
   getActive: async (): Promise<Product[]> => {
-    // API ready — replace mock with real backend
+    // API ready - replace mock with real backend
     return Promise.resolve(productsData.filter((p) => p.isActive));
   },
   getById: async (id: number): Promise<Product> => {

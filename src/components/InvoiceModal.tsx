@@ -177,7 +177,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
                 <option value="">{t('invoiceModal.selectBranch', 'Select Branch')}</option>
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
-                    {branch.name}{branch.city ? ` — ${branch.city}` : ''}
+                    {branch.name}{branch.city ? ` - ${branch.city}` : ''}
                   </option>
                 ))}
               </Select>

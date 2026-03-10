@@ -1,4 +1,4 @@
-// Admin Dashboard — business management: dynamic by inventory categories
+// Admin Dashboard - business management: dynamic by inventory categories
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -537,8 +537,8 @@ const AdminDashboard = () => {
                             inv.status === 'paid'
                               ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
                               : inv.status === 'sent'
-                              ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800'
-                              : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'
+                                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800'
+                                : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'
                           )}>
                             {inv.status === 'paid' ? t('common.paid', 'Paid') : inv.status === 'sent' ? t('common.sent', 'Sent') : t('common.draft', 'Draft')}
                           </span>
@@ -565,8 +565,8 @@ const AdminDashboard = () => {
                         inv.status === 'paid'
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                           : inv.status === 'sent'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       )}>
                         {inv.status === 'paid' ? t('common.paid', 'Paid') : inv.status === 'sent' ? t('common.sent', 'Sent') : t('common.draft', 'Draft')}
                       </span>
@@ -626,7 +626,7 @@ const AdminDashboard = () => {
       {/* ── Complaint Metrics ── */}
       {renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}
 
-      {/* ── Financial Overview — Combined Dashboard ── */}
+      {/* ── Financial Overview - Combined Dashboard ── */}
       <div className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t('dashboard.financialOverview', 'Financial Overview')}
@@ -667,7 +667,7 @@ const AdminDashboard = () => {
 
         {/* Charts: Revenue Trend + Category Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4 items-start">
-          {/* Revenue Trend — Area Chart */}
+          {/* Revenue Trend - Area Chart */}
           <Card className="overflow-hidden animate-slide-up lg:col-span-3">
             <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
             <CardHeader className="py-3 flex flex-row items-center justify-between">
@@ -731,7 +731,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Invoice Status Breakdown — Donut Chart */}
+          {/* Invoice Status Breakdown - Donut Chart */}
           <Card className="overflow-hidden animate-slide-up lg:col-span-2" style={{ animationDelay: '0.1s' }}>
             <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
             <CardHeader className="py-3">
@@ -836,7 +836,7 @@ const AdminDashboard = () => {
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active'
                             ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
                             : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
-                          }`}
+                            }`}
                         >
                           {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                         </span>
@@ -866,7 +866,7 @@ const AdminDashboard = () => {
                       className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${customer.status === 'Active'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                      }`}
+                        }`}
                     >
                       {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                     </span>

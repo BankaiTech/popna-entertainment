@@ -29,7 +29,7 @@ export function InfiniteCarousel({
   // Duplicate items to create seamless loop
   useEffect(() => {
     if (children.length === 0) return;
-    
+
     // Ensure we have enough items for smooth scrolling
     let itemsToShow = children;
     if (children.length < 5) {
@@ -37,7 +37,7 @@ export function InfiniteCarousel({
       const multiplier = Math.ceil(5 / children.length);
       itemsToShow = Array(multiplier).fill(children).flat();
     }
-    
+
     // Create 3 copies for seamless infinite loop
     const duplicates = [...itemsToShow, ...itemsToShow, ...itemsToShow];
     setDuplicatedItems(duplicates);
@@ -50,14 +50,14 @@ export function InfiniteCarousel({
     const calculateWidth = () => {
       const firstItem = trackRef.current?.children[0] as HTMLElement;
       if (!firstItem) return;
-      
+
       const itemWidth = firstItem.offsetWidth;
       const gap = 24; // gap-6 = 1.5rem = 24px
       setCardWidth(itemWidth + gap);
     };
 
     calculateWidth();
-    
+
     const resizeObserver = new ResizeObserver(calculateWidth);
     if (trackRef.current) {
       resizeObserver.observe(trackRef.current);
@@ -68,7 +68,7 @@ export function InfiniteCarousel({
     };
   }, [duplicatedItems.length]);
 
-  // Carousel control logic fixed — UI only
+  // Carousel control logic fixed - UI only
   // Transform-based animation for smooth infinite scroll with working arrow buttons
   useEffect(() => {
     if (duplicatedItems.length === 0 || cardWidth === 0) return;
@@ -87,12 +87,12 @@ export function InfiniteCarousel({
       if (!isPaused) {
         setTranslateX((prev) => {
           const newTranslate = prev - (speed * deltaTime) / 1000;
-          
+
           // Reset when we've scrolled through one complete set
           if (Math.abs(newTranslate) >= singleSetWidth) {
             return newTranslate + singleSetWidth;
           }
-          
+
           return newTranslate;
         });
       }
@@ -109,7 +109,7 @@ export function InfiniteCarousel({
     };
   }, [speed, duplicatedItems.length, isPaused, cardWidth]);
 
-  // Carousel control logic fixed — UI only
+  // Carousel control logic fixed - UI only
   // Manual scroll handlers (for arrow buttons) - transform-based
   const scrollLeft = () => {
     if (cardWidth === 0) return;
@@ -161,7 +161,7 @@ export function InfiniteCarousel({
   const handleTouchEnd = () => {
     const swipeDistance = touchStart - touchEnd;
     const minSwipeDistance = 50;
-    
+
     if (Math.abs(swipeDistance) > minSwipeDistance) {
       if (swipeDistance > 0) {
         scrollRight();
@@ -169,7 +169,7 @@ export function InfiniteCarousel({
         scrollLeft();
       }
     }
-    
+
     setTouchStart(0);
     setTouchEnd(0);
     setIsPaused(false);
@@ -188,7 +188,7 @@ export function InfiniteCarousel({
       onTouchEnd={handleTouchEnd}
     >
       {/* Left Arrow - properly bound with pointer-events and z-index */}
-      {/* Carousel control logic fixed — UI only */}
+      {/* Carousel control logic fixed - UI only */}
       {showArrows && cardWidth > 0 && (
         <button
           onClick={(e) => {
@@ -205,7 +205,7 @@ export function InfiniteCarousel({
       )}
 
       {/* Right Arrow - properly bound with pointer-events and z-index */}
-      {/* Carousel control logic fixed — UI only */}
+      {/* Carousel control logic fixed - UI only */}
       {showArrows && cardWidth > 0 && (
         <button
           onClick={(e) => {

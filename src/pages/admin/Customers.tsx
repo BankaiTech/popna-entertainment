@@ -1,4 +1,4 @@
-// SaaS Ready — Fully Dynamic Product
+// SaaS Ready - Fully Dynamic Product
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -17,6 +17,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword, cn } from '@/lib/utils';
 import { organizationsApi } from '@/api/organizations';
+import { showError, showSuccess } from '@/utils/toast';
 
 const AdminCustomers = () => {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ const AdminCustomers = () => {
     loadData();
   }, [fetchCustomers, fetchProducts, initialize]);
 
-  // Payment Collection System — SaaS Ready (universal for all products, no cable-only restriction)
+  // Payment Collection System - SaaS Ready (universal for all products, no cable-only restriction)
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
@@ -63,7 +64,7 @@ const AdminCustomers = () => {
       const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
       const matchesConnection =
         connectionFilter === 'All' || customer.connectionType === connectionFilter;
-      // Payment filter — universal for ALL product types (SaaS Ready)
+      // Payment filter - universal for ALL product types (SaaS Ready)
       const matchesPayment =
         paymentStatusFilter === 'All'
           ? true
@@ -89,7 +90,7 @@ const AdminCustomers = () => {
   const handleAdd = () => {
     // Security check: Only Admin can add customers; Employee must not see button
     if (isEmployee) {
-      alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+      showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
       return;
     }
     setIsSheetOpen(false);
@@ -108,9 +109,9 @@ const AdminCustomers = () => {
     // Security check: Employees cannot add or edit customers
     if (isEmployee) {
       if (editingCustomer) {
-        alert(t('customers.noPermissionEdit', 'You do not have permission to edit customer details.'));
+        showError(t('customers.noPermissionEdit', 'You do not have permission to edit customer details.'));
       } else {
-        alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+        showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
       }
       return;
     }
@@ -159,7 +160,7 @@ const AdminCustomers = () => {
     setEditingCustomer(null);
   };
 
-  // Payment Collection System — SaaS Ready (ALL product types). collectedByUsername for employee stats.
+  // Payment Collection System - SaaS Ready (ALL product types). collectedByUsername for employee stats.
   const handleUpdatePayment = async (
     customerId: number,
     data: { paymentStatus: 'paid' | 'not_paid'; paymentDescription: string; paymentUpdatedAt: string; paymentMethod?: PaymentMethod; collectedAmount?: number; balanceAmount?: number; collectedByUsername?: string }
@@ -171,7 +172,7 @@ const AdminCustomers = () => {
     if (data.paymentStatus === 'paid') {
       const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
       if (renewed) {
-        alert(
+        showSuccess(
           t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', {
             date: renewed.subscriptionEnd,
           })
@@ -248,13 +249,13 @@ const AdminCustomers = () => {
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
+
     // Generate filename with current date and filter info
     const date = new Date().toISOString().split('T')[0];
     const statusText = statusFilter === 'All' ? 'all' : statusFilter.toLowerCase();
     const connectionText = connectionFilter === 'All' ? 'all' : connectionFilter.toLowerCase();
     const filename = `customers_${statusText}_${connectionText}_${date}.csv`;
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
@@ -273,9 +274,9 @@ const AdminCustomers = () => {
         <div className="flex gap-2 w-full sm:w-auto">
           {!isEmployee && (
             <>
-              <Button 
-                onClick={handleDownloadExcel} 
-                variant="outline" 
+              <Button
+                onClick={handleDownloadExcel}
+                variant="outline"
                 className="flex-1 sm:flex-initial"
                 disabled={filteredCustomers.length === 0}
               >
@@ -401,10 +402,10 @@ const AdminCustomers = () => {
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.mobile}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getConnectionTypeLabel(customer.connectionType)}</td>
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.package}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.stbNumber || '—'}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.canCafId || '—'}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.cin || '—'}</td>
-                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.area || '—'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.stbNumber || '-'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.canCafId || '-'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.cin || '-'}</td>
+                          <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.area || '-'}</td>
                           <td className="px-3 py-2 text-sm">
                             {customer.paymentStatus !== 'paid' ? (
                               <button
@@ -519,7 +520,7 @@ const AdminCustomers = () => {
         )}
       </Card>
 
-      {/* Customer Sheet: Add or Edit only — no payment controls */}
+      {/* Customer Sheet: Add or Edit only - no payment controls */}
       {(isAddCustomerOpen || isSheetOpen) && (
         <CustomerSheet
           isOpen={isAddCustomerOpen || isSheetOpen}
@@ -529,7 +530,7 @@ const AdminCustomers = () => {
         />
       )}
 
-      {/* Payment Collection Modal — separate from edit, opened from Unpaid badge */}
+      {/* Payment Collection Modal - separate from edit, opened from Unpaid badge */}
       {paymentCustomer && (
         <PaymentCollectionModal
           isOpen={!!paymentCustomer}
@@ -539,7 +540,7 @@ const AdminCustomers = () => {
         />
       )}
 
-      {/* Password Success Dialog — shown once after customer creation */}
+      {/* Password Success Dialog - shown once after customer creation */}
       {showPasswordDialog && generatedPassword && (
         <Dialog open={showPasswordDialog} onClose={() => { setShowPasswordDialog(false); setGeneratedPassword(null); }}>
           <DialogHeader title={t('customers.customerCreated', 'Customer Created Successfully')} onClose={() => { setShowPasswordDialog(false); setGeneratedPassword(null); }} />
@@ -565,7 +566,7 @@ const AdminCustomers = () => {
         </Dialog>
       )}
 
-      {/* Delete Customer — confirmation alert dialog (Admin only) */}
+      {/* Delete Customer - confirmation alert dialog (Admin only) */}
       {customerIdToDelete != null && (
         <Dialog open={customerIdToDelete != null} onClose={handleDeleteCancel}>
           <DialogHeader title={t('customers.deleteCustomer', 'Delete Customer')} onClose={handleDeleteCancel} />

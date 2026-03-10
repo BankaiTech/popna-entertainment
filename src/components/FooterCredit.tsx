@@ -2,7 +2,7 @@ import { Heart } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Global footer credit — appears on every page (front site, admin/employee, customer login & dashboard).
+ * Global footer credit - appears on every page (front site, admin/employee, customer login & dashboard).
  * Subtle, small text; link opens in new tab.
  */
 function FooterCredit() {

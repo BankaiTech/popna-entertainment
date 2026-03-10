@@ -1,4 +1,4 @@
-// Theme Switcher — toggle button for dark/light mode
+// Theme Switcher - toggle button for dark/light mode
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useTranslation } from 'react-i18next';

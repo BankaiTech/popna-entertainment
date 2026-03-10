@@ -1,4 +1,4 @@
-// Theme Provider — manages dark/light mode via class on <html>
+// Theme Provider - manages dark/light mode via class on <html>
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -13,8 +13,8 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue>({
     theme: 'system',
     resolvedTheme: 'light',
-    setTheme: () => {},
-    toggleTheme: () => {},
+    setTheme: () => { },
+    toggleTheme: () => { },
 });
 
 export const useTheme = () => useContext(ThemeContext);

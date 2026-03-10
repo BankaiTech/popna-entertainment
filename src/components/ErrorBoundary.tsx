@@ -17,7 +17,7 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Only log — do NOT redirect via sendErrorToPage because we already show
+    // Only log - do NOT redirect via sendErrorToPage because we already show
     // a fallback UI.  Redirecting causes a full reload that loses the
     // error context and often creates a confusing "Something went wrong"
     // page with no details.

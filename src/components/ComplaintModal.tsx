@@ -7,6 +7,7 @@ import Select from './ui/Select';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import type { Complaint, ComplaintStatus, Customer } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
+import { showError } from '@/utils/toast';
 
 /** Convert File to base64 data URL (mock only). Replace with secure backend image upload later. */
 const fileToBase64 = (file: File): Promise<string> =>
@@ -84,14 +85,14 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     if (!file) return;
     const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
     if (!allowed.includes(file.type)) {
-      alert(t('complaintModal.invalidImageType', 'Please upload a JPG, JPEG or PNG image.'));
+      showError(t('complaintModal.invalidImageType', 'Please upload a JPG, JPEG or PNG image.'));
       return;
     }
     try {
       const base64 = await fileToBase64(file);
       setClosureImage(base64);
     } catch (err) {
-      alert(t('complaintModal.imageReadFailed', 'Failed to read image. Please try again.'));
+      showError(t('complaintModal.imageReadFailed', 'Failed to read image. Please try again.'));
     }
     e.target.value = '';
   };
@@ -100,7 +101,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
     e.preventDefault();
 
     if (!selectedCustomer) {
-      alert(t('complaintModal.selectCustomerAlert', 'Please select a customer'));
+      showError(t('complaintModal.selectCustomerAlert', 'Please select a customer'));
       return;
     }
 
@@ -108,7 +109,7 @@ const ComplaintModal = ({ isOpen, onClose, complaint, customers }: ComplaintModa
       if (formData.status === 'completed') {
         const imageToSave = closureImage ?? complaint.closureImage;
         if (!imageToSave) {
-          alert(t('complaintModal.closurePhotoRequired', 'Please upload a closure photo. Image is required when status is Completed.'));
+          showError(t('complaintModal.closurePhotoRequired', 'Please upload a closure photo. Image is required when status is Completed.'));
           return;
         }
         const closedAt = complaint.closedAt ?? new Date().toISOString();

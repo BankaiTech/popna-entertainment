@@ -1,5 +1,5 @@
 // Multi-language Safe Translation
-// SaaS Ready — Fully Dynamic Product
+// SaaS Ready - Fully Dynamic Product
 // Load only selected language (performance: do not load all languages)
 // Ready for backend language sync via setLanguage(lang)
 

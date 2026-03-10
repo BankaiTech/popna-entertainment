@@ -1,4 +1,4 @@
-// SaaS Ready — Customer Edit/Add Sheet (payment collection is a separate modal)
+// SaaS Ready - Customer Edit/Add Sheet (payment collection is a separate modal)
 // Connection type selection bug fixed
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import { Plus, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, Address } from '@/models/types';
 import { getConnectionTypeLabel, isCableProvider } from '@/lib/providerUtils';
+import { showError } from '@/utils/toast';
 
 interface CustomerSheetProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
   const isReadOnly = role === 'employee';
   const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address'>('info');
 
-  // Stable reference — only recompute when products array identity changes
+  // Stable reference - only recompute when products array identity changes
   const availableProviders = useMemo(
     () => (Array.isArray(products) ? products.map((p) => p.name) : []),
     [products]
@@ -80,7 +81,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     [plans, formData.connectionType]
   );
 
-  // Reset form when dialog opens/closes or customer changes — NOT on availableProviders change
+  // Reset form when dialog opens/closes or customer changes - NOT on availableProviders change
   useEffect(() => {
     if (!isOpen) return;
     if (customer) {
@@ -137,9 +138,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     // Security check: Employees cannot add or edit customers
     if (isReadOnly) {
       if (customer) {
-        alert(t('customers.noPermissionEdit', 'You do not have permission to edit customer details.'));
+        showError(t('customers.noPermissionEdit', 'You do not have permission to edit customer details.'));
       } else {
-        alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+        showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
       }
       return;
     }
@@ -147,11 +148,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     if (formData.gstin && formData.gstin.trim() !== '') {
       const gstinValue = formData.gstin.trim().toUpperCase();
       if (gstinValue.length !== 15) {
-        alert(t('customerSheet.gstinLengthError', 'GSTIN must be exactly 15 characters'));
+        showError(t('customerSheet.gstinLengthError', 'GSTIN must be exactly 15 characters'));
         return;
       }
       if (!/^[A-Z0-9]{15}$/.test(gstinValue)) {
-        alert(t('customerSheet.gstinAlphanumericError', 'GSTIN must contain only alphanumeric characters'));
+        showError(t('customerSheet.gstinAlphanumericError', 'GSTIN must contain only alphanumeric characters'));
         return;
       }
       formData.gstin = gstinValue;
@@ -171,7 +172,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
 
   useEffect(() => {
     if (isOpen && isReadOnly && !customer) {
-      alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+      showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
       onClose();
     }
   }, [isOpen, isReadOnly, customer, onClose, t]);
@@ -322,10 +323,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     disabled={isReadOnly}
                   >
                     {availableProviders.length === 0 ? (
-                      <option value="">{t('customerSheet.noProducts', 'No products — add in Settings → Products')}</option>
+                      <option value="">{t('customerSheet.noProducts', 'No products - add in Settings → Products')}</option>
                     ) : (
                       <>
-                        <option value="">{t('customerSheet.selectProduct', '— Select Product —')}</option>
+                        <option value="">{t('customerSheet.selectProduct', '- Select Product -')}</option>
                         {availableProviders.map((provider) => (
                           <option key={provider} value={provider}>
                             {getConnectionTypeLabel(provider, products)}
@@ -342,7 +343,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     onChange={(e) => setFormData({ ...formData, package: e.target.value })}
                     disabled={isReadOnly}
                   >
-                    <option value="">— {t('customerSheet.selectPlan', 'Select Plan')} —</option>
+                    <option value="">- {t('customerSheet.selectPlan', 'Select Plan')} -</option>
                     {availablePlans.map((plan) => (
                       <option key={plan.id} value={plan.planName}>{plan.planName}</option>
                     ))}
@@ -402,7 +403,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     title={t('customerSheet.cinTooltip', 'Customer Identification Number')}
                   />
                 </div>
-                {/* Box Number — only for cable product customers */}
+                {/* Box Number - only for cable product customers */}
                 {isCableProvider(formData.connectionType, products) && (
                   <div>
                     <label className="block text-sm font-medium mb-2">

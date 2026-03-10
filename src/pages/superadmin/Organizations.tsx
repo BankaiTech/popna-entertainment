@@ -1,4 +1,4 @@
-// SaaS Master Controller — Organizations Management Page
+// SaaS Master Controller - Organizations Management Page
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -132,7 +132,7 @@ const Organizations = () => {
                                 <div className="text-xs text-muted-foreground space-y-1">
                                     <p>{t('organizations.id', 'ID')}: <span className="font-mono">{org.id}</span></p>
                                     <p>{t('organizations.modules', 'Modules')}: {org.allowedModules.length} / {ALL_MODULES.length}</p>
-                                    <p>{t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} — {org.subscriptionEnd}</p>
+                                    <p>{t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} - {org.subscriptionEnd}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
                                     <Select
@@ -187,7 +187,7 @@ const Organizations = () => {
             {/* Modules Assignment Modal */}
             {showModulesModal && modulesOrg && (
                 <Dialog open={showModulesModal} onClose={() => setShowModulesModal(false)} size="lg">
-                    <DialogHeader title={`${t('organizations.manageModulesFor', 'Manage Modules')} — ${modulesOrg.name}`} onClose={() => setShowModulesModal(false)} />
+                    <DialogHeader title={`${t('organizations.manageModulesFor', 'Manage Modules')} - ${modulesOrg.name}`} onClose={() => setShowModulesModal(false)} />
                     <DialogBody>
                         <div className="px-4 sm:px-5 py-4 space-y-4">
                             <div>
