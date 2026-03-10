@@ -71,13 +71,13 @@ const HomePage = () => {
       },
       { threshold: 0.5, rootMargin: "-10% 0px -20% 0px" }
     );
-    
+
     // Slight delay to allow DOM to render before observing
     const timer = setTimeout(() => {
       const blocks = document.querySelectorAll('.showcase-trigger');
       blocks.forEach((block) => observer.observe(block));
     }, 100);
-    
+
     return () => {
       clearTimeout(timer);
       observer.disconnect();
@@ -247,13 +247,13 @@ const HomePage = () => {
 
       {/* ════ Module Showcase — In-Place Scroll Alternating ════ */}
       <section id="showcase" className="relative bg-black text-white">
-        {/* Track for scroll height - roughly 3 viewport heights */}
-        <div className="relative h-[300vh]">
-          
+        {/* Track for scroll height - roughly 6 viewport heights */}
+        <div className="relative h-[600vh]">
+
           {/* Sticky container that locks into view */}
           <div className="sticky top-0 h-screen w-full flex items-center overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col justify-center py-12 md:py-24">
-              
+
               <div className="text-center mb-8 md:mb-12">
                 <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
                   {t('home.showcase.title', 'Platform Features')}
@@ -281,13 +281,31 @@ const HomePage = () => {
                     img: '/POS Module.png',
                     icon: ShoppingCart,
                   },
+                  {
+                    title: t('home.features.inventory', 'Inventory Module'),
+                    desc: t('home.features.inventoryDesc', 'Track stock levels, manage variations, and handle multiple locations seamlessly.'),
+                    img: '/Inventory Module.png',
+                    icon: Package,
+                  },
+                  {
+                    title: t('home.features.labels', 'Label Print'),
+                    desc: t('home.features.labelsDesc', 'Design and print custom barcode labels for all your products effortlessly.'),
+                    img: '/Label Print.png',
+                    icon: Zap,
+                  },
+                  {
+                    title: t('home.features.thermal', 'POS Thermal Bill'),
+                    desc: t('home.features.thermalDesc', 'Quickly print professional thermal receipts for faster checkout experiences.'),
+                    img: '/POS Thermal Bill.png',
+                    icon: FileText,
+                  },
                 ].map((item, idx) => {
                   const Icon = item.icon;
                   const isActive = activeShowcaseIdx === idx;
                   const isEven = idx % 2 === 0;
-                  
+
                   return (
-                    <div 
+                    <div
                       key={idx}
                       className={cn(
                         "absolute inset-0 flex flex-col items-center gap-8 lg:gap-16 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] w-full h-full",
@@ -317,12 +335,12 @@ const HomePage = () => {
                           "inline-flex items-center gap-4 mb-4 sm:mb-6",
                           isEven ? "md:flex-row" : "md:flex-row-reverse"
                         )}>
-                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shrink-0 shadow-xl">
-                             <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                           </div>
-                           <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                             {item.title}
-                           </h3>
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shrink-0 shadow-xl">
+                            <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                          </div>
+                          <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+                            {item.title}
+                          </h3>
                         </div>
                         <p className="text-lg sm:text-xl lg:text-2xl text-white/70 leading-relaxed font-light max-w-sm sm:max-w-none md:mx-0">
                           {item.desc}
@@ -339,11 +357,11 @@ const HomePage = () => {
 
           {/* Invisible Scroll Triggers placed along the track */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col">
-            {[0, 1, 2].map((idx) => (
+            {[0, 1, 2, 3, 4, 5].map((idx) => (
               <div key={idx} className="h-screen w-full showcase-trigger" data-index={idx} />
             ))}
           </div>
-          
+
         </div>
       </section>
 

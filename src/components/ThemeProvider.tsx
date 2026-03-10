@@ -26,7 +26,10 @@ function getSystemTheme(): 'light' | 'dark' {
 
 function applyTheme(resolved: 'light' | 'dark') {
     const root = document.documentElement;
-    if (resolved === 'dark') {
+    const isPublicRoute = typeof window !== 'undefined' &&
+        (window.location.pathname === '/' || window.location.pathname === '/login');
+
+    if (resolved === 'dark' && !isPublicRoute) {
         root.classList.add('dark');
     } else {
         root.classList.remove('dark');
@@ -34,7 +37,7 @@ function applyTheme(resolved: 'light' | 'dark') {
     // Update theme-color meta tag
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-        meta.setAttribute('content', resolved === 'dark' ? '#0f172a' : '#2563eb');
+        meta.setAttribute('content', (resolved === 'dark' && !isPublicRoute) ? '#0f172a' : '#2563eb');
     }
 }
 
