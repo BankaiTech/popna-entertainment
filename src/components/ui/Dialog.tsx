@@ -1,6 +1,7 @@
-// Reusable Dialog for all modals — consistent overlay, sizing, and accessibility
+// Reusable Dialog for all modals - consistent overlay, sizing, and accessibility
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -46,7 +47,7 @@ export function Dialog({
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 pb-20 sm:p-4 sm:pb-4 bg-black/40 backdrop-blur-sm"
       onClick={closeOnOverlayClick ? onClose : undefined}
       role="presentation"
     >
@@ -54,7 +55,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'bg-white rounded-lg shadow-xl max-h-[85vh] overflow-hidden flex flex-col border border-gray-200/60 animate-scale-in',
+          'bg-white dark:bg-gray-900 rounded-lg shadow-xl max-h-[90dvh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-gray-200/60 dark:border-gray-700/60 animate-scale-in',
           sizeClasses[size],
           className
         )}
@@ -75,14 +76,15 @@ export interface DialogHeaderProps {
 }
 
 export function DialogHeader({ title, onClose, className }: DialogHeaderProps) {
+  const { t } = useTranslation();
   return (
-    <div className={cn('flex items-center justify-between shrink-0 px-4 py-2.5 border-b border-gray-100', className)}>
-      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+    <div className={cn('flex items-center justify-between shrink-0 px-4 py-2.5 border-b border-gray-100 dark:border-gray-800', className)}>
+      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
       <button
         type="button"
         onClick={onClose}
-        className="p-1.5 hover:bg-accent rounded-lg transition-colors"
-        aria-label="Close"
+        className="p-1.5 hover:bg-accent rounded-lg transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+        aria-label={t('common.close', 'Close')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -110,7 +112,7 @@ export interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('shrink-0 flex flex-wrap justify-end gap-2 px-4 py-2.5 border-t border-gray-100 bg-gray-50/50', className)}>
+    <div className={cn('shrink-0 flex flex-wrap justify-end gap-2 px-4 py-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50', className)}>
       {children}
     </div>
   );

@@ -1,4 +1,4 @@
-// Client folder removed — SaaS multi-tenant only
+// Client folder removed - SaaS multi-tenant only
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, UserRole } from '@/store/useAuthStore';
 
@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly }: ProtectedRoute
       return <Navigate to="/customer/dashboard" replace />;
     }
     if (role === 'superadmin') {
-      return <Navigate to="/superadmin/organizations" replace />;
+      return <Navigate to="/superadmin/dashboard" replace />;
     }
     return <Navigate to="/admin/dashboard" replace />;
   }

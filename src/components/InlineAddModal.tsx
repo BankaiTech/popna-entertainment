@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import Select from './ui/Select';
+
+interface InlineFieldOption {
+    value: string;
+    label: string;
+}
 
 interface InlineAddModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
-    fields: { name: string; label: string; type?: string; placeholder?: string; required?: boolean }[];
+    fields: { name: string; label: string; type?: string; placeholder?: string; required?: boolean; options?: InlineFieldOption[] }[];
     onSave: (data: Record<string, string>) => Promise<void>;
 }
 
@@ -49,13 +55,26 @@ const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddMod
                                 <label className="block text-sm font-medium mb-1 text-foreground">
                                     {field.label} {field.required && <span className="text-destructive">*</span>}
                                 </label>
-                                <Input
-                                    type={field.type || 'text'}
-                                    value={formData[field.name] || ''}
-                                    onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                                    placeholder={field.placeholder || field.label}
-                                    disabled={saving}
-                                />
+                                {field.type === 'select' && field.options ? (
+                                    <Select
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                                        disabled={saving}
+                                    >
+                                        <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                                        {field.options.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        type={field.type || 'text'}
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                                        placeholder={field.placeholder || field.label}
+                                        disabled={saving}
+                                    />
+                                )}
                             </div>
                         ))}
                         {error && (

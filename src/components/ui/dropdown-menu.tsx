@@ -13,6 +13,7 @@ interface DropdownMenuContextValue {
   triggerRef: React.RefObject<HTMLDivElement>;
   contentRef: React.RefObject<HTMLDivElement>;
   position: { top: number; left: number; width: number };
+  positioned: boolean;
   updatePosition: () => void;
   align: Align;
 }
@@ -38,9 +39,11 @@ export function DropdownMenu({ children, side = 'bottom', align = 'end', disable
   const triggerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const contentRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [positioned, setPositioned] = useState(false);
 
   const setOpen = useCallback((v: boolean) => {
     if (disabled && v) return;
+    if (!v) setPositioned(false);
     setOpenRaw(v);
   }, [disabled]);
 
@@ -85,6 +88,7 @@ export function DropdownMenu({ children, side = 'bottom', align = 'end', disable
     if (top < EDGE_MARGIN) top = EDGE_MARGIN;
 
     setPosition({ top, left, width: triggerW });
+    setPositioned(true);
   }, [side, align]);
 
   // Reposition after open + after content mounts
@@ -129,7 +133,7 @@ export function DropdownMenu({ children, side = 'bottom', align = 'end', disable
   }, [open, setOpen]);
 
   return (
-    <Ctx.Provider value={{ open, setOpen, disabled, triggerRef, contentRef, position, updatePosition, align }}>
+    <Ctx.Provider value={{ open, setOpen, disabled, triggerRef, contentRef, position, positioned, updatePosition, align }}>
       {children}
     </Ctx.Provider>
   );
@@ -157,7 +161,7 @@ export function DropdownMenuTrigger({
 }
 
 export function DropdownMenuContent({ children, className }: { children: React.ReactNode; className?: string }) {
-  const { open, contentRef, position } = useCtx();
+  const { open, contentRef, position, positioned } = useCtx();
   if (!open) return null;
 
   const el = (
@@ -165,15 +169,17 @@ export function DropdownMenuContent({ children, className }: { children: React.R
       ref={contentRef}
       role="listbox"
       className={cn(
-        'fixed z-[9999] rounded-lg border border-border bg-background shadow-lg py-1',
+        'fixed z-[9999] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg py-1',
         'max-h-[250px] overflow-y-auto overscroll-contain',
         '-webkit-overflow-scrolling-touch',
+        'transition-opacity duration-75',
         className
       )}
       style={{
         top: position.top,
         left: position.left,
         minWidth: position.width,
+        opacity: positioned ? 1 : 0,
       }}
       onTouchMove={(e) => e.stopPropagation()}
     >
@@ -197,7 +203,8 @@ export function DropdownMenuItem({
       role="option"
       className={cn(
         'flex cursor-pointer select-none items-center px-3 py-2.5 text-sm outline-none transition-colors',
-        'hover:bg-muted focus:bg-muted active:bg-muted/80',
+        'text-gray-900 dark:text-gray-100',
+        'hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600',
         'touch-manipulation',
         disabled && 'pointer-events-none opacity-50',
         className

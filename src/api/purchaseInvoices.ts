@@ -1,4 +1,4 @@
-// Multi-tenant ready — backend will enforce org isolation
+// Multi-tenant ready - backend will enforce org isolation
 // Product display names updated to generic labels (vendor id unchanged)
 import type { PurchaseInvoice, Vendor } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';

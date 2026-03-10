@@ -6,8 +6,9 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useStore } from '@/store/useStore';
-import type { Customer, Plan, InvoiceType } from '@/models/types';
+import type { Customer, Plan, InvoiceType, Branch } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
+import { branchesApi } from '@/api/branches';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 
@@ -29,6 +30,8 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     if (isOpen) fetchCompanyProfile();
   }, [isOpen, fetchCompanyProfile]);
 
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | ''>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>('');
   const [selectedPlanId, setSelectedPlanId] = useState<number | ''>('');
   const [invoiceType, setInvoiceType] = useState<InvoiceType>('tax_invoice');
@@ -39,6 +42,12 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   const [status, setStatus] = useState<'draft' | 'sent' | 'paid' | 'overdue'>('draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      branchesApi.getAll().then((list) => setBranches(list.filter(b => b.isActive)));
+    }
+  }, [isOpen]);
 
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
@@ -72,6 +81,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
       await salesInvoicesApi.create({
         organizationId: MOCK_ORGANIZATION_ID,
         invoiceNumber,
+        branchId: selectedBranchId || undefined,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         serviceProvider: selectedPlan.provider,
@@ -98,6 +108,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   };
 
   const resetForm = () => {
+    setSelectedBranchId('');
     setSelectedCustomerId('');
     setSelectedPlanId('');
     setInvoiceType('tax_invoice');
@@ -153,6 +164,23 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
                   placeholder="998314"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {t('invoiceModal.branch', 'Branch')}
+              </label>
+              <Select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(Number(e.target.value) || '')}
+              >
+                <option value="">{t('invoiceModal.selectBranch', 'Select Branch')}</option>
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}{branch.city ? ` - ${branch.city}` : ''}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div>

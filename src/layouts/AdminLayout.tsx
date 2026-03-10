@@ -5,16 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle,
-  UserCog, Settings, LogOut, Menu, X, PhoneCall, Contact2,
-  GitBranch, Store, ChevronDown
+  UserCog, Settings, LogOut, Menu, PhoneCall, Contact2,
+  GitBranch, Store, ChevronDown, ChevronLeft
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
+import Logo from '@/components/Logo';
 import type { ModuleKey } from '@/models/types';
 
-// Sidebar group definition
 interface SidebarGroup {
   labelKey: string;
   items: SidebarItem[];
@@ -25,6 +26,7 @@ interface SidebarItem {
   labelKey: string;
   icon: typeof LayoutDashboard;
   moduleKey: ModuleKey;
+  color: string;
 }
 
 const AdminLayout = () => {
@@ -32,18 +34,16 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
-  const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
+  const { fetchOrganization, isModuleAllowed } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  // Fetch organization permissions on mount
   useEffect(() => {
     if (organizationId) {
       fetchOrganization(organizationId);
     }
   }, [organizationId, fetchOrganization]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
@@ -57,42 +57,40 @@ const AdminLayout = () => {
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  // Grouped sidebar structure
   const sidebarGroups: SidebarGroup[] = [
     {
       labelKey: 'nav.groupMain',
       items: [
-        { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard' },
+        { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard', color: 'text-blue-500' },
       ],
     },
     {
       labelKey: 'nav.groupBusiness',
       items: [
-        { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts' },
-        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products' },
-        { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices' },
-        { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices' },
+        { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500' },
+        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
+        { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
+        { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
       ],
     },
     {
       labelKey: 'nav.groupOperations',
       items: [
-        { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests' },
-        { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints' },
-        { path: '/admin/pos', labelKey: 'nav.pos', icon: Store, moduleKey: 'pos' },
+        { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests', color: 'text-cyan-500' },
+        { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints', color: 'text-red-500' },
+        { path: '/admin/pos', labelKey: 'nav.pos', icon: Store, moduleKey: 'pos', color: 'text-amber-500' },
       ],
     },
     {
       labelKey: 'nav.groupManagement',
       items: [
-        { path: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch, moduleKey: 'branches' },
-        { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users' },
-        { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings' },
+        { path: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch, moduleKey: 'branches', color: 'text-teal-500' },
+        { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users', color: 'text-indigo-500' },
+        { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings', color: 'text-gray-500' },
       ],
     },
   ];
 
-  // Filter groups by permission
   const filteredGroups = sidebarGroups
     .map((group) => ({
       ...group,
@@ -107,32 +105,37 @@ const AdminLayout = () => {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 sm:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 sm:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-13 shrink-0 flex items-center justify-between px-3 sm:px-5 border-b border-gray-200/80 bg-white/95 backdrop-blur-md shadow-sm">
+      {/* ── Header ── */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 shrink-0 flex items-center justify-between px-3 sm:px-5 border-b border-gray-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-sm">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="sm:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            className="sm:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label={t('openMenu')}
           >
-            <Menu className="w-4.5 h-4.5 text-gray-600" />
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
-          <img src="/NexLink.svg" alt="NexLink" className="h-[104px] w-auto object-contain shrink-0" />
+          <div className="logo-header-wrap shrink-0">
+            <Logo className="logo-header sm:hidden" variant="icon" />
+            <Logo className="logo-header hidden sm:block" />
+          </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{t('nav.logout')}</span>
@@ -140,36 +143,32 @@ const AdminLayout = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 pt-13">
-        {/* Sidebar */}
+      <div className="flex flex-1 pt-14">
+        {/* ── Sidebar ── */}
         <aside
           className={cn(
-            'fixed top-13 bottom-0 left-0',
-            'z-40 w-52 bg-white border-r border-gray-200/80 flex flex-col',
+            'fixed top-14 left-0',
+            'bottom-16 sm:bottom-0',
+            'z-40 w-56 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col',
             'transform transition-transform duration-200 ease-out',
             'sm:translate-x-0',
-            isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'
+            isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
           )}
         >
-          {/* Sidebar header — org name and close button */}
-          <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between shrink-0">
-            <h1 className="text-xs font-semibold text-gray-800 uppercase tracking-wider truncate">
-              {currentOrganization?.name || t('nexlink', 'NexLink')}
-            </h1>
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin relative">
+            {/* Mobile close button */}
             <button
+              type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="sm:hidden p-1 hover:bg-gray-100 rounded-md transition-colors"
-              aria-label="Close menu"
+              className="sm:hidden absolute top-1 right-1 z-10 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label={t('closeMenu', 'Close menu')}
             >
-              <X className="w-4 h-4 text-gray-500" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
-          </div>
 
-          {/* Navigation with groups */}
-          <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 scrollbar-thin">
             {filteredGroups.map((group) => {
               const isCollapsed = collapsedGroups[group.labelKey];
-              const hasActiveItem = group.items.some((item) => location.pathname === item.path);
               const groupLabel = t(group.labelKey, group.labelKey.split('.').pop() || '');
 
               return (
@@ -177,7 +176,7 @@ const AdminLayout = () => {
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(group.labelKey)}
-                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
+                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
                   >
                     <span>{groupLabel}</span>
                     <ChevronDown
@@ -199,14 +198,22 @@ const AdminLayout = () => {
                             key={item.path}
                             to={item.path}
                             className={cn(
-                              'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
+                              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
                               isActive
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 shadow-sm border border-blue-100 dark:border-blue-800/50'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
                             )}
                           >
-                            <Icon className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-blue-600' : 'text-gray-400')} />
+                            <Icon
+                              className={cn(
+                                'w-4 h-4 shrink-0 transition-colors',
+                                isActive ? 'text-blue-600 dark:text-blue-400' : item.color + ' opacity-70 group-hover:opacity-100'
+                              )}
+                            />
                             <span className="truncate">{t(item.labelKey)}</span>
+                            {isActive && (
+                              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0" />
+                            )}
                           </Link>
                         );
                       })}
@@ -218,44 +225,52 @@ const AdminLayout = () => {
           </nav>
 
           {/* Sidebar footer */}
-          <div className="shrink-0 px-3 py-2 border-t border-gray-100">
-            <p className="text-[9px] text-gray-400 text-center">v1.0 • GST Ready</p>
+          <div className="shrink-0 px-3 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-[9px] text-gray-400 dark:text-gray-500 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
           </div>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 flex flex-col w-full bg-white sm:ml-52">
+        {/* ── Main Content ── */}
+        <main className="flex-1 flex flex-col w-full sm:ml-56">
           <div className="flex-1 overflow-auto p-3 sm:p-5 pb-20 sm:pb-5">
             <Outlet />
           </div>
-          <footer className="shrink-0 mt-auto border-t border-gray-200/80 bg-white py-1.5 px-3 hidden sm:block">
+          <footer className="shrink-0 mt-auto border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 py-1.5 px-4 hidden sm:block">
             <FooterCredit />
           </footer>
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation — PWA-style */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200/80 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-        <div className="flex items-center justify-around px-1 py-1.5">
+      {/* ── Mobile Bottom Navigation ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 shadow-lg shadow-black/10">
+        <div className="flex items-center justify-around px-1 py-2">
           {([
-            { path: '/admin/dashboard', icon: LayoutDashboard, label: t('nav.bottomHome', 'Home') },
-            { path: '/admin/contacts', icon: Contact2, label: t('nav.contacts', 'Contacts') },
-            { path: '/admin/invoices', icon: FileText, label: t('nav.invoices', 'Invoices') },
-            { path: '/admin/inventory-products', icon: Package, label: t('nav.inventory', 'Inventory') },
-            { path: '/admin/settings', icon: Settings, label: t('nav.settings', 'Settings') },
-          ] as { path: string; icon: typeof LayoutDashboard; label: string }[]).map(({ path, icon: Icon, label }) => {
+            { path: '/admin/dashboard', icon: LayoutDashboard, labelKey: 'nav.bottomHome' },
+            { path: '/admin/contacts', icon: Contact2, labelKey: 'nav.contacts' },
+            { path: '/admin/invoices', icon: FileText, labelKey: 'nav.invoices' },
+            { path: '/admin/inventory-products', icon: Package, labelKey: 'nav.inventory' },
+            { path: '/admin/settings', icon: Settings, labelKey: 'nav.settings' },
+          ] as { path: string; icon: typeof LayoutDashboard; labelKey: string }[]).map(({ path, icon: Icon, labelKey }) => {
             const isActive = location.pathname === path;
             return (
               <Link
                 key={path}
                 to={path}
-                className={cn(
-                  'flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all duration-150 min-w-0',
-                  isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-                )}
+                className="flex flex-col items-center gap-0.5 min-w-0 relative px-2 py-1"
               >
-                <Icon className={cn('w-5 h-5 shrink-0', isActive && 'scale-110')} />
-                <span className="text-[9px] font-medium truncate">{label}</span>
+                <div
+                  className={cn(
+                    'w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200',
+                    isActive
+                      ? 'bg-blue-600 shadow-lg shadow-blue-500/30 scale-110'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                  )}
+                >
+                  <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500')} />
+                </div>
+                <span className={cn('text-[9px] font-medium truncate', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500')}>
+                  {t(labelKey)}
+                </span>
               </Link>
             );
           })}

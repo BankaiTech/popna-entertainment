@@ -56,7 +56,7 @@ function SelectInner(
   const display = selected?.label ?? (value != null && value !== '' ? String(value) : '');
 
   const triggerClass = cn(
-    'flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm leading-normal',
+    'flex h-9 w-full items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm leading-normal',
     'text-foreground transition-colors',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary',
     'hover:border-primary/30',

@@ -4,6 +4,7 @@ import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import type { Customer } from '@/models/types';
+import { showError } from '@/utils/toast';
 
 interface CustomerComplaintModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const CustomerComplaintModal = ({ isOpen, onClose, customer }: CustomerComplaint
     e.preventDefault();
     
     if (!description.trim()) {
-      alert(t('customerComplaint.validation.descriptionRequired', 'Please enter your complaint description'));
+      showError(t('customerComplaint.validation.descriptionRequired', 'Please enter your complaint description'));
       return;
     }
 
@@ -44,7 +45,7 @@ const CustomerComplaintModal = ({ isOpen, onClose, customer }: CustomerComplaint
       });
       onClose();
     } catch (error) {
-      alert(t('customerComplaint.validation.submitFailed', 'Failed to submit complaint. Please try again.'));
+      showError(t('customerComplaint.validation.submitFailed', 'Failed to submit complaint. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

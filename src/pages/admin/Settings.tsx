@@ -3,10 +3,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Package, Building2, CreditCard } from 'lucide-react';
+import { Package, Building2, CreditCard, ShoppingCart } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import BillingSettings from '@/components/settings/BillingSettings';
+import POSSettings from '@/components/settings/POSSettings';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import type { SettingsTabKey } from '@/models/types';
@@ -23,6 +24,7 @@ const Settings = () => {
     { id: 'company', label: t('settings.tabCompany', 'Company Details'), icon: Building2, description: t('settings.companyDesc', 'Configure company information for invoices and documents') },
     { id: 'products', label: t('settings.tabProducts', 'Products'), icon: Package, description: t('settings.productsDesc', 'Manage products, plans, and pricing') },
     { id: 'billing', label: t('settings.tabBilling', 'Billing & UPI'), icon: CreditCard, description: t('settings.billingDesc', 'Pay by UPI apps and manage subscription') },
+    { id: 'pos', label: t('settings.tabPOS', 'POS / Checkout'), icon: ShoppingCart, description: t('settings.posTabDesc', 'Invoice format and checkout settings') },
   ];
 
   const tabs = useMemo(
@@ -83,7 +85,7 @@ const Settings = () => {
       <nav
         role="tablist"
         aria-label={t('settings.tabsLabel', 'Settings tabs')}
-        className="hidden sm:flex gap-1 p-1 rounded-xl bg-muted/40 border border-border w-full"
+        className="hidden sm:flex gap-1 p-1 rounded-xl bg-gray-100/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 w-full"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -99,8 +101,8 @@ const Settings = () => {
               className={cn(
                 'flex items-center gap-2 flex-1 justify-center px-5 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-card text-primary shadow-sm border border-border'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                  ? 'bg-white dark:bg-gray-900 text-primary shadow-sm border border-gray-200 dark:border-gray-700'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/60 dark:hover:bg-gray-700/60'
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -123,6 +125,7 @@ const Settings = () => {
             {activeTab === 'company' && <CompanyProfileSettings />}
             {activeTab === 'products' && <ProductManagement />}
             {activeTab === 'billing' && <BillingSettings />}
+            {activeTab === 'pos' && <POSSettings />}
           </div>
         </CardContent>
       </Card>

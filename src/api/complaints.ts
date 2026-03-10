@@ -3,7 +3,7 @@ import type { Complaint } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockComplaints } from './mockData';
 
-// Multi-tenant ready — backend will enforce org isolation
+// Multi-tenant ready - backend will enforce org isolation
 let complaintsData: Complaint[] = [...mockComplaints];
 
 export const complaintsApi = {

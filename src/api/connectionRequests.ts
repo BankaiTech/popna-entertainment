@@ -1,4 +1,4 @@
-// API ready — replace mock with real backend
+// API ready - replace mock with real backend
 // Replace with real backend API later
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -10,7 +10,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
 
   // Generate 20+ realistic mock entries
   const names = [
-    'Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
+    'Rajesh Kumar', 'Naresh', 'Amit Patel', 'Sneha Reddy', 'Vikram Singh',
     'Anjali Mehta', 'Rahul Gupta', 'Kavita Desai', 'Suresh Iyer', 'Meera Nair',
     'Arjun Menon', 'Divya Krishnan', 'Kiran Pillai', 'Lakshmi Nair', 'Gopal Rao',
     'Sunita Devi', 'Mohan Das', 'Sarita Joshi', 'Naveen Kumar', 'Rekha Agarwal',
@@ -50,7 +50,7 @@ const generateMockConnectionRequests = (): ConnectionRequest[] => {
     { id: 10, name: 'Internet 3 Premium', productId: 4, productName: 'Internet 3' },
   ];
 
-  // Status assignment is inline — no statuses array needed
+  // Status assignment is inline - no statuses array needed
 
   for (let i = 0; i < 25; i++) {
     const plan = plans[i % plans.length];
@@ -106,7 +106,7 @@ export interface CreateConnectionRequestPayload {
 export const connectionRequestsApi = {
   /**
    * Create a new connection request
-   * API ready — replace mock with real backend
+   * API ready - replace mock with real backend
    * Backend will handle WhatsApp & Email sending
    */
   create: async (payload: CreateConnectionRequestPayload): Promise<ConnectionRequest> => {
@@ -136,7 +136,7 @@ export const connectionRequestsApi = {
 
   /**
    * Get all connection requests
-   * API ready — replace mock with real backend
+   * API ready - replace mock with real backend
    */
   getAll: async (): Promise<ConnectionRequest[]> => {
     return Promise.resolve([...connectionRequestsData]);
@@ -144,7 +144,7 @@ export const connectionRequestsApi = {
 
   /**
    * Get connection request by ID
-   * API ready — replace mock with real backend
+   * API ready - replace mock with real backend
    */
   getById: async (id: number): Promise<ConnectionRequest> => {
     const request = connectionRequestsData.find((r) => r.id === id);
@@ -154,7 +154,7 @@ export const connectionRequestsApi = {
 
   /**
    * Update connection request status
-   * API ready — replace mock with real backend
+   * API ready - replace mock with real backend
    */
   updateStatus: async (id: number, status: ConnectionRequestStatus): Promise<ConnectionRequest> => {
     const index = connectionRequestsData.findIndex((r) => r.id === id);
@@ -165,7 +165,7 @@ export const connectionRequestsApi = {
 
   /**
    * Delete connection request
-   * API ready — replace mock with real backend
+   * API ready - replace mock with real backend
    */
   delete: async (id: number): Promise<void> => {
     const index = connectionRequestsData.findIndex((r) => r.id === id);

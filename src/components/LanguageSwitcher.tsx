@@ -19,7 +19,7 @@ const labels: Record<string, string> = {
   ml: 'മലയാളം',
 };
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ triggerClassName }: { triggerClassName?: string }) {
   const { i18n } = useTranslation();
   const current = supportedLanguages.find((l) => l.code === i18n.language) ?? supportedLanguages[0];
 
@@ -28,7 +28,7 @@ export default function LanguageSwitcher() {
       <DropdownMenuTrigger
         className={cn(
           'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-          'border border-border bg-card hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
+          triggerClassName || 'border border-border bg-card hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
         )}
         aria-label="Select language"
       >

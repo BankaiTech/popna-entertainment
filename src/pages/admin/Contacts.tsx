@@ -1,4 +1,4 @@
-// Contacts Module — Unified: Customers + Suppliers + Import
+// Contacts Module - Unified: Customers + Suppliers + Import
 // Customers tab now has full features from the standalone Customers page
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword } from '@/lib/utils';
 import { organizationsApi } from '@/api/organizations';
+import { showError, showSuccess, showInfo } from '@/utils/toast';
 
 type ContactTab = 'customers' | 'suppliers' | 'import';
 
@@ -102,7 +103,7 @@ const Contacts = () => {
     // ─── Customer Handlers ───
     const handleAddCustomer = () => {
         if (isEmployee) {
-            alert(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
+            showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
             return;
         }
         setShowCustomerSheet(false);
@@ -119,7 +120,7 @@ const Contacts = () => {
 
     const handleSaveCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => {
         if (isEmployee) {
-            alert(editingCustomer
+            showError(editingCustomer
                 ? t('customers.noPermissionEdit', 'You do not have permission to edit customer details.')
                 : t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
             return;
@@ -170,7 +171,7 @@ const Contacts = () => {
         if (data.paymentStatus === 'paid') {
             const renewed = await organizationsApi.renewSubscription(MOCK_ORGANIZATION_ID);
             if (renewed) {
-                alert(t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', { date: renewed.subscriptionEnd }));
+                showSuccess(t('payment.subscriptionRenewed', 'Subscription renewed! Valid until: {{date}}', { date: renewed.subscriptionEnd }));
             }
         }
     };
@@ -333,7 +334,7 @@ const Contacts = () => {
                         <>
                             <Button onClick={() => {
                                 const pendingCustomers = customers.filter(c => c.paymentStatus === 'not_paid' && c.status === 'Active');
-                                alert(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
+                                showInfo(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
                             }} variant="outline" size="xs">
                                 <MessageSquare className="w-3.5 h-3.5" />
                                 SMS
@@ -439,7 +440,6 @@ const Contacts = () => {
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.status', 'Status')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -467,10 +467,10 @@ const Contacts = () => {
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{getConnectionTypeLabel(customer.connectionType)}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.stbNumber || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '—'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '—'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.stbNumber || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '-'}</td>
                                                         <td className="px-3 py-2 text-sm">
                                                             {customer.paymentStatus !== 'paid' ? (
                                                                 <button
@@ -485,11 +485,6 @@ const Contacts = () => {
                                                                     {t('customers.paid', 'Paid')}
                                                                 </span>
                                                             )}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-sm">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                                {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                                                            </span>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -512,9 +507,6 @@ const Contacts = () => {
                                                         )}
                                                         <p className="text-xs text-muted-foreground mt-1">{t('customers.id', 'ID')}: {customer.id}</p>
                                                     </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${customer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                                                    </span>
                                                 </div>
                                                 <div className="space-y-2 text-sm">
                                                     <div>
@@ -576,9 +568,6 @@ const Contacts = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input className="pl-9" value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)} placeholder={t('contacts.searchSuppliers', 'Search suppliers...')} />
                         </div>
-                        <Button onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }} className="w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" /> {t('contacts.addSupplier', 'Add Supplier')}
-                        </Button>
                     </div>
                     <div className="overflow-x-auto">
                         {/* Desktop table */}

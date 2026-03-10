@@ -1,4 +1,4 @@
-// Multi-tenant SaaS Isolation — backend will isolate by organization
+// Multi-tenant SaaS Isolation - backend will isolate by organization
 import type { CompanyProfile } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
@@ -15,7 +15,7 @@ let companyProfileData: CompanyProfile | null = {
   country: 'India',
   pincode: '560001',
   contactNumber: '+91 9876543210',
-  email: 'contact@nexlink.com',
+  email: 'contact@Popna.com',
   updatedAt: new Date().toISOString(),
 };
 

@@ -13,13 +13,15 @@ import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { generateSalesInvoicePdf } from '@/lib/pdfUtils';
+import { showError } from '@/utils/toast';
 
 const Invoices = () => {
   const { t } = useTranslation();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'All'>('All');
-  const [serviceFilter, setServiceFilter] = useState<Provider | 'All'>('All');
+  const [categoryFilter, setCategoryFilter] = useState<'All' | 'cable' | 'internet'>('All');
+  const [productFilter, setProductFilter] = useState<Provider | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,13 +49,17 @@ const Invoices = () => {
   const filtered = useMemo(() => {
     return invoices.filter((inv) => {
       const byStatus = statusFilter === 'All' || inv.status === statusFilter;
-      const byService = serviceFilter === 'All' || inv.serviceProvider === serviceFilter;
+
+      const invoiceProduct = products.find(p => p.name === inv.serviceProvider);
+      const byCategory = categoryFilter === 'All' || (invoiceProduct && invoiceProduct.productType === categoryFilter);
+      const byProduct = productFilter === 'All' || inv.serviceProvider === productFilter;
+
       const bySearch = searchQuery.trim() === '' ||
         inv.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase());
-      return byStatus && byService && bySearch;
+      return byStatus && byCategory && byProduct && bySearch;
     });
-  }, [invoices, statusFilter, serviceFilter, searchQuery]);
+  }, [invoices, products, statusFilter, categoryFilter, productFilter, searchQuery]);
 
   // Pagination logic
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -65,7 +71,7 @@ const Invoices = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, serviceFilter]);
+  }, [searchQuery, statusFilter, categoryFilter, productFilter]);
 
   const statusBadge = (status: InvoiceStatus) => {
     const styles: Record<InvoiceStatus, string> = {
@@ -94,28 +100,28 @@ const Invoices = () => {
       await generateSalesInvoicePdf(inv, customer || null, companyProfile);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
+      showError(t('common.pdfError', 'Failed to generate PDF. Please try again.'));
     }
   };
 
   return (
     <div className="space-y-3">
       <Card>
-        <CardHeader className="py-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <CardHeader className="py-2.5 px-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-56 shrink-0">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder={t('invoices.searchPlaceholder', 'Search by customer or invoice...')}
+                placeholder={t('invoices.searchPlaceholder', 'Search...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm w-50"
+                className="pl-8 h-8 text-xs"
               />
             </div>
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | 'All')}
-              className="h-9 text-sm"
+              className="h-8 ml-auto text-xs w-full sm:w-32"
             >
               <option value="All">{t('invoices.allStatus', 'All Status')}</option>
               <option value="draft">{t('invoices.statusDraft', 'Draft')}</option>
@@ -124,25 +130,34 @@ const Invoices = () => {
               <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
             </Select>
             <Select
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value as Provider | 'All')}
-              className="h-9 text-sm"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
             >
-              <option value="All">{t('invoices.allServices', 'All Services')}</option>
+              <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
+              <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
+              <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+            </Select>
+            <Select
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
+            >
+              <option value="All">{t('invoices.allProducts', 'All Products')}</option>
               {Array.isArray(products) && products.length > 0 ? (
-                products.map((product) => (
-                  <option key={product.id} value={product.name}>
-                    {getProviderDisplayName(product.name, products)}
-                  </option>
-                ))
+                products
+                  .filter(p => categoryFilter === 'All' || p.productType === categoryFilter)
+                  .map((product) => (
+                    <option key={product.id} value={product.name}>
+                      {getProviderDisplayName(product.name, products)}
+                    </option>
+                  ))
               ) : null}
             </Select>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsModalOpen(true)} size="xs" className="w-fit shrink-0">
-                <Plus className="w-3.5 h-3.5" />
-                {t('invoices.newInvoice', 'New Invoice')}
-              </Button>
-            </div>
+            <Button onClick={() => setIsModalOpen(true)} size="xs" className="shrink-0 w-full sm:w-auto">
+              <Plus className="w-3.5 h-3.5" />
+              {t('invoices.newInvoice', 'New Invoice')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">

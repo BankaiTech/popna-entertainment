@@ -1,4 +1,4 @@
-// SaaS Ready — Fully Dynamic Product
+// SaaS Ready - Fully Dynamic Product
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
@@ -10,7 +10,6 @@ import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import { Plus, AlertCircle, Search } from 'lucide-react';
 import type { Complaint, ComplaintStatus, Provider } from '@/models/types';
-import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import ComplaintModal from '@/components/ComplaintModal';
 import { cn } from '@/lib/utils';
 
@@ -195,8 +194,8 @@ const Complaints = () => {
                       >
                         <td className="px-3 py-2 text-sm font-medium text-primary hover:underline">{complaint.customerName}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.mobile}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.connectionType || '—'}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customers.find(c => c.id === complaint.customerId)?.package || '—'}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{complaint.connectionType || '-'}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customers.find(c => c.id === complaint.customerId)?.package || '-'}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground max-w-xs truncate">{complaint.customerDescription}</td>
                         <td className="px-3 py-2">
                           <span
@@ -239,11 +238,11 @@ const Complaints = () => {
                     <div className="space-y-2 text-sm">
                       <div>
                         <span className="text-muted-foreground">{t('complaints.category', 'Category')}: </span>
-                        <span className="font-medium">{complaint.connectionType || '—'}</span>
+                        <span className="font-medium">{complaint.connectionType || '-'}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">{t('complaints.product', 'Product')}: </span>
-                        <span className="font-medium">{customers.find(c => c.id === complaint.customerId)?.package || '—'}</span>
+                        <span className="font-medium">{customers.find(c => c.id === complaint.customerId)?.package || '-'}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">{t('complaints.description', 'Description')}: </span>

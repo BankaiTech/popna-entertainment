@@ -1,4 +1,4 @@
-// Multi-tenant ready — backend will enforce org isolation
+// Multi-tenant ready - backend will enforce org isolation
 // Product display names updated to generic labels (serviceProvider id unchanged)
 import type { SalesInvoice } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -32,7 +32,7 @@ let invoicesData: SalesInvoice[] = [
     organizationId: MOCK_ORGANIZATION_ID,
     invoiceNumber: 'INV-2024-002',
     customerId: 2,
-    customerName: 'Priya Sharma',
+    customerName: 'Naresh',
     serviceProvider: 'Internet 1',
     planName: 'Internet 1 Fiber Basic',
     amount: 449,

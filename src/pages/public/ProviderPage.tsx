@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import type { Provider } from '@/models/types';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import { formatCurrencyINR } from '@/lib/utils';
+import { showSuccess } from '@/utils/toast';
 
 interface ProviderPageProps {
   provider: Provider;
@@ -32,7 +33,7 @@ const ProviderPage = ({ provider }: ProviderPageProps) => {
   };
 
   const handleRequestConnection = (planName: string) => {
-    alert(t('providerPage.connectionRequestSubmitted', 'Connection request for {{planName}} has been submitted! We will contact you soon.', { planName }));
+    showSuccess(t('providerPage.connectionRequestSubmitted', 'Connection request for {{planName}} has been submitted! We will contact you soon.', { planName }));
   };
 
   if (loading) {

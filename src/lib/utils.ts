@@ -20,7 +20,7 @@ export function formatCurrencyINR(amount: number): string {
   }).format(amount);
 }
 
-/** Alias for formatCurrencyINR — Indian currency format */
+/** Alias for formatCurrencyINR - Indian currency format */
 export const formatIndianCurrency = formatCurrencyINR;
 
 /**
@@ -34,7 +34,7 @@ export function formatDateDMY(date: Date | string | number): string {
     : date;
 
   if (isNaN(dateObj.getTime())) {
-    return '—';
+    return '-';
   }
 
   const day = String(dateObj.getDate()).padStart(2, '0');

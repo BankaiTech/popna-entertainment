@@ -9,8 +9,8 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#2563eb',
-          foreground: '#ffffff',
+          DEFAULT: 'var(--color-primary)',
+          foreground: 'var(--color-primary-foreground)',
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
@@ -19,26 +19,26 @@ export default {
           700: '#1d4ed8',
         },
         secondary: {
-          DEFAULT: '#7c3aed',
-          foreground: '#ffffff',
+          DEFAULT: 'var(--color-secondary)',
+          foreground: 'var(--color-secondary-foreground)',
         },
         muted: {
-          DEFAULT: '#f8fafc',
-          foreground: '#94a3b8',
+          DEFAULT: 'var(--color-muted)',
+          foreground: 'var(--color-muted-foreground)',
         },
-        border: '#e2e8f0',
-        background: '#ffffff',
-        foreground: '#0f172a',
+        border: 'var(--color-border)',
+        background: 'var(--color-background)',
+        foreground: 'var(--color-foreground)',
         card: {
-          DEFAULT: '#ffffff',
-          foreground: '#0f172a',
+          DEFAULT: 'var(--color-card)',
+          foreground: 'var(--color-card-foreground)',
         },
         accent: {
-          DEFAULT: '#f1f5f9',
-          foreground: '#0f172a',
+          DEFAULT: 'var(--color-accent)',
+          foreground: 'var(--color-accent-foreground)',
         },
         destructive: {
-          DEFAULT: '#ef4444',
+          DEFAULT: 'var(--color-destructive)',
           foreground: '#ffffff',
         },
         success: {

@@ -12,6 +12,7 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import ProductModal from '@/components/ProductModal';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
+import { showError, showInfo } from '@/utils/toast';
 
 const FREE_PRODUCT_LIMIT = 4;
 const ADDITIONAL_PRODUCT_COST = 200;
@@ -74,18 +75,18 @@ const ProductManagement = () => {
   };
 
   const handlePayForAdditionalProducts = () => {
-    // Additional products: org pays platform — use our (platform) UPI
+    // Additional products: org pays platform - use our (platform) UPI
     setShowPaymentModal(false);
     if (hasPlatformUpi()) {
       setShowUpiModal(true);
     } else {
-      alert(t('productManagement.platformUpiNotConfigured', 'Payment is not configured. Please contact support.'));
+      showError(t('productManagement.platformUpiNotConfigured', 'Payment is not configured. Please contact support.'));
     }
   };
 
   const handlePaymentInitiated = () => {
     setShowUpiModal(false);
-    alert('Payment initiated! Please share the payment screenshot or UTR number with admin for verification. Once verified, you can add more products.');
+    showInfo('Payment initiated! Please share the payment screenshot or UTR number with admin for verification. Once verified, you can add more products.');
   };
 
   return (
@@ -194,7 +195,7 @@ const ProductManagement = () => {
         editingProduct={editingProduct}
       />
 
-      {/* Payment Required — use Dialog for consistency */}
+      {/* Payment Required - use Dialog for consistency */}
       <Dialog open={showPaymentModal} onClose={() => setShowPaymentModal(false)} size="sm">
         <DialogHeader
           title={t('productManagement.additionalProductLimitTitle', 'Additional Product Limit Reached')}
@@ -235,7 +236,7 @@ const ProductManagement = () => {
         </DialogFooter>
       </Dialog>
 
-      {/* UPI Payment Modal — additional products: platform (our) UPI only */}
+      {/* UPI Payment Modal - additional products: platform (our) UPI only */}
       {hasPlatformUpi() && (
         <UpiPaymentModal
           isOpen={showUpiModal}

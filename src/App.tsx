@@ -1,17 +1,17 @@
 // SaaS Product Fully Completed
-// Client folder removed — SaaS multi-tenant architecture used
+// Client folder removed - SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
 
+import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
 import ErrorShowPage from './pages/ErrorShowPage';
-import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
-// Catalog module removed — merged into Inventory
-// Customers module removed — merged into Contacts
+// Catalog module removed - merged into Inventory
+// Customers module removed - merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
 import AdminComplaints from './pages/admin/Complaints';
@@ -22,11 +22,15 @@ import AdminContacts from './pages/admin/Contacts';
 import InventoryProducts from './pages/admin/InventoryProducts';
 import AdminBranches from './pages/admin/Branches';
 import AdminPointOfSale from './pages/admin/PointOfSale';
+import SuperAdminDashboard from './pages/superadmin/Dashboard';
 import Organizations from './pages/superadmin/Organizations';
+import SignupRequests from './pages/superadmin/SignupRequests';
+import SuperAdminUsers from './pages/superadmin/Users';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
+import { PWAFeatures } from './components/PWAFeatures';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
@@ -34,18 +38,33 @@ function App() {
   const [searchParams] = useSearchParams();
   const showErrorPage = location.pathname === '/' && searchParams.has('error_show');
 
+  // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames)
+  useEffect(() => {
+    const el = document.getElementById('app-loading');
+    let rafId: number;
+    const remove = () => {
+      if (el?.parentNode) el.remove();
+    };
+    rafId = requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(remove);
+    });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   return (
     <>
       <ScrollToTop />
+      <PWAFeatures />
       {showErrorPage && <ErrorShowPage />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="plans" element={<PlansPage />} />
         </Route>
 
-        {/* Single Login — admin/employee/customer determined by credentials */}
+        {/* Single Login - admin/employee/customer determined by credentials */}
         <Route path="/login" element={<Login />} />
 
         {/* Customer Routes - Protected */}
@@ -62,7 +81,7 @@ function App() {
           element={<Navigate to="/customer/dashboard" replace />}
         />
 
-        {/* Super Admin Routes — SaaS Master Controller */}
+        {/* Super Admin Routes - SaaS Master Controller */}
         <Route
           path="/superadmin"
           element={
@@ -72,6 +91,14 @@ function App() {
           }
         >
           <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="organizations"
             element={
               <ProtectedRoute allowedRoles={['superadmin']}>
@@ -79,7 +106,23 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route index element={<Navigate to="/superadmin/organizations" replace />} />
+          <Route
+            path="signup-requests"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SignupRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperAdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route index element={<Navigate to="/superadmin/dashboard" replace />} />
         </Route>
 
         {/* Admin Routes - Protected */}
@@ -204,7 +247,7 @@ function AdminRedirect() {
   }
 
   if (role === 'superadmin') {
-    return <Navigate to="/superadmin/organizations" replace />;
+    return <Navigate to="/superadmin/dashboard" replace />;
   }
 
   if (role === 'admin') {

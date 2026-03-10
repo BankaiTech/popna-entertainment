@@ -7,21 +7,32 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['NexLink.svg', 'Product Logo.png', 'Product Logo.svg'],
+      registerType: 'prompt', // so we can show "New version available. Reload?" via useRegisterSW
+      includeAssets: ['Popna.png', 'Popna Logo.png'],
       manifest: false, // Managed manually via public/manifest.json
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
+        // Allow large assets (e.g. hero image) to be precached; default is 2 MiB
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MiB
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^(?!\/(api|v1))/],
         runtimeCaching: [
           {
             urlPattern: /^http:\/\/localhost:3001\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60, // 1 hour
-              },
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 10,
+            },
+          },
+          // Production API: cache list/data for offline; set VITE_API_ORIGIN or use same origin
+          {
+            urlPattern: /^\/(api|v1)\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
               networkTimeoutSeconds: 10,
             },
           },
@@ -29,6 +40,7 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
+        navigateFallbackDenylist: [/^\/api/, /^\/v1/],
       },
     }),
   ],

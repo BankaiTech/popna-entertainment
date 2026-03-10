@@ -1,11 +1,11 @@
-// SaaS Ready — Fully Dynamic Product
+// SaaS Ready - Fully Dynamic Product
 import type { Plan, Customer, Complaint, User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
-// Multi-tenant SaaS Isolation — All mock data scoped by organizationId.
-// Products fully dynamic — no hardcoded service names. Mock uses product names from Products API.
+// Multi-tenant SaaS Isolation - All mock data scoped by organizationId.
+// Products fully dynamic - no hardcoded service names. Mock uses product names from Products API.
 
-// Mock Plans — provider = product name from Admin → Settings → Products
+// Mock Plans - provider = product name from Admin → Settings → Products
 export const mockPlans: Plan[] = [
   {
     id: 1,
@@ -151,7 +151,7 @@ const getDateString = (daysAgo: number): string => {
   return date.toISOString();
 };
 
-// Mock Customers — Payment Collection System applies to ALL product types (SaaS Ready)
+// Mock Customers - Payment Collection System applies to ALL product types (SaaS Ready)
 export const mockCustomers: Customer[] = [
   {
     id: 1,
@@ -187,8 +187,8 @@ export const mockCustomers: Customer[] = [
   {
     id: 2,
     organizationId: MOCK_ORGANIZATION_ID,
-    name: 'Priya Sharma',
-    email: 'priya.sharma@example.com',
+    name: 'Naresh',
+    email: 'naresh@example.com',
     mobile: '9876543211',
     password: 'password123',
     connectionType: 'Internet 1',
@@ -690,7 +690,7 @@ export const mockComplaints: Complaint[] = [
     id: 2,
     organizationId: MOCK_ORGANIZATION_ID,
     customerId: 2,
-    customerName: 'Priya Sharma',
+    customerName: 'Naresh',
     mobile: '9876543211',
     connectionType: 'Internet 1',
     customerDescription: 'Billing issue - charged extra amount this month. Need clarification on bill.',

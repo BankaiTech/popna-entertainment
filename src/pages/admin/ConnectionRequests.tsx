@@ -1,4 +1,4 @@
-// Connection Requests — Shows only "New" requests with clickable badge to add customer
+// Connection Requests - Shows only "New" requests with clickable badge to add customer
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { Search, Info } from 'lucide-react';
 import CustomerSheet from '@/components/CustomerSheet';
 import type { ConnectionRequest } from '@/models/types';
+import { showError } from '@/utils/toast';
 
 const ConnectionRequests = () => {
   const { t } = useTranslation();
@@ -24,10 +25,22 @@ const ConnectionRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(null);
   const itemsPerPage = 10;
 
+  const { addCustomer, products, fetchProducts } = useStore();
+
   useEffect(() => {
     loadRequests();
     fetchProducts();
   }, [fetchProducts]);
+
+  const handleAddCustomer = (customerData: any) => {
+    // Add customer and mark request as converted
+    addCustomer(customerData);
+    if (selectedRequest) {
+      handleStatusUpdate(selectedRequest.id, 'Converted');
+    }
+    setIsCustomerSheetOpen(false);
+    setSelectedRequest(null);
+  };
 
   const loadRequests = async () => {
     try {
@@ -47,21 +60,10 @@ const ConnectionRequests = () => {
       await loadRequests();
     } catch (error) {
       console.error('Error updating status:', error);
-      alert(t('connectionRequests.updateError', 'Failed to update status. Please try again.'));
+      showError(t('connectionRequests.updateError', 'Failed to update status. Please try again.'));
     }
   };
 
-  const { addCustomer, products, fetchProducts } = useStore();
-
-  const handleAddCustomer = (customerData: any) => {
-    // Add customer and mark request as converted
-    addCustomer(customerData);
-    if (selectedRequest) {
-      handleStatusUpdate(selectedRequest.id, 'Converted');
-    }
-    setIsCustomerSheetOpen(false);
-    setSelectedRequest(null);
-  };
 
   const handleNewBadgeClick = (request: ConnectionRequest) => {
     setSelectedRequest(request);
@@ -135,7 +137,7 @@ const ConnectionRequests = () => {
             <div className="p-8 text-center text-gray-600">{t('connectionRequests.empty', 'No connection requests found.')}</div>
           ) : (
             <>
-              {/* Desktop Table View — Status shows "New" badge with info icon */}
+              {/* Desktop Table View - Status shows "New" badge with info icon */}
               <div className="hidden md:block">
                 <div className="min-w-full">
                   <table className="w-full">
@@ -203,7 +205,7 @@ const ConnectionRequests = () => {
                       </div>
                       <div className="space-y-1 text-sm">
                         <p><span className="text-gray-600">{t('connectionRequests.colMobile', 'Mobile')}:</span> {request.mobile}</p>
-                        <p><span className="text-gray-600">{t('connectionRequests.colEmail', 'Email')}:</span> {request.email || '—'}</p>
+                        <p><span className="text-gray-600">{t('connectionRequests.colEmail', 'Email')}:</span> {request.email || '-'}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colPlanName', 'Plan')}:</span> {request.planName}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colProductName', 'Product')}:</span> {getProviderDisplayName(request.productName)}</p>
                         <p><span className="text-gray-600">{t('connectionRequests.colRequestedDate', 'Date')}:</span> {formatDate(request.createdAt)}</p>

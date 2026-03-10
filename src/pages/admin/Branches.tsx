@@ -11,6 +11,8 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Plus, Search, MapPin, Edit, Trash2, Phone, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type DialogTab = 'info' | 'address';
+
 const AdminBranches = () => {
     const { t } = useTranslation();
     const [branches, setBranches] = useState<Branch[]>([]);
@@ -22,10 +24,17 @@ const AdminBranches = () => {
     // Form state
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+    const [activeTab, setActiveTab] = useState<DialogTab>('info');
     const [formName, setFormName] = useState('');
-    const [formAddress, setFormAddress] = useState('');
     const [formPhone, setFormPhone] = useState('');
+    const [formGstin, setFormGstin] = useState('');
     const [formActive, setFormActive] = useState(true);
+    const [formAddressLine1, setFormAddressLine1] = useState('');
+    const [formAddressLine2, setFormAddressLine2] = useState('');
+    const [formCity, setFormCity] = useState('');
+    const [formState, setFormState] = useState('');
+    const [formCountry, setFormCountry] = useState('India');
+    const [formPincode, setFormPincode] = useState('');
     const [formError, setFormError] = useState('');
     const [saving, setSaving] = useState(false);
 
@@ -50,7 +59,11 @@ const AdminBranches = () => {
         if (!searchQuery.trim()) return branches;
         const q = searchQuery.toLowerCase();
         return branches.filter((b) =>
-            b.name.toLowerCase().includes(q) || b.address?.toLowerCase().includes(q) || b.phone?.includes(q)
+            b.name.toLowerCase().includes(q) ||
+            b.city?.toLowerCase().includes(q) ||
+            b.addressLine1?.toLowerCase().includes(q) ||
+            b.phone?.includes(q) ||
+            b.gstin?.toLowerCase().includes(q)
         );
     }, [branches, searchQuery]);
 
@@ -60,22 +73,41 @@ const AdminBranches = () => {
         return filteredBranches.slice(start, start + itemsPerPage);
     }, [filteredBranches, currentPage, itemsPerPage]);
 
+    const getBranchDisplayAddress = (b: Branch) => {
+        const parts = [b.addressLine1, b.city, b.state].filter(Boolean);
+        return parts.length > 0 ? parts.join(', ') : b.address || '-';
+    };
+
     const handleOpenAdd = () => {
         setEditingBranch(null);
+        setActiveTab('info');
         setFormName('');
-        setFormAddress('');
         setFormPhone('');
+        setFormGstin('');
         setFormActive(true);
+        setFormAddressLine1('');
+        setFormAddressLine2('');
+        setFormCity('');
+        setFormState('');
+        setFormCountry('India');
+        setFormPincode('');
         setFormError('');
         setIsDialogOpen(true);
     };
 
     const handleOpenEdit = (branch: Branch) => {
         setEditingBranch(branch);
+        setActiveTab('info');
         setFormName(branch.name);
-        setFormAddress(branch.address || '');
         setFormPhone(branch.phone || '');
+        setFormGstin(branch.gstin || '');
         setFormActive(branch.isActive);
+        setFormAddressLine1(branch.addressLine1 || '');
+        setFormAddressLine2(branch.addressLine2 || '');
+        setFormCity(branch.city || '');
+        setFormState(branch.state || '');
+        setFormCountry(branch.country || 'India');
+        setFormPincode(branch.pincode || '');
         setFormError('');
         setIsDialogOpen(true);
     };
@@ -86,12 +118,27 @@ const AdminBranches = () => {
         const name = formName.trim();
         if (!name) { setFormError(t('branches.nameRequired', 'Branch name is required')); return; }
 
+        const payload = {
+            name,
+            phone: formPhone.trim(),
+            gstin: formGstin.trim(),
+            isActive: formActive,
+            addressLine1: formAddressLine1.trim(),
+            addressLine2: formAddressLine2.trim(),
+            city: formCity.trim(),
+            state: formState.trim(),
+            country: formCountry.trim(),
+            pincode: formPincode.trim(),
+            // Build legacy address string for backward compat
+            address: [formAddressLine1.trim(), formCity.trim(), formState.trim()].filter(Boolean).join(', '),
+        };
+
         setSaving(true);
         try {
             if (editingBranch) {
-                await branchesApi.update(editingBranch.id, { name, address: formAddress.trim(), phone: formPhone.trim(), isActive: formActive });
+                await branchesApi.update(editingBranch.id, payload);
             } else {
-                await branchesApi.create({ organizationId: MOCK_ORGANIZATION_ID, name, address: formAddress.trim(), phone: formPhone.trim(), isActive: formActive });
+                await branchesApi.create({ organizationId: MOCK_ORGANIZATION_ID, ...payload });
             }
             await loadBranches();
             setIsDialogOpen(false);
@@ -153,6 +200,7 @@ const AdminBranches = () => {
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('branches.colId', 'ID')}</th>
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('common.name', 'Name')}</th>
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('branches.colAddress', 'Address')}</th>
+                                            <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-36">{t('branches.colGstin', 'GSTIN')}</th>
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.mobile', 'Phone')}</th>
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.status', 'Status')}</th>
                                             <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('branches.colCreated', 'Created')}</th>
@@ -164,8 +212,9 @@ const AdminBranches = () => {
                                             <tr key={b.id} className={cn("border-b border-border hover:bg-muted/50 transition-colors", idx % 2 === 0 ? 'bg-white' : 'bg-muted/20')}>
                                                 <td className="px-3 py-2 text-sm text-gray-600">{b.id}</td>
                                                 <td className="px-3 py-2 text-sm font-medium text-foreground">{b.name}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-600">{b.address || '—'}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-600">{b.phone || '—'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-600">{getBranchDisplayAddress(b)}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-600 font-mono">{b.gstin || '-'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-600">{b.phone || '-'}</td>
                                                 <td className="px-3 py-2">
                                                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                                         {b.isActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
@@ -191,14 +240,15 @@ const AdminBranches = () => {
                                         <div className="flex justify-between items-start">
                                             <span className="font-medium text-foreground">{b.name}</span>
                                             <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", b.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                                {b.isActive ? 'Active' : 'Inactive'}
+                                                {b.isActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
                                             </span>
                                         </div>
-                                        {b.address && (
-                                            <div className="text-sm flex items-start gap-1">
-                                                <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                                                <span className="text-gray-600">{b.address}</span>
-                                            </div>
+                                        <div className="text-sm flex items-start gap-1">
+                                            <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                                            <span className="text-gray-600">{getBranchDisplayAddress(b)}</span>
+                                        </div>
+                                        {b.gstin && (
+                                            <div className="text-sm text-gray-600 font-mono">{t('branches.colGstin', 'GSTIN')}: {b.gstin}</div>
                                         )}
                                         {b.phone && (
                                             <div className="text-sm flex items-center gap-1">
@@ -230,32 +280,97 @@ const AdminBranches = () => {
             {isDialogOpen && (
                 <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
                     <DialogHeader title={editingBranch ? t('branches.dialogEditTitle', 'Edit Branch') : t('branches.dialogAddTitle', 'Add Branch')} onClose={() => setIsDialogOpen(false)} />
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-border shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('info')}
+                            className={cn(
+                                'flex-1 px-6 py-3 text-sm font-medium transition-colors',
+                                activeTab === 'info'
+                                    ? 'border-b-2 border-primary text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            )}
+                        >
+                            {t('branches.tabInfo', 'Information')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('address')}
+                            className={cn(
+                                'flex-1 px-6 py-3 text-sm font-medium transition-colors',
+                                activeTab === 'address'
+                                    ? 'border-b-2 border-primary text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            )}
+                        >
+                            {t('branches.tabAddress', 'Address')}
+                        </button>
+                    </div>
+
                     <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
                         <DialogBody>
-                            <div className="px-4 sm:px-6 py-4 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">{t('branches.labelName', 'Branch Name')} <span className="text-destructive">*</span></label>
-                                    <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t('branches.namePlaceholder', 'e.g. North Branch')} required disabled={saving} />
+                            {/* Info Tab */}
+                            {activeTab === 'info' && (
+                                <div className="px-4 sm:px-6 py-4 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('branches.labelName', 'Branch Name')} <span className="text-destructive">*</span></label>
+                                        <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t('branches.namePlaceholder', 'e.g. North Branch')} required disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('common.mobile', 'Phone')}</label>
+                                        <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder={t('branches.phonePlaceholder', 'Phone number')} disabled={saving} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">{t('branches.labelGstin', 'GSTIN')}</label>
+                                        <Input value={formGstin} onChange={(e) => setFormGstin(e.target.value.toUpperCase())} placeholder={t('branches.gstinPlaceholder', 'e.g. 27AABCU9603R1ZM')} maxLength={15} disabled={saving} className="font-mono" />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <label className="text-sm font-medium">{t('common.status', 'Status')}:</label>
+                                        <button type="button" onClick={() => setFormActive(!formActive)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors", formActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                                            {formActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                            {formActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">{t('branches.colAddress', 'Address')}</label>
-                                    <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={t('branches.addressPlaceholder', 'Full address')} disabled={saving} />
+                            )}
+
+                            {/* Address Tab */}
+                            {activeTab === 'address' && (
+                                <div className="px-4 sm:px-6 py-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.addressLine1', 'Address Line 1')}</label>
+                                            <Input value={formAddressLine1} onChange={(e) => setFormAddressLine1(e.target.value)} placeholder={t('branches.addressLine1Placeholder', 'Street address')} disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.addressLine2', 'Address Line 2')}</label>
+                                            <Input value={formAddressLine2} onChange={(e) => setFormAddressLine2(e.target.value)} placeholder={t('branches.addressLine2Placeholder', 'Area, landmark')} disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.city', 'City')}</label>
+                                            <Input value={formCity} onChange={(e) => setFormCity(e.target.value)} placeholder={t('branches.cityPlaceholder', 'City')} disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.state', 'State')}</label>
+                                            <Input value={formState} onChange={(e) => setFormState(e.target.value)} placeholder={t('branches.statePlaceholder', 'State')} disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.country', 'Country')}</label>
+                                            <Input value={formCountry} onChange={(e) => setFormCountry(e.target.value)} placeholder={t('branches.countryPlaceholder', 'Country')} disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('branches.pincode', 'Pincode')}</label>
+                                            <Input value={formPincode} onChange={(e) => setFormPincode(e.target.value)} placeholder={t('branches.pincodePlaceholder', 'Pincode')} disabled={saving} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">{t('common.mobile', 'Phone')}</label>
-                                    <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder={t('branches.phonePlaceholder', 'Phone number')} disabled={saving} />
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <label className="text-sm font-medium">{t('common.status', 'Status')}:</label>
-                                    <button type="button" onClick={() => setFormActive(!formActive)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors", formActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                        {formActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                        {formActive ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                                    </button>
-                                </div>
-                                {formError && (
-                                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">{formError}</div>
-                                )}
-                            </div>
+                            )}
+
+                            {formError && (
+                                <div className="mx-4 sm:mx-6 mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">{formError}</div>
+                            )}
                         </DialogBody>
                         <DialogFooter className="flex-col sm:flex-row gap-2">
                             <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto" disabled={saving}>{t('common.cancel', 'Cancel')}</Button>

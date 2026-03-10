@@ -6,7 +6,7 @@ import type { ServiceCategory, Product } from '@/models/types';
 export const getServiceCategory = (productType: 'cable' | 'internet'): ServiceCategory => productType;
 
 /**
- * Check if provider is cable type. Uses product data only — no hardcoded names.
+ * Check if provider is cable type. Uses product data only - no hardcoded names.
  */
 export const isCableProvider = (provider: string, products?: Product[]): boolean => {
   if (!products?.length) return false;
@@ -15,7 +15,7 @@ export const isCableProvider = (provider: string, products?: Product[]): boolean
 };
 
 /**
- * Check if provider is internet type. Uses product data only — no hardcoded names.
+ * Check if provider is internet type. Uses product data only - no hardcoded names.
  */
 export const isInternetProvider = (provider: string, products?: Product[]): boolean => {
   if (!products?.length) return false;
