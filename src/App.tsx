@@ -9,7 +9,6 @@ import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
 import ErrorShowPage from './pages/ErrorShowPage';
-import PlansPage from './pages/public/PlansPage';
 import AdminDashboard from './pages/admin/Dashboard';
 // Catalog module removed — merged into Inventory
 // Customers module removed — merged into Contacts
@@ -61,7 +60,6 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="plans" element={<PlansPage />} />
         </Route>
 
         {/* Single Login — admin/employee/customer determined by credentials */}

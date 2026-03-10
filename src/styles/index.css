@@ -375,3 +375,22 @@ body {
 .dark .hover\:text-gray-900:hover { color: #f1f5f9 !important; }
 .dark .hover\:border-gray-300:hover { border-color: #475569 !important; }
 .dark .border-gray-300 { border-color: #475569 !important; }
+
+/* ─── Homepage animations ─── */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.02); }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-float { animation: float 8s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 10s ease-in-out infinite 2s; }
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}

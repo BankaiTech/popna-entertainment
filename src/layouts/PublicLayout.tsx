@@ -16,28 +16,23 @@ const PublicLayout = () => {
   const { companyProfile, fetchCompanyProfile, fetchActiveProducts } = useStore();
 
   useEffect(() => {
-    // Load data if not already initialized, but don't block rendering
     const loadData = async () => {
       try {
         await fetchCompanyProfile();
         await fetchActiveProducts();
       } catch (error) {
         console.error('Error loading layout data:', error);
-        // Continue rendering with mock data
       }
     };
-    // Always try to load data, but don't block rendering
     loadData();
   }, [fetchCompanyProfile, fetchActiveProducts]);
 
-  // Multi-tenant ready — company name from settings; fallback to Businexa
   const companyName = companyProfile?.companyName || 'Businexa';
-
-  // Multi-tenant ready — company name from settings
+  const isHomePage = location.pathname === '/';
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
-      {/* Navbar — Dynamic based on active products — Sticky header */}
+      {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -59,21 +54,28 @@ const PublicLayout = () => {
                 {t('nav.home')}
               </Link>
 
-              <Link
-                to="/plans"
-                className={cn(
-                  'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/plans' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                )}
-              >
-                {t('nav.plans')}
-              </Link>
+              {isHomePage && (
+                <>
+                  <a
+                    href="#features"
+                    className="px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {t('home.features.title', 'Features')}
+                  </a>
+                  <a
+                    href="#contact"
+                    className="px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {t('home.contact.title', 'Contact')}
+                  </a>
+                </>
+              )}
 
               <Link
                 to="/login"
                 className={cn(
                   'px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === '/login' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30'
                 )}
               >
                 {t('nav.login')}
@@ -82,54 +84,55 @@ const PublicLayout = () => {
               <LanguageSwitcher />
             </div>
 
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-accent rounded-md transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 dark:border-gray-800 py-2 bg-white dark:bg-gray-950">
-              <Link
-                to="/"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={cn(
-                  'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
-                )}
-              >
-                {t('nav.home')}
-              </Link>
-
-              <Link
-                to="/plans"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={cn(
-                  'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/plans' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
-                )}
-              >
-                {t('nav.plans')}
-              </Link>
-
+            {/* Mobile: Login + Theme + Language + Hamburger always visible */}
+            <div className="md:hidden flex items-center gap-1">
+              <ThemeSwitcher />
+              <LanguageSwitcher />
               <Link
                 to="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  'block px-4 py-3 text-sm font-medium',
-                  location.pathname === '/login' ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
+                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  location.pathname === '/login' ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'
                 )}
               >
                 {t('nav.login')}
               </Link>
-              <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                <ThemeSwitcher />
-                <LanguageSwitcher />
-              </div>
+              {isHomePage && (
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 hover:bg-accent rounded-md transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Navigation — section anchors (only on homepage) */}
+          {isMobileMenuOpen && isHomePage && (
+            <div className="md:hidden border-t border-gray-200 dark:border-gray-800 py-2 bg-white dark:bg-gray-950">
+              <a
+                href="#features"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
+              >
+                {t('home.features.title', 'Features')}
+              </a>
+              <a
+                href="#about"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
+              >
+                {t('home.about.title', 'About')}
+              </a>
+              <a
+                href="#contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
+              >
+                {t('home.contact.title', 'Contact')}
+              </a>
             </div>
           )}
         </div>
@@ -140,7 +143,7 @@ const PublicLayout = () => {
         <Outlet />
       </main>
 
-      {/* Footer — Sticky at bottom */}
+      {/* Footer */}
       <footer className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
@@ -158,11 +161,20 @@ const PublicLayout = () => {
                     {t('nav.home')}
                   </Link>
                 </li>
-                <li>
-                  <Link to="/plans" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
-                    {t('nav.plans')}
-                  </Link>
-                </li>
+                {isHomePage && (
+                  <>
+                    <li>
+                      <a href="#features" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        {t('home.features.title', 'Features')}
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#contact" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        {t('home.contact.title', 'Contact')}
+                      </a>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
             <div>
@@ -173,7 +185,7 @@ const PublicLayout = () => {
           </div>
           <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
             <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <p>&copy; 2024 {companyName}. {t('footer.rightsReserved')}</p>
+              <p>&copy; {new Date().getFullYear()} {companyName}. {t('footer.rightsReserved')}</p>
               <FooterCredit />
             </div>
           </div>

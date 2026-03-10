@@ -608,7 +608,7 @@ const PointOfSale = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrencyINR(grandTotal)}</p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('pos.paymentReceived', 'Payment received via')} {getPaymentMethodLabel(paymentMethod)}</p>
-                                {lastInvoiceNumber && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Invoice: {lastInvoiceNumber}</p>}
+                                {lastInvoiceNumber && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('pos.invoiceLabel', 'Invoice')}: {lastInvoiceNumber}</p>}
                             </div>
 
                             {selectedCustomer && (
