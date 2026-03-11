@@ -2,7 +2,7 @@
 -- Popna Entertainment — ISP Management Platform
 -- PostgreSQL Schema Migration: 001_create_tables
 -- =============================================================================
--- Tables: 25
+-- Tables: 29
 --   1.  organizations
 --   2.  users
 --   3.  customers          (UI label: Contacts)
@@ -28,6 +28,10 @@
 --  23.  pos_transactions
 --  24.  pos_transaction_items
 --  25.  upi_payment_config
+--  26.  superadmin_users
+--  27.  signup_requests
+--  28.  sms_config
+--  29.  sms_logs
 -- =============================================================================
 
 -- Enable UUID extension if preferred for PKs
@@ -57,6 +61,8 @@ CREATE TYPE weight_unit             AS ENUM ('g', 'kg', 'lb');
 CREATE TYPE duration_unit           AS ENUM ('days', 'months', 'years');
 CREATE TYPE pos_payment_method      AS ENUM ('cash', 'upi', 'card', 'bank_transfer', 'other');
 CREATE TYPE pos_status              AS ENUM ('completed', 'refunded', 'voided');
+CREATE TYPE superadmin_role         AS ENUM ('super_admin', 'manager');
+CREATE TYPE sms_status              AS ENUM ('sent', 'failed', 'pending');
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 1: organizations
@@ -81,7 +87,7 @@ CREATE TABLE organizations (
 
 COMMENT ON TABLE organizations IS 'SaaS master table — root of all tenant data';
 COMMENT ON COLUMN organizations.allowed_modules IS 'ModuleKey[]: dashboard|contacts|complaints|payments|invoices|purchase-invoices|users|settings|connection-requests|inventory-products|products|branches|pos';
-COMMENT ON COLUMN organizations.allowed_settings_tabs IS 'SettingsTabKey[]: company|products|billing';
+COMMENT ON COLUMN organizations.allowed_settings_tabs IS 'SettingsTabKey[]: company|products|billing|pos';
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 2: users
@@ -116,8 +122,15 @@ CREATE TABLE branches (
     organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name             VARCHAR(255)  NOT NULL,
     location         VARCHAR(255),
-    address          TEXT,
+    address          TEXT,                                              -- @deprecated: use structured fields below
     phone            VARCHAR(20),
+    gstin            VARCHAR(20),                                      -- branch-level GSTIN
+    address_line1    VARCHAR(255),
+    address_line2    VARCHAR(255),
+    city             VARCHAR(100),
+    state            VARCHAR(100),
+    country          VARCHAR(100)  DEFAULT 'India',
+    pincode          VARCHAR(10),
     is_active        BOOLEAN       NOT NULL DEFAULT TRUE,
     created_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, name)
@@ -266,6 +279,7 @@ CREATE TABLE sales_invoices (
     id               SERIAL          PRIMARY KEY,
     organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     invoice_number   VARCHAR(50)     NOT NULL,
+    branch_id        INT             REFERENCES branches(id) ON DELETE SET NULL,
     customer_id      INT             REFERENCES customers(id) ON DELETE SET NULL,
     customer_name    VARCHAR(255)    NOT NULL,
     service_provider VARCHAR(100)    NOT NULL,
@@ -578,13 +592,18 @@ COMMENT ON COLUMN inventory_products.image IS 'Store S3/CDN presigned URL — ne
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_product_variants (
-    id           SERIAL          PRIMARY KEY,
-    product_id   INT             NOT NULL REFERENCES inventory_products(id) ON DELETE CASCADE,
-    name         VARCHAR(255)    NOT NULL,                        -- e.g. "Red / XL"
-    sku          VARCHAR(100),
-    price        DECIMAL(10,2),                                   -- overrides product price if set
-    stock        INT             DEFAULT 0,
-    created_at   TIMESTAMP       NOT NULL DEFAULT NOW()
+    id              SERIAL          PRIMARY KEY,
+    product_id      INT             NOT NULL REFERENCES inventory_products(id) ON DELETE CASCADE,
+    name            VARCHAR(255)    NOT NULL,                     -- e.g. "Red / XL", "128GB"
+    sku             VARCHAR(100),                                 -- variant-level SKU
+    price           DECIMAL(10,2),                                -- overrides product price if set
+    purchase_price  DECIMAL(10,2),                                -- variant-level cost price
+    mrp             DECIMAL(10,2),                                -- variant-level MRP
+    tax_type        tax_type        DEFAULT 'exclusive',          -- variant-level tax type
+    warranty_id     INT             REFERENCES inventory_warranties(id) ON DELETE SET NULL,
+    barcode         VARCHAR(100),                                 -- variant-level barcode (EAN/UPC)
+    current_stock   INT             DEFAULT 0,                    -- stock per variant
+    created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_inv_variants_product ON inventory_product_variants(product_id);
@@ -659,6 +678,97 @@ CREATE INDEX idx_upi_config_org ON upi_payment_config(organization_id);
 COMMENT ON TABLE upi_payment_config IS 'UPI payment gateway config per tenant. Maps to upiPayment.ts UpiPaymentConfig interface.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 26: superadmin_users
+-- Platform-level super admin accounts (NOT scoped to any organization).
+-- Maps to SuperAdminUser interface in types.ts.
+-- Roles: super_admin (full access) | manager (permission-based access).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE superadmin_users (
+    id                    SERIAL            PRIMARY KEY,
+    name                  VARCHAR(255)      NOT NULL,
+    username              VARCHAR(100)      NOT NULL UNIQUE,          -- globally unique
+    password_hash         VARCHAR(255)      NOT NULL,                 -- bcrypt/argon2 hash
+    role                  superadmin_role   NOT NULL DEFAULT 'manager',
+    status                user_status       NOT NULL DEFAULT 'active',
+    allowed_permissions   JSONB             DEFAULT '[]',             -- SAPermissionKey[] for managers
+    created_at            TIMESTAMP         NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE superadmin_users IS 'Platform-level admin accounts. Not tied to any organization.';
+COMMENT ON COLUMN superadmin_users.allowed_permissions IS 'SAPermissionKey[]: sa_dashboard|sa_organizations_view|sa_organizations_add|sa_organizations_edit|sa_organizations_inactive|sa_signup_requests|sa_users';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 27: signup_requests
+-- Business signup requests submitted from the public landing page.
+-- Managed by super admins via the SignupRequests page.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE signup_requests (
+    id               SERIAL        PRIMARY KEY,
+    name             VARCHAR(255)  NOT NULL,
+    mobile           VARCHAR(15)   NOT NULL,
+    email            VARCHAR(255)  NOT NULL,
+    business_type    VARCHAR(100)  NOT NULL,                     -- e.g. 'ISP', 'Cable Operator', 'Retail'
+    business_name    VARCHAR(255)  NOT NULL,
+    created_at       TIMESTAMP     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_signup_requests_date ON signup_requests(created_at DESC);
+
+COMMENT ON TABLE signup_requests IS 'Public signup requests from potential tenants. Not scoped to an organization.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 28: sms_config
+-- SMS provider configuration per organization.
+-- Supports 3rd-party SMS APIs (MSG91, Twilio, TextLocal, etc.).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE sms_config (
+    id               SERIAL        PRIMARY KEY,
+    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    provider         VARCHAR(50)   NOT NULL DEFAULT '',           -- e.g. 'msg91', 'twilio', 'textlocal'
+    api_key          VARCHAR(255)  NOT NULL DEFAULT '',           -- provider API key / auth token
+    sender_id        VARCHAR(20)   NOT NULL DEFAULT '',           -- 6-char sender ID (Indian DLT)
+    template_id      VARCHAR(100)  DEFAULT '',                    -- DLT-approved template ID
+    enabled          BOOLEAN       NOT NULL DEFAULT FALSE,
+    -- Payment SMS template placeholders: {customer_name}, {amount}, {method}, {balance}, {company}
+    payment_template TEXT          DEFAULT 'Dear {customer_name}, payment of Rs.{amount} received via {method}. Balance: Rs.{balance}. Thank you - {company}',
+    updated_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    UNIQUE (organization_id)
+);
+
+CREATE INDEX idx_sms_config_org ON sms_config(organization_id);
+
+COMMENT ON TABLE sms_config IS 'SMS gateway config per tenant. Backend sends SMS on payment collection.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 29: sms_logs
+-- Audit trail for all SMS sent by the system.
+-- Tracks delivery status for debugging and reporting.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE sms_logs (
+    id               SERIAL        PRIMARY KEY,
+    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    customer_id      INT           REFERENCES customers(id) ON DELETE SET NULL,
+    mobile           VARCHAR(15)   NOT NULL,
+    message          TEXT          NOT NULL,
+    sms_type         VARCHAR(50)   NOT NULL DEFAULT 'payment',    -- payment | reminder | welcome | custom
+    status           sms_status    NOT NULL DEFAULT 'pending',
+    provider_ref     VARCHAR(255),                                -- provider message ID for tracking
+    error_message    TEXT,                                        -- failure reason if status = 'failed'
+    sent_at          TIMESTAMP     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_sms_logs_org      ON sms_logs(organization_id);
+CREATE INDEX idx_sms_logs_customer ON sms_logs(customer_id);
+CREATE INDEX idx_sms_logs_date     ON sms_logs(organization_id, sent_at DESC);
+CREATE INDEX idx_sms_logs_type     ON sms_logs(organization_id, sms_type);
+
+COMMENT ON TABLE sms_logs IS 'Audit trail for all SMS sent. Tracks delivery for debugging and compliance.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- UPDATED_AT trigger function
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -684,4 +794,8 @@ CREATE TRIGGER set_updated_at_website_settings
 
 CREATE TRIGGER set_updated_at_upi_payment_config
     BEFORE UPDATE ON upi_payment_config
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER set_updated_at_sms_config
+    BEFORE UPDATE ON sms_config
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();

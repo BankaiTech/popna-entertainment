@@ -6,11 +6,12 @@
 -- without manual data entry.
 --
 -- Record counts:
---   1 organization, 2 users, 3 branches
+--   1 organization, 2 users, 3 branches, 1 superadmin user
 --   4 products, 12 plans
 --   22 customers, 18 complaints, 3 sales invoices
 --   2 vendors, 2 purchase invoices, 3 connection requests
 --   1 company profile, 1 website settings, 1 upi payment config
+--   1 sms config (disabled by default)
 --   2 suppliers
 --   4 inventory categories, 7 inventory subcategories
 --   5 inventory units, 5 inventory tax rates, 5 inventory warranties
@@ -28,7 +29,7 @@ VALUES (
     'Popna Entertainment',
     'active',
     '["dashboard","contacts","complaints","payments","invoices","purchase-invoices","users","settings","connection-requests","inventory-products","products","branches","pos"]',
-    '["company","products","billing"]',
+    '["company","products","billing","pos"]',
     '2025-01-01',
     '2027-12-31'
 );
@@ -37,11 +38,26 @@ VALUES (
 -- Branches  (inserted before users so branch_id FK is resolvable)
 -- ─────────────────────────────────────────────────────────────────────────────
 
-INSERT INTO branches (organization_id, name, location, address, phone, is_active)
+INSERT INTO branches (
+    organization_id, name, location, address, phone, gstin,
+    address_line1, address_line2, city, state, country, pincode, is_active
+)
 VALUES
-    ('org_001', 'Main Office',  'Mumbai Central', '101 Business Park, Mumbai, Maharashtra 400001', '9000000000', TRUE),
-    ('org_001', 'North Branch', 'Andheri',        '45 Link Road, Andheri West, Mumbai 400053',     '9000000011', TRUE),
-    ('org_001', 'South Branch', 'Thane',          '7 Station Road, Thane, Maharashtra 400601',     '9000000022', TRUE);
+    (
+        'org_001', 'Main Office', 'Mumbai Central',
+        '101 Business Park, Mumbai, Maharashtra 400001', '9000000000', '27AABCU9603R1ZM',
+        '101 Business Park', 'Andheri East', 'Mumbai', 'Maharashtra', 'India', '400069', TRUE
+    ),
+    (
+        'org_001', 'North Branch', 'Andheri',
+        '45 Link Road, Andheri West, Mumbai 400053', '9000000011', '07AABCU9603R1ZN',
+        '45 Link Road', 'Andheri West', 'Mumbai', 'Maharashtra', 'India', '400053', TRUE
+    ),
+    (
+        'org_001', 'South Branch', 'Thane',
+        '7 Station Road, Thane, Maharashtra 400601', '9000000022', NULL,
+        '7 Station Road', NULL, 'Thane', 'Maharashtra', 'India', '400601', TRUE
+    );
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Users
@@ -473,23 +489,23 @@ VALUES
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO sales_invoices (
-    organization_id, invoice_number, customer_id, customer_name,
+    organization_id, invoice_number, branch_id, customer_id, customer_name,
     service_provider, plan_name, amount, gst_rate, gst_amount, total_amount,
     status, invoice_type, issue_date, due_date
 )
 VALUES
     (
-        'org_001', 'INV-2024-001', 1, 'Rajesh Kumar',
+        'org_001', 'INV-2024-001', 1, 1, 'Rajesh Kumar',
         'Cable', 'Cable Basic 50 Mbps', 499, 18, 89.82, 588.82,
         'paid', 'tax_invoice', CURRENT_DATE - 15, CURRENT_DATE - 5
     ),
     (
-        'org_001', 'INV-2024-002', 2, 'Priya Sharma',
+        'org_001', 'INV-2024-002', 1, 2, 'Priya Sharma',
         'Internet 1', 'Internet 1 Fiber Basic', 449, 18, 80.82, 529.82,
         'sent', 'tax_invoice', CURRENT_DATE - 8, CURRENT_DATE + 2
     ),
     (
-        'org_001', 'INV-2024-003', 3, 'Amit Patel',
+        'org_001', 'INV-2024-003', 1, 3, 'Amit Patel',
         'Internet 2', 'Internet 2 Express 75 Mbps', 599, 18, 107.82, 706.82,
         'draft', 'tax_invoice', CURRENT_DATE, CURRENT_DATE + 30
     );
@@ -772,3 +788,31 @@ INSERT INTO pos_transaction_items (
 VALUES
     (1, 1, 'Dual-Band WiFi Router', 1, 1200, 18, 216, 1416),
     (2, 5, 'Installation Service',  1,  500, 18,  90,  590);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Super Admin Users  (platform-level, not scoped to any organization)
+-- Mirrors superadminUsers.ts mock data
+-- Password: test123 → generate hash: node -e "require('bcrypt').hash('test123',10).then(console.log)"
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO superadmin_users (name, username, password_hash, role, status, allowed_permissions)
+VALUES
+    ('Super Admin', 'superadmin', '$2b$10$PLACEHOLDER_HASH_SA', 'super_admin', 'active', '[]');
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- SMS Config  (disabled by default — admin enables after entering provider creds)
+-- Supports payment SMS: sent when customer payment_status changes to 'paid'
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO sms_config (
+    organization_id, provider, api_key, sender_id, template_id, enabled, payment_template
+)
+VALUES (
+    'org_001',
+    '',
+    '',
+    '',
+    '',
+    FALSE,
+    'Dear {customer_name}, payment of Rs.{amount} received via {method}. Balance: Rs.{balance}. Thank you - {company}'
+);
