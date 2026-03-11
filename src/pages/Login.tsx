@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Lock, User, ArrowRight, Building2, ArrowLeft, Eye, EyeOff, Mail, Phone, Briefcase } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
-import Logo from '@/components/Logo';
+
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTheme } from '@/components/ThemeProvider';
 import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -43,17 +44,27 @@ const Login = () => {
   });
 
   // Force light mode while on the login page and restore previous theme on unmount
+  const { resolvedTheme } = useTheme();
   const prevThemeRef = useRef<'light' | 'dark' | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
-    prevThemeRef.current = root.classList.contains('dark') ? 'dark' : 'light';
+    // Capture the current theme only once on mount
+    if (!prevThemeRef.current) {
+      prevThemeRef.current = root.classList.contains('dark') ? 'dark' : 'light';
+    }
+
+    // Always enforce light mode while this component is mounted
     root.classList.remove('dark');
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
       meta.setAttribute('content', '#2563eb');
     }
+
     return () => {
+      // We only want to restore on true unmount, but Strict Mode unmounts and remounts
+      // If we navigate away, we restore. In StrictMode, it might flash. 
+      // Actually, relying on ThemeProvider is better, but this handles DOM.
       if (prevThemeRef.current === 'dark') {
         root.classList.add('dark');
         const metaTag = document.querySelector('meta[name="theme-color"]');
@@ -62,7 +73,7 @@ const Login = () => {
         }
       }
     };
-  }, []);
+  }, [resolvedTheme]); // Re-run if ThemeProvider tries to apply dark mode again
 
   useEffect(() => {
     initialize();
@@ -196,18 +207,22 @@ const Login = () => {
                 : t('login.signInToContinue', 'Sign in to manage your business, invoices, contacts and more - all in one powerful platform.')}
             </p>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               t('home.features.invoicing', 'GST Invoicing'),
               t('home.features.contacts', 'Contact Management'),
               t('home.features.pos', 'Point of Sale'),
               t('home.benefits.multiLang', 'Multi-Language Support'),
+              t('home.features.inventory', 'Inventory Module'),
+              t('home.features.labels', 'Label Print'),
+              t('home.features.thermal', 'POS Thermal Bill'),
+              t('home.features.reports', 'Business Reports'),
             ].map((feat) => (
-              <div key={feat} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <ArrowRight className="w-3 h-3 text-white" />
+              <div key={feat} className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <ArrowRight className="w-2.5 h-2.5 text-white" />
                 </div>
-                <span className="text-sm text-white/75">{feat}</span>
+                <span className="text-xs text-white/80 font-medium">{feat}</span>
               </div>
             ))}
           </div>
@@ -236,7 +251,7 @@ const Login = () => {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-8 lg:hidden">
-              <Logo className="h-12 w-auto" />
+              <img src="/Popna.png" alt="Popna" className="h-12 w-auto" />
             </div>
 
             {!isSignup ? (

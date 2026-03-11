@@ -71,13 +71,13 @@ const HomePage = () => {
       },
       { threshold: 0.5, rootMargin: "-10% 0px -20% 0px" }
     );
-    
+
     // Slight delay to allow DOM to render before observing
     const timer = setTimeout(() => {
       const blocks = document.querySelectorAll('.showcase-trigger');
       blocks.forEach((block) => observer.observe(block));
     }, 100);
-    
+
     return () => {
       clearTimeout(timer);
       observer.disconnect();
@@ -247,13 +247,13 @@ const HomePage = () => {
 
       {/* ════ Module Showcase — In-Place Scroll Alternating ════ */}
       <section id="showcase" className="relative bg-black text-white">
-        {/* Track for scroll height - roughly 3 viewport heights */}
-        <div className="relative h-[300vh]">
-          
+        {/* Track for scroll height - roughly 6 viewport heights */}
+        <div className="relative h-[600vh]">
+
           {/* Sticky container that locks into view */}
           <div className="sticky top-0 h-screen w-full flex items-center overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full flex flex-col justify-center py-12 md:py-24">
-              
+
               <div className="text-center mb-8 md:mb-12">
                 <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
                   {t('home.showcase.title', 'Platform Features')}
@@ -265,29 +265,65 @@ const HomePage = () => {
                 {[
                   {
                     title: t('dashboard.title', 'Dashboard'),
-                    desc: t('dashboard.subtitle', 'Overview of your business management system in real-time.'),
+                    desc: t(
+                      'home.showcase.dashboardDesc',
+                      'Overview of your business management system in real-time. Track key metrics, alerts, and trends at a glance.'
+                    ),
                     img: '/Dashboard.png',
                     icon: BarChart3,
                   },
                   {
                     title: t('home.features.contacts', 'Contacts Management'),
-                    desc: t('home.features.contactsDesc', 'Manage customers and their subscription plans efficiently.'),
+                    desc: t(
+                      'home.showcase.contactsDesc',
+                      'Manage customers and suppliers with detailed profiles and history. Keep everything organized for faster follow-ups.'
+                    ),
                     img: '/Contacts Module.png',
                     icon: Users,
                   },
                   {
                     title: t('home.features.pos', 'Point of Sale'),
-                    desc: t('home.features.posDesc', 'Quick and easy billing system for your retail operations.'),
+                    desc: t(
+                      'home.showcase.posDesc',
+                      'Quick and easy billing for your daily sales. Barcode scanning and multiple payments make checkout faster.'
+                    ),
                     img: '/POS Module.png',
                     icon: ShoppingCart,
+                  },
+                  {
+                    title: t('home.features.inventory', 'Inventory Module'),
+                    desc: t(
+                      'home.showcase.inventoryDesc',
+                      'Track stock levels, manage variations, and handle multiple locations seamlessly. Get low-stock visibility before you run out.'
+                    ),
+                    img: '/Inventory Module.png',
+                    icon: Package,
+                  },
+                  {
+                    title: t('home.features.labels', 'Label Print'),
+                    desc: t(
+                      'home.showcase.labelsDesc',
+                      'Design and print custom barcode labels for all your products effortlessly. Perfect for faster billing and stock tracking.'
+                    ),
+                    img: '/Label Print.png',
+                    icon: Zap,
+                  },
+                  {
+                    title: t('home.features.thermal', 'POS Thermal Bill'),
+                    desc: t(
+                      'home.showcase.thermalDesc',
+                      'Quickly print professional thermal receipts for faster checkout. Reduce waiting time and improve customer experience.'
+                    ),
+                    img: '/POS Thermal Bill.png',
+                    icon: FileText,
                   },
                 ].map((item, idx) => {
                   const Icon = item.icon;
                   const isActive = activeShowcaseIdx === idx;
                   const isEven = idx % 2 === 0;
-                  
+
                   return (
-                    <div 
+                    <div
                       key={idx}
                       className={cn(
                         "absolute inset-0 flex flex-col items-center gap-8 lg:gap-16 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] w-full h-full",
@@ -317,12 +353,12 @@ const HomePage = () => {
                           "inline-flex items-center gap-4 mb-4 sm:mb-6",
                           isEven ? "md:flex-row" : "md:flex-row-reverse"
                         )}>
-                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shrink-0 shadow-xl">
-                             <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                           </div>
-                           <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                             {item.title}
-                           </h3>
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shrink-0 shadow-xl">
+                            <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                          </div>
+                          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+                            {item.title}
+                          </h3>
                         </div>
                         <p className="text-lg sm:text-xl lg:text-2xl text-white/70 leading-relaxed font-light max-w-sm sm:max-w-none md:mx-0">
                           {item.desc}
@@ -339,11 +375,11 @@ const HomePage = () => {
 
           {/* Invisible Scroll Triggers placed along the track */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col">
-            {[0, 1, 2].map((idx) => (
+            {[0, 1, 2, 3, 4, 5].map((idx) => (
               <div key={idx} className="h-screen w-full showcase-trigger" data-index={idx} />
             ))}
           </div>
-          
+
         </div>
       </section>
 
@@ -351,16 +387,31 @@ const HomePage = () => {
       <section id="benefits" className="py-16 sm:py-28 bg-gray-50 ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" ref={benefitsRef}>
           <div className="text-center mb-10 sm:mb-16 scroll-reveal opacity-0">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 text-black text-xs font-semibold uppercase tracking-wider mb-4 border border-black/10 ">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              {t('home.benefits.title')}
-            </div>
             <h2 className="text-2xl sm:text-4xl font-bold text-black mb-4 tracking-tight">
               {t('home.benefits.title')}
             </h2>
             <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
               {t('home.benefits.subtitle')}
             </p>
+            <p className="mt-4 text-sm sm:text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              {t(
+                'home.benefits.lead',
+                'Popna brings POS, invoicing, inventory, contacts, and complaint tracking into one simple workflow - so you spend less time managing software and more time growing your business.'
+              )}
+            </p>
+
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto text-left">
+              {[
+                t('home.benefits.point1', 'Fast daily operations with POS + thermal billing'),
+                t('home.benefits.point2', 'Accurate stock & barcode label printing for every item'),
+                t('home.benefits.point3', 'Cloud access + multi-language UI for your whole team'),
+              ].map((point) => (
+                <div key={point} className="flex items-start gap-2.5 rounded-2xl bg-white border border-gray-200 p-4">
+                  <CheckCircle2 className="w-5 h-5 text-black shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700 leading-relaxed">{point}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -424,9 +475,34 @@ const HomePage = () => {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-black mb-6 tracking-tight">
               {t('home.about.heading', 'About Popna')}
             </h2>
-            <p className="text-lg sm:text-2xl text-gray-700 font-medium mb-12">
-              {t('home.about.description', 'Popna is an application software designed to take your business to the next level.')}
-            </p>
+            <div className="mx-auto max-w-3xl mb-10 sm:mb-12 space-y-4 text-left">
+              <p className="text-base sm:text-lg text-gray-700 font-medium leading-relaxed">
+                {t(
+                  'home.about.p1',
+                  'Popna is a comprehensive business management platform designed for small and medium businesses.'
+                )}
+              </p>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                {t(
+                  'home.about.p2',
+                  'From point-of-sale and invoicing to inventory tracking and customer management, we provide all the tools you need in one integrated solution.'
+                )}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
+                {[
+                  t('home.about.point1', 'POS, barcode scanning, and quick billing'),
+                  t('home.about.point2', 'GST-ready invoices and payment tracking'),
+                  t('home.about.point3', 'Inventory, variants, and low-stock alerts'),
+                  t('home.about.point4', 'Contacts, complaints, and multi-branch support'),
+                ].map((point) => (
+                  <div key={point} className="flex items-start gap-2.5 rounded-2xl bg-gray-50 border border-gray-200 p-4">
+                    <CheckCircle2 className="w-5 h-5 text-black shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700 leading-relaxed">{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="inline-flex flex-col items-center w-full max-w-md p-8 sm:p-12 rounded-3xl bg-gray-50 border border-gray-200 shadow-xl shadow-gray-200/50 group hover:border-black/20 transition-all duration-300">
               <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
