@@ -2,16 +2,24 @@
 -- Popna Entertainment — ISP Management Platform
 -- PostgreSQL Seed Migration: 002_seed_data
 -- =============================================================================
--- Inserts the same data currently in db.json / mockData.ts so development
--- and testing can start immediately without manual data entry.
+-- Mirrors mockData.ts and db.json so development/testing starts immediately
+-- without manual data entry.
+--
+-- Record counts:
+--   1 organization, 2 users, 3 branches
+--   4 products, 12 plans
+--   22 customers, 18 complaints, 3 sales invoices
+--   2 vendors, 2 purchase invoices, 3 connection requests
+--   1 company profile, 1 website settings, 1 upi payment config
+--   2 suppliers
+--   4 inventory categories, 7 inventory subcategories
+--   5 inventory units, 5 inventory tax rates, 5 inventory warranties
+--   5 inventory products, 2 pos transactions + line items
 -- =============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Organization
--- allowed_modules reflects the full module set from ALL_MODULES in types.ts:
---   dashboard | contacts | complaints | payments | invoices | purchase-invoices
---   | users | settings | connection-requests | inventory-products | products
---   | branches | pos
+-- allowed_modules reflects ALL_MODULES from types.ts
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO organizations (id, name, status, allowed_modules, allowed_settings_tabs, subscription_start, subscription_end)
@@ -22,31 +30,34 @@ VALUES (
     '["dashboard","contacts","complaints","payments","invoices","purchase-invoices","users","settings","connection-requests","inventory-products","products","branches","pos"]',
     '["company","products","billing"]',
     '2025-01-01',
-    '2026-12-31'
+    '2027-12-31'
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Admin User  (password: admin123  →  bcrypt hash shown below)
--- Generate fresh hashes with: node -e "require('bcrypt').hash('admin123',10).then(console.log)"
--- ─────────────────────────────────────────────────────────────────────────────
-
-INSERT INTO users (organization_id, name, username, password_hash, role, status)
-VALUES
-    ('org_001', 'Admin User',    'admin',    '$2b$10$PLACEHOLDER_HASH_ADMIN',    'admin',    'active'),
-    ('org_001', 'Employee One',  'emp1',     '$2b$10$PLACEHOLDER_HASH_EMP1',     'employee', 'active');
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Branches
+-- Branches  (inserted before users so branch_id FK is resolvable)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO branches (organization_id, name, location, address, phone, is_active)
 VALUES
-    ('org_001', 'Main Office',    'Mumbai Central',   '101 Business Park, Mumbai, Maharashtra 400001', '9000000000', TRUE),
-    ('org_001', 'North Branch',   'Andheri',          '45 Link Road, Andheri West, Mumbai 400053',     '9000000011', TRUE),
-    ('org_001', 'South Branch',   'Thane',            '7 Station Road, Thane, Maharashtra 400601',     '9000000022', TRUE);
+    ('org_001', 'Main Office',  'Mumbai Central', '101 Business Park, Mumbai, Maharashtra 400001', '9000000000', TRUE),
+    ('org_001', 'North Branch', 'Andheri',        '45 Link Road, Andheri West, Mumbai 400053',     '9000000011', TRUE),
+    ('org_001', 'South Branch', 'Thane',          '7 Station Road, Thane, Maharashtra 400601',     '9000000022', TRUE);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Users
+-- Usernames match mockData.ts: bankaitech (admin), bankaitech-emp (employee)
+-- allowed_modules mirrors the employee's restricted access in mockData
+-- Generate fresh bcrypt hashes: node -e "require('bcrypt').hash('test123',10).then(console.log)"
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO users (organization_id, name, username, password_hash, role, status, allowed_modules, branch_id)
+VALUES
+    ('org_001', 'Admin User',    'bankaitech',     '$2b$10$PLACEHOLDER_HASH_ADMIN', 'admin',    'active', '[]',                        1),
+    ('org_001', 'Employee User', 'bankaitech-emp', '$2b$10$PLACEHOLDER_HASH_EMP1',  'employee', 'active', '["contacts","complaints"]', 1);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Products (dynamic ISP service categories)
+-- Mirrors mockData.ts providers: Cable | Internet 1 | Internet 2 | Internet 3
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO products (organization_id, name, product_type, is_active, cutoff_date, cutoff_days)
@@ -54,80 +65,411 @@ VALUES
     ('org_001', 'Cable',      'cable',    TRUE, 10,   NULL),
     ('org_001', 'Internet 1', 'internet', TRUE, NULL, 7),
     ('org_001', 'Internet 2', 'internet', TRUE, NULL, 7),
-    ('org_001', 'BSNL',       'internet', TRUE, NULL, 15);
+    ('org_001', 'Internet 3', 'internet', TRUE, NULL, 15);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Plans
+-- Plans (12 plans — mirrors mockData.ts mockPlans)
+-- product_id: 1=Cable, 2=Internet 1, 3=Internet 2, 4=Internet 3
 -- ─────────────────────────────────────────────────────────────────────────────
 
-INSERT INTO plans (organization_id, provider, plan_name, image_url, price, gst_rate, installation_amount, description, permanent_discount)
+INSERT INTO plans (organization_id, provider, plan_name, price, gst_rate, installation_amount, description, permanent_discount)
 VALUES
-    ('org_001', 'Cable',      'Cable Basic 50 Mbps',        NULL, 499, 18, 500, 'High-speed cable with 50 Mbps. Perfect for small families.',       0),
-    ('org_001', 'Cable',      'Cable Premium 100 Mbps',     NULL, 799, 18, 500, 'Premium cable with 100 Mbps. Ideal for streaming and gaming.',     0),
-    ('org_001', 'Internet 1', 'Internet 1 Fiber Basic',     NULL, 449, 18, 500, 'Reliable fiber connection with stable speeds.',                    0),
-    ('org_001', 'Internet 2', 'Internet 2 Express 75 Mbps', NULL, 599, 18, 500, 'Fast Internet 2 connection with 75 Mbps speed.',                  0),
-    ('org_001', 'BSNL',       'BSNL Rural Connect',         NULL, 399, 18, 500, 'Affordable broadband for rural areas with good connectivity.',     0);
+    -- Cable (3 plans)
+    ('org_001', 'Cable',      'Cable Basic 50 Mbps',        499,  18, 500,  'High-speed cable broadband with 50 Mbps. Perfect for small families and home offices.',     0),
+    ('org_001', 'Cable',      'Cable Premium 100 Mbps',     799,  18, 500,  'Premium cable broadband with 100 Mbps. Ideal for streaming and gaming.',                    0),
+    ('org_001', 'Cable',      'Cable Ultra 200 Mbps',       1299, 18, 1000, 'Ultra-fast cable broadband with 200 Mbps. Perfect for heavy users and businesses.',         0),
+    -- Internet 1 (3 plans)
+    ('org_001', 'Internet 1', 'Internet 1 Fiber Basic',     449,  18, 500,  'Reliable fiber connection with stable speeds and excellent coverage.',                      0),
+    ('org_001', 'Internet 1', 'Internet 1 Fiber Plus',      699,  18, 500,  'Enhanced fiber connection with better speeds and reliability.',                             0),
+    ('org_001', 'Internet 1', 'Internet 1 Fiber Premium',   999,  18, 1000, 'Premium fiber connection with high-speed internet for demanding users.',                    0),
+    -- Internet 2 (3 plans)
+    ('org_001', 'Internet 2', 'Internet 2 Express 75 Mbps', 599,  18, 500,  'Fast and reliable connection with 75 Mbps speed.',                                         0),
+    ('org_001', 'Internet 2', 'Internet 2 Speed 150 Mbps',  899,  18, 500,  'High-speed connection with 150 Mbps for power users.',                                     0),
+    ('org_001', 'Internet 2', 'Internet 2 Turbo 300 Mbps',  1499, 18, 1000, 'Turbo-charged connection with blazing fast 300 Mbps speeds.',                              0),
+    -- Internet 3 (3 plans)
+    ('org_001', 'Internet 3', 'Internet 3 Rural Connect',   399,  18, 500,  'Affordable internet solution for rural areas with good connectivity.',                      0),
+    ('org_001', 'Internet 3', 'Internet 3 Home Plus',       549,  18, 500,  'Enhanced home internet connection with better speeds and coverage.',                        0),
+    ('org_001', 'Internet 3', 'Internet 3 Business',        799,  18, 1000, 'Business-grade internet connection with dedicated support and reliability.',                 0);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Customers  (UI label: Contacts)
--- branch_id=1 → Main Office
+-- Customers  (22 — mirrors mockData.ts mockCustomers)
+-- branch_id=1 → Main Office for all (mockData has no branch assignment)
+-- password_hash: plain text stored as-is for mock only — replace with bcrypt in prod
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO customers (
-    organization_id, name, email, mobile, connection_type, package, status,
+    organization_id, name, email, mobile, connection_type, package, status, description,
     address_line1, address_line2, city, state, country,
-    payment_status, branch_id, created_at
+    payment_status, payment_method, payment_description, payment_updated_at,
+    collected_amount, balance_amount,
+    box_number, stb_number, can_caf_id, cin, area,
+    branch_id, created_at
 )
 VALUES
+    -- 1: Rajesh Kumar — Cable, paid via UPI
     (
         'org_001', 'Rajesh Kumar', 'rajesh.kumar@example.com', '9876543210',
-        'Cable', 'Cable Basic 50 Mbps', 'Active',
+        'Cable', 'Cable Basic 50 Mbps', 'Active', 'Long-term customer, very satisfied with service.',
         '123 Main Street', 'Near City Park', 'Mumbai', 'Maharashtra', 'India',
-        'paid', 1, '2024-01-15T10:00:00Z'
+        'paid', 'upi', 'Monthly bill paid via UPI on 15th.', CURRENT_TIMESTAMP - INTERVAL '10 days',
+        589, 0,
+        'BOX-001', 'STB-MH-001', 'CAN-2024-00001', 'CIN-MH-001', 'Andheri West',
+        1, CURRENT_TIMESTAMP - INTERVAL '45 days'
     ),
+    -- 2: Priya Sharma — Internet 1, not paid
     (
         'org_001', 'Priya Sharma', 'priya.sharma@example.com', '9876543211',
-        'Internet 1', 'Internet 1 Fiber Basic', 'Active',
+        'Internet 1', 'Internet 1 Fiber Basic', 'Active', 'New customer, installation completed last month.',
         '456 Park Avenue', 'Block A', 'Delhi', 'Delhi', 'India',
-        'not_paid', 1, '2024-01-20T10:00:00Z'
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, 'Connaught Place',
+        1, CURRENT_TIMESTAMP - INTERVAL '25 days'
     ),
+    -- 3: Amit Patel — Internet 2, inactive, balance due
     (
         'org_001', 'Amit Patel', 'amit.patel@example.com', '9876543212',
-        'Internet 2', 'Internet 2 Express 75 Mbps', 'Inactive',
+        'Internet 2', 'Internet 2 Express 75 Mbps', 'Inactive', 'Service temporarily suspended due to payment issues.',
         '789 Tech Road', 'Sector 5', 'Bangalore', 'Karnataka', 'India',
-        'not_paid', 2, '2024-02-01T10:00:00Z'
+        'not_paid', NULL, NULL, NULL,
+        0, 707,
+        NULL, NULL, NULL, NULL, 'Koramangala',
+        1, CURRENT_TIMESTAMP - INTERVAL '60 days'
     ),
+    -- 4: Sneha Reddy — Cable Premium, inactive, balance due
     (
-        'org_001', 'Sunita Verma', 'sunita.v@example.com', '9876543213',
-        'BSNL', 'BSNL Rural Connect', 'Active',
-        '22 Village Road', NULL, 'Pune', 'Maharashtra', 'India',
-        'paid', 3, '2024-02-10T10:00:00Z'
+        'org_001', 'Sneha Reddy', 'sneha.reddy@example.com', '9876543213',
+        'Cable', 'Cable Premium 100 Mbps', 'Inactive', 'Upgraded to premium plan recently.',
+        '321 Business Park', 'Floor 3', 'Hyderabad', 'Telangana', 'India',
+        'not_paid', NULL, 'Pending: December bill.', CURRENT_TIMESTAMP - INTERVAL '5 days',
+        0, 943,
+        'BOX-004', 'STB-TS-004', 'CAN-2024-00004', NULL, 'Banjara Hills',
+        1, CURRENT_TIMESTAMP - INTERVAL '15 days'
+    ),
+    -- 5: Vikram Singh — Internet 3 Rural, paid cash
+    (
+        'org_001', 'Vikram Singh', 'vikram.singh@example.com', '9876543214',
+        'Internet 3', 'Internet 3 Rural Connect', 'Active', 'Rural area customer, good connectivity.',
+        'Village Road', 'Near Post Office', 'Pune', 'Maharashtra', 'India',
+        'paid', 'cash', 'Paid in cash at local office.', CURRENT_TIMESTAMP - INTERVAL '1 day',
+        471, 0,
+        NULL, NULL, NULL, NULL, 'Wakad',
+        1, CURRENT_TIMESTAMP - INTERVAL '5 days'
+    ),
+    -- 6: Anjali Mehta — Internet 1 Fiber Plus, paid UPI
+    (
+        'org_001', 'Anjali Mehta', 'anjali.mehta@example.com', '9876543215',
+        'Internet 1', 'Internet 1 Fiber Plus', 'Active', 'Regular customer, always pays on time.',
+        '567 Residential Complex', 'Tower B', 'Chennai', 'Tamil Nadu', 'India',
+        'paid', 'upi', 'Auto-paid via Google Pay.', CURRENT_TIMESTAMP - INTERVAL '3 days',
+        825, 0,
+        NULL, NULL, NULL, NULL, 'T. Nagar',
+        1, CURRENT_TIMESTAMP - INTERVAL '30 days'
+    ),
+    -- 7: Rahul Verma — Internet 2 Speed, paid card, GST customer
+    (
+        'org_001', 'Rahul Verma', 'rahul.verma@example.com', '9876543216',
+        'Internet 2', 'Internet 2 Speed 150 Mbps', 'Active', 'Business customer, requires high-speed connection.',
+        '890 Corporate Avenue', 'Suite 201', 'Gurgaon', 'Haryana', 'India',
+        'paid', 'card', 'Paid by credit card.', CURRENT_TIMESTAMP - INTERVAL '7 days',
+        1061, 0,
+        NULL, NULL, NULL, NULL, 'DLF Cyber City',
+        1, CURRENT_TIMESTAMP - INTERVAL '8 days'
+    ),
+    -- 8: Kavita Nair — Cable Ultra, paid cash
+    (
+        'org_001', 'Kavita Nair', 'kavita.nair@example.com', '9876543217',
+        'Cable', 'Cable Ultra 200 Mbps', 'Active', 'Power user, needs ultra-fast speeds for work.',
+        '234 Tech Hub', 'Unit 15', 'Noida', 'Uttar Pradesh', 'India',
+        'paid', 'cash', 'Paid in full at office.', CURRENT_TIMESTAMP - INTERVAL '2 days',
+        1533, 0,
+        'BOX-008', 'STB-UP-008', 'CAN-2024-00008', 'CIN-UP-008', 'Sector 62',
+        2, CURRENT_TIMESTAMP - INTERVAL '12 days'
+    ),
+    -- 9: Mohit Agarwal — Internet 1 Fiber Premium, inactive, not paid
+    (
+        'org_001', 'Mohit Agarwal', 'mohit.agarwal@example.com', '9876543218',
+        'Internet 1', 'Internet 1 Fiber Premium', 'Inactive', 'Service disconnected, customer moved to different city.',
+        '345 Green Valley', 'Apartment 4B', 'Kolkata', 'West Bengal', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        2, CURRENT_TIMESTAMP - INTERVAL '90 days'
+    ),
+    -- 10: Divya Joshi — Internet 3 Home Plus, not paid
+    (
+        'org_001', 'Divya Joshi', 'divya.joshi@example.com', '9876543219',
+        'Internet 3', 'Internet 3 Home Plus', 'Active', 'Home user, satisfied with current plan.',
+        '678 Suburban Lane', 'House No. 12', 'Ahmedabad', 'Gujarat', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        2, CURRENT_TIMESTAMP - INTERVAL '20 days'
+    ),
+    -- 11: Arjun Malhotra — Internet 2 Turbo, not paid
+    (
+        'org_001', 'Arjun Malhotra', 'arjun.malhotra@example.com', '9876543220',
+        'Internet 2', 'Internet 2 Turbo 300 Mbps', 'Active', 'Gaming enthusiast, requires low latency connection.',
+        '901 Gaming Street', 'Flat 302', 'Bangalore', 'Karnataka', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        2, CURRENT_TIMESTAMP - INTERVAL '3 days'
+    ),
+    -- 12: Pooja Desai — Cable Basic, not paid
+    (
+        'org_001', 'Pooja Desai', 'pooja.desai@example.com', '9876543221',
+        'Cable', 'Cable Basic 50 Mbps', 'Active', 'Budget-conscious customer, happy with basic plan.',
+        '112 Affordable Housing', 'Block C', 'Surat', 'Gujarat', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        2, CURRENT_TIMESTAMP - INTERVAL '18 days'
+    ),
+    -- 13: Suresh Iyer — Internet 1 Fiber Basic, inactive
+    (
+        'org_001', 'Suresh Iyer', 'suresh.iyer@example.com', '9876543222',
+        'Internet 1', 'Internet 1 Fiber Basic', 'Inactive', 'Temporary disconnection, will reconnect next month.',
+        '223 Temple Road', 'Near Market', 'Coimbatore', 'Tamil Nadu', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        2, CURRENT_TIMESTAMP - INTERVAL '75 days'
+    ),
+    -- 14: Meera Krishnan — Internet 3 Business, not paid
+    (
+        'org_001', 'Meera Krishnan', 'meera.krishnan@example.com', '9876543223',
+        'Internet 3', 'Internet 3 Business', 'Active', 'Small business owner, needs reliable connection for operations.',
+        '334 Commercial Street', 'Shop No. 5', 'Kochi', 'Kerala', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '10 days'
+    ),
+    -- 15: Nikhil Kapoor — Cable Premium, not paid
+    (
+        'org_001', 'Nikhil Kapoor', 'nikhil.kapoor@example.com', '9876543224',
+        'Cable', 'Cable Premium 100 Mbps', 'Active', 'Streaming enthusiast, upgraded for better quality.',
+        '445 Entertainment Avenue', 'Residency 8', 'Mumbai', 'Maharashtra', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '7 days'
+    ),
+    -- 16: Riya Banerjee — Internet 2 Express, not paid
+    (
+        'org_001', 'Riya Banerjee', 'riya.banerjee@example.com', '9876543225',
+        'Internet 2', 'Internet 2 Express 75 Mbps', 'Active', 'Student, needs internet for online classes.',
+        '556 College Road', 'Hostel Block', 'Pune', 'Maharashtra', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '22 days'
+    ),
+    -- 17: Karan Thakur — Internet 1 Fiber Plus, not paid
+    (
+        'org_001', 'Karan Thakur', 'karan.thakur@example.com', '9876543226',
+        'Internet 1', 'Internet 1 Fiber Plus', 'Active', 'Remote worker, depends on stable connection.',
+        '667 Work From Home', 'Apartment 9A', 'Jaipur', 'Rajasthan', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '14 days'
+    ),
+    -- 18: Shreya Menon — Internet 3 Rural, inactive
+    (
+        'org_001', 'Shreya Menon', 'shreya.menon@example.com', '9876543227',
+        'Internet 3', 'Internet 3 Rural Connect', 'Inactive', 'Service suspended due to area maintenance.',
+        '778 Village Main Road', 'House No. 23', 'Thrissur', 'Kerala', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '50 days'
+    ),
+    -- 19: Aditya Rao — Cable Ultra, not paid
+    (
+        'org_001', 'Aditya Rao', 'aditya.rao@example.com', '9876543228',
+        'Cable', 'Cable Ultra 200 Mbps', 'Active', 'Tech professional, requires high-speed for development work.',
+        '889 Developer Hub', 'Flat 501', 'Bangalore', 'Karnataka', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        3, CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    -- 20: Neha Gupta — Internet 2 Speed, not paid
+    (
+        'org_001', 'Neha Gupta', 'neha.gupta@example.com', '9876543229',
+        'Internet 2', 'Internet 2 Speed 150 Mbps', 'Active', 'Content creator, needs fast upload speeds.',
+        '990 Content Studio', 'Unit 7', 'Mumbai', 'Maharashtra', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        1, CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    -- 21: Rohit Sharma — Internet 1 Fiber Premium, not paid
+    (
+        'org_001', 'Rohit Sharma', 'rohit.sharma@example.com', '9876543230',
+        'Internet 1', 'Internet 1 Fiber Premium', 'Active', 'Family plan, multiple devices connected.',
+        '101 Family Home', 'Ground Floor', 'Delhi', 'Delhi', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        1, CURRENT_TIMESTAMP - INTERVAL '6 days'
+    ),
+    -- 22: Ananya Das — Internet 3 Home Plus, not paid
+    (
+        'org_001', 'Ananya Das', 'ananya.das@example.com', '9876543231',
+        'Internet 3', 'Internet 3 Home Plus', 'Active', 'New customer, just installed last week.',
+        '202 New Colony', 'House No. 45', 'Bhubaneswar', 'Odisha', 'India',
+        'not_paid', NULL, NULL, NULL,
+        0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        1, CURRENT_TIMESTAMP - INTERVAL '4 days'
     );
 
+-- Update GST number for business customer Rahul Verma (id=7 after insert)
+UPDATE customers SET gstin = '06AABCT1234C1ZN' WHERE mobile = '9876543216' AND organization_id = 'org_001';
+
 -- ─────────────────────────────────────────────────────────────────────────────
--- Complaints
+-- Complaints  (18 — mirrors mockData.ts mockComplaints)
+-- customer_id references auto-assigned SERIAL IDs (1–22) from customers insert
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO complaints (
     organization_id, customer_id, customer_name, mobile, connection_type,
-    customer_description, internal_description, status, created_at
+    customer_description, internal_description, status, closed_at, created_at
 )
 VALUES
+    -- 1: Rajesh Kumar — Cable, active
     (
         'org_001', 1, 'Rajesh Kumar', '9876543210', 'Cable',
-        'Internet is very slow in the evenings.',
-        'Scheduled technician visit on 2024-03-05.',
-        'on-hold', '2024-03-01T09:00:00Z'
+        'Internet speed is very slow during evening hours. Connection drops frequently.',
+        'Checked connection logs. High traffic during peak hours. Investigating bandwidth allocation.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '2 days'
     ),
+    -- 2: Priya Sharma — Internet 1, active
     (
         'org_001', 2, 'Priya Sharma', '9876543211', 'Internet 1',
-        'Connection drops every few hours.',
-        NULL,
-        'active', '2024-03-03T11:00:00Z'
+        'Billing issue - charged extra amount this month. Need clarification on bill.',
+        'Reviewing billing records. May be due to plan upgrade mid-month.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    -- 3: Amit Patel — Internet 2, active (urgent)
+    (
+        'org_001', 3, 'Amit Patel', '9876543212', 'Internet 2',
+        'Connection not working since yesterday. No internet access at all.',
+        'Urgent - Sending technician today. Suspected fiber cut in area.',
+        'active', NULL, CURRENT_TIMESTAMP
+    ),
+    -- 4: Sneha Reddy — Cable, on-hold
+    (
+        'org_001', 4, 'Sneha Reddy', '9876543213', 'Cable',
+        'Router needs replacement. Current router keeps restarting.',
+        'Waiting for router stock. Expected delivery in 2 days.',
+        'on-hold', NULL, CURRENT_TIMESTAMP - INTERVAL '5 days'
+    ),
+    -- 5: Vikram Singh — Internet 3, active
+    (
+        'org_001', 5, 'Vikram Singh', '9876543214', 'Internet 3',
+        'Installation pending for 3 days. Need urgent installation.',
+        'Scheduled for tomorrow. Technician assigned.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '3 days'
+    ),
+    -- 6: Anjali Mehta — Internet 1, on-hold
+    (
+        'org_001', 6, 'Anjali Mehta', '9876543215', 'Internet 1',
+        'Slow download speeds. Not getting promised 100 Mbps.',
+        'Testing connection speed. May need line optimization.',
+        'on-hold', NULL, CURRENT_TIMESTAMP - INTERVAL '7 days'
+    ),
+    -- 7: Rahul Verma — Internet 2, completed
+    (
+        'org_001', 7, 'Rahul Verma', '9876543216', 'Internet 2',
+        'Connection issue resolved. Thank you for quick support.',
+        'Issue resolved by resetting ONT. Customer satisfied.',
+        'completed', CURRENT_TIMESTAMP - INTERVAL '10 days', CURRENT_TIMESTAMP - INTERVAL '10 days'
+    ),
+    -- 8: Kavita Nair — Cable, active
+    (
+        'org_001', 8, 'Kavita Nair', '9876543217', 'Cable',
+        'Need to upgrade plan. Current plan not sufficient for work from home.',
+        'Contacted customer. Upgrading to 200 Mbps plan.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    -- 9: Mohit Agarwal — Internet 1, active (emergency)
+    (
+        'org_001', 9, 'Mohit Agarwal', '9876543218', 'Internet 1',
+        'Fiber cable cut due to construction work. Need repair.',
+        'Emergency repair team dispatched. ETA 4 hours.',
+        'active', NULL, CURRENT_TIMESTAMP
+    ),
+    -- 10: Divya Joshi — Internet 3, on-hold
+    (
+        'org_001', 10, 'Divya Joshi', '9876543219', 'Internet 3',
+        'Payment gateway issue. Unable to pay online bill.',
+        'Payment gateway working. Customer can try alternative payment method.',
+        'on-hold', NULL, CURRENT_TIMESTAMP - INTERVAL '4 days'
+    ),
+    -- 11: Arjun Malhotra — Internet 2, active
+    (
+        'org_001', 11, 'Arjun Malhotra', '9876543220', 'Internet 2',
+        'High ping in online games. Connection unstable during gaming.',
+        'Checking latency. May need QoS configuration for gaming.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    -- 12: Pooja Desai — Cable, completed
+    (
+        'org_001', 12, 'Pooja Desai', '9876543221', 'Cable',
+        'Router configuration issue resolved. Working fine now.',
+        'Fixed router settings. Connection stable now.',
+        'completed', CURRENT_TIMESTAMP - INTERVAL '8 days', CURRENT_TIMESTAMP - INTERVAL '8 days'
+    ),
+    -- 13: Suresh Iyer — Internet 1, active
+    (
+        'org_001', 13, 'Suresh Iyer', '9876543222', 'Internet 1',
+        'Service reconnection request. Want to resume connection.',
+        'Processing reconnection. Will activate within 24 hours.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '1 day'
+    ),
+    -- 14: Meera Krishnan — Internet 3, on-hold
+    (
+        'org_001', 14, 'Meera Krishnan', '9876543223', 'Internet 3',
+        'Business connection needs dedicated IP address. Please provide.',
+        'Dedicated IP allocation in progress. Requires network configuration.',
+        'on-hold', NULL, CURRENT_TIMESTAMP - INTERVAL '6 days'
+    ),
+    -- 15: Nikhil Kapoor — Cable, active
+    (
+        'org_001', 15, 'Nikhil Kapoor', '9876543224', 'Cable',
+        'Streaming quality poor. Buffering issues on Netflix and YouTube.',
+        'Investigating bandwidth allocation. May need to optimize streaming traffic.',
+        'active', NULL, CURRENT_TIMESTAMP
+    ),
+    -- 16: Riya Banerjee — Internet 2, completed
+    (
+        'org_001', 16, 'Riya Banerjee', '9876543225', 'Internet 2',
+        'Connection restored. Issue was from ISP side, now fixed.',
+        'Network maintenance completed. All services restored.',
+        'completed', CURRENT_TIMESTAMP - INTERVAL '12 days', CURRENT_TIMESTAMP - INTERVAL '12 days'
+    ),
+    -- 17: Karan Thakur — Internet 1, active
+    (
+        'org_001', 17, 'Karan Thakur', '9876543226', 'Internet 1',
+        'Need to relocate connection to new address. Please arrange.',
+        'Relocation request received. Survey scheduled for next week.',
+        'active', NULL, CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    -- 18: Shreya Menon — Internet 3, completed
+    (
+        'org_001', 18, 'Shreya Menon', '9876543227', 'Internet 3',
+        'Technical support ticket resolved. Customer satisfied.',
+        'All issues resolved. Customer feedback positive.',
+        'completed', CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP - INTERVAL '15 days'
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Sales Invoices
+-- plan_id references: 1=Cable Basic, 4=Internet 1 Fiber Basic, 7=Internet 2 Express
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO sales_invoices (
@@ -181,6 +523,8 @@ VALUES
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Connection Requests
+-- plan_id: 1=Cable Basic, 4=Internet 1 Fiber Basic, 7=Internet 2 Express 75 Mbps
+-- product_id: 1=Cable, 2=Internet 1, 3=Internet 2
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO connection_requests (
@@ -189,8 +533,8 @@ INSERT INTO connection_requests (
 )
 VALUES
     ('org_001', 'Kiran Shah',  '9111000001', 'kiran@example.com', 1, 1, 'Cable Basic 50 Mbps',        'Cable',      'New'),
-    ('org_001', 'Meera Nair',  '9111000002', NULL,                3, 2, 'Internet 1 Fiber Basic',     'Internet 1', 'New'),
-    ('org_001', 'Ravi Reddy',  '9111000003', 'ravi@example.com',  4, 3, 'Internet 2 Express 75 Mbps', 'Internet 2', 'Converted');
+    ('org_001', 'Meera Nair',  '9111000002', NULL,                4, 2, 'Internet 1 Fiber Basic',     'Internet 1', 'New'),
+    ('org_001', 'Ravi Reddy',  '9111000003', 'ravi@example.com',  7, 3, 'Internet 2 Express 75 Mbps', 'Internet 2', 'Converted');
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Company Profile
@@ -223,7 +567,7 @@ VALUES (
     'Choose from our wide range of broadband and cable plans tailored for homes and businesses.',
     'Why Choose Us?',
     '[
-        {"title":"High Speed","description":"Up to 100 Mbps download speeds","icon":"Zap"},
+        {"title":"High Speed","description":"Up to 300 Mbps download speeds","icon":"Zap"},
         {"title":"Reliable","description":"99.9% uptime guarantee","icon":"Shield"},
         {"title":"Support","description":"24/7 customer support","icon":"HeadphonesIcon"}
     ]',
@@ -232,7 +576,22 @@ VALUES (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Suppliers  (enhanced supplier management for inventory)
+-- UPI Payment Config  (mirrors UpiPaymentConfig interface in upiPayment.ts)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+INSERT INTO upi_payment_config (
+    organization_id, upi_id, upi_display_name, enabled, supported_apps
+)
+VALUES (
+    'org_001',
+    '',
+    '',
+    FALSE,
+    '["gpay","phonepe","paytm","bhim"]'
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Suppliers
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO suppliers (
@@ -253,7 +612,7 @@ VALUES
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Inventory Categories
+-- Inventory Categories  (ISP-specific: Network Equipment, Cables, STB, Tools)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO inventory_categories (organization_id, name, code, description)
@@ -265,6 +624,7 @@ VALUES
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Inventory Subcategories
+-- category_id: 1=Network Equipment, 2=Cables & Wiring, 3=Set-Top Boxes, 4=Tools
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO inventory_subcategories (organization_id, category_id, name)
@@ -283,14 +643,14 @@ VALUES
 
 INSERT INTO inventory_units (organization_id, name, short_name)
 VALUES
-    ('org_001', 'Piece',  'Pcs'),
-    ('org_001', 'Box',    'Box'),
-    ('org_001', 'Meter',  'Mtr'),
-    ('org_001', 'Roll',   'Roll'),
-    ('org_001', 'Set',    'Set');
+    ('org_001', 'Piece', 'Pcs'),
+    ('org_001', 'Box',   'Box'),
+    ('org_001', 'Meter', 'Mtr'),
+    ('org_001', 'Roll',  'Roll'),
+    ('org_001', 'Set',   'Set');
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Inventory Tax Rates
+-- Inventory Tax Rates  (Indian GST slabs)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO inventory_tax_rates (organization_id, name, rate, type)
@@ -307,18 +667,19 @@ VALUES
 
 INSERT INTO inventory_warranties (organization_id, name, duration, duration_unit)
 VALUES
-    ('org_001', 'No Warranty',    0,  'months'),
-    ('org_001', '6 Months',       6,  'months'),
-    ('org_001', '1 Year',         12, 'months'),
-    ('org_001', '2 Years',        24, 'months'),
-    ('org_001', '3 Years',        36, 'months');
+    ('org_001', 'No Warranty', 0,  'months'),
+    ('org_001', '6 Months',    6,  'months'),
+    ('org_001', '1 Year',      12, 'months'),
+    ('org_001', '2 Years',     24, 'months'),
+    ('org_001', '3 Years',     36, 'months');
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Inventory Products
 -- category_id: 1=Network Equipment, 2=Cables, 3=STB, 4=Tools
--- unit_id:     1=Pcs, 2=Box, 3=Mtr, 4=Roll, 5=Set
--- tax_rate_id: 3=GST 18%, 1=GST 5%, 5=Exempt
--- warranty_id: 3=1 Year, 2=6 Months, 1=No Warranty
+-- subcategory_id: 1=Routers, 2=Modems, 4=Coaxial Cable, 6=HD STB
+-- unit_id:     1=Pcs, 3=Mtr
+-- tax_rate_id: 3=GST 18%, 5=Exempt
+-- warranty_id: 1=No Warranty, 2=6 Months, 3=1 Year
 -- branch_id:   1=Main Office
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -379,6 +740,7 @@ VALUES
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- POS Transactions (sample completed sales)
+-- created_by: 1=bankaitech (admin), 2=bankaitech-emp (employee)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO pos_transactions (
@@ -400,6 +762,7 @@ VALUES
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- POS Transaction Items
+-- product_id: 1=Dual-Band WiFi Router, 5=Installation Service
 -- ─────────────────────────────────────────────────────────────────────────────
 
 INSERT INTO pos_transaction_items (

@@ -2,7 +2,7 @@
 -- Popna Entertainment — ISP Management Platform
 -- PostgreSQL Schema Migration: 001_create_tables
 -- =============================================================================
--- Tables: 24
+-- Tables: 25
 --   1.  organizations
 --   2.  users
 --   3.  customers          (UI label: Contacts)
@@ -27,6 +27,7 @@
 --  22.  inventory_product_variants
 --  23.  pos_transactions
 --  24.  pos_transaction_items
+--  25.  upi_payment_config
 -- =============================================================================
 
 -- Enable UUID extension if preferred for PKs
@@ -54,7 +55,7 @@ CREATE TYPE inventory_product_type  AS ENUM ('physical', 'service', 'digital', '
 CREATE TYPE tracking_type           AS ENUM ('none', 'serial', 'batch');
 CREATE TYPE weight_unit             AS ENUM ('g', 'kg', 'lb');
 CREATE TYPE duration_unit           AS ENUM ('days', 'months', 'years');
-CREATE TYPE pos_payment_method      AS ENUM ('cash', 'upi', 'card', 'other');
+CREATE TYPE pos_payment_method      AS ENUM ('cash', 'upi', 'card', 'bank_transfer', 'other');
 CREATE TYPE pos_status              AS ENUM ('completed', 'refunded', 'voided');
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ CREATE TABLE users (
     password_hash    VARCHAR(255)  NOT NULL,                     -- bcrypt/argon2 hash
     role             user_role     NOT NULL DEFAULT 'employee',
     status           user_status   NOT NULL DEFAULT 'active',
+    allowed_modules  JSONB         NOT NULL DEFAULT '[]',        -- ModuleKey[] for employee access control
     created_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, username)                           -- username unique per org
 );
@@ -123,6 +125,10 @@ CREATE TABLE branches (
 
 CREATE INDEX idx_branches_org    ON branches(organization_id);
 CREATE INDEX idx_branches_active ON branches(organization_id, is_active);
+
+-- branch_id on users added here (after branches table) to satisfy FK dependency
+ALTER TABLE users ADD COLUMN branch_id INT REFERENCES branches(id) ON DELETE SET NULL;
+CREATE INDEX idx_users_branch ON users(branch_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 3: customers  (UI label: "Contacts")
@@ -163,6 +169,7 @@ CREATE TABLE customers (
     can_caf_id            VARCHAR(100),                          -- CAN/CAF ID
     cin                   VARCHAR(100),                          -- Customer ID Number
     area                  VARCHAR(100),                          -- service area
+    additional_addresses  JSONB           DEFAULT '[]',          -- Address[] extra delivery/billing addresses
     permanent_discount    DECIMAL(5,2)    DEFAULT 0,             -- permanent plan discount %
     branch_id             INT             REFERENCES branches(id) ON DELETE SET NULL,
     created_at            TIMESTAMP       NOT NULL DEFAULT NOW(),
@@ -631,6 +638,27 @@ CREATE INDEX idx_pos_items_transaction ON pos_transaction_items(transaction_id);
 CREATE INDEX idx_pos_items_product     ON pos_transaction_items(product_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 25: upi_payment_config
+-- UPI payment gateway configuration per organization.
+-- Stores UPI ID, display name, and supported app list.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE upi_payment_config (
+    id               SERIAL        PRIMARY KEY,
+    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    upi_id           VARCHAR(100)  NOT NULL DEFAULT '',          -- e.g. 'popna@upi'
+    upi_display_name VARCHAR(255)  NOT NULL DEFAULT '',          -- shown on payment screen
+    enabled          BOOLEAN       NOT NULL DEFAULT FALSE,
+    supported_apps   JSONB         NOT NULL DEFAULT '["gpay","phonepe","paytm","bhim"]',
+    updated_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    UNIQUE (organization_id)
+);
+
+CREATE INDEX idx_upi_config_org ON upi_payment_config(organization_id);
+
+COMMENT ON TABLE upi_payment_config IS 'UPI payment gateway config per tenant. Maps to upiPayment.ts UpiPaymentConfig interface.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- UPDATED_AT trigger function
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -652,4 +680,8 @@ CREATE TRIGGER set_updated_at_company_profile
 
 CREATE TRIGGER set_updated_at_website_settings
     BEFORE UPDATE ON website_settings
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER set_updated_at_upi_payment_config
+    BEFORE UPDATE ON upi_payment_config
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
