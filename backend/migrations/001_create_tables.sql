@@ -2,40 +2,34 @@
 -- Popna Entertainment — ISP Management Platform
 -- PostgreSQL Schema Migration: 001_create_tables
 -- =============================================================================
--- Tables: 29
+-- Tables: 26
 --   1.  organizations
---   2.  users
---   3.  customers          (UI label: Contacts)
---   4.  products           (ISP service categories — dynamic)
---   5.  plans
---   6.  complaints
---   7.  sales_invoices
---   8.  vendors
+--   2.  branches           (defined early — referenced by users & contacts)
+--   3.  users
+--   4.  contacts           (unified: customers + suppliers + vendors)
+--   5.  products           (ISP service categories — dynamic)
+--   6.  plans
+--   7.  complaints
+--   8.  sales_invoices
 --   9.  purchase_invoices
 --  10.  connection_requests
 --  11.  company_profile
 --  12.  website_settings
---  13.  client_configs
---  14.  branches
---  15.  suppliers
---  16.  inventory_categories
---  17.  inventory_subcategories
---  18.  inventory_units
---  19.  inventory_tax_rates
---  20.  inventory_warranties
---  21.  inventory_products
---  22.  inventory_product_variants
---  23.  pos_transactions
---  24.  pos_transaction_items
---  25.  upi_payment_config
---  26.  superadmin_users
---  27.  signup_requests
---  28.  sms_config
---  29.  sms_logs
+--  13.  inventory_categories
+--  14.  inventory_subcategories
+--  15.  inventory_units
+--  16.  inventory_tax_rates
+--  17.  inventory_warranties
+--  18.  inventory_products
+--  19.  inventory_product_variants
+--  20.  pos_transactions
+--  21.  pos_transaction_items
+--  22.  upi_payment_config
+--  23.  superadmin_users
+--  24.  signup_requests
+--  25.  sms_config
+--  26.  sms_logs
 -- =============================================================================
-
--- Enable UUID extension if preferred for PKs
--- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- ENUMS
@@ -44,6 +38,7 @@
 CREATE TYPE organization_status     AS ENUM ('active', 'disabled', 'suspended');
 CREATE TYPE user_role               AS ENUM ('admin', 'employee');
 CREATE TYPE user_status             AS ENUM ('active', 'inactive');
+CREATE TYPE contact_type            AS ENUM ('customer', 'supplier', 'vendor');
 CREATE TYPE customer_status         AS ENUM ('Active', 'Inactive');
 CREATE TYPE payment_status          AS ENUM ('paid', 'not_paid');
 CREATE TYPE payment_method          AS ENUM ('cash', 'upi', 'card', 'other');
@@ -52,7 +47,6 @@ CREATE TYPE complaint_status        AS ENUM ('active', 'on-hold', 'completed');
 CREATE TYPE invoice_status          AS ENUM ('draft', 'sent', 'paid', 'overdue');
 CREATE TYPE invoice_type            AS ENUM ('tax_invoice', 'bill_of_supply');
 CREATE TYPE connection_req_status   AS ENUM ('New', 'Converted');
-CREATE TYPE client_status           AS ENUM ('active', 'inactive');
 CREATE TYPE tax_type                AS ENUM ('inclusive', 'exclusive', 'none');
 CREATE TYPE tax_rate_type           AS ENUM ('inclusive', 'exclusive');
 CREATE TYPE inventory_product_type  AS ENUM ('physical', 'service', 'digital', 'bundle');
@@ -90,30 +84,7 @@ COMMENT ON COLUMN organizations.allowed_modules IS 'ModuleKey[]: dashboard|conta
 COMMENT ON COLUMN organizations.allowed_settings_tabs IS 'SettingsTabKey[]: company|products|billing|pos';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 2: users
--- Admin and Employee accounts for the management panel.
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE users (
-    id               SERIAL        PRIMARY KEY,
-    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    name             VARCHAR(255)  NOT NULL,
-    username         VARCHAR(100)  NOT NULL,
-    password_hash    VARCHAR(255)  NOT NULL,                     -- bcrypt/argon2 hash
-    role             user_role     NOT NULL DEFAULT 'employee',
-    status           user_status   NOT NULL DEFAULT 'active',
-    allowed_modules  JSONB         NOT NULL DEFAULT '[]',        -- ModuleKey[] for employee access control
-    created_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
-    UNIQUE (organization_id, username)                           -- username unique per org
-);
-
-CREATE INDEX idx_users_org  ON users(organization_id);
-CREATE INDEX idx_users_role ON users(organization_id, role);
-
-COMMENT ON TABLE users IS 'Admin/Employee accounts; password stored as bcrypt/argon2 hash — NEVER plain text';
-
--- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 14: branches  (defined early — referenced by customers and inventory)
+-- TABLE 2: branches  (defined early — referenced by users and contacts)
 -- Physical business branches/locations per organization.
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -139,34 +110,73 @@ CREATE TABLE branches (
 CREATE INDEX idx_branches_org    ON branches(organization_id);
 CREATE INDEX idx_branches_active ON branches(organization_id, is_active);
 
--- branch_id on users added here (after branches table) to satisfy FK dependency
-ALTER TABLE users ADD COLUMN branch_id INT REFERENCES branches(id) ON DELETE SET NULL;
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 3: users
+-- Admin and Employee accounts for the management panel.
+-- branch_id added here after branches table satisfies FK dependency.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE users (
+    id               SERIAL        PRIMARY KEY,
+    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name             VARCHAR(255)  NOT NULL,
+    username         VARCHAR(100)  NOT NULL,
+    password_hash    VARCHAR(255)  NOT NULL,                     -- bcrypt/argon2 hash
+    role             user_role     NOT NULL DEFAULT 'employee',
+    status           user_status   NOT NULL DEFAULT 'active',
+    allowed_modules  JSONB         NOT NULL DEFAULT '[]',        -- ModuleKey[] for employee access control
+    branch_id        INT           REFERENCES branches(id) ON DELETE SET NULL,
+    created_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    UNIQUE (organization_id, username)                           -- username unique per org
+);
+
+CREATE INDEX idx_users_org    ON users(organization_id);
+CREATE INDEX idx_users_role   ON users(organization_id, role);
 CREATE INDEX idx_users_branch ON users(branch_id);
 
+COMMENT ON TABLE users IS 'Admin/Employee accounts; password stored as bcrypt/argon2 hash — NEVER plain text';
+
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 3: customers  (UI label: "Contacts")
--- End-user subscriber accounts.
--- Note: Catalog module removed — merged into Inventory.
---       Customers module removed — now "Contacts" in the sidebar (same table).
+-- TABLE 4: contacts
+-- Unified contact table combining ISP customers, inventory suppliers, and vendors.
+-- contact_type discriminates between the three roles.
+--
+--   'customer' — ISP subscriber account (UI: Contacts module)
+--   'supplier' — Inventory/purchase supplier (UI: Suppliers in Inventory)
+--   'vendor'   — Vendor for purchase invoicing (linked to purchase_invoices)
+--
+-- ISP-specific fields (used when contact_type = 'customer'):
+--   connection_type, package, status, payment_*, box_number, stb_number,
+--   can_caf_id, cin, area, permanent_discount, password_hash
+--
+-- Supplier/Vendor-specific fields (contact_type IN ('supplier','vendor')):
+--   contact_person, tax_number, opening_balance
 -- ─────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE customers (
+CREATE TABLE contacts (
     id                    SERIAL          PRIMARY KEY,
     organization_id       VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    contact_type          contact_type    NOT NULL DEFAULT 'customer',
+
+    -- ── Common fields ────────────────────────────────────────────────────────
     name                  VARCHAR(255)    NOT NULL,
     email                 VARCHAR(255),
-    mobile                VARCHAR(15)     NOT NULL,
-    password_hash         VARCHAR(255),                           -- customer portal login (bcrypt)
-    connection_type       VARCHAR(100)    NOT NULL,               -- service category name (dynamic)
-    package               VARCHAR(255)    NOT NULL,               -- plan name
-    status                customer_status NOT NULL DEFAULT 'Active',
-    description           TEXT,
-    -- Address (flattened for query performance)
-    address_line1         VARCHAR(255)    NOT NULL DEFAULT '',
+    mobile                VARCHAR(20)     NOT NULL,
+    gstin                 VARCHAR(20),
+    address_line1         VARCHAR(255),
     address_line2         VARCHAR(255),
-    city                  VARCHAR(100)    NOT NULL DEFAULT '',
-    state                 VARCHAR(100)    NOT NULL DEFAULT '',
+    city                  VARCHAR(100),
+    state                 VARCHAR(100),
     country               VARCHAR(100)    NOT NULL DEFAULT 'India',
+    pincode               VARCHAR(10),
+    additional_addresses  JSONB           DEFAULT '[]',           -- Address[] extra billing/delivery addresses
+
+    -- ── Customer-specific (contact_type = 'customer') ────────────────────────
+    password_hash         VARCHAR(255),                           -- customer portal login (bcrypt)
+    connection_type       VARCHAR(100),                          -- ISP service category name (dynamic)
+    package               VARCHAR(255),                          -- plan name
+    status                customer_status,                       -- Active | Inactive (customers only)
+    description           TEXT,
     -- Payment Collection
     payment_status        payment_status  DEFAULT 'not_paid',
     payment_description   TEXT,
@@ -175,32 +185,41 @@ CREATE TABLE customers (
     collected_amount      DECIMAL(10,2)   DEFAULT 0,
     balance_amount        DECIMAL(10,2)   DEFAULT 0,
     collected_by_username VARCHAR(100),                          -- employee who collected
-    -- GST & Identifiers
-    gstin                 VARCHAR(20),
+    -- Cable-specific identifiers
     box_number            VARCHAR(50),                           -- cable box number
     stb_number            VARCHAR(100),                          -- Set-Top Box / User ID
     can_caf_id            VARCHAR(100),                          -- CAN/CAF ID
     cin                   VARCHAR(100),                          -- Customer ID Number
     area                  VARCHAR(100),                          -- service area
-    additional_addresses  JSONB           DEFAULT '[]',          -- Address[] extra delivery/billing addresses
     permanent_discount    DECIMAL(5,2)    DEFAULT 0,             -- permanent plan discount %
     branch_id             INT             REFERENCES branches(id) ON DELETE SET NULL,
+
+    -- ── Supplier/Vendor-specific (contact_type IN ('supplier','vendor')) ─────
+    contact_person        VARCHAR(255),                          -- primary contact name
+    tax_number            VARCHAR(30),                           -- GSTIN or equivalent tax ID
+    opening_balance       DECIMAL(12,2)   DEFAULT 0,            -- supplier opening balance
+
     created_at            TIMESTAMP       NOT NULL DEFAULT NOW(),
-    UNIQUE (organization_id, mobile)
+
+    -- Same mobile may not repeat within the same type in the same org
+    UNIQUE (organization_id, contact_type, mobile)
 );
 
-CREATE INDEX idx_customers_org      ON customers(organization_id);
-CREATE INDEX idx_customers_status   ON customers(organization_id, status);
-CREATE INDEX idx_customers_type     ON customers(organization_id, connection_type);
-CREATE INDEX idx_customers_payment  ON customers(organization_id, payment_status);
-CREATE INDEX idx_customers_mobile   ON customers(organization_id, mobile);
-CREATE INDEX idx_customers_branch   ON customers(branch_id);
+CREATE INDEX idx_contacts_org      ON contacts(organization_id);
+CREATE INDEX idx_contacts_type     ON contacts(organization_id, contact_type);
+CREATE INDEX idx_contacts_status   ON contacts(organization_id, status);
+CREATE INDEX idx_contacts_conn     ON contacts(organization_id, connection_type);
+CREATE INDEX idx_contacts_payment  ON contacts(organization_id, payment_status);
+CREATE INDEX idx_contacts_mobile   ON contacts(organization_id, mobile);
+CREATE INDEX idx_contacts_branch   ON contacts(branch_id);
 
-COMMENT ON TABLE customers IS 'UI label: Contacts. Subscriber accounts; address flattened for SQL performance.';
-COMMENT ON COLUMN customers.connection_type IS 'Service category name — dynamic, not an FK (categories renamed/deleted freely)';
+COMMENT ON TABLE contacts IS 'Unified contact table: ISP customers, inventory suppliers, and vendors in one place.';
+COMMENT ON COLUMN contacts.contact_type IS 'customer = ISP subscriber | supplier = inventory supplier | vendor = purchase invoice vendor';
+COMMENT ON COLUMN contacts.connection_type IS 'Customer only. Service category name — dynamic, not an FK.';
+COMMENT ON COLUMN contacts.tax_number IS 'Supplier/Vendor only. GSTIN or equivalent tax registration number.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 4: products
+-- TABLE 5: products
 -- ISP service categories (e.g. "Cable", "Internet 1"). Fully dynamic.
 -- Distinct from inventory_products (physical/digital goods for POS).
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -225,7 +244,7 @@ COMMENT ON COLUMN products.cutoff_date IS 'Cable only: day of month for billing 
 COMMENT ON COLUMN products.cutoff_days IS 'Internet only: days after due date before service cut-off';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 5: plans
+-- TABLE 6: plans
 -- Subscription plans offered under each ISP service category.
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -247,13 +266,13 @@ CREATE INDEX idx_plans_org      ON plans(organization_id);
 CREATE INDEX idx_plans_provider ON plans(organization_id, provider);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 6: complaints
+-- TABLE 7: complaints
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE complaints (
     id                     SERIAL           PRIMARY KEY,
     organization_id        VARCHAR(50)      NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    customer_id            INT              REFERENCES customers(id) ON DELETE SET NULL,
+    contact_id             INT              REFERENCES contacts(id) ON DELETE SET NULL,
     customer_name          VARCHAR(255)     NOT NULL,
     mobile                 VARCHAR(15)      NOT NULL,
     connection_type        VARCHAR(100)     NOT NULL,
@@ -265,14 +284,14 @@ CREATE TABLE complaints (
     created_at             TIMESTAMP        NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_complaints_org      ON complaints(organization_id);
-CREATE INDEX idx_complaints_status   ON complaints(organization_id, status);
-CREATE INDEX idx_complaints_customer ON complaints(customer_id);
+CREATE INDEX idx_complaints_org     ON complaints(organization_id);
+CREATE INDEX idx_complaints_status  ON complaints(organization_id, status);
+CREATE INDEX idx_complaints_contact ON complaints(contact_id);
 
 COMMENT ON COLUMN complaints.closure_image_url IS 'Store S3/CDN presigned URL — never base64 in database';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 7: sales_invoices
+-- TABLE 8: sales_invoices
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE sales_invoices (
@@ -280,7 +299,7 @@ CREATE TABLE sales_invoices (
     organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     invoice_number   VARCHAR(50)     NOT NULL,
     branch_id        INT             REFERENCES branches(id) ON DELETE SET NULL,
-    customer_id      INT             REFERENCES customers(id) ON DELETE SET NULL,
+    contact_id       INT             REFERENCES contacts(id) ON DELETE SET NULL,
     customer_name    VARCHAR(255)    NOT NULL,
     service_provider VARCHAR(100)    NOT NULL,
     plan_name        VARCHAR(255)    NOT NULL,
@@ -298,44 +317,22 @@ CREATE TABLE sales_invoices (
     UNIQUE (organization_id, invoice_number)
 );
 
-CREATE INDEX idx_sales_invoices_org      ON sales_invoices(organization_id);
-CREATE INDEX idx_sales_invoices_customer ON sales_invoices(customer_id);
-CREATE INDEX idx_sales_invoices_status   ON sales_invoices(organization_id, status);
-CREATE INDEX idx_sales_invoices_date     ON sales_invoices(organization_id, issue_date);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 8: vendors
--- Legacy vendor table for purchase invoicing.
--- See also: suppliers (table 15) — enhanced for inventory purchasing.
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE vendors (
-    id               SERIAL        PRIMARY KEY,
-    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    name             VARCHAR(255)  NOT NULL,
-    contact          VARCHAR(20),
-    gstin            VARCHAR(20),
-    address_line1    VARCHAR(255),
-    address_line2    VARCHAR(255),
-    city             VARCHAR(100),
-    state            VARCHAR(100),
-    country          VARCHAR(100)  DEFAULT 'India',
-    pincode          VARCHAR(10),
-    created_at       TIMESTAMP     NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_vendors_org ON vendors(organization_id);
+CREATE INDEX idx_sales_invoices_org     ON sales_invoices(organization_id);
+CREATE INDEX idx_sales_invoices_contact ON sales_invoices(contact_id);
+CREATE INDEX idx_sales_invoices_status  ON sales_invoices(organization_id, status);
+CREATE INDEX idx_sales_invoices_date    ON sales_invoices(organization_id, issue_date);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 9: purchase_invoices
+-- contact_id references a contact with contact_type = 'vendor' or 'supplier'.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE purchase_invoices (
     id               SERIAL        PRIMARY KEY,
     organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     invoice_number   VARCHAR(50)   NOT NULL,
-    vendor_id        INT           NOT NULL REFERENCES vendors(id) ON DELETE RESTRICT,
-    vendor_name      VARCHAR(255)  NOT NULL,
+    contact_id       INT           NOT NULL REFERENCES contacts(id) ON DELETE RESTRICT,  -- vendor/supplier
+    vendor_name      VARCHAR(255)  NOT NULL,                     -- denormalized
     reference        VARCHAR(100),
     amount           DECIMAL(10,2) NOT NULL,
     cgst             DECIMAL(10,2) DEFAULT 0,
@@ -347,9 +344,9 @@ CREATE TABLE purchase_invoices (
     UNIQUE (organization_id, invoice_number)
 );
 
-CREATE INDEX idx_purchase_invoices_org    ON purchase_invoices(organization_id);
-CREATE INDEX idx_purchase_invoices_vendor ON purchase_invoices(vendor_id);
-CREATE INDEX idx_purchase_invoices_date   ON purchase_invoices(organization_id, issue_date);
+CREATE INDEX idx_purchase_invoices_org     ON purchase_invoices(organization_id);
+CREATE INDEX idx_purchase_invoices_contact ON purchase_invoices(contact_id);
+CREATE INDEX idx_purchase_invoices_date    ON purchase_invoices(organization_id, issue_date);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 10: connection_requests
@@ -416,52 +413,7 @@ CREATE TABLE website_settings (
 COMMENT ON COLUMN website_settings.highlight_cards IS 'JSONB array of { title, description, icon } objects';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 13: client_configs
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE client_configs (
-    id               SERIAL        PRIMARY KEY,
-    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    client_name      VARCHAR(255)  NOT NULL,
-    username         VARCHAR(100)  NOT NULL,
-    password_hash    VARCHAR(255)  NOT NULL,
-    allowed_tabs     JSONB         NOT NULL DEFAULT '[]',
-    status           client_status NOT NULL DEFAULT 'active',
-    created_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
-    UNIQUE (organization_id, username)
-);
-
-CREATE INDEX idx_client_configs_org ON client_configs(organization_id);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 15: suppliers
--- Enhanced supplier management for inventory purchasing.
--- Supports multiple addresses via JSONB.
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE suppliers (
-    id                   SERIAL          PRIMARY KEY,
-    organization_id      VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    name                 VARCHAR(255)    NOT NULL,
-    contact_person       VARCHAR(255),
-    mobile               VARCHAR(20)     NOT NULL,
-    email                VARCHAR(255),
-    tax_number           VARCHAR(30),                             -- GSTIN or equivalent
-    opening_balance      DECIMAL(12,2)   DEFAULT 0,
-    address_line1        VARCHAR(255),
-    address_line2        VARCHAR(255),
-    city                 VARCHAR(100),
-    state                VARCHAR(100),
-    country              VARCHAR(100)    DEFAULT 'India',
-    pincode              VARCHAR(10),
-    additional_addresses JSONB           DEFAULT '[]',            -- Address[]
-    created_at           TIMESTAMP       NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_suppliers_org ON suppliers(organization_id);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 16: inventory_categories
+-- TABLE 13: inventory_categories
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_categories (
@@ -477,7 +429,7 @@ CREATE TABLE inventory_categories (
 CREATE INDEX idx_inv_categories_org ON inventory_categories(organization_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 17: inventory_subcategories
+-- TABLE 14: inventory_subcategories
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_subcategories (
@@ -492,7 +444,7 @@ CREATE INDEX idx_inv_subcategories_org      ON inventory_subcategories(organizat
 CREATE INDEX idx_inv_subcategories_category ON inventory_subcategories(category_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 18: inventory_units
+-- TABLE 15: inventory_units
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_units (
@@ -507,7 +459,7 @@ CREATE TABLE inventory_units (
 CREATE INDEX idx_inv_units_org ON inventory_units(organization_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 19: inventory_tax_rates
+-- TABLE 16: inventory_tax_rates
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_tax_rates (
@@ -522,7 +474,7 @@ CREATE TABLE inventory_tax_rates (
 CREATE INDEX idx_inv_tax_rates_org ON inventory_tax_rates(organization_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 20: inventory_warranties
+-- TABLE 17: inventory_warranties
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_warranties (
@@ -537,7 +489,7 @@ CREATE TABLE inventory_warranties (
 CREATE INDEX idx_inv_warranties_org ON inventory_warranties(organization_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 21: inventory_products
+-- TABLE 18: inventory_products
 -- Physical/digital/service/bundle goods for POS and inventory management.
 -- Distinct from the ISP service categories in the products table.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -567,7 +519,7 @@ CREATE TABLE inventory_products (
     current_stock     INT                     DEFAULT 0,
     stock_alert       INT,                                       -- low-stock alert threshold
     reorder_level     INT,                                       -- triggers reorder alert
-    tracking_type     tracking_type           NOT NULL DEFAULT 'none', -- none | serial | batch
+    tracking_type     tracking_type           NOT NULL DEFAULT 'none',
     barcode           VARCHAR(100),                              -- EAN-13, UPC-A, or custom
     weight            DECIMAL(8,3),
     weight_unit       weight_unit,
@@ -588,7 +540,7 @@ COMMENT ON COLUMN inventory_products.hsn_sac_code IS 'HSN (goods) or SAC (servic
 COMMENT ON COLUMN inventory_products.image IS 'Store S3/CDN presigned URL — never base64 in database';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 22: inventory_product_variants
+-- TABLE 19: inventory_product_variants
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE inventory_product_variants (
@@ -599,17 +551,17 @@ CREATE TABLE inventory_product_variants (
     price           DECIMAL(10,2),                                -- overrides product price if set
     purchase_price  DECIMAL(10,2),                                -- variant-level cost price
     mrp             DECIMAL(10,2),                                -- variant-level MRP
-    tax_type        tax_type        DEFAULT 'exclusive',          -- variant-level tax type
+    tax_type        tax_type        DEFAULT 'exclusive',
     warranty_id     INT             REFERENCES inventory_warranties(id) ON DELETE SET NULL,
     barcode         VARCHAR(100),                                 -- variant-level barcode (EAN/UPC)
-    current_stock   INT             DEFAULT 0,                    -- stock per variant
+    current_stock   INT             DEFAULT 0,
     created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_inv_variants_product ON inventory_product_variants(product_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 23: pos_transactions
+-- TABLE 20: pos_transactions
 -- Point-of-Sale transaction header.
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -617,7 +569,7 @@ CREATE TABLE pos_transactions (
     id               SERIAL              PRIMARY KEY,
     organization_id  VARCHAR(50)         NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     branch_id        INT                 REFERENCES branches(id) ON DELETE SET NULL,
-    customer_id      INT                 REFERENCES customers(id) ON DELETE SET NULL,
+    contact_id       INT                 REFERENCES contacts(id) ON DELETE SET NULL,
     customer_name    VARCHAR(255),                                -- denormalized (walk-in or linked)
     subtotal         DECIMAL(10,2)       NOT NULL DEFAULT 0,
     tax_total        DECIMAL(10,2)       NOT NULL DEFAULT 0,
@@ -630,13 +582,13 @@ CREATE TABLE pos_transactions (
     created_at       TIMESTAMP           NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_pos_transactions_org      ON pos_transactions(organization_id);
-CREATE INDEX idx_pos_transactions_branch   ON pos_transactions(branch_id);
-CREATE INDEX idx_pos_transactions_customer ON pos_transactions(customer_id);
-CREATE INDEX idx_pos_transactions_date     ON pos_transactions(organization_id, created_at);
+CREATE INDEX idx_pos_transactions_org     ON pos_transactions(organization_id);
+CREATE INDEX idx_pos_transactions_branch  ON pos_transactions(branch_id);
+CREATE INDEX idx_pos_transactions_contact ON pos_transactions(contact_id);
+CREATE INDEX idx_pos_transactions_date    ON pos_transactions(organization_id, created_at);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 24: pos_transaction_items
+-- TABLE 21: pos_transaction_items
 -- Line items for each POS transaction.
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -657,16 +609,15 @@ CREATE INDEX idx_pos_items_transaction ON pos_transaction_items(transaction_id);
 CREATE INDEX idx_pos_items_product     ON pos_transaction_items(product_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 25: upi_payment_config
+-- TABLE 22: upi_payment_config
 -- UPI payment gateway configuration per organization.
--- Stores UPI ID, display name, and supported app list.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE upi_payment_config (
     id               SERIAL        PRIMARY KEY,
     organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    upi_id           VARCHAR(100)  NOT NULL DEFAULT '',          -- e.g. 'popna@upi'
-    upi_display_name VARCHAR(255)  NOT NULL DEFAULT '',          -- shown on payment screen
+    upi_id           VARCHAR(100)  NOT NULL DEFAULT '',           -- e.g. 'popna@upi'
+    upi_display_name VARCHAR(255)  NOT NULL DEFAULT '',           -- shown on payment screen
     enabled          BOOLEAN       NOT NULL DEFAULT FALSE,
     supported_apps   JSONB         NOT NULL DEFAULT '["gpay","phonepe","paytm","bhim"]',
     updated_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
@@ -675,12 +626,11 @@ CREATE TABLE upi_payment_config (
 
 CREATE INDEX idx_upi_config_org ON upi_payment_config(organization_id);
 
-COMMENT ON TABLE upi_payment_config IS 'UPI payment gateway config per tenant. Maps to upiPayment.ts UpiPaymentConfig interface.';
+COMMENT ON TABLE upi_payment_config IS 'UPI payment gateway config per tenant. Maps to UpiPaymentConfig interface in upiPayment.ts.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 26: superadmin_users
+-- TABLE 23: superadmin_users
 -- Platform-level super admin accounts (NOT scoped to any organization).
--- Maps to SuperAdminUser interface in types.ts.
 -- Roles: super_admin (full access) | manager (permission-based access).
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -699,7 +649,7 @@ COMMENT ON TABLE superadmin_users IS 'Platform-level admin accounts. Not tied to
 COMMENT ON COLUMN superadmin_users.allowed_permissions IS 'SAPermissionKey[]: sa_dashboard|sa_organizations_view|sa_organizations_add|sa_organizations_edit|sa_organizations_inactive|sa_signup_requests|sa_users';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 27: signup_requests
+-- TABLE 24: signup_requests
 -- Business signup requests submitted from the public landing page.
 -- Managed by super admins via the SignupRequests page.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -719,7 +669,7 @@ CREATE INDEX idx_signup_requests_date ON signup_requests(created_at DESC);
 COMMENT ON TABLE signup_requests IS 'Public signup requests from potential tenants. Not scoped to an organization.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 28: sms_config
+-- TABLE 25: sms_config
 -- SMS provider configuration per organization.
 -- Supports 3rd-party SMS APIs (MSG91, Twilio, TextLocal, etc.).
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -743,15 +693,14 @@ CREATE INDEX idx_sms_config_org ON sms_config(organization_id);
 COMMENT ON TABLE sms_config IS 'SMS gateway config per tenant. Backend sends SMS on payment collection.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 29: sms_logs
+-- TABLE 26: sms_logs
 -- Audit trail for all SMS sent by the system.
--- Tracks delivery status for debugging and reporting.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE sms_logs (
     id               SERIAL        PRIMARY KEY,
     organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    customer_id      INT           REFERENCES customers(id) ON DELETE SET NULL,
+    contact_id       INT           REFERENCES contacts(id) ON DELETE SET NULL,
     mobile           VARCHAR(15)   NOT NULL,
     message          TEXT          NOT NULL,
     sms_type         VARCHAR(50)   NOT NULL DEFAULT 'payment',    -- payment | reminder | welcome | custom
@@ -761,10 +710,10 @@ CREATE TABLE sms_logs (
     sent_at          TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_sms_logs_org      ON sms_logs(organization_id);
-CREATE INDEX idx_sms_logs_customer ON sms_logs(customer_id);
-CREATE INDEX idx_sms_logs_date     ON sms_logs(organization_id, sent_at DESC);
-CREATE INDEX idx_sms_logs_type     ON sms_logs(organization_id, sms_type);
+CREATE INDEX idx_sms_logs_org     ON sms_logs(organization_id);
+CREATE INDEX idx_sms_logs_contact ON sms_logs(contact_id);
+CREATE INDEX idx_sms_logs_date    ON sms_logs(organization_id, sent_at DESC);
+CREATE INDEX idx_sms_logs_type    ON sms_logs(organization_id, sms_type);
 
 COMMENT ON TABLE sms_logs IS 'Audit trail for all SMS sent. Tracks delivery for debugging and compliance.';
 
