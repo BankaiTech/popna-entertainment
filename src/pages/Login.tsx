@@ -2,26 +2,23 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Lock, User, ArrowRight, Building2, ArrowLeft, Eye, EyeOff, Mail, Phone, Briefcase } from 'lucide-react';
+import {
+  Lock, User, ArrowRight, Building2, ArrowLeft, Eye, EyeOff, Mail, Phone,
+  Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
+  Shirt, Heart, Dumbbell, Building, GraduationCap, Car, Briefcase, LayoutGrid,
+} from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
 
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTheme } from '@/components/ThemeProvider';
 import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
+import { INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
 
-const BUSINESS_TYPES = [
-  'Retail',
-  'Wholesale',
-  'Restaurant / Cafe',
-  'Salon / Spa',
-  'Grocery',
-  'Electronics',
-  'Clothing / Fashion',
-  'Healthcare / Pharmacy',
-  'ISP / Cable TV',
-  'Other',
-];
+const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
+  Shirt, Heart, Dumbbell, Building, GraduationCap, Car, Briefcase, LayoutGrid,
+};
 
 const Login = () => {
   const { t } = useTranslation();
@@ -450,26 +447,34 @@ const Login = () => {
                     </div>
                   </div>
 
-                  {/* Business Type */}
+                  {/* Business Type - Industry Card Grid */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       {t('signup.businessType', 'Business / Company Type')} *
                     </label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
-                        <Briefcase className="w-4 h-4" />
-                      </div>
-                      <select
-                        value={signupForm.businessType}
-                        onChange={(e) => setSignupForm({ ...signupForm, businessType: e.target.value })}
-                        className={`${inputClass} appearance-none`}
-                        disabled={signupLoading}
-                      >
-                        <option value="">{t('signup.selectBusinessType', 'Select business type')}</option>
-                        {BUSINESS_TYPES.map((type) => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-1">
+                      {INDUSTRY_TEMPLATES.map((template) => {
+                        const IconComp = INDUSTRY_ICON_MAP[template.icon] || LayoutGrid;
+                        const isSelected = signupForm.businessType === template.id;
+                        return (
+                          <button
+                            key={template.id}
+                            type="button"
+                            disabled={signupLoading}
+                            onClick={() => setSignupForm({ ...signupForm, businessType: template.id })}
+                            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all text-center ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                                : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
+                            } disabled:opacity-50`}
+                          >
+                            <IconComp className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                            <span className={`text-xs font-medium leading-tight ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+                              {t(template.labelKey, template.id)}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

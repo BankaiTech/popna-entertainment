@@ -27,12 +27,15 @@ export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
 export const ALL_MODULES = [
   'dashboard', 'contacts', 'complaints', 'payments',
   'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
-  'inventory-products', 'products', 'branches', 'pos'
+  'inventory-products', 'products', 'branches', 'pos',
+  // Universal business modules
+  'service-requests', 'expenses', 'quotations', 'purchase-orders',
+  'crm-leads', 'subscriptions', 'appointments', 'reports', 'audit-trail'
 ] as const;
 
 /** All available settings tabs that can be assigned to an organization */
 export const ALL_SETTINGS_TABS = [
-  'company', 'products', 'billing', 'pos'
+  'company', 'products', 'billing', 'pos', 'custom-fields', 'industry'
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
@@ -63,6 +66,13 @@ export interface SuperAdminUser {
   createdAt: string;
 }
 
+/** Industry types for the universal business management platform */
+export type IndustryType =
+  | 'isp-cable' | 'retail' | 'wholesale' | 'restaurant-cafe'
+  | 'salon-spa' | 'grocery' | 'electronics' | 'clothing-fashion'
+  | 'healthcare-pharmacy' | 'gym-fitness' | 'real-estate'
+  | 'education' | 'automotive' | 'professional-services' | 'general';
+
 export interface Organization {
   id: string;
   name: string;
@@ -71,6 +81,10 @@ export interface Organization {
   allowedSettingsTabs: SettingsTabKey[];
   subscriptionStart: string;
   subscriptionEnd: string;
+  /** Industry type selected during signup */
+  industryType?: IndustryType;
+  /** Terminology overrides for industry-specific labels */
+  terminology?: Record<string, string>;
 }
 
 export interface Plan {
@@ -138,6 +152,19 @@ export interface Customer {
   permanentDiscount?: number;
   /** Username of the user who last collected payment (for employee collection stats) */
   collectedByUsername?: string;
+  // Universal business fields
+  /** Credit limit for B2B/wholesale customers */
+  creditLimit?: number;
+  /** Current outstanding balance */
+  currentBalance?: number;
+  /** Loyalty points earned */
+  loyaltyPoints?: number;
+  /** Loyalty tier based on points */
+  loyaltyTier?: 'bronze' | 'silver' | 'gold' | 'platinum';
+  /** Tags for categorization */
+  tags?: string[];
+  /** Custom fields defined per organization */
+  customFields?: Record<string, unknown>;
 }
 
 // SaaS Dashboard KPI cards implemented
@@ -181,6 +208,17 @@ export interface Complaint {
   closureImage?: string;
   /** Date/time when complaint was closed (ISO string). */
   closedAt?: string;
+  // SLA & escalation fields
+  /** SLA hours to resolve */
+  slaHours?: number;
+  /** SLA deadline (ISO string) */
+  slaDeadline?: string;
+  /** Whether SLA has been breached */
+  slaBreached?: boolean;
+  /** User this complaint is escalated to */
+  escalatedTo?: string;
+  /** Priority level */
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 /** Admin/Employee user. password is plain text for mock only. */
@@ -228,6 +266,13 @@ export interface SalesInvoice {
   placeOfSupply?: string;
   /** GST: HSN/SAC code (e.g. 998314 for telecom/broadband services) */
   hsnSac?: string;
+  // Multi-item invoice support
+  /** Line items for multi-item invoices */
+  items?: InvoiceLineItem[];
+  /** Recurring invoice configuration */
+  recurringConfig?: { frequency: 'monthly' | 'quarterly' | 'yearly'; nextDate: string };
+  /** Approval status for workflows */
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 /** Purchase invoice (vendor, GST breakup, reference). */
@@ -491,6 +536,214 @@ export interface InventoryProduct {
   weightUnit?: 'g' | 'kg' | 'lb';
   /** Enable expiry date tracking - for pharma and FMCG */
   expiryTracking?: boolean;
+  // Extended inventory fields
+  /** Batch number for batch-tracked products */
+  batchNumber?: string;
+  /** Expiry date (ISO string) for perishable products */
+  expiryDate?: string;
+  /** Serial numbers for serial-tracked products */
+  serialNumbers?: string[];
+  /** Warehouse/location ID for multi-warehouse */
+  warehouseId?: number;
+  /** Quantity to reorder when stock is low */
+  reorderQuantity?: number;
+}
+
+// ===== Universal Business Module Types =====
+
+/** Line item for multi-item invoices, quotations, and purchase orders */
+export interface InvoiceLineItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  discount: number;
+  lineTotal: number;
+}
+
+/** Expense tracking */
+export type ExpenseStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Expense {
+  id: number;
+  organizationId: string;
+  expenseNumber: string;
+  category: string;
+  description: string;
+  amount: number;
+  taxAmount: number;
+  totalAmount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  vendorId?: number;
+  vendorName?: string;
+  receiptImage?: string;
+  status: ExpenseStatus;
+  approvedBy?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+/** Quotation / Estimate */
+export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+
+export interface QuotationItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  discount: number;
+  lineTotal: number;
+}
+
+export interface Quotation {
+  id: number;
+  organizationId: string;
+  quotationNumber: string;
+  customerId: number;
+  customerName: string;
+  items: QuotationItem[];
+  subtotal: number;
+  taxTotal: number;
+  discountAmount: number;
+  grandTotal: number;
+  status: QuotationStatus;
+  validUntil: string;
+  notes?: string;
+  createdAt: string;
+}
+
+/** Purchase Order */
+export type PurchaseOrderStatus = 'draft' | 'sent' | 'partial' | 'received' | 'cancelled';
+
+export interface PurchaseOrderItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  lineTotal: number;
+  receivedQuantity?: number;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  organizationId: string;
+  poNumber: string;
+  vendorId: number;
+  vendorName: string;
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  taxTotal: number;
+  grandTotal: number;
+  status: PurchaseOrderStatus;
+  expectedDate?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+/** Appointment / Booking */
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
+
+export interface Appointment {
+  id: number;
+  organizationId: string;
+  customerId: number;
+  customerName: string;
+  customerMobile: string;
+  serviceType: string;
+  staffAssigned?: string;
+  scheduledAt: string;
+  duration: number; // minutes
+  status: AppointmentStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+/** Service Request / Job Card */
+export type ServiceRequestStatus = 'new' | 'assigned' | 'in-progress' | 'resolved' | 'closed';
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface ServiceRequest {
+  id: number;
+  organizationId: string;
+  customerId: number;
+  customerName: string;
+  customerMobile: string;
+  requestType: string;
+  description: string;
+  priority: PriorityLevel;
+  assignedTo?: string;
+  status: ServiceRequestStatus;
+  resolution?: string;
+  slaHours?: number;
+  slaDeadline?: string;
+  slaBreached?: boolean;
+  createdAt: string;
+}
+
+/** CRM Lead */
+export type LeadSource = 'walk-in' | 'website' | 'referral' | 'social' | 'other';
+export type LeadStage = 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
+
+export interface FollowUp {
+  id: number;
+  date: string;
+  type: 'call' | 'email' | 'meeting' | 'other';
+  notes: string;
+  outcome?: string;
+}
+
+export interface Lead {
+  id: number;
+  organizationId: string;
+  name: string;
+  email?: string;
+  mobile: string;
+  source: LeadSource;
+  stage: LeadStage;
+  value?: number;
+  assignedTo?: string;
+  followUps: FollowUp[];
+  notes?: string;
+  tags?: string[];
+  createdAt: string;
+}
+
+/** Subscription / Recurring billing */
+export type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired';
+export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+
+export interface Subscription {
+  id: number;
+  organizationId: string;
+  customerId: number;
+  customerName: string;
+  planName: string;
+  amount: number;
+  billingCycle: BillingCycle;
+  startDate: string;
+  nextBillingDate: string;
+  status: SubscriptionStatus;
+  autoRenew: boolean;
+  createdAt: string;
+}
+
+/** Audit Trail */
+export type AuditAction = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'export';
+
+export interface AuditEntry {
+  id: number;
+  organizationId: string;
+  userId: number;
+  username: string;
+  action: AuditAction;
+  entity: string;
+  entityId?: string;
+  details?: string;
+  timestamp: string;
 }
 
 /** Label print configuration */

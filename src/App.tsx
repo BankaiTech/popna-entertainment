@@ -14,6 +14,9 @@ import AdminDashboard from './pages/admin/Dashboard';
 // Customers module removed - merged into Contacts
 import AdminInvoices from './pages/admin/Invoices';
 import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
+import Expenses from './pages/admin/Expenses';
+import Quotations from './pages/admin/Quotations';
+import PurchaseOrders from './pages/admin/PurchaseOrders';
 import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
@@ -150,6 +153,30 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminInvoices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="expenses"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Expenses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="quotations"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Quotations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="purchase-orders"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PurchaseOrders />
               </ProtectedRoute>
             }
           />

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle,
   UserCog, Settings, LogOut, Menu, PhoneCall, Contact2,
-  GitBranch, Store, ChevronDown, ChevronLeft
+  GitBranch, Store, ChevronDown, ChevronLeft, ReceiptText, Quote, ListChecks
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -71,6 +71,9 @@ const AdminLayout = () => {
         { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
         { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
         { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
+        { path: '/admin/expenses', labelKey: 'nav.expenses', icon: ReceiptText, moduleKey: 'expenses', color: 'text-amber-500' },
+        { path: '/admin/quotations', labelKey: 'nav.quotations', icon: Quote, moduleKey: 'quotations', color: 'text-indigo-500' },
+        { path: '/admin/purchase-orders', labelKey: 'nav.purchaseOrders', icon: ListChecks, moduleKey: 'purchase-orders', color: 'text-emerald-600' },
       ],
     },
     {

@@ -12,6 +12,8 @@ let organizations: Organization[] = [
         allowedSettingsTabs: [...ALL_SETTINGS_TABS],
         subscriptionStart: '2025-01-01',
         subscriptionEnd: '2026-12-31',
+        industryType: 'isp-cable',
+        terminology: { customer: 'Subscriber', complaint: 'Ticket' },
     },
 ];
 // Note: ALL_SETTINGS_TABS includes 'billing' for UPI/payment settings
