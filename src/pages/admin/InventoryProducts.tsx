@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInventoryStore } from '@/store/useInventoryStore';
 import { useStore } from '@/store/useStore';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { getTemplateById } from '@/config/industryTemplates';
 import { Card, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -36,6 +38,9 @@ const InventoryProducts = () => {
     } = useInventoryStore();
 
     const { companyProfile } = useStore();
+    const { currentOrganization } = useOrganizationStore();
+    const template = currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined;
+    const showBatchExpiry = template?.inventoryConfig?.batchExpiry === true;
 
     const [showProductModal, setShowProductModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
@@ -329,6 +334,12 @@ const InventoryProducts = () => {
                                     <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colSku', 'SKU ID')}</th>
                                     <th className="text-center px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colStock', 'Stock')}</th>
                                     <th className="text-center px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden lg:table-cell">{t('inventory.colVariants', 'Variants')}</th>
+                                    {showBatchExpiry && (
+                                        <>
+                                            <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colBatch', 'Batch')}</th>
+                                            <th className="text-left px-3 py-2.5 font-medium text-gray-600 text-xs uppercase tracking-wider hidden md:table-cell">{t('inventory.colExpiry', 'Expiry')}</th>
+                                        </>
+                                    )}
                                     <th className="w-10 px-2 py-2.5"></th>
                                 </tr>
                             </thead>
@@ -383,6 +394,12 @@ const InventoryProducts = () => {
                                                 <span className="text-xs text-gray-400">-</span>
                                             )}
                                         </td>
+                                        {showBatchExpiry && (
+                                            <>
+                                                <td className="px-3 py-2.5 text-sm text-gray-600 hidden md:table-cell">{product.batchNumber ?? '-'}</td>
+                                                <td className="px-3 py-2.5 text-sm text-gray-600 hidden md:table-cell">{product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : '-'}</td>
+                                            </>
+                                        )}
                                         <td className="px-2 py-2.5 text-center">
                                             <button
                                                 onClick={() => { if (confirm(t('inventory.deleteConfirm', 'Delete this product?'))) deleteProduct(product.id); }}
@@ -395,7 +412,7 @@ const InventoryProducts = () => {
                                     </tr>
                                 ))}
                                 {filteredProducts.length === 0 && (
-                                    <tr><td colSpan={8} className="text-center py-8 text-gray-500 text-sm">{t('common.noResults', 'No products found')}</td></tr>
+                                    <tr><td colSpan={8 + (showBatchExpiry ? 2 : 0)} className="text-center py-8 text-gray-500 text-sm">{t('common.noResults', 'No products found')}</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -550,7 +567,7 @@ const InventoryProducts = () => {
 
                             {/* Label Quantity */}
                             <div>
-                                <label className="block text-sm font-medium mb-2">{t('inventory.labelQuantity', 'Quantity')}</label>
+                                <label className="block text-sm font-medium mb-2 text-foreground">{t('inventory.labelQuantity', 'Quantity')}</label>
                                 <div className="flex flex-wrap gap-1.5">
                                     {[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((q) => (
                                         <button
@@ -560,8 +577,8 @@ const InventoryProducts = () => {
                                             className={cn(
                                                 'px-2.5 py-1 text-xs font-medium rounded border transition-colors',
                                                 labelQuantity === q
-                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                                                    ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400 dark:hover:bg-gray-600'
                                             )}
                                         >
                                             {q}
@@ -674,6 +691,7 @@ const InventoryProducts = () => {
                 onAddTaxRate={addTaxRate}
                 onAddSubCategory={addSubCategory}
                 onAddWarranty={addWarranty}
+                showBatchExpiry={showBatchExpiry}
             />
 
             <ImportModal

@@ -383,7 +383,7 @@ const AdminCustomers = () => {
                           key={customer.id}
                           className={cn(
                             "border-b border-border hover:bg-muted/50 transition-colors",
-                            idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                            idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                           )}
                         >
                           <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customer.id}</td>

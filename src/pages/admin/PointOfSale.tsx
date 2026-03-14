@@ -12,7 +12,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
     Search, Plus, Minus, CreditCard, Receipt, X,
-    WifiOff, ScanBarcode, UserPlus,
+    WifiOff, ScanBarcode, UserPlus, Pause, RotateCcw, ShoppingCart,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import {
@@ -21,15 +21,18 @@ import {
     type POSReceiptData,
 } from '@/lib/posReceiptUtils';
 import type { InventoryProduct, Customer } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { salesInvoicesApi } from '@/api/invoices';
 
 const PointOfSale = () => {
     const { t } = useTranslation();
     const { customers, fetchCustomers, addCustomer, companyProfile } = useStore();
     const inventoryStore = useInventoryStore();
     const {
-        cart, selectedCustomerId, discount, paymentMethod,
+        cart, selectedCustomerId, discount, paymentMethod, heldBills,
         addToCart, removeFromCart, updateQuantity,
         setCustomer, setDiscount, setPaymentMethod, clearCart,
+        holdCurrentBill, retrieveBill,
         getSubtotal, getTaxTotal, getDiscountAmount, getGrandTotal,
     } = usePOSStore();
 
@@ -38,11 +41,15 @@ const PointOfSale = () => {
     const [showReceipt, setShowReceipt] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
+    const [showRetrieveList, setShowRetrieveList] = useState(false);
+    const [showCartSheet, setShowCartSheet] = useState(false);
     const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
     const [lastInvoiceNumber, setLastInvoiceNumber] = useState('');
+    const [selectedIndex, setSelectedIndex] = useState(0);
     const barcodeBufferRef = useRef('');
     const barcodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const searchResultItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     useEffect(() => {
         const onOnline = () => setIsOnline(true);
@@ -125,28 +132,61 @@ const PointOfSale = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleBarcodeScan]);
 
+    const searchResults = useMemo(() => {
+        const q = productSearch.trim().toLowerCase();
+        if (!q) return [];
+        return inventoryStore.products.filter(
+            (p) => p.isActive && (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode && p.barcode.toLowerCase().includes(q)))
+        );
+    }, [productSearch, inventoryStore.products]);
+
+    // Clamp selected index when search results change
+    useEffect(() => {
+        if (searchResults.length > 0 && selectedIndex >= searchResults.length) {
+            setSelectedIndex(searchResults.length - 1);
+        }
+        if (searchResults.length === 0) setSelectedIndex(0);
+    }, [searchResults.length]);
+
+    // Scroll selected product into view when navigating with keyboard
+    useEffect(() => {
+        if (searchResults.length === 0 || selectedIndex < 0 || selectedIndex >= searchResults.length) return;
+        searchResultItemRefs.current[selectedIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, [selectedIndex, searchResults.length]);
+
     // Search input - Enter key scans barcode or adds first matching product
     const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key !== 'Enter' || !productSearch.trim()) return;
-        const q = productSearch.trim().toLowerCase();
-        // Try barcode match first
-        const barcodeMatch = inventoryStore.products.find(
-            (p) => p.isActive && p.barcode && p.barcode.toLowerCase() === q
-        );
-        if (barcodeMatch) {
-            handleAddProduct(barcodeMatch);
-            setProductSearch('');
-            return;
+        if (!productSearch.trim()) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setSelectedIndex((prev) => Math.min(prev + 1, searchResults.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setSelectedIndex((prev) => Math.max(prev - 1, 0));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const q = productSearch.trim().toLowerCase();
+            const barcodeMatch = inventoryStore.products.find(
+                (p) => p.isActive && p.barcode && p.barcode.toLowerCase() === q
+            );
+            if (barcodeMatch) {
+                handleAddProduct(barcodeMatch);
+                setProductSearch('');
+                setSelectedIndex(0);
+                return;
+            }
+            if (searchResults.length > 0 && selectedIndex >= 0 && selectedIndex < searchResults.length) {
+                const product = searchResults[selectedIndex];
+                const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
+                if (!outOfStock) {
+                    handleAddProduct(product);
+                    setProductSearch('');
+                    setSelectedIndex(0);
+                }
+            }
         }
-        // Try name/SKU match
-        const nameMatch = inventoryStore.products.find(
-            (p) => p.isActive && (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
-        );
-        if (nameMatch) {
-            handleAddProduct(nameMatch);
-            setProductSearch('');
-        }
-    }, [productSearch, inventoryStore.products, handleAddProduct]);
+    }, [productSearch, searchResults, selectedIndex, inventoryStore.products, handleAddProduct]);
 
     // Add customer and auto-select
     const handleAddCustomerSave = useCallback(async (customerData: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => {
@@ -177,7 +217,7 @@ const PointOfSale = () => {
 
 
 
-    const handleConfirmCheckout = () => {
+    const handleConfirmCheckout = async () => {
         const invoiceNumber = generatePOSInvoiceNumber();
         setLastInvoiceNumber(invoiceNumber);
         const settings = getPOSSettings();
@@ -195,6 +235,42 @@ const PointOfSale = () => {
             invoiceNumber,
             date: new Date(),
         };
+
+        // Persist POS sale as a SalesInvoice for ITR / accounting
+        try {
+            const sub = getSubtotal();
+            const tax = getTaxTotal();
+            const total = getGrandTotal();
+            const avgTaxRate = sub > 0 ? Math.round((tax / sub) * 10000) / 100 : 0;
+
+            await salesInvoicesApi.create({
+                organizationId: MOCK_ORGANIZATION_ID,
+                invoiceNumber,
+                customerId: selectedCustomer?.id ?? 0,
+                customerName: selectedCustomer?.name ?? t('pos.walkIn', 'Walk-in Customer'),
+                serviceProvider: 'POS',
+                planName: cart.map((i) => `${i.name} x${i.quantity}`).join(', '),
+                amount: sub,
+                gstRate: avgTaxRate,
+                gstAmount: tax,
+                totalAmount: total,
+                status: 'paid',
+                issueDate: new Date().toISOString().slice(0, 10),
+                dueDate: new Date().toISOString().slice(0, 10),
+                invoiceType: 'tax_invoice',
+                items: cart.map((item) => ({
+                    productId: item.productId,
+                    productName: item.name,
+                    quantity: item.quantity,
+                    unitPrice: item.price,
+                    taxRate: item.tax,
+                    discount: 0,
+                    lineTotal: item.price * item.quantity * (1 + item.tax / 100),
+                })),
+            });
+        } catch {
+            // Silent fail for mock; in production this would show an error
+        }
 
         if (settings.autoPrint) {
             if (settings.invoiceFormat === 'thermal') {
@@ -264,7 +340,10 @@ const PointOfSale = () => {
                     <Input
                         ref={searchInputRef}
                         value={productSearch}
-                        onChange={(e) => setProductSearch(e.target.value)}
+                        onChange={(e) => {
+                            setProductSearch(e.target.value);
+                            setSelectedIndex(0);
+                        }}
                         onKeyDown={handleSearchKeyDown}
                         placeholder={t('pos.searchPlaceholder', 'Search products...')}
                         className="pl-9"
@@ -278,27 +357,23 @@ const PointOfSale = () => {
                 >
                     <ScanBarcode className="w-5 h-5" />
                 </button>
-                {/* Product Search Auto-List Dropdown */}
                 {productSearch.trim().length > 0 && (
                     <div className="absolute top-full left-0 right-[48px] mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
-                        {(() => {
-                            const q = productSearch.trim().toLowerCase();
-                            const matches = inventoryStore.products.filter(
-                                (p) => p.isActive && (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode && p.barcode.toLowerCase().includes(q)))
-                            );
-                            if (matches.length === 0) {
-                                return <div className="p-3 text-sm text-gray-500 text-center">{t('pos.noProductsFound', 'No products found')}</div>;
-                            }
-                            return matches.map((product) => {
+                        {searchResults.length === 0 ? (
+                            <div className="p-3 text-sm text-gray-500 text-center">{t('pos.noProductsFound', 'No products found')}</div>
+                        ) : (
+                            searchResults.map((product, index) => {
                                 const outOfStock = (product.currentStock ?? 0) <= 0 && product.productType !== 'service';
                                 return (
                                     <button
                                         key={product.id}
+                                        ref={(el) => { searchResultItemRefs.current[index] = el; }}
                                         type="button"
                                         disabled={outOfStock}
-                                        onClick={() => { handleAddProduct(product); setProductSearch(''); }}
+                                        onClick={() => { handleAddProduct(product); setProductSearch(''); setSelectedIndex(0); }}
                                         className={cn(
-                                            "w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors flex justify-between items-center",
+                                            "w-full text-left p-3 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors flex justify-between items-center",
+                                            index === selectedIndex ? "bg-gray-100 dark:bg-gray-800" : "hover:bg-gray-50 dark:hover:bg-gray-800",
                                             outOfStock && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
@@ -312,14 +387,14 @@ const PointOfSale = () => {
                                         </div>
                                     </button>
                                 );
-                            });
-                        })()}
+                            })
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* ════ Cart Table ════ */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* ════ Cart Table (desktop); on mobile use FAB + slide-up sheet below ════ */}
+            <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {cart.length === 0 ? (
                     <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                         <ScanBarcode className="w-12 h-12 mx-auto mb-3 opacity-40" />
@@ -499,14 +574,107 @@ const PointOfSale = () => {
                             </div>
                         </div>
                     </div>
-                    <Button onClick={() => setShowCheckout(true)} disabled={!isOnline || cart.length === 0} className="w-full min-h-[48px] text-base font-semibold" size="lg">
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        {t('pos.checkout', 'Checkout')} - {formatCurrencyINR(grandTotal)}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" onClick={() => { if (cart.length > 0) holdCurrentBill(); }} disabled={cart.length === 0} className="flex-1 min-h-[44px]" size="lg">
+                            <Pause className="w-5 h-5 mr-2" />
+                            {t('pos.holdBill', 'Hold Bill')}
+                        </Button>
+                        <div className="relative flex-1">
+                            <Button variant="outline" onClick={() => setShowRetrieveList((v) => !v)} disabled={heldBills.length === 0} className="w-full min-h-[44px]" size="lg">
+                                <RotateCcw className="w-5 h-5 mr-2" />
+                                {t('pos.retrieveBill', 'Retrieve')} {heldBills.length > 0 ? `(${heldBills.length})` : ''}
+                            </Button>
+                            {showRetrieveList && heldBills.length > 0 && (
+                                <>
+                                    <div className="absolute inset-0 top-full z-20 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
+                                        {heldBills.map((bill) => (
+                                            <button
+                                                key={bill.id}
+                                                type="button"
+                                                onClick={() => { retrieveBill(bill.id); setShowRetrieveList(false); }}
+                                                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm flex justify-between items-center"
+                                            >
+                                                <span>{new Date(bill.createdAt).toLocaleString()}</span>
+                                                <span className="font-medium">{bill.cart.length} {t('pos.items', 'items')}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowRetrieveList(false)} aria-hidden="true" />
+                                </>
+                            )}
+                        </div>
+                        <Button onClick={() => setShowCheckout(true)} disabled={!isOnline || cart.length === 0} className="flex-1 min-h-[48px] text-base font-semibold" size="lg">
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            {t('pos.checkout', 'Checkout')} - {formatCurrencyINR(grandTotal)}
+                        </Button>
+                    </div>
                 </div>
             )}
 
-            {/* Mobile Bottom Cart Summary Removed as checkout explicitly moved directly below cart */}
+            {/* Mobile: floating cart FAB + slide-up sheet */}
+            <div className="md:hidden fixed bottom-24 right-4 z-40">
+                <button
+                    type="button"
+                    onClick={() => setShowCartSheet(true)}
+                    className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center relative"
+                    aria-label={t('pos.cart', 'Cart')}
+                >
+                    <ShoppingCart className="w-6 h-6" />
+                    {cart.length > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
+                            {cart.length > 12 ? '12+' : cart.length}
+                        </span>
+                    )}
+                </button>
+            </div>
+
+            {showCartSheet && (
+                <>
+                    <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowCartSheet(false)} aria-hidden="true" />
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] rounded-t-2xl bg-card border-t border-border shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-300">
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <h3 className="font-semibold text-lg">{t('pos.cart', 'Cart')} {cart.length > 0 && `(${cart.length})`}</h3>
+                            <button type="button" onClick={() => setShowCartSheet(false)} className="p-2 rounded-lg hover:bg-muted">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {cart.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-8 text-center">{t('pos.emptyCart', 'No items yet')}</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {cart.map((item) => {
+                                        const itemTotal = item.price * item.quantity * (1 + item.tax / 100);
+                                        return (
+                                            <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex justify-between items-center gap-2 py-2 border-b border-border last:border-0">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-medium text-sm truncate">{item.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{formatCurrencyINR(item.price)} × {item.quantity}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="font-semibold tabular-nums">{formatCurrencyINR(itemTotal)}</span>
+                                                    <button type="button" onClick={() => removeFromCart(item.productId, item.variantId)} className="p-1.5 rounded text-destructive hover:bg-destructive/10">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        {cart.length > 0 && (
+                            <div className="p-4 border-t border-border space-y-2">
+                                <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('pos.grandTotal', 'Grand Total')}</span><span className="font-bold">{formatCurrencyINR(grandTotal)}</span></div>
+                                <Button className="w-full" size="lg" onClick={() => { setShowCartSheet(false); setShowCheckout(true); }}>
+                                    <CreditCard className="w-5 h-5 mr-2" />
+                                    {t('pos.checkout', 'Checkout')} - {formatCurrencyINR(grandTotal)}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
 
             {/* ════ Barcode Scanner ════ */}
             {showScanner && (

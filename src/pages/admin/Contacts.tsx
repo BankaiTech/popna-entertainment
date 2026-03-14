@@ -17,7 +17,7 @@ import ImportModal from '@/components/ImportModal';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare } from 'lucide-react';
 import type { Customer, Supplier, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyINR } from '@/lib/utils';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword } from '@/lib/utils';
@@ -439,6 +439,8 @@ const Contacts = () => {
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.refNo', 'Ref No')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.creditLimit', 'Credit Limit')}</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.loyaltyPoints', 'Loyalty')}</th>
                                                     <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>
                                                 </tr>
                                             </thead>
@@ -448,7 +450,7 @@ const Contacts = () => {
                                                         key={customer.id}
                                                         className={cn(
                                                             "border-b border-border hover:bg-muted/50 transition-colors",
-                                                            idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                                                            idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                                                         )}
                                                     >
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.id}</td>
@@ -471,6 +473,8 @@ const Contacts = () => {
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '-'}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '-'}</td>
                                                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.creditLimit != null ? formatCurrencyINR(customer.creditLimit) : '-'}</td>
+                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.loyaltyPoints != null ? customer.loyaltyPoints : '-'}</td>
                                                         <td className="px-3 py-2 text-sm">
                                                             {customer.paymentStatus !== 'paid' ? (
                                                                 <button

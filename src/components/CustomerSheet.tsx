@@ -41,7 +41,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
   }, [isOpen, fetchActiveProducts, fetchPlans]);
 
   const isReadOnly = role === 'employee';
-  const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address' | 'more'>('info');
 
   // Stable reference - only recompute when products array identity changes
   const availableProviders = useMemo(
@@ -73,6 +73,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
       pincode: '',
     } as Address,
     additionalAddresses: [] as Address[],
+    creditLimit: undefined as number | undefined,
+    loyaltyPoints: undefined as number | undefined,
+    tags: [] as string[],
+    customFields: {} as Record<string, unknown>,
   });
 
   // Plans filtered by selected connectionType (category)
@@ -102,6 +106,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         permanentDiscount: customer.permanentDiscount ?? undefined,
         address: customer.address,
         additionalAddresses: customer.additionalAddresses || [],
+        creditLimit: customer.creditLimit ?? undefined,
+        loyaltyPoints: customer.loyaltyPoints ?? undefined,
+        tags: customer.tags ?? [],
+        customFields: customer.customFields ?? {},
       });
     } else {
       // Use prefillData if available, otherwise use empty defaults
@@ -129,6 +137,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
           pincode: '',
         },
         additionalAddresses: [],
+        creditLimit: undefined,
+        loyaltyPoints: undefined,
+        tags: [],
+        customFields: {},
       });
     }
   }, [customer, isOpen, prefillData]);
@@ -160,10 +172,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
       formData.gstin = undefined;
     }
 
+    const payload = { ...formData };
+    const cf = { ...(payload.customFields ?? {}) };
+    Object.keys(cf).forEach((k) => { if (k.trim() === '') delete cf[k]; });
+    payload.customFields = Object.keys(cf).length ? cf : {};
     if (customer) {
-      onSave(formData);
+      onSave(payload);
     } else {
-      onSave(formData);
+      onSave(payload);
     }
     onClose();
   };
@@ -216,6 +232,16 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
               }`}
           >
             {t('customerSheet.address', 'Address')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('more')}
+            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'more'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            {t('customerSheet.more', 'More')}
           </button>
         </div>
 
@@ -661,6 +687,123 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* More tab: credit limit, loyalty, tags, custom fields */}
+          {activeTab === 'more' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.creditLimit', 'Credit Limit')}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={formData.creditLimit ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                    setFormData({ ...formData, creditLimit: v === undefined || isNaN(v) ? undefined : Math.max(0, v) });
+                  }}
+                  placeholder={t('customerSheet.creditLimitPlaceholder', 'Amount')}
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.loyaltyPoints', 'Loyalty Points')}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={formData.loyaltyPoints ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    setFormData({ ...formData, loyaltyPoints: v === undefined || isNaN(v) ? undefined : Math.max(0, v) });
+                  }}
+                  placeholder={t('customerSheet.loyaltyPointsPlaceholder', 'Points')}
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div className="col-span-full">
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.tags', 'Tags')}</label>
+                <Input
+                  value={(formData.tags ?? []).join(', ')}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const tags = raw.split(/,\s*/).map((s) => s.trim()).filter(Boolean);
+                    setFormData({ ...formData, tags });
+                  }}
+                  placeholder={t('customerSheet.tagsPlaceholder', 'tag1, tag2, tag3')}
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div className="col-span-full">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">{t('customerSheet.customFields', 'Custom Fields')}</label>
+                  {!isReadOnly && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const cf = formData.customFields ?? {};
+                        const newKey = `field_${Object.keys(cf).length}`;
+                        setFormData({
+                          ...formData,
+                          customFields: { ...cf, [newKey]: '' },
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      {t('customerSheet.addField', 'Add')}
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {Object.entries(formData.customFields ?? {}).map(([key, val], idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input
+                        value={key}
+                        onChange={(e) => {
+                          const prev = { ...(formData.customFields ?? {}) };
+                          delete prev[key];
+                          prev[e.target.value] = val;
+                          setFormData({ ...formData, customFields: prev });
+                        }}
+                        placeholder={t('customerSheet.fieldName', 'Field name')}
+                        disabled={isReadOnly}
+                        className="flex-1 min-w-0"
+                      />
+                      <Input
+                        value={typeof val === 'string' ? val : String(val ?? '')}
+                        onChange={(e) => {
+                          const prev = { ...(formData.customFields ?? {}) };
+                          prev[key] = e.target.value;
+                          setFormData({ ...formData, customFields: prev });
+                        }}
+                        placeholder={t('customerSheet.fieldValue', 'Value')}
+                        disabled={isReadOnly}
+                        className="flex-1 min-w-0"
+                      />
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const prev = { ...(formData.customFields ?? {}) };
+                            delete prev[key];
+                            setFormData({ ...formData, customFields: prev });
+                          }}
+                          className="p-2 text-destructive hover:bg-destructive/10 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {Object.keys(formData.customFields ?? {}).length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t('customerSheet.noCustomFields', 'No custom fields. Click Add to add key-value pairs.')}</p>
+                  )}
+                </div>
               </div>
             </div>
           )}

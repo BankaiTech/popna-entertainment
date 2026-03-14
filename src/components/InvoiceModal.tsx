@@ -6,11 +6,13 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useStore } from '@/store/useStore';
-import type { Customer, Plan, InvoiceType, Branch } from '@/models/types';
+import type { Customer, Plan, InvoiceType, Branch, SalesInvoice } from '@/models/types';
+import type { InvoiceLineItem } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { branchesApi } from '@/api/branches';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
+import InvoiceLineItems from '@/components/InvoiceLineItems';
 
 interface InvoiceModalProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   const [status, setStatus] = useState<'draft' | 'sent' | 'paid' | 'overdue'>('draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,10 +58,23 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     ? plans.filter((p) => p.provider === selectedCustomer.connectionType)
     : [];
 
-  const baseAmount = selectedPlan?.price ?? 0;
-  const gstRate = selectedPlan?.gstRate ?? 0;
-  const gstAmount = invoiceType === 'tax_invoice' ? (baseAmount * gstRate) / 100 : 0;
-  const totalAmount = baseAmount + gstAmount;
+  const useMultiItem = lineItems.length > 0;
+  const baseAmount = useMultiItem
+    ? lineItems.reduce((sum, i) => sum + i.quantity * i.unitPrice * (1 - i.discount / 100), 0)
+    : (selectedPlan?.price ?? 0);
+  const gstRate = useMultiItem ? 0 : (selectedPlan?.gstRate ?? 0);
+  const gstAmount = useMultiItem
+    ? lineItems.reduce((sum, i) => sum + (i.lineTotal - i.quantity * i.unitPrice * (1 - i.discount / 100)), 0)
+    : (invoiceType === 'tax_invoice' ? (baseAmount * gstRate) / 100 : 0);
+  const totalAmount = useMultiItem
+    ? lineItems.reduce((sum, i) => sum + i.lineTotal, 0)
+    : baseAmount + gstAmount;
+  const lineItemOptions = filteredPlans.map((p) => ({
+    id: p.id,
+    name: p.planName,
+    unitPrice: p.price,
+    taxRate: p.gstRate ?? 0,
+  }));
 
   useEffect(() => {
     if (issueDate) {
@@ -71,23 +87,31 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!selectedCustomer || !selectedPlan) {
+    if (!selectedCustomer) {
+      setError(t('invoiceModal.selectCustomerError', 'Please select a customer'));
+      return;
+    }
+    if (!useMultiItem && !selectedPlan) {
       setError(t('invoiceModal.selectBothError', 'Please select both customer and plan'));
+      return;
+    }
+    if (useMultiItem && lineItems.length === 0) {
+      setError(t('invoiceModal.addAtLeastOneLine', 'Add at least one line item or use a single plan'));
       return;
     }
     setSaving(true);
     try {
       const invoiceNumber = `INV-${Date.now()}`;
-      await salesInvoicesApi.create({
+      const invoice: Omit<SalesInvoice, 'id' | 'createdAt'> = {
         organizationId: MOCK_ORGANIZATION_ID,
         invoiceNumber,
         branchId: selectedBranchId || undefined,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
-        serviceProvider: selectedPlan.provider,
-        planName: selectedPlan.planName,
+        serviceProvider: useMultiItem ? (filteredPlans[0]?.provider ?? '') : selectedPlan!.provider,
+        planName: useMultiItem ? (lineItems.map((i) => i.productName).join(', ') || 'Multi-item') : selectedPlan!.planName,
         amount: baseAmount,
-        gstRate,
+        gstRate: useMultiItem ? 0 : gstRate,
         gstAmount,
         totalAmount,
         status,
@@ -96,7 +120,9 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
         invoiceType,
         placeOfSupply: placeOfSupply.trim() || undefined,
         hsnSac: hsnSac.trim() || undefined,
-      });
+      };
+      if (useMultiItem) invoice.items = lineItems;
+      await salesInvoicesApi.create(invoice);
       onSuccess();
       onClose();
       resetForm();
@@ -118,6 +144,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
     setDueDate('');
     setStatus('draft');
     setError('');
+    setLineItems([]);
   };
 
   const customerAddressLines = selectedCustomer
@@ -250,8 +277,20 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
               )}
             </div>
 
-            {selectedPlan && (
-              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50">
+            {/* Multi-item line entries: when present, they override single-plan totals */}
+            {selectedCustomer && (
+              <div>
+                <InvoiceLineItems
+                  items={lineItems}
+                  onChange={setLineItems}
+                  options={lineItemOptions}
+                  productLabel={t('invoiceModal.planService', 'Plan / Service')}
+                />
+              </div>
+            )}
+
+            {(useMultiItem || selectedPlan) && (
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{t('invoiceModal.amountBreakdown', 'Amount Breakdown (GST Compliant)')}</CardTitle>
                 </CardHeader>
@@ -260,9 +299,9 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
                     <span className="text-sm font-medium">{t('invoiceModal.baseAmount', 'Base Amount')}:</span>
                     <span className="font-semibold">{formatCurrencyINR(baseAmount)}</span>
                   </div>
-                  {invoiceType === 'tax_invoice' && (
+                  {invoiceType === 'tax_invoice' && (gstAmount > 0 || !useMultiItem) && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{t('invoiceModal.gst', 'GST')} ({gstRate}%):</span>
+                      <span className="text-sm font-medium">{t('invoiceModal.gst', 'GST')} ({useMultiItem ? '' : gstRate + '%'}):</span>
                       <span className="font-semibold">{formatCurrencyINR(gstAmount)}</span>
                     </div>
                   )}
@@ -310,7 +349,7 @@ const InvoiceModal = ({ isOpen, onClose, customers, plans, onSuccess }: InvoiceM
           <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
             {t('common.cancel', 'Cancel')}
           </Button>
-          <Button type="submit" disabled={saving || !selectedCustomer || !selectedPlan}>
+          <Button type="submit" disabled={saving || !selectedCustomer || (!useMultiItem && !selectedPlan) || (useMultiItem && lineItems.length === 0)}>
             {saving ? t('invoiceModal.creating', 'Creating...') : t('invoiceModal.createInvoice', 'Create Invoice')}
           </Button>
         </DialogFooter>

@@ -257,7 +257,7 @@ const PurchaseInvoiceModal = ({ isOpen, onClose, onSuccess }: PurchaseInvoiceMod
                 </div>
               </div>
 
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{t('purchaseInvoiceModal.gstBreakdown', 'GST Breakdown')}</CardTitle>
                 </CardHeader>

@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import { Plus, AlertCircle, Search } from 'lucide-react';
 import type { Complaint, ComplaintStatus, Provider } from '@/models/types';
+type ComplaintPriority = 'low' | 'medium' | 'high' | 'critical';
 import ComplaintModal from '@/components/ComplaintModal';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ const Complaints = () => {
   const { complaints, loading, fetchComplaints, initialize, customers, products, fetchProducts } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | 'All'>('All');
+  const [priorityFilter, setPriorityFilter] = useState<ComplaintPriority | 'All'>('All');
   const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
@@ -48,9 +50,11 @@ const Complaints = () => {
       const matchesConnection =
         connectionFilter === 'All' || complaint.connectionType === connectionFilter;
 
-      return matchesSearch && matchesStatus && matchesConnection;
+      const matchesPriority = priorityFilter === 'All' || complaint.priority === priorityFilter;
+
+      return matchesSearch && matchesStatus && matchesConnection && matchesPriority;
     });
-  }, [complaints, searchQuery, statusFilter, connectionFilter, isEmployee]);
+  }, [complaints, searchQuery, statusFilter, connectionFilter, priorityFilter, isEmployee]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
@@ -62,7 +66,7 @@ const Complaints = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, connectionFilter]);
+  }, [searchQuery, statusFilter, connectionFilter, priorityFilter]);
 
   const handleAdd = () => {
     setEditingComplaint(null);
@@ -139,6 +143,17 @@ const Complaints = () => {
               ))}
             </Select>
             <Select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as ComplaintPriority | 'All')}
+              className="h-9 text-sm w-full min-w-0 sm:min-w-[140px] sm:flex-initial"
+            >
+              <option value="All">{t('complaints.allPriority', 'All Priority')}</option>
+              <option value="low">{t('complaints.priorityLow', 'Low')}</option>
+              <option value="medium">{t('complaints.priorityMedium', 'Medium')}</option>
+              <option value="high">{t('complaints.priorityHigh', 'High')}</option>
+              <option value="critical">{t('complaints.priorityCritical', 'Critical')}</option>
+            </Select>
+            <Select
               value={connectionFilter}
               onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
               className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
@@ -178,7 +193,9 @@ const Complaints = () => {
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.category', 'Category')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.product', 'Product')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[8rem]">{t('complaints.description', 'Description')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.priority', 'Priority')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.status', 'Status')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.sla', 'SLA')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.created', 'Created')}</th>
                     </tr>
                   </thead>
@@ -189,7 +206,7 @@ const Complaints = () => {
                         onClick={() => handleEdit(complaint)}
                         className={cn(
                           "border-b border-border hover:bg-muted/50 transition-colors cursor-pointer",
-                          idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                          idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                         )}
                       >
                         <td className="px-3 py-2 text-sm font-medium text-primary hover:underline">{complaint.customerName}</td>
@@ -198,6 +215,19 @@ const Complaints = () => {
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{customers.find(c => c.id === complaint.customerId)?.package || '-'}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground max-w-xs truncate">{complaint.customerDescription}</td>
                         <td className="px-3 py-2">
+                          {complaint.priority ? (
+                            <span className={cn(
+                              'px-2 py-1 rounded text-xs font-medium',
+                              complaint.priority === 'critical' && 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+                              complaint.priority === 'high' && 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+                              complaint.priority === 'medium' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+                              complaint.priority === 'low' && 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            )}>
+                              {complaint.priority}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td className="px-3 py-2">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
                               complaint.status
@@ -205,6 +235,16 @@ const Complaints = () => {
                           >
                             {getStatusLabel(complaint.status)}
                           </span>
+                        </td>
+                        <td className="px-3 py-2 text-sm">
+                          {complaint.slaDeadline ? (
+                            <span className={cn(
+                              'px-2 py-0.5 rounded text-xs font-medium',
+                              complaint.slaBreached ? 'bg-red-100 text-red-800 dark:bg-red-900/40' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            )}>
+                              {complaint.slaBreached ? t('complaints.slaBreached', 'Breached') : new Date(complaint.slaDeadline).toLocaleString()}
+                            </span>
+                          ) : '-'}
                         </td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                       </tr>
@@ -237,6 +277,10 @@ const Complaints = () => {
 
                     <div className="space-y-2 text-sm">
                       <div>
+                        <span className="text-muted-foreground">{t('complaints.priority', 'Priority')}: </span>
+                        <span className="font-medium">{complaint.priority ?? '-'}</span>
+                      </div>
+                      <div>
                         <span className="text-muted-foreground">{t('complaints.category', 'Category')}: </span>
                         <span className="font-medium">{complaint.connectionType || '-'}</span>
                       </div>
@@ -248,6 +292,20 @@ const Complaints = () => {
                         <span className="text-muted-foreground">{t('complaints.description', 'Description')}: </span>
                         <span className="font-medium">{complaint.customerDescription}</span>
                       </div>
+                      {complaint.slaDeadline && (
+                        <div>
+                          <span className="text-muted-foreground">{t('complaints.sla', 'SLA')}: </span>
+                          <span className={cn('font-medium', complaint.slaBreached && 'text-red-600 dark:text-red-400')}>
+                            {complaint.slaBreached ? t('complaints.slaBreached', 'Breached') : new Date(complaint.slaDeadline).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                      {complaint.escalatedTo && (
+                        <div>
+                          <span className="text-muted-foreground">{t('complaints.escalatedTo', 'Escalated to')}: </span>
+                          <span className="font-medium">{complaint.escalatedTo}</span>
+                        </div>
+                      )}
                       <div>
                         <span className="text-muted-foreground">{t('complaints.created', 'Created')}: </span>
                         <span className="font-medium">{new Date(complaint.createdAt).toLocaleDateString()}</span>

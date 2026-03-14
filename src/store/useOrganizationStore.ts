@@ -1,7 +1,8 @@
 // Module access controlled by organization permissions
 import { create } from 'zustand';
 import { organizationsApi } from '@/api/organizations';
-import type { Organization, ModuleKey, SettingsTabKey } from '@/models/types';
+import type { Organization, ModuleKey, SettingsTabKey, IndustryType } from '@/models/types';
+import { getTemplateById } from '@/config/industryTemplates';
 
 interface OrganizationState {
     currentOrganization: Organization | null;
@@ -19,6 +20,10 @@ interface OrganizationState {
     getAllowedModules: () => ModuleKey[];
     /** Get allowed settings tabs for current org */
     getAllowedSettingsTabs: () => SettingsTabKey[];
+    /** Set industry type and apply template defaults */
+    setIndustryType: (type: IndustryType) => void;
+    /** Get terminology override for a key */
+    getTerminology: (key: string) => string | undefined;
 }
 
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
@@ -68,5 +73,25 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
         const org = get().currentOrganization;
         if (!org) return [];
         return org.allowedSettingsTabs;
+    },
+
+    setIndustryType: (type: IndustryType) => {
+        const org = get().currentOrganization;
+        if (!org) return;
+        const template = getTemplateById(type);
+        set({
+            currentOrganization: {
+                ...org,
+                industryType: type,
+                terminology: template?.terminology ?? {},
+                allowedModules: template?.enabledModules ?? org.allowedModules,
+                allowedSettingsTabs: template?.enabledSettingsTabs ?? org.allowedSettingsTabs,
+            },
+        });
+    },
+
+    getTerminology: (key: string) => {
+        const org = get().currentOrganization;
+        return org?.terminology?.[key];
     },
 }));
