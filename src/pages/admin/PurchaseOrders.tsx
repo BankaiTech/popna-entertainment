@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, Search, Trash2, FileText, CheckCircle, XCircle, ListChecks } from 'lucide-react';
+import { Search } from 'lucide-react';
+import Select from '@/components/ui/Select';
 import type { PurchaseOrder, PurchaseOrderStatus } from '@/models/types';
 import { usePurchaseOrdersStore } from '@/store/usePurchaseOrdersStore';
 import PurchaseOrderModal from '@/components/PurchaseOrderModal';
@@ -99,46 +100,33 @@ const PurchaseOrders = () => {
   return (
     <div className="space-y-3">
       <Card>
-        <CardHeader className="py-3">
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <ListChecks className="w-5 h-5 text-emerald-500" />
-              <div>
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {t('purchaseOrders.title', 'Purchase Orders')}
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('purchaseOrders.subtitle', 'Track supplier orders and receiving status.')}
-                </p>
-              </div>
+        <CardHeader className="py-2.5 px-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-56 shrink-0">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder={t('purchaseOrders.searchPlaceholder', 'Search by vendor or PO number...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs w-full"
+              />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <div className="relative flex-1 sm:w-56">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder={t('purchaseOrders.searchPlaceholder', 'Search by vendor or PO number...')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm w-full"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as PurchaseOrderStatus | 'all')}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs sm:text-sm sm:w-40"
-              >
-                <option value="all">{t('purchaseOrders.allStatuses', 'All Statuses')}</option>
-                <option value="draft">{t('purchaseOrders.statusDraft', 'Draft')}</option>
-                <option value="sent">{t('purchaseOrders.statusSent', 'Sent')}</option>
-                <option value="partial">{t('purchaseOrders.statusPartial', 'Partial Received')}</option>
-                <option value="received">{t('purchaseOrders.statusReceived', 'Received')}</option>
-                <option value="cancelled">{t('purchaseOrders.statusCancelled', 'Cancelled')}</option>
-              </select>
-              <Button onClick={openCreate} size="xs" className="shrink-0">
-                <Plus className="w-3.5 h-3.5" />
-                {t('purchaseOrders.newPurchaseOrder', 'New Purchase Order')}
-              </Button>
-            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as PurchaseOrderStatus | 'all')}
+              className="h-8 ml-auto text-xs w-full sm:w-32"
+            >
+              <option value="all">{t('purchaseOrders.allStatuses', 'All Statuses')}</option>
+              <option value="draft">{t('purchaseOrders.statusDraft', 'Draft')}</option>
+              <option value="sent">{t('purchaseOrders.statusSent', 'Sent')}</option>
+              <option value="partial">{t('purchaseOrders.statusPartial', 'Partial Received')}</option>
+              <option value="received">{t('purchaseOrders.statusReceived', 'Received')}</option>
+              <option value="cancelled">{t('purchaseOrders.statusCancelled', 'Cancelled')}</option>
+            </Select>
+            <Button onClick={openCreate} size="xs" className="shrink-0 w-full sm:w-auto">
+              <span className="mr-1 text-lg leading-none">+</span>
+              {t('purchaseOrders.newPurchaseOrder', 'New Purchase Order')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -181,7 +169,7 @@ const PurchaseOrders = () => {
                         key={po.id}
                         className={cn(
                           'border-b border-border hover:bg-muted/50 transition-colors',
-                          idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                          idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                         )}
                       >
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{po.poNumber}</td>

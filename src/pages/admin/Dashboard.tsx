@@ -1,8 +1,12 @@
-// Admin Dashboard - business management: dynamic by inventory categories
+// Admin Dashboard - business management: widget-driven from industry template
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useInventoryStore } from '@/store/useInventoryStore';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { useAppointmentsStore } from '@/store/useAppointmentsStore';
+import { getTemplateById } from '@/config/industryTemplates';
+import type { DashboardWidgetKey } from '@/config/industryTemplates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import Select from '@/components/ui/Select';
@@ -10,7 +14,7 @@ import { Link } from 'react-router-dom';
 import {
   Users, AlertCircle, TrendingUp, IndianRupee,
   DollarSign, Clock, MessageSquare, Package, RefreshCw, ArrowRight,
-  AlertTriangle, Tag, Percent, ShoppingBag, CalendarClock,
+  AlertTriangle, Tag, Percent, ShoppingBag, CalendarClock, FileText, UserPlus, ShoppingCart, Calendar,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -44,10 +48,21 @@ const AdminDashboard = () => {
   const {
     categories, products: inventoryProducts, initialize: initInventory,
   } = useInventoryStore();
+  const { currentOrganization, isModuleAllowed } = useOrganizationStore();
+  const { appointments, fetchAppointments } = useAppointmentsStore();
   const [lastCustomers, setLastCustomers] = useState<Customer[]>([]);
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('this_month');
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [todayAppointmentsCount, setTodayAppointmentsCount] = useState(0);
+  const [expiringSoonCount, setExpiringSoonCount] = useState(0);
+  const [todaySalesAmount, setTodaySalesAmount] = useState(0);
+
+  const template = useMemo(
+    () => (currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined),
+    [currentOrganization?.industryType]
+  );
+  const dashboardWidgets = template?.dashboardWidgets ?? [];
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,9 +79,41 @@ const AdminDashboard = () => {
       setInvoices(allInvoices);
       const org = await organizationsApi.getById(MOCK_ORGANIZATION_ID);
       setOrganization(org ?? null);
+      await fetchAppointments();
     };
     loadData();
-  }, [fetchDashboardStats, fetchCustomers, initialize, initInventory]);
+  }, [fetchDashboardStats, fetchCustomers, initialize, initInventory, fetchAppointments]);
+
+  // Industry KPIs: today's appointments, expiring soon, today's sales
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayStart = new Date(today).getTime();
+    const todayEnd = todayStart + 24 * 60 * 60 * 1000;
+    const count = appointments.filter((a) => {
+      const d = new Date(a.scheduledAt).getTime();
+      return d >= todayStart && d < todayEnd;
+    }).length;
+    setTodayAppointmentsCount(count);
+  }, [appointments]);
+
+  useEffect(() => {
+    const in30Days = new Date();
+    in30Days.setDate(in30Days.getDate() + 30);
+    const count = inventoryProducts.filter((p) => {
+      if (!p.expiryDate) return false;
+      const exp = new Date(p.expiryDate).getTime();
+      return exp <= in30Days.getTime() && exp >= Date.now();
+    }).length;
+    setExpiringSoonCount(count);
+  }, [inventoryProducts]);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const amount = invoices
+      .filter((inv) => inv.issueDate === today && (inv.status === 'paid' || inv.status === 'sent'))
+      .reduce((sum, inv) => sum + (inv.totalAmount ?? inv.amount + (inv.gstAmount ?? 0)), 0);
+    setTodaySalesAmount(amount);
+  }, [invoices]);
 
   // ── Category stats (auto-tracking: dynamically computed from categories) ──
   const categoryStats = useMemo(() => {
@@ -270,6 +317,81 @@ const AdminDashboard = () => {
     },
   ];
 
+  // Widget key -> card config for industry-driven dashboard
+  const widgetCardMap: Record<DashboardWidgetKey, { title: string; value: number; icon: React.ElementType; color: string; bgColor: string; isCurrency: boolean }> = {
+    revenue: {
+      title: t('dashboard.totalRevenue', 'Total Revenue'),
+      value: totalRevenue,
+      icon: DollarSign,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-900/30',
+      isCurrency: true,
+    },
+    contacts: {
+      title: t('dashboard.totalContacts', 'Total Contacts'),
+      value: dashboardStats.totalCustomers,
+      icon: Users,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/30',
+      isCurrency: false,
+    },
+    lowStock: {
+      title: t('dashboard.lowStockAlerts', 'Low Stock Alerts'),
+      value: lowStockTotal,
+      icon: AlertTriangle,
+      color: lowStockTotal > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400',
+      bgColor: lowStockTotal > 0 ? 'bg-red-50 dark:bg-red-900/30' : 'bg-green-50 dark:bg-green-900/30',
+      isCurrency: false,
+    },
+    complaints: {
+      title: t('dashboard.activeComplaints'),
+      value: dashboardStats.activeComplaints,
+      icon: MessageSquare,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/30',
+      isCurrency: false,
+    },
+    appointments: {
+      title: t('dashboard.todaysAppointments', "Today's Appointments"),
+      value: todayAppointmentsCount,
+      icon: Calendar,
+      color: 'text-pink-600 dark:text-pink-400',
+      bgColor: 'bg-pink-50 dark:bg-pink-900/30',
+      isCurrency: false,
+    },
+    expiringSoon: {
+      title: t('dashboard.expiringSoon', 'Expiring Soon'),
+      value: expiringSoonCount,
+      icon: Clock,
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-50 dark:bg-amber-900/30',
+      isCurrency: false,
+    },
+    pendingInvoices: {
+      title: t('dashboard.totalPending', 'Total Pending'),
+      value: totalPending,
+      icon: Clock,
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-50 dark:bg-amber-900/30',
+      isCurrency: true,
+    },
+    todaySales: {
+      title: t('dashboard.todaySales', "Today's Sales"),
+      value: todaySalesAmount,
+      icon: TrendingUp,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
+      isCurrency: true,
+    },
+  };
+
+  const overviewCardsToShow =
+    dashboardWidgets.length === 0
+      ? overviewCards
+      : dashboardWidgets
+          .filter((w): w is DashboardWidgetKey => w in widgetCardMap)
+          .map((w) => widgetCardMap[w]);
+
   // ── Complaint cards ──
   const complaintCards = [
     {
@@ -340,6 +462,42 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-in pb-4 sm:pb-6">
+      {/* ── Quick actions ── */}
+      <div className="flex flex-wrap gap-2">
+        {isModuleAllowed('invoices') && (
+          <Link to="/admin/invoices">
+            <Button variant="outline" size="sm" className="gap-2">
+              <FileText className="w-4 h-4" />
+              {t('dashboard.quickActionNewInvoice', 'New Invoice')}
+            </Button>
+          </Link>
+        )}
+        {isModuleAllowed('contacts') && (
+          <Link to="/admin/contacts">
+            <Button variant="outline" size="sm" className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              {t('dashboard.quickActionNewContact', 'New Contact')}
+            </Button>
+          </Link>
+        )}
+        {isModuleAllowed('pos') && (
+          <Link to="/admin/pos">
+            <Button variant="outline" size="sm" className="gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              {t('dashboard.quickActionPOS', 'Point of Sale')}
+            </Button>
+          </Link>
+        )}
+        {isModuleAllowed('appointments') && (
+          <Link to="/admin/appointments">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Calendar className="w-4 h-4" />
+              {t('dashboard.quickActionAppointments', 'Appointments')}
+            </Button>
+          </Link>
+        )}
+      </div>
+
       {/* ── Subscription Renewal Alert ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {organization && (() => {
@@ -378,8 +536,8 @@ const AdminDashboard = () => {
         })()}
       </div>
 
-      {/* ── Overview KPI Cards ── */}
-      {renderCardSection(t('dashboard.overview', 'Overview'), overviewCards)}
+      {/* ── Overview KPI Cards (widget-driven when template has dashboardWidgets) ── */}
+      {renderCardSection(t('dashboard.overview', 'Overview'), overviewCardsToShow)}
 
       {/* ── Category-wise Inventory ── */}
       {categoryStats.length > 0 && (
@@ -526,7 +684,7 @@ const AdminDashboard = () => {
                     recentInvoices.map((inv, idx) => (
                       <tr key={inv.id} className={cn(
                         "border-b border-gray-200 hover:bg-gray-50 transition-colors",
-                        idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                        idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/30'
                       )}>
                         <td className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm text-gray-600">{inv.customerName}</td>
@@ -825,7 +983,7 @@ const AdminDashboard = () => {
                   lastCustomers.map((customer, idx) => (
                     <tr key={customer.id} className={cn(
                       "border-b border-gray-200 hover:bg-gray-50 transition-colors",
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/30'
                     )}>
                       <td className="px-3 py-2 text-xs sm:text-sm font-normal text-gray-600">{customer.id}</td>
                       <td className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-900">{customer.name}</td>

@@ -1,5 +1,8 @@
 import type { IndustryType, ModuleKey, SettingsTabKey } from '@/models/types';
 
+/** Dashboard widget keys for industry-specific KPIs */
+export type DashboardWidgetKey = 'revenue' | 'contacts' | 'lowStock' | 'complaints' | 'appointments' | 'expiringSoon' | 'pendingInvoices' | 'todaySales';
+
 export interface IndustryTemplate {
   id: IndustryType;
   labelKey: string;
@@ -10,6 +13,10 @@ export interface IndustryTemplate {
   terminology: Record<string, string>;
   defaultCategories: string[];
   color: string; // tailwind color name
+  /** Widgets to show on dashboard (order matters) */
+  dashboardWidgets?: DashboardWidgetKey[];
+  /** Inventory: show batch/expiry columns when true */
+  inventoryConfig?: { batchExpiry?: boolean };
 }
 
 export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
@@ -28,6 +35,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Subscriber', complaint: 'Ticket', connectionType: 'Service Plan' },
     defaultCategories: ['Modems', 'Cables', 'Set-Top Boxes', 'Routers'],
     color: 'blue',
+    dashboardWidgets: ['revenue', 'contacts', 'complaints', 'pendingInvoices'],
   },
   {
     id: 'retail',
@@ -43,6 +51,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { complaint: 'Return' },
     defaultCategories: ['General', 'Electronics', 'Clothing', 'Accessories'],
     color: 'emerald',
+    dashboardWidgets: ['revenue', 'contacts', 'lowStock', 'todaySales'],
+    inventoryConfig: { batchExpiry: false },
   },
   {
     id: 'wholesale',
@@ -73,6 +83,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Guest', appointment: 'Reservation', product: 'Menu Item' },
     defaultCategories: ['Starters', 'Main Course', 'Beverages', 'Desserts'],
     color: 'orange',
+    dashboardWidgets: ['revenue', 'appointments', 'todaySales', 'contacts'],
   },
   {
     id: 'salon-spa',
@@ -88,6 +99,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Client', appointment: 'Booking', product: 'Service' },
     defaultCategories: ['Hair Care', 'Skin Care', 'Spa Treatments', 'Retail Products'],
     color: 'pink',
+    dashboardWidgets: ['appointments', 'revenue', 'contacts', 'todaySales'],
   },
   {
     id: 'grocery',
@@ -103,6 +115,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: {},
     defaultCategories: ['Fruits & Vegetables', 'Dairy', 'Snacks', 'Beverages', 'Staples'],
     color: 'green',
+    dashboardWidgets: ['revenue', 'lowStock', 'expiringSoon', 'todaySales'],
+    inventoryConfig: { batchExpiry: true },
   },
   {
     id: 'electronics',
@@ -148,6 +162,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Patient', appointment: 'Consultation' },
     defaultCategories: ['Medicines', 'Medical Devices', 'Supplements', 'Personal Care'],
     color: 'red',
+    dashboardWidgets: ['expiringSoon', 'appointments', 'revenue', 'lowStock', 'contacts'],
+    inventoryConfig: { batchExpiry: true },
   },
   {
     id: 'gym-fitness',

@@ -4,9 +4,10 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard, Package, FileText, ShoppingCart, AlertCircle,
-  UserCog, Settings, LogOut, Menu, PhoneCall, Contact2,
-  GitBranch, Store, ChevronDown, ChevronLeft, ReceiptText, Quote, ListChecks
+  LayoutDashboard, Package, FileText, ShoppingCart,
+  UserCog, Settings, LogOut, Menu, Contact2,
+  GitBranch, Store, ChevronDown, ChevronLeft,
+  Calendar, Wrench, UserPlus, Repeat, BarChart3, Activity
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -34,7 +35,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
-  const { fetchOrganization, isModuleAllowed } = useOrganizationStore();
+  const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
@@ -69,18 +70,22 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500' },
         { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
-        { path: '/admin/invoices', labelKey: 'nav.invoices', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
-        { path: '/admin/purchase-invoices', labelKey: 'nav.purchaseInvoices', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
-        { path: '/admin/expenses', labelKey: 'nav.expenses', icon: ReceiptText, moduleKey: 'expenses', color: 'text-amber-500' },
-        { path: '/admin/quotations', labelKey: 'nav.quotations', icon: Quote, moduleKey: 'quotations', color: 'text-indigo-500' },
-        { path: '/admin/purchase-orders', labelKey: 'nav.purchaseOrders', icon: ListChecks, moduleKey: 'purchase-orders', color: 'text-emerald-600' },
+        { path: '/admin/sales', labelKey: 'nav.sales', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
+        { path: '/admin/purchase', labelKey: 'nav.purchase', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
+      ],
+    },
+    {
+      labelKey: 'nav.groupServices',
+      items: [
+        { path: '/admin/appointments', labelKey: 'nav.appointments', icon: Calendar, moduleKey: 'appointments', color: 'text-sky-500' },
+        { path: '/admin/service-requests', labelKey: 'nav.serviceRequests', icon: Wrench, moduleKey: 'service-requests', color: 'text-rose-500' },
+        { path: '/admin/leads', labelKey: 'nav.leads', icon: UserPlus, moduleKey: 'crm-leads', color: 'text-fuchsia-500' },
+        { path: '/admin/subscriptions', labelKey: 'nav.subscriptions', icon: Repeat, moduleKey: 'subscriptions', color: 'text-lime-500' },
       ],
     },
     {
       labelKey: 'nav.groupOperations',
       items: [
-        { path: '/admin/connection-requests', labelKey: 'nav.newConnection', icon: PhoneCall, moduleKey: 'connection-requests', color: 'text-cyan-500' },
-        { path: '/admin/complaints', labelKey: 'nav.complaints', icon: AlertCircle, moduleKey: 'complaints', color: 'text-red-500' },
         { path: '/admin/pos', labelKey: 'nav.pos', icon: Store, moduleKey: 'pos', color: 'text-amber-500' },
       ],
     },
@@ -89,6 +94,8 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch, moduleKey: 'branches', color: 'text-teal-500' },
         { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users', color: 'text-indigo-500' },
+        { path: '/admin/reports', labelKey: 'nav.reports', icon: BarChart3, moduleKey: 'reports', color: 'text-blue-500' },
+        { path: '/admin/audit-trail', labelKey: 'nav.auditTrail', icon: Activity, moduleKey: 'audit-trail', color: 'text-slate-500' },
         { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings', color: 'text-gray-500' },
       ],
     },
@@ -106,6 +113,10 @@ const AdminLayout = () => {
       }),
     }))
     .filter((group) => group.items.length > 0);
+
+  // Mobile bottom nav: top 5 from allowed modules (flatten sidebar order)
+  const bottomNavItems = filteredGroups.flatMap((g) => g.items).slice(0, 5);
+  const showPOSFAB = currentOrganization && (currentOrganization.industryType === 'retail' || currentOrganization.industryType === 'restaurant-cafe') && isModuleAllowed('pos');
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
@@ -244,16 +255,10 @@ const AdminLayout = () => {
         </main>
       </div>
 
-      {/* ── Mobile Bottom Navigation ── */}
+      {/* ── Mobile Bottom Navigation (dynamic from template's allowed modules) ── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 shadow-lg shadow-black/10">
         <div className="flex items-center justify-around px-1 py-2">
-          {([
-            { path: '/admin/dashboard', icon: LayoutDashboard, labelKey: 'nav.bottomHome' },
-            { path: '/admin/contacts', icon: Contact2, labelKey: 'nav.contacts' },
-            { path: '/admin/invoices', icon: FileText, labelKey: 'nav.invoices' },
-            { path: '/admin/inventory-products', icon: Package, labelKey: 'nav.inventory' },
-            { path: '/admin/settings', icon: Settings, labelKey: 'nav.settings' },
-          ] as { path: string; icon: typeof LayoutDashboard; labelKey: string }[]).map(({ path, icon: Icon, labelKey }) => {
+          {bottomNavItems.map(({ path, icon: Icon, labelKey }) => {
             const isActive = location.pathname === path;
             return (
               <Link
@@ -279,6 +284,17 @@ const AdminLayout = () => {
           })}
         </div>
       </nav>
+
+      {/* POS FAB on mobile for retail/restaurant */}
+      {showPOSFAB && (
+        <Link
+          to="/admin/pos"
+          className="fixed bottom-20 right-4 z-50 sm:hidden w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg flex items-center justify-center"
+          aria-label={t('nav.pos', 'Point of Sale')}
+        >
+          <Store className="w-6 h-6" />
+        </Link>
+      )}
     </div>
   );
 };

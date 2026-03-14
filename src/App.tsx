@@ -12,11 +12,14 @@ import ErrorShowPage from './pages/ErrorShowPage';
 import AdminDashboard from './pages/admin/Dashboard';
 // Catalog module removed - merged into Inventory
 // Customers module removed - merged into Contacts
-import AdminInvoices from './pages/admin/Invoices';
-import AdminPurchaseInvoices from './pages/admin/PurchaseInvoices';
-import Expenses from './pages/admin/Expenses';
-import Quotations from './pages/admin/Quotations';
-import PurchaseOrders from './pages/admin/PurchaseOrders';
+import AdminSales from './pages/admin/Sales';
+import AdminPurchase from './pages/admin/Purchase';
+import Appointments from './pages/admin/Appointments';
+import ServiceRequests from './pages/admin/ServiceRequests';
+import Leads from './pages/admin/Leads';
+import Subscriptions from './pages/admin/Subscriptions';
+import Reports from './pages/admin/Reports';
+import AuditTrail from './pages/admin/AuditTrail';
 import AdminComplaints from './pages/admin/Complaints';
 import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
@@ -149,42 +152,71 @@ function App() {
           <Route path="products" element={<Navigate to="/admin/inventory-products" replace />} />
           <Route path="catalog" element={<Navigate to="/admin/inventory-products" replace />} />
           <Route
-            path="invoices"
+            path="sales"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminInvoices />
+                <AdminSales />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="invoices" element={<Navigate to="/admin/sales" replace />} />
+          <Route path="quotations" element={<Navigate to="/admin/sales" replace />} />
+          <Route
+            path="purchase"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPurchase />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="purchase-invoices" element={<Navigate to="/admin/purchase" replace />} />
+          <Route path="purchase-orders" element={<Navigate to="/admin/purchase" replace />} />
+          <Route path="expenses" element={<Navigate to="/admin/purchase" replace />} />
+          <Route
+            path="appointments"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <Appointments />
               </ProtectedRoute>
             }
           />
           <Route
-            path="expenses"
+            path="service-requests"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <Expenses />
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <ServiceRequests />
               </ProtectedRoute>
             }
           />
           <Route
-            path="quotations"
+            path="leads"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <Quotations />
+                <Leads />
               </ProtectedRoute>
             }
           />
           <Route
-            path="purchase-orders"
+            path="subscriptions"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <PurchaseOrders />
+                <Subscriptions />
               </ProtectedRoute>
             }
           />
           <Route
-            path="purchase-invoices"
+            path="reports"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminPurchaseInvoices />
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="audit-trail"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AuditTrail />
               </ProtectedRoute>
             }
           />

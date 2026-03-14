@@ -370,7 +370,7 @@ const AdminUsers = () => {
                   </thead>
                   <tbody>
                     {paginatedUsers.map((u, idx) => (
-                      <tr key={u.id} className={cn("border-b border-border hover:bg-muted/50 transition-colors", idx % 2 === 0 ? 'bg-white' : 'bg-muted/20')}>
+                      <tr key={u.id} className={cn("border-b border-border hover:bg-muted/50 transition-colors", idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20')}>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.id}</td>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{u.name}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.username}</td>

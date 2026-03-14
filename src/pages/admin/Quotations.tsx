@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardHeading, CardToolbar } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, Search, Quote } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { Quotation, QuotationStatus } from '@/models/types';
 import { useQuotationsStore } from '@/store/useQuotationsStore';
 import QuotationModal from '@/components/QuotationModal';
@@ -111,43 +112,21 @@ const Quotations = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardHeading>
-            <div className="flex items-center gap-2">
-              <Quote className="w-5 h-5 text-indigo-500" />
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {t('quotations.title', 'Quotations & Estimates')}
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('quotations.subtitle', 'Send professional estimates and convert them into invoices.')}
-                </p>
-              </div>
-            </div>
-          </CardHeading>
-          <CardToolbar>
-            <Button size="sm" onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t('quotations.addQuotation', 'New Quotation')}
-            </Button>
-          </CardToolbar>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <CardHeader className="py-2.5 px-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-56 shrink-0">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={t('quotations.searchPlaceholder', 'Search by customer or quotation no...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-8 h-8 text-xs"
               />
             </div>
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as QuotationStatus | 'all')}
-              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+              className="h-8 ml-auto text-xs w-full sm:w-32"
             >
               <option value="all">{t('quotations.allStatuses', 'All Statuses')}</option>
               <option value="draft">{t('quotations.statusDraft', 'Draft')}</option>
@@ -155,8 +134,14 @@ const Quotations = () => {
               <option value="accepted">{t('quotations.statusAccepted', 'Accepted')}</option>
               <option value="rejected">{t('quotations.statusRejected', 'Rejected')}</option>
               <option value="expired">{t('quotations.statusExpired', 'Expired')}</option>
-            </select>
+            </Select>
+            <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto">
+              <span className="mr-1 text-lg leading-none">+</span>
+              {t('quotations.addQuotation', 'New Quotation')}
+            </Button>
           </div>
+        </CardHeader>
+        <CardContent className="p-0">
 
           {loading ? (
             <div className="text-center py-8 text-gray-500">{t('common.loading', 'Loading...')}</div>

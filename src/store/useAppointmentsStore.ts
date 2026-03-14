@@ -1,19 +1,18 @@
 import { create } from 'zustand';
-import type { Appointment, AppointmentStatus } from '@/models/types';
+import type { Appointment } from '@/models/types';
 import { appointmentsApi } from '@/api/appointments';
 
-interface AppointmentState {
+interface AppointmentsState {
   appointments: Appointment[];
   loading: boolean;
   error: string | null;
   fetchAppointments: () => Promise<void>;
   addAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt'>) => Promise<void>;
-  updateAppointment: (id: number, data: Partial<Appointment>) => Promise<void>;
+  updateAppointment: (id: number, appointment: Partial<Appointment>) => Promise<void>;
   deleteAppointment: (id: number) => Promise<void>;
-  updateStatus: (id: number, status: AppointmentStatus) => Promise<void>;
 }
 
-export const useAppointmentsStore = create<AppointmentState>((set) => ({
+export const useAppointmentsStore = create<AppointmentsState>((set) => ({
   appointments: [],
   loading: false,
   error: null,
@@ -39,10 +38,10 @@ export const useAppointmentsStore = create<AppointmentState>((set) => ({
     }
   },
 
-  updateAppointment: async (id, data) => {
+  updateAppointment: async (id, appointment) => {
     set({ loading: true, error: null });
     try {
-      await appointmentsApi.update(id, data);
+      await appointmentsApi.update(id, appointment);
       const appointments = await appointmentsApi.getAll();
       set({ appointments, loading: false });
     } catch (e) {
@@ -60,16 +59,4 @@ export const useAppointmentsStore = create<AppointmentState>((set) => ({
       set({ error: (e as Error).message, loading: false });
     }
   },
-
-  updateStatus: async (id, status) => {
-    set({ loading: true, error: null });
-    try {
-      await appointmentsApi.updateStatus(id, status);
-      const appointments = await appointmentsApi.getAll();
-      set({ appointments, loading: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
-    }
-  },
 }));
-

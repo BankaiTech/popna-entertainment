@@ -84,6 +84,8 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
                 ...org,
                 industryType: type,
                 terminology: template?.terminology ?? {},
+                allowedModules: template?.enabledModules ?? org.allowedModules,
+                allowedSettingsTabs: template?.enabledSettingsTabs ?? org.allowedSettingsTabs,
             },
         });
     },

@@ -120,7 +120,7 @@ const PurchaseInvoices = () => {
                     {paginatedInvoices.map((inv, idx) => (
                       <tr key={inv.id} className={cn(
                         "border-b border-border hover:bg-muted/50 transition-colors",
-                        idx % 2 === 0 ? 'bg-white' : 'bg-muted/20'
+                        idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                       )}>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.vendorName}</td>

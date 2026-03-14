@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardHeading, CardToolbar } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
-import { Plus, Search, Trash2, Pencil } from 'lucide-react';
+import Select from '@/components/ui/Select';
+import { Search, Trash2, Pencil } from 'lucide-react';
 import type { Expense, ExpenseStatus } from '@/models/types';
 import { useExpenseStore } from '@/store/useExpenseStore';
 import ExpenseModal from '@/components/ExpenseModal';
@@ -91,80 +92,54 @@ const Expenses = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardHeading>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {t('expenses.title', 'Expenses')}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('expenses.subtitle', 'Track and manage business expenses')}
-            </p>
-          </CardHeading>
-          <CardToolbar>
-            <Button onClick={handleAdd} size="sm">
-              <Plus className="w-4 h-4 mr-1" /> {t('expenses.addExpense', 'Add Expense')}
+        <CardHeader className="py-2.5 px-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-56 shrink-0">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder={t('expenses.searchPlaceholder', 'Search expenses...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ExpenseStatus | 'all')}
+              className="h-8 ml-auto text-xs w-full sm:w-32"
+            >
+              <option value="all">{t('common.allStatuses', 'All Statuses')}</option>
+              <option value="pending">{t('expenses.statusPending', 'Pending')}</option>
+              <option value="approved">{t('expenses.statusApproved', 'Approved')}</option>
+              <option value="rejected">{t('expenses.statusRejected', 'Rejected')}</option>
+            </Select>
+            <Select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
+            >
+              <option value="all">{t('common.allCategories', 'All Categories')}</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </Select>
+            
+            <div className="flex items-center gap-2 w-full sm:w-auto h-8 border border-input rounded-md px-2 bg-background flex-1 sm:flex-none">
+               <label className="text-xs text-muted-foreground whitespace-nowrap">{t('common.fromDate', 'From')}</label>
+               <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="bg-transparent text-xs border-none outline-none w-full sm:w-[110px]" />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto h-8 border border-input rounded-md px-2 bg-background flex-1 sm:flex-none">
+               <label className="text-xs text-muted-foreground whitespace-nowrap">{t('common.toDate', 'To')}</label>
+               <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="bg-transparent text-xs border-none outline-none w-full sm:w-[110px]" />
+            </div>
+
+            <Button onClick={handleAdd} size="xs" className="shrink-0 w-full xl:w-auto mt-2 xl:mt-0">
+              <span className="mr-1 text-lg leading-none">+</span>
+              {t('expenses.addExpense', 'Add Expense')}
             </Button>
-          </CardToolbar>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="space-y-3 mb-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder={t('expenses.searchPlaceholder', 'Search expenses...')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ExpenseStatus | 'all')}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
-              >
-                <option value="all">{t('common.allStatuses', 'All Statuses')}</option>
-                <option value="pending">{t('expenses.statusPending', 'Pending')}</option>
-                <option value="approved">{t('expenses.statusApproved', 'Approved')}</option>
-                <option value="rejected">{t('expenses.statusRejected', 'Rejected')}</option>
-              </select>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
-              >
-                <option value="all">{t('common.allCategories', 'All Categories')}</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {t('common.fromDate', 'From date')}
-                </label>
-                <Input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {t('common.toDate', 'To date')}
-                </label>
-                <Input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
           </div>
+        </CardHeader>
+        <CardContent className="p-0">
 
           {/* Table / Cards */}
           {loading ? (

@@ -3,11 +3,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Package, Building2, CreditCard, ShoppingCart } from 'lucide-react';
+import { Package, Building2, CreditCard, ShoppingCart, Sliders, LayoutGrid } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import BillingSettings from '@/components/settings/BillingSettings';
 import POSSettings from '@/components/settings/POSSettings';
+import CustomFieldsSettings from '@/components/settings/CustomFieldsSettings';
+import IndustrySettings from '@/components/settings/IndustrySettings';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import type { SettingsTabKey } from '@/models/types';
@@ -25,6 +27,8 @@ const Settings = () => {
     { id: 'products', label: t('settings.tabProducts', 'Products'), icon: Package, description: t('settings.productsDesc', 'Manage products, plans, and pricing') },
     { id: 'billing', label: t('settings.tabBilling', 'Billing & UPI'), icon: CreditCard, description: t('settings.billingDesc', 'Pay by UPI apps and manage subscription') },
     { id: 'pos', label: t('settings.tabPOS', 'POS / Checkout'), icon: ShoppingCart, description: t('settings.posTabDesc', 'Invoice format and checkout settings') },
+    { id: 'custom-fields', label: t('settings.tabCustomFields', 'Custom Fields'), icon: Sliders, description: t('settings.customFieldsTabDesc', 'Define custom fields for customers and products') },
+    { id: 'industry', label: t('settings.tabIndustry', 'Industry'), icon: LayoutGrid, description: t('settings.industryTabDesc', 'Business type and module visibility') },
   ];
 
   const tabs = useMemo(
@@ -126,6 +130,8 @@ const Settings = () => {
             {activeTab === 'products' && <ProductManagement />}
             {activeTab === 'billing' && <BillingSettings />}
             {activeTab === 'pos' && <POSSettings />}
+            {activeTab === 'custom-fields' && <CustomFieldsSettings />}
+            {activeTab === 'industry' && <IndustrySettings />}
           </div>
         </CardContent>
       </Card>

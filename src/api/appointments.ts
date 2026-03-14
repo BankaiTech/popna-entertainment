@@ -1,59 +1,62 @@
-import type { Appointment, AppointmentStatus } from '@/models/types';
+import type { Appointment } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 
-const today = new Date();
-
-const getDateTime = (offsetMinutes: number) => {
-  const d = new Date(today);
-  d.setMinutes(d.getMinutes() + offsetMinutes);
-  return d.toISOString();
-};
+const now = new Date().toISOString();
 
 let appointmentsData: Appointment[] = [
   {
     id: 1,
     organizationId: MOCK_ORGANIZATION_ID,
     customerId: 1,
-    customerName: 'Rajesh Kumar',
+    customerName: 'John Doe',
     customerMobile: '9876543210',
-    serviceType: 'Broadband installation',
-    staffAssigned: 'Technician A',
-    scheduledAt: getDateTime(60),
-    duration: 60,
+    serviceType: 'Haircut',
+    staffAssigned: 'Jane',
+    scheduledAt: '2026-03-10T10:00:00.000Z',
+    duration: 30,
     status: 'scheduled',
-    notes: 'New broadband installation at customer premises.',
-    createdAt: getDateTime(-60),
+    notes: 'First visit',
+    createdAt: now,
   },
   {
     id: 2,
     organizationId: MOCK_ORGANIZATION_ID,
     customerId: 2,
-    customerName: 'Naresh',
+    customerName: 'Jane Smith',
     customerMobile: '9876543211',
-    serviceType: 'Plan upgrade consultation',
-    staffAssigned: 'Sales Exec 1',
-    scheduledAt: getDateTime(180),
-    duration: 30,
+    serviceType: 'Consultation',
+    scheduledAt: '2026-03-10T14:00:00.000Z',
+    duration: 60,
     status: 'confirmed',
-    notes: 'Discuss fiber plan upgrade options.',
-    createdAt: getDateTime(-120),
+    createdAt: now,
+  },
+  {
+    id: 3,
+    organizationId: MOCK_ORGANIZATION_ID,
+    customerId: 1,
+    customerName: 'John Doe',
+    customerMobile: '9876543210',
+    serviceType: 'Follow-up',
+    staffAssigned: 'Tech1',
+    scheduledAt: '2026-03-09T09:00:00.000Z',
+    duration: 45,
+    status: 'completed',
+    createdAt: now,
   },
 ];
 
-let nextId = 3;
+let nextId = 4;
 
 export const appointmentsApi = {
-  getAll: async (): Promise<Appointment[]> => Promise.resolve([...appointmentsData]),
-
-  getById: async (id: number): Promise<Appointment> => {
-    const appt = appointmentsData.find((a) => a.id === id);
-    if (!appt) throw new Error('Appointment not found');
-    return appt;
+  getAll: async (): Promise<Appointment[]> => {
+    return Promise.resolve([...appointmentsData]);
   },
-
-  create: async (
-    appointment: Omit<Appointment, 'id' | 'createdAt'>
-  ): Promise<Appointment> => {
+  getById: async (id: number): Promise<Appointment> => {
+    const item = appointmentsData.find((a) => a.id === id);
+    if (!item) throw new Error('Appointment not found');
+    return Promise.resolve(item);
+  },
+  create: async (appointment: Omit<Appointment, 'id' | 'createdAt'>): Promise<Appointment> => {
     const newAppointment: Appointment = {
       ...appointment,
       organizationId: appointment.organizationId ?? MOCK_ORGANIZATION_ID,
@@ -61,29 +64,18 @@ export const appointmentsApi = {
       createdAt: new Date().toISOString(),
     };
     appointmentsData.push(newAppointment);
-    return newAppointment;
+    return Promise.resolve(newAppointment);
   },
-
-  update: async (
-    id: number,
-    data: Partial<Appointment>
-  ): Promise<Appointment> => {
-    const idx = appointmentsData.findIndex((a) => a.id === id);
-    if (idx === -1) throw new Error('Appointment not found');
-    appointmentsData[idx] = { ...appointmentsData[idx], ...data };
-    return appointmentsData[idx];
+  update: async (id: number, appointment: Partial<Appointment>): Promise<Appointment> => {
+    const index = appointmentsData.findIndex((a) => a.id === id);
+    if (index === -1) throw new Error('Appointment not found');
+    appointmentsData[index] = { ...appointmentsData[index], ...appointment };
+    return Promise.resolve(appointmentsData[index]);
   },
-
-  updateStatus: async (
-    id: number,
-    status: AppointmentStatus
-  ): Promise<Appointment> => {
-    return appointmentsApi.update(id, { status });
-  },
-
   delete: async (id: number): Promise<void> => {
-    appointmentsData = appointmentsData.filter((a) => a.id !== id);
+    const index = appointmentsData.findIndex((a) => a.id === id);
+    if (index === -1) throw new Error('Appointment not found');
+    appointmentsData.splice(index, 1);
     return Promise.resolve();
   },
 };
-

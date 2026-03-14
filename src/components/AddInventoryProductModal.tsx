@@ -27,6 +27,8 @@ interface AddInventoryProductModalProps {
     onAddTaxRate: (tax: Omit<TaxRate, 'id' | 'createdAt'>) => Promise<void>;
     onAddSubCategory: (sub: Omit<SubCategory, 'id' | 'createdAt'>) => Promise<void>;
     onAddWarranty?: (w: Omit<Warranty, 'id' | 'createdAt'>) => Promise<void>;
+    /** When true (from industry template), show batch number and expiry date fields */
+    showBatchExpiry?: boolean;
 }
 
 type FormTab = 'general' | 'pricing' | 'inventory' | 'variants';
@@ -49,6 +51,8 @@ const defaultFormData = {
     trackingType: 'none' as 'none' | 'serial' | 'batch',
     barcode: '',
     expiryTracking: false,
+    batchNumber: '',
+    expiryDate: '',
     weight: 0, weightUnit: 'kg' as 'g' | 'kg' | 'lb',
 };
 
@@ -56,6 +60,7 @@ const AddInventoryProductModal = ({
     isOpen, onClose, onSave, onUpdate, editingProduct,
     categories, subCategories, units, branches, taxRates, warranties,
     onAddCategory, onAddUnit, onAddBranch, onAddTaxRate, onAddSubCategory, onAddWarranty,
+    showBatchExpiry = false,
 }: AddInventoryProductModalProps) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<FormTab>('general');
@@ -93,6 +98,8 @@ const AddInventoryProductModal = ({
                 trackingType: editingProduct.trackingType || 'none',
                 barcode: editingProduct.barcode || '',
                 expiryTracking: editingProduct.expiryTracking || false,
+                batchNumber: editingProduct.batchNumber || '',
+                expiryDate: editingProduct.expiryDate || '',
                 weight: editingProduct.weight || 0,
                 weightUnit: editingProduct.weightUnit || 'kg',
             });
@@ -143,6 +150,8 @@ const AddInventoryProductModal = ({
                 brand: formData.brand || undefined,
                 hsnSacCode: formData.hsnSacCode || undefined,
                 barcode: formData.barcode || undefined,
+                batchNumber: showBatchExpiry ? (formData.batchNumber || undefined) : undefined,
+                expiryDate: showBatchExpiry ? (formData.expiryDate || undefined) : undefined,
                 variants: variants.map((v, i) => ({ ...v, id: i + 1 })),
             };
             if (editingProduct && onUpdate) {
@@ -452,6 +461,19 @@ const AddInventoryProductModal = ({
                                         <p className="text-xs text-gray-400 mt-0.5 ml-6">{t('productModal.expiryHint', 'For pharma, dairy, packaged food')}</p>
                                     </div>
                                 </div>
+
+                                {showBatchExpiry && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('productModal.batchNumber', 'Batch / Lot Number')}</label>
+                                            <Input value={formData.batchNumber} onChange={(e) => set({ batchNumber: e.target.value })} placeholder="e.g. BATCH-001" disabled={saving} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('productModal.expiryDate', 'Expiry Date')}</label>
+                                            <Input type="date" value={formData.expiryDate} onChange={(e) => set({ expiryDate: e.target.value })} disabled={saving} />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>

@@ -12,11 +12,22 @@ export interface CartItem {
     tax: number; // percentage
 }
 
+/** Snapshot of a bill that was held for later */
+export interface HeldBill {
+    id: string;
+    cart: CartItem[];
+    selectedCustomerId: number | null;
+    discount: number;
+    paymentMethod: 'cash' | 'upi' | 'card' | 'bank_transfer';
+    createdAt: string; // ISO
+}
+
 interface POSState {
     cart: CartItem[];
     selectedCustomerId: number | null;
     discount: number; // percentage
     paymentMethod: 'cash' | 'upi' | 'card' | 'bank_transfer';
+    heldBills: HeldBill[];
     addToCart: (item: Omit<CartItem, 'quantity'>) => void;
     removeFromCart: (productId: number, variantId?: number) => void;
     updateQuantity: (productId: number, quantity: number, variantId?: number) => void;
@@ -24,6 +35,10 @@ interface POSState {
     setDiscount: (discount: number) => void;
     setPaymentMethod: (method: 'cash' | 'upi' | 'card' | 'bank_transfer') => void;
     clearCart: () => void;
+    /** Save current cart as a held bill and clear cart */
+    holdCurrentBill: () => string | null;
+    /** Load a held bill into cart and remove it from held list. Returns true if found. */
+    retrieveBill: (id: string) => boolean;
     getSubtotal: () => number;
     getTaxTotal: () => number;
     getDiscountAmount: () => number;
@@ -38,6 +53,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
     selectedCustomerId: null,
     discount: 0,
     paymentMethod: 'cash',
+    heldBills: [],
 
     addToCart: (item) => {
         const { cart } = get();
@@ -65,6 +81,31 @@ export const usePOSStore = create<POSState>((set, get) => ({
     setDiscount: (discount) => set({ discount: Math.min(100, Math.max(0, discount)) }),
     setPaymentMethod: (method) => set({ paymentMethod: method }),
     clearCart: () => set({ cart: [], selectedCustomerId: null, discount: 0, paymentMethod: 'cash' }),
+
+    holdCurrentBill: () => {
+        const { cart, selectedCustomerId, discount, paymentMethod, heldBills } = get();
+        if (cart.length === 0) return null;
+        const id = `hold-${Date.now()}`;
+        const held: HeldBill = {
+            id,
+            cart: [...cart],
+            selectedCustomerId,
+            discount,
+            paymentMethod,
+            createdAt: new Date().toISOString(),
+        };
+        set({ heldBills: [...heldBills, held], cart: [], selectedCustomerId: null, discount: 0, paymentMethod: 'cash' });
+        return id;
+    },
+
+    retrieveBill: (id: string) => {
+        const { heldBills } = get();
+        const idx = heldBills.findIndex((b) => b.id === id);
+        if (idx === -1) return false;
+        const [held] = heldBills.splice(idx, 1);
+        set({ cart: held.cart, selectedCustomerId: held.selectedCustomerId, discount: held.discount, paymentMethod: held.paymentMethod, heldBills: [...heldBills] });
+        return true;
+    },
 
     getSubtotal: () => get().cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
 
