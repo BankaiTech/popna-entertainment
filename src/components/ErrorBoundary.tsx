@@ -1,79 +1,34 @@
 import React from 'react';
+import { reportError } from '@/lib/errorReporter';
 
 interface State {
   hasError: boolean;
-  error: Error | null;
 }
 
+/**
+ * ErrorBoundary — catches any React render error, reports it via email,
+ * and redirects the user to /login. No error UI is shown to end users.
+ */
 export class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
   State
 > {
-  state: State = { hasError: false, error: null };
+  state: State = { hasError: false };
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
-    // Only log - do NOT redirect via sendErrorToPage because we already show
-    // a fallback UI.  Redirecting causes a full reload that loses the
-    // error context and often creates a confusing "Something went wrong"
-    // page with no details.
+    reportError(error, errorInfo.componentStack ?? 'React componentDidCatch');
   }
 
   render() {
-    if (this.state.hasError && this.state.error) {
+    if (this.state.hasError) {
+      // Show custom fallback if provided, otherwise render nothing while
+      // reportError() is redirecting to /login in the background.
       if (this.props.fallback) return this.props.fallback;
-      return (
-        <div
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            fontFamily: 'system-ui, sans-serif',
-            background: '#f8fafc',
-            color: '#181c32',
-          }}
-        >
-          <div style={{ maxWidth: 480 }}>
-            <h1 style={{ fontSize: '1.25rem', marginBottom: 8 }}>
-              Something went wrong
-            </h1>
-            <pre
-              style={{
-                padding: 16,
-                background: '#fff',
-                border: '1px solid #e4e6ef',
-                borderRadius: 8,
-                overflow: 'auto',
-                fontSize: 12,
-                color: '#f1416c',
-              }}
-            >
-              {this.state.error.message}
-            </pre>
-            <button
-              type="button"
-              onClick={() => this.setState({ hasError: false, error: null })}
-              style={{
-                marginTop: 16,
-                padding: '10px 20px',
-                background: '#009ef7',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-              }}
-            >
-              Try again
-            </button>
-          </div>
-        </div>
-      );
+      return null;
     }
     return this.props.children;
   }

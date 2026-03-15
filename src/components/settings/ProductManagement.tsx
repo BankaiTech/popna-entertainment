@@ -1,36 +1,420 @@
+/**
+ * ProductManagement — multi-industry settings panel.
+ *
+ * ISP / General mode  (industry = 'isp-cable' | 'general' | undefined)
+ *   • Manages ISP service connection types (Cable TV, Fiber Internet)
+ *   • Each product has a billing cutoff (day of month for cable, days after due for internet)
+ *   • Plans (pricing) are a separate concept — configured in Settings → Billing tab
+ *
+ * Generic mode  (all other industries)
+ *   • Manages service / product categories used in invoices and inventory
+ *   • Industry-specific type labels (e.g., "Food Item" for restaurant, "Spare Part" for auto)
+ *   • No ISP billing fields shown
+ */
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { Plus, Edit, Trash2, Check, X, Lock, Lightbulb } from 'lucide-react';
-import type { Product } from '@/models/types';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import {
+  Plus, Edit2, Trash2, CheckCircle2, XCircle,
+  Lock, Lightbulb, Info, Wifi, Tag, ToggleLeft, ToggleRight,
+} from 'lucide-react';
+import type { Product, ProductType } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { getProviderDisplayName } from '@/lib/providerUtils';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import ProductModal from '@/components/ProductModal';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
 import { showError, showInfo } from '@/utils/toast';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById } from '@/config/industryTemplates';
+import type { IndustryType } from '@/models/types';
 
+// ── Constants ────────────────────────────────────────────────────────────────
 const FREE_PRODUCT_LIMIT = 4;
 const ADDITIONAL_PRODUCT_COST = 200;
 
+// ── Industry config helpers ──────────────────────────────────────────────────
+
+/** Returns true when the industry needs ISP-specific product fields */
+function isIspIndustry(industryType?: IndustryType | null): boolean {
+  return !industryType || industryType === 'isp-cable' || industryType === 'general';
+}
+
+/** Industry-specific type options for non-ISP industries */
+function getTypeOptions(industryType?: IndustryType | null): { value: ProductType; label: string }[] {
+  switch (industryType) {
+    case 'restaurant-cafe':
+      return [
+        { value: 'food', label: 'Food Item' },
+        { value: 'service', label: 'Beverage' },
+        { value: 'general', label: 'Other' },
+      ];
+    case 'salon-spa':
+      return [
+        { value: 'service', label: 'Service / Treatment' },
+        { value: 'physical', label: 'Retail Product' },
+      ];
+    case 'gym-fitness':
+      return [
+        { value: 'service', label: 'Membership / Session' },
+        { value: 'physical', label: 'Supplement / Merchandise' },
+      ];
+    case 'healthcare-pharmacy':
+      return [
+        { value: 'physical', label: 'Medicine / Drug' },
+        { value: 'service', label: 'Medical Service' },
+        { value: 'general', label: 'Supplement / Device' },
+      ];
+    case 'automotive':
+      return [
+        { value: 'physical', label: 'Spare Part' },
+        { value: 'service', label: 'Service / Labour' },
+        { value: 'general', label: 'Consumable / Accessory' },
+      ];
+    case 'electronics':
+      return [
+        { value: 'physical', label: 'Product' },
+        { value: 'service', label: 'Repair / Service' },
+        { value: 'general', label: 'Accessory' },
+      ];
+    case 'education':
+      return [
+        { value: 'service', label: 'Course / Subject' },
+        { value: 'physical', label: 'Book / Material' },
+      ];
+    case 'real-estate':
+      return [
+        { value: 'service', label: 'Property Type' },
+        { value: 'general', label: 'Other Service' },
+      ];
+    case 'wholesale':
+    case 'retail':
+    case 'grocery':
+    case 'clothing-fashion':
+    default:
+      return [
+        { value: 'physical', label: 'Physical Product' },
+        { value: 'service', label: 'Service' },
+        { value: 'general', label: 'Other' },
+      ];
+  }
+}
+
+/** Industry-specific page title */
+function getPageTitle(t: (key: string, fallback: string) => string, industryType?: IndustryType | null): string {
+  if (isIspIndustry(industryType)) return t('productManagement.ispTitle', 'Service Connection Types');
+  switch (industryType) {
+    case 'restaurant-cafe': return t('productManagement.menuCategories', 'Menu Categories');
+    case 'salon-spa': return t('productManagement.serviceCategories', 'Service & Product Categories');
+    case 'gym-fitness': return t('productManagement.gymCategories', 'Membership & Product Categories');
+    case 'healthcare-pharmacy': return t('productManagement.healthcareCategories', 'Medicine & Service Categories');
+    case 'automotive': return t('productManagement.automotiveCategories', 'Parts & Service Categories');
+    case 'education': return t('productManagement.educationCategories', 'Course & Material Categories');
+    default: return t('productManagement.categoryTitle', 'Product / Service Categories');
+  }
+}
+
+/** Industry-specific page description */
+function getPageDescription(t: (key: string, fallback: string) => string, industryType?: IndustryType | null): string {
+  if (isIspIndustry(industryType)) {
+    return t('productManagement.ispDesc', 'Define your service connection types (Cable TV, Fiber Internet). Each type has its own billing cutoff schedule. Pricing plans are set separately in the Billing tab.');
+  }
+  return t('productManagement.genericDesc', 'Define the categories used to organise your products and services in invoices, POS, and inventory.');
+}
+
+/** Badge color per product type */
+function getTypeBadgeClass(productType: ProductType): string {
+  switch (productType) {
+    case 'cable': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+    case 'internet': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+    case 'food': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+    case 'service': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+    case 'physical': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+    case 'digital': return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300';
+    default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+  }
+}
+
+// ── Add/Edit Modal ───────────────────────────────────────────────────────────
+interface ProductFormData {
+  name: string;
+  productType: ProductType;
+  isActive: boolean;
+  description: string;
+  cutoffDate?: number;
+  cutoffDays?: number;
+}
+
+interface ProductFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: ProductFormData) => Promise<void>;
+  editing: Product | null;
+  industryType?: IndustryType | null;
+}
+
+const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: ProductFormModalProps) => {
+  const { t } = useTranslation();
+  const isIsp = isIspIndustry(industryType);
+  const typeOptions = getTypeOptions(industryType);
+
+  const defaultType: ProductType = isIsp ? 'internet' : (typeOptions[0]?.value ?? 'general');
+
+  const [form, setForm] = useState<ProductFormData>({
+    name: '',
+    productType: defaultType,
+    isActive: true,
+    description: '',
+    cutoffDate: undefined,
+    cutoffDays: undefined,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (editing) {
+      setForm({
+        name: editing.name,
+        productType: editing.productType,
+        isActive: editing.isActive,
+        description: editing.description ?? '',
+        cutoffDate: editing.cutoffDate,
+        cutoffDays: editing.cutoffDays,
+      });
+    } else {
+      setForm({ name: '', productType: defaultType, isActive: true, description: '', cutoffDate: undefined, cutoffDays: undefined });
+    }
+    setError('');
+  }, [isOpen, editing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) { setError(t('productManagement.nameRequired', 'Name is required')); return; }
+    setSaving(true);
+    try {
+      await onSubmit(form);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('productManagement.saveFailed', 'Failed to save'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} size="lg" closeOnOverlayClick={!saving}>
+      <DialogHeader
+        title={editing
+          ? t('productManagement.editItem', 'Edit {{name}}', { name: editing.name })
+          : t('productManagement.addNew', 'Add New Category')}
+        onClose={onClose}
+      />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogBody className="p-4 sm:p-5 space-y-4">
+
+          {/* ISP info banner */}
+          {isIsp && (
+            <div className="flex gap-2.5 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <Wifi className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <p className="font-semibold">{t('productManagement.ispProductNote', 'Service Connection Type')}</p>
+                <p>{t('productManagement.ispProductNoteDesc', 'This defines one connection category (e.g., Cable TV or Fiber Internet). Pricing plans for this type are configured separately in Settings → Billing tab.')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-foreground">
+              {isIsp
+                ? t('productManagement.connectionTypeName', 'Connection Type Name')
+                : t('productManagement.categoryName', 'Category Name')}
+              <span className="text-destructive ml-1">*</span>
+            </label>
+            <Input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder={isIsp
+                ? t('productManagement.ispNamePlaceholder', 'e.g., Cable TV, Fiber Internet, VDSL')
+                : t('productManagement.genericNamePlaceholder', 'e.g., Hair Colour, Spare Part, Main Course')}
+              required
+              disabled={saving}
+              autoFocus
+            />
+          </div>
+
+          {/* Type */}
+          {isIsp ? (
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t('productManagement.connectionCategory', 'Connection Category')}
+                <span className="text-destructive ml-1">*</span>
+              </label>
+              <Select
+                value={form.productType}
+                onChange={(e) => setForm({ ...form, productType: e.target.value as ProductType, cutoffDate: undefined, cutoffDays: undefined })}
+                disabled={saving}
+              >
+                <option value="cable">{t('productManagement.cable', 'Cable (Fixed monthly cutoff day)')}</option>
+                <option value="internet">{t('productManagement.internet', 'Internet (Cutoff days after due date)')}</option>
+              </Select>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t('productManagement.categoryType', 'Category Type')}
+              </label>
+              <Select
+                value={form.productType}
+                onChange={(e) => setForm({ ...form, productType: e.target.value as ProductType })}
+                disabled={saving}
+              >
+                {typeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('productManagement.categoryTypeHint', 'Used to filter and group items in reports and inventory')}
+              </p>
+            </div>
+          )}
+
+          {/* ISP: Cable cutoff date */}
+          {isIsp && form.productType === 'cable' && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t('productManagement.cutoffDate', 'Monthly Cutoff Day')}
+              </label>
+              <Select
+                value={form.cutoffDate?.toString() ?? ''}
+                onChange={(e) => setForm({ ...form, cutoffDate: e.target.value ? Number(e.target.value) : undefined })}
+                disabled={saving}
+              >
+                <option value="">{t('productManagement.selectCutoffDate', '— Select cutoff day —')}</option>
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day}>
+                    {t('productManagement.dayOfMonth', '{{day}}{{suffix}} of every month', {
+                      day,
+                      suffix: day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th',
+                    })}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('productManagement.cutoffDateHint', 'Subscriber\'s cable service renews on this day each month')}
+              </p>
+            </div>
+          )}
+
+          {/* ISP: Internet cutoff days */}
+          {isIsp && form.productType === 'internet' && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t('productManagement.cutoffDays', 'Grace Period After Due Date (days)')}
+              </label>
+              <Input
+                type="number"
+                min="1"
+                max="30"
+                value={form.cutoffDays ?? ''}
+                onChange={(e) => setForm({ ...form, cutoffDays: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="e.g., 5"
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('productManagement.cutoffDaysHint', 'Internet service is suspended N days after the due date if unpaid')}
+              </p>
+            </div>
+          )}
+
+          {/* Description (non-ISP only) */}
+          {!isIsp && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t('productManagement.description', 'Description')}
+                <span className="text-muted-foreground text-xs ml-1">({t('common.optional', 'optional')})</span>
+              </label>
+              <Input
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder={t('productManagement.descriptionPlaceholder', 'Short description of this category')}
+                disabled={saving}
+              />
+            </div>
+          )}
+
+          {/* Active toggle */}
+          <div className="flex items-center gap-3 py-1">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, isActive: !form.isActive })}
+              className={cn(
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0',
+                form.isActive ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+              )}
+              disabled={saving}
+              aria-checked={form.isActive}
+              role="switch"
+            >
+              <span className={cn('inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', form.isActive ? 'translate-x-6' : 'translate-x-1')} />
+            </button>
+            <label className="text-sm font-medium text-foreground cursor-pointer" onClick={() => setForm({ ...form, isActive: !form.isActive })}>
+              {form.isActive ? t('productManagement.active', 'Active') : t('productManagement.inactive', 'Inactive')}
+              <span className="text-muted-foreground font-normal ml-1.5 text-xs">
+                {form.isActive
+                  ? t('productManagement.activeHint', '(visible in dropdowns and invoices)')
+                  : t('productManagement.inactiveHint', '(hidden — existing records kept)')}
+              </span>
+            </label>
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving
+              ? t('common.saving', 'Saving...')
+              : editing
+                ? t('common.saveChanges', 'Save Changes')
+                : t('productManagement.addCategory', 'Add Category')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
+};
+
+// ── Main Component ───────────────────────────────────────────────────────────
 const ProductManagement = () => {
   const { t } = useTranslation();
   const { products, loading, fetchProducts, addProduct, updateProduct, deleteProduct } = useStore();
   const { currentOrganization } = useOrganizationStore();
+  const industryType = currentOrganization?.industryType ?? null;
+  const isIsp = isIspIndustry(industryType);
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showUpiModal, setShowUpiModal] = useState(false);
 
   const template = useMemo(
-    () => currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined,
-    [currentOrganization?.industryType]
+    () => industryType ? getTemplateById(industryType) : undefined,
+    [industryType]
   );
 
   const suggestedCategories = useMemo(() => {
@@ -39,113 +423,142 @@ const ProductManagement = () => {
     return template.defaultCategories.filter((cat) => !existingNames.has(cat.toLowerCase()));
   }, [template, products]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const handleOpenAdd = () => {
-    // Check if user has reached free limit
-    if (products.length >= FREE_PRODUCT_LIMIT) {
-      setShowPaymentModal(true);
-    } else {
-      setEditingProduct(null);
-      setShowModal(true);
-    }
+  const typeOptions = getTypeOptions(industryType);
+
+  // ── Label helpers ──────────────────────────────────────────────────────────
+  const getTypeLabel = (productType: ProductType): string => {
+    if (isIsp) return productType === 'cable' ? t('productManagement.cable', 'Cable') : t('productManagement.internet', 'Internet');
+    const opt = typeOptions.find((o) => o.value === productType);
+    return opt?.label ?? productType;
   };
 
-  const handleOpenEdit = (product: Product) => {
-    setEditingProduct(product);
+  const getCutoffLabel = (product: Product): string | null => {
+    if (!isIsp) return null;
+    if (product.productType === 'cable' && product.cutoffDate) {
+      const d = product.cutoffDate;
+      const suffix = d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+      return t('productManagement.cutoffDayLabel', 'Cutoff: {{day}}{{suffix}} each month', { day: d, suffix });
+    }
+    if (product.productType === 'internet' && product.cutoffDays) {
+      return t('productManagement.cutoffGraceLabel', 'Grace: {{days}} days after due', { days: product.cutoffDays });
+    }
+    return null;
+  };
+
+  // ── CRUD handlers ──────────────────────────────────────────────────────────
+  const openAdd = () => {
+    if (products.length >= FREE_PRODUCT_LIMIT) { setShowPaymentModal(true); return; }
+    setEditingProduct(null);
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingProduct(null);
-  };
+  const openEdit = (p: Product) => { setEditingProduct(p); setShowModal(true); };
 
-  const handleSave = async (productData: Omit<Product, 'id' | 'createdAt' | 'organizationId'>) => {
-    await addProduct({
-      ...productData,
-      organizationId: MOCK_ORGANIZATION_ID,
-    });
+  const handleSubmit = async (data: ProductFormData) => {
+    if (editingProduct) {
+      await updateProduct(editingProduct.id, data);
+    } else {
+      await addProduct({ ...data, organizationId: MOCK_ORGANIZATION_ID });
+    }
     await fetchProducts();
   };
 
-  const handleUpdate = async (id: number, productData: Omit<Product, 'id' | 'createdAt' | 'organizationId'>) => {
-    await updateProduct(id, productData);
-    await fetchProducts();
-  };
-
-  const handleDelete = async (id: number) => {
-    if (confirm(t('productManagement.confirmDelete', 'Are you sure you want to delete this product? This will affect all related customers and plans.'))) {
-      await deleteProduct(id);
+  const handleDelete = async (p: Product) => {
+    const label = isIsp
+      ? t('productManagement.confirmDeleteIsp', 'Delete "{{name}}"? This affects all subscribers using this connection type and their plans.', { name: p.name })
+      : t('productManagement.confirmDeleteGeneric', 'Delete "{{name}}"? This category will be removed from dropdowns.', { name: p.name });
+    if (confirm(label)) {
+      await deleteProduct(p.id);
       await fetchProducts();
     }
   };
 
-  const toggleActive = async (product: Product) => {
-    await updateProduct(product.id, { isActive: !product.isActive });
+  const toggleActive = async (p: Product) => {
+    await updateProduct(p.id, { isActive: !p.isActive });
+    await fetchProducts();
+  };
+
+  const handleQuickAdd = async (name: string) => {
+    if (products.length >= FREE_PRODUCT_LIMIT) { setShowPaymentModal(true); return; }
+    const defaultType: ProductType = isIsp ? 'cable' : (typeOptions[0]?.value ?? 'general');
+    await addProduct({ name, productType: defaultType, isActive: true, organizationId: MOCK_ORGANIZATION_ID });
     await fetchProducts();
   };
 
   const handlePayForAdditionalProducts = () => {
-    // Additional products: org pays platform - use our (platform) UPI
     setShowPaymentModal(false);
     if (hasPlatformUpi()) {
       setShowUpiModal(true);
     } else {
-      showError(t('productManagement.platformUpiNotConfigured', 'Payment is not configured. Please contact support.'));
+      showError(t('productManagement.platformUpiNotConfigured', 'Payment not configured. Contact support.'));
     }
   };
 
   const handlePaymentInitiated = () => {
     setShowUpiModal(false);
-    showInfo('Payment initiated! Please share the payment screenshot or UTR number with admin for verification. Once verified, you can add more products.');
+    showInfo(t('productManagement.paymentInitiated', 'Payment initiated! Share the UTR/screenshot with admin. Once verified, more categories will be unlocked.'));
   };
 
-  const handleQuickAdd = async (categoryName: string) => {
-    if (products.length >= FREE_PRODUCT_LIMIT) {
-      setShowPaymentModal(true);
-      return;
-    }
-    await addProduct({
-      name: categoryName,
-      productType: 'cable',
-      isActive: true,
-      organizationId: MOCK_ORGANIZATION_ID,
-    });
-    await fetchProducts();
-  };
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{t('productManagement.title', 'Category Management')}</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('productManagement.description', 'Manage service categories and products. Used for filtering customers, complaints, and reports.')}
+    <div className="space-y-5">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+            {isIsp ? <Wifi className="w-5 h-5 text-primary shrink-0" /> : <Tag className="w-5 h-5 text-primary shrink-0" />}
+            {getPageTitle(t, industryType)}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+            {getPageDescription(t, industryType)}
           </p>
-          {template && (
-            <p className="text-xs text-primary mt-1">
-              {t('productManagement.industryHint', 'Industry: {{industry}}', { industry: t(template.labelKey) })}
-            </p>
-          )}
-          <p className="text-xs text-muted-foreground mt-1">
-            {products.length}/{FREE_PRODUCT_LIMIT} {t('productManagement.freeUsed', 'free products used')}. {t('productManagement.additionalCost', 'Additional products cost ₹{{cost}} each.', { cost: ADDITIONAL_PRODUCT_COST })}
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {products.length}/{FREE_PRODUCT_LIMIT} {t('productManagement.freeUsed', 'free used')}
+            {products.length < FREE_PRODUCT_LIMIT
+              ? ` · ${FREE_PRODUCT_LIMIT - products.length} ${t('productManagement.remaining', 'remaining free')}`
+              : ` · ${t('productManagement.additionalCost', '₹{{cost}} per additional', { cost: ADDITIONAL_PRODUCT_COST })}`}
           </p>
         </div>
-        <Button onClick={handleOpenAdd} className="shrink-0">
+        <Button onClick={openAdd} className="shrink-0 w-full sm:w-auto min-h-[44px] sm:min-h-0">
           <Plus className="w-4 h-4 mr-2" />
-          {t('productManagement.addProduct', 'Add Product')}
+          {isIsp ? t('productManagement.addConnectionType', 'Add Connection Type') : t('productManagement.addCategory', 'Add Category')}
         </Button>
       </div>
 
+      {/* ── ISP explanation banner ── */}
+      {isIsp && (
+        <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+          <div className="flex gap-3">
+            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <div className="space-y-2 min-w-0">
+              <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                {t('productManagement.ispInfoTitle', 'Products vs Plans — What\'s the difference?')}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-blue-700 dark:text-blue-300">
+                <div className="rounded-lg bg-white/60 dark:bg-blue-800/30 p-3 border border-blue-100 dark:border-blue-700">
+                  <p className="font-semibold mb-1">📡 {t('productManagement.ispProductsHere', 'Products (this page)')}</p>
+                  <p>{t('productManagement.ispProductsDesc', 'Connection categories — e.g., "Cable TV" (type: cable) or "Fiber Internet" (type: internet). Defines the billing cutoff schedule.')}</p>
+                </div>
+                <div className="rounded-lg bg-white/60 dark:bg-blue-800/30 p-3 border border-blue-100 dark:border-blue-700">
+                  <p className="font-semibold mb-1">💰 {t('productManagement.ispPlansElsewhere', 'Plans (Settings → Billing tab)')}</p>
+                  <p>{t('productManagement.ispPlansDesc', 'Pricing packages within a product — e.g., Gold ₹999/mo, Silver ₹599/mo. Each plan belongs to a product type.')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Suggested categories ── */}
       {suggestedCategories.length > 0 && (
-        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 dark:bg-primary/10 p-4">
+        <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 dark:bg-primary/10 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb className="w-4 h-4 text-primary shrink-0" />
             <p className="text-sm font-medium text-foreground">
-              {t('productManagement.suggestedCategories', 'Suggested categories for your industry')}
+              {t('productManagement.suggestedCategories', 'Suggested for your industry — tap to add')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -154,12 +567,9 @@ const ProductManagement = () => {
                 key={cat}
                 type="button"
                 onClick={() => handleQuickAdd(cat)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
-                  'bg-white dark:bg-gray-800 text-foreground border-border hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/20'
-                )}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all min-h-[36px] bg-white dark:bg-gray-800 text-foreground border-border hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/20"
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-3 h-3 shrink-0" />
                 {cat}
               </button>
             ))}
@@ -167,123 +577,150 @@ const ProductManagement = () => {
         </div>
       )}
 
+      {/* ── Product cards / empty state ── */}
       {loading ? (
-        <div className="text-center py-12">{t('productManagement.loading', 'Loading products...')}</div>
+        <div className="text-center py-12 text-muted-foreground text-sm animate-pulse">
+          {t('productManagement.loading', 'Loading...')}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="py-14 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
+          {isIsp ? <Wifi className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" /> : <Tag className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />}
+          <p className="text-sm font-medium text-muted-foreground">{t('productManagement.emptyState', 'No categories yet')}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isIsp
+              ? t('productManagement.ispEmptyHint', 'Add your first service type (e.g., Cable TV, Fiber Internet)')
+              : t('productManagement.genericEmptyHint', 'Use the suggestions above or add a custom category')}
+          </p>
+          <Button onClick={openAdd} className="mt-4" size="sm">
+            <Plus className="w-4 h-4 mr-1.5" />
+            {isIsp ? t('productManagement.addConnectionType', 'Add Connection Type') : t('productManagement.addCategory', 'Add Category')}
+          </Button>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {products.map((product) => (
-            <Card key={product.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm truncate">{getProviderDisplayName(product.name)}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                      {product.productType}
-                    </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {products.map((product) => {
+            const cutoffLabel = getCutoffLabel(product);
+            return (
+              <Card
+                key={product.id}
+                className={cn(
+                  'group hover:shadow-md transition-all duration-200 border',
+                  !product.isActive && 'opacity-60'
+                )}
+              >
+                <CardContent className="p-0">
+                  {/* Card top accent line by type */}
+                  <div className={cn('h-1 rounded-t-lg', {
+                    'bg-orange-400': product.productType === 'cable',
+                    'bg-blue-500': product.productType === 'internet',
+                    'bg-purple-500': product.productType === 'service',
+                    'bg-amber-500': product.productType === 'physical',
+                    'bg-green-500': product.productType === 'food',
+                    'bg-cyan-500': product.productType === 'digital',
+                    'bg-gray-400': product.productType === 'general',
+                  })} />
+
+                  <div className="p-3 sm:p-4 space-y-3">
+                    {/* Name + active toggle */}
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{product.name}</p>
+                        {product.description && (
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{product.description}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => toggleActive(product)}
+                        title={product.isActive ? t('productManagement.clickToDeactivate', 'Click to deactivate') : t('productManagement.clickToActivate', 'Click to activate')}
+                        className="shrink-0 p-1 rounded-md transition-colors hover:bg-muted"
+                        aria-label={product.isActive ? 'Deactivate' : 'Activate'}
+                      >
+                        {product.isActive
+                          ? <ToggleRight className="w-5 h-5 text-primary" />
+                          : <ToggleLeft className="w-5 h-5 text-muted-foreground" />}
+                      </button>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide', getTypeBadgeClass(product.productType))}>
+                        {getTypeLabel(product.productType)}
+                      </span>
+                      <span className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
+                        product.isActive
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      )}>
+                        {product.isActive
+                          ? <><CheckCircle2 className="w-2.5 h-2.5" />{t('productManagement.active', 'Active')}</>
+                          : <><XCircle className="w-2.5 h-2.5" />{t('productManagement.inactive', 'Inactive')}</>}
+                      </span>
+                    </div>
+
+                    {/* ISP cutoff info */}
+                    {cutoffLabel && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Info className="w-3 h-3 shrink-0" />
+                        {cutoffLabel}
+                      </p>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => openEdit(product)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-border hover:bg-muted transition-colors text-foreground min-h-[36px]"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 shrink-0" />
+                        {t('common.edit', 'Edit')}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors min-h-[36px]"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                        {t('common.delete', 'Delete')}
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => toggleActive(product)}
-                    className={cn(
-                      'p-1 rounded-md transition-colors shrink-0',
-                      product.isActive
-                        ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30'
-                        : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    )}
-                    title={product.isActive ? t('productManagement.deactivate', 'Deactivate') : t('productManagement.activate', 'Activate')}
-                  >
-                    {product.isActive ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <X className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2 pb-3">
-                <div className="flex items-center gap-1 mb-3">
-                  <span
-                    className={cn(
-                      'px-1.5 py-0.5 rounded-full text-[10px] font-medium',
-                      product.isActive
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    )}
-                  >
-                    {product.isActive ? t('productManagement.active', 'Active') : t('productManagement.inactive', 'Inactive')}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 capitalize">
-                    {product.productType}
-                  </span>
-                </div>
-                <div className="flex gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleOpenEdit(product)}
-                    className="flex-1 text-xs h-7"
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    {t('common.edit', 'Edit')}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(product.id)}
-                    className="flex-1 text-xs h-7"
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    {t('common.delete', 'Delete')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {products.length === 0 && !loading && (
-        <div className="py-12 text-center border border-border rounded-lg bg-muted/20">
-          <p className="text-muted-foreground">{t('productManagement.emptyState', 'No products found. Add your first product to get started.')}</p>
-        </div>
-      )}
-
-      <ProductModal
+      {/* ── Add/Edit modal ── */}
+      <ProductFormModal
         isOpen={showModal}
-        onClose={handleCloseModal}
-        onSave={handleSave}
-        onUpdate={handleUpdate}
-        editingProduct={editingProduct}
+        onClose={() => { setShowModal(false); setEditingProduct(null); }}
+        onSubmit={handleSubmit}
+        editing={editingProduct}
+        industryType={industryType}
       />
 
-      {/* Payment Required - use Dialog for consistency */}
+      {/* ── Paywall: additional product limit ── */}
       <Dialog open={showPaymentModal} onClose={() => setShowPaymentModal(false)} size="sm">
-        <DialogHeader
-          title={t('productManagement.additionalProductLimitTitle', 'Additional Product Limit Reached')}
-          onClose={() => setShowPaymentModal(false)}
-        />
-        <DialogBody className="p-4 sm:p-5">
-          <div className="flex items-start gap-3 mb-4">
+        <DialogHeader title={t('productManagement.limitReachedTitle', 'Free Limit Reached')} onClose={() => setShowPaymentModal(false)} />
+        <DialogBody className="p-4 sm:p-5 space-y-4">
+          <div className="flex items-start gap-3">
             <div className="p-2 rounded-full bg-primary/10 shrink-0">
               <Lock className="w-5 h-5 text-primary" />
             </div>
             <p className="text-sm text-muted-foreground">
-              {t('productManagement.additionalProductLimitDesc', "You've used all {{limit}} free products. To add more, pay ₹{{cost}} per additional product.", {
+              {t('productManagement.limitReachedDesc', 'You\'ve used all {{limit}} free categories. Each additional category costs ₹{{cost}} (one-time).', {
                 limit: FREE_PRODUCT_LIMIT,
                 cost: ADDITIONAL_PRODUCT_COST,
               })}
             </p>
           </div>
-          <div className="bg-muted/50 rounded-lg p-4 border border-border">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-foreground">
-                {t('productManagement.additionalProduct', 'Additional Product')}
-              </span>
-              <span className="font-semibold text-foreground">₹{ADDITIONAL_PRODUCT_COST}</span>
+          <div className="rounded-lg bg-muted/50 border border-border p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t('productManagement.additionalCategory', 'Additional Category')}</p>
+              <p className="text-xs text-muted-foreground">{t('productManagement.oneTimePayment', 'One-time payment')}</p>
             </div>
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>{t('productManagement.oneTimePayment', 'One-time payment')}</span>
-              <span>{t('productManagement.perProduct', 'Per product')}</span>
-            </div>
+            <p className="text-lg font-bold text-foreground">₹{ADDITIONAL_PRODUCT_COST}</p>
           </div>
         </DialogBody>
         <DialogFooter>
@@ -291,12 +728,12 @@ const ProductManagement = () => {
             {t('common.cancel', 'Cancel')}
           </Button>
           <Button onClick={handlePayForAdditionalProducts}>
-            {t('productManagement.payAmount', 'Pay ₹{{amount}}', { amount: ADDITIONAL_PRODUCT_COST })}
+            {t('productManagement.payNow', 'Pay ₹{{amount}}', { amount: ADDITIONAL_PRODUCT_COST })}
           </Button>
         </DialogFooter>
       </Dialog>
 
-      {/* UPI Payment Modal - additional products: platform (our) UPI only */}
+      {/* ── UPI payment modal ── */}
       {hasPlatformUpi() && (
         <UpiPaymentModal
           isOpen={showUpiModal}
@@ -304,8 +741,8 @@ const ProductManagement = () => {
           upiId={PLATFORM_UPI.upiId}
           businessName={PLATFORM_UPI.businessName}
           amount={ADDITIONAL_PRODUCT_COST}
-          description={t('productManagement.additionalProductPurchase', 'Additional Product Purchase')}
-          transactionRef={`PROD${Date.now()}`}
+          description={t('productManagement.paymentDesc', 'Additional Category Unlock')}
+          transactionRef={`CAT${Date.now()}`}
           onPaymentInitiated={handlePaymentInitiated}
         />
       )}

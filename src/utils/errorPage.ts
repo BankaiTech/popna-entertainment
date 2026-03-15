@@ -1,20 +1,8 @@
 /**
- * On error: redirect to home. Persist error in sessionStorage.
- * When user visits the same URL with ?error_show, the app shows the error details.
+ * Legacy compat shim — all error reporting now goes through reportError().
+ * Kept so existing call-sites don't break.
  */
-export const ERROR_STORAGE_KEY = '__Popna_error__';
+export { reportError as sendErrorToPage } from '@/lib/errorReporter';
 
-export function sendErrorToPage(error: Error, context?: string): void {
-  try {
-    const data = {
-      message: error?.message ?? String(error),
-      stack: error?.stack ?? '',
-      time: new Date().toISOString(),
-      context: context ?? '',
-    };
-    sessionStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(data));
-    window.location.href = '/?error_show';
-  } catch {
-    window.location.href = '/?error_show&message=' + encodeURIComponent(String(error));
-  }
-}
+/** @deprecated key no longer used */
+export const ERROR_STORAGE_KEY = '__Popna_error__';

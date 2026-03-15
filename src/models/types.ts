@@ -306,18 +306,27 @@ export interface Vendor {
   createdAt: string;
 }
 
+/**
+ * Product/Category type — covers both ISP-specific and generic industry categories.
+ *  ISP:      'cable' | 'internet'
+ *  Generic:  'service' | 'physical' | 'food' | 'digital' | 'general'
+ */
+export type ProductType = 'cable' | 'internet' | 'service' | 'physical' | 'food' | 'digital' | 'general';
+
 /** Dynamic Product - Multi-tenant ready - backend will isolate by organization */
-// Product cut-off configuration added
 export interface Product {
   id: number;
   organizationId: string;
   name: string;
-  productType: 'cable' | 'internet';
+  /** For ISP: 'cable' | 'internet'. For other industries: 'service' | 'physical' | etc. */
+  productType: ProductType;
   isActive: boolean;
   createdAt: string;
-  /** Cut-off date (day of month, 1-28) - only for cable products */
+  /** Optional description / notes for non-ISP categories */
+  description?: string;
+  /** Cut-off date (day of month, 1-28) — ISP cable only */
   cutoffDate?: number;
-  /** Cut-off days (days after due date) - only for internet products */
+  /** Cut-off days (days after due date) — ISP internet only */
   cutoffDays?: number;
 }
 

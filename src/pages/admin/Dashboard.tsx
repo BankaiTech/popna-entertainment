@@ -539,8 +539,8 @@ const AdminDashboard = () => {
       {/* ── Overview KPI Cards (widget-driven when template has dashboardWidgets) ── */}
       {renderCardSection(t('dashboard.overview', 'Overview'), overviewCardsToShow)}
 
-      {/* ── Category-wise Inventory ── */}
-      {categoryStats.length > 0 && (
+      {/* ── Category-wise Inventory — only for industries that have inventory-products ── */}
+      {isModuleAllowed('inventory-products') && categoryStats.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t('dashboard.inventoryByCategory', 'Inventory by Category')}
@@ -601,8 +601,8 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── Sales & Revenue ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start">
+      {/* ── Sales & Revenue — only for industries that have invoices/sales ── */}
+      {isModuleAllowed('invoices') && <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start">
         {/* Top Products by Revenue */}
         <Card className="overflow-hidden animate-slide-up">
           <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
@@ -669,8 +669,8 @@ const AdminDashboard = () => {
                   <tr className="border-b-2 border-border bg-muted/30">
                     <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.number', 'Invoice')}</th>
                     <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.customer', 'Customer')}</th>
+                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.date', 'Date')}</th>
                     <th className="text-right px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.amount', 'Amount')}</th>
-                    <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('invoices.status', 'Status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -688,19 +688,8 @@ const AdminDashboard = () => {
                       )}>
                         <td className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm text-gray-600">{inv.customerName}</td>
+                        <td className="px-3 py-2 text-xs sm:text-sm text-muted-foreground">{new Date(inv.issueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
                         <td className="px-3 py-2 text-xs sm:text-sm text-right font-medium">{formatCurrencyINR(inv.totalAmount)}</td>
-                        <td className="px-3 py-2 text-xs sm:text-sm">
-                          <span className={cn(
-                            'px-2 py-1 rounded-full text-xs font-semibold',
-                            inv.status === 'paid'
-                              ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
-                              : inv.status === 'sent'
-                                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800'
-                                : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'
-                          )}>
-                            {inv.status === 'paid' ? t('common.paid', 'Paid') : inv.status === 'sent' ? t('common.sent', 'Sent') : t('common.draft', 'Draft')}
-                          </span>
-                        </td>
                       </tr>
                     ))
                   )}
@@ -718,16 +707,7 @@ const AdminDashboard = () => {
                   <div key={inv.id} className="bg-card border border-border rounded-lg p-3 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{inv.invoiceNumber}</span>
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-full text-[10px] font-semibold',
-                        inv.status === 'paid'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                          : inv.status === 'sent'
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      )}>
-                        {inv.status === 'paid' ? t('common.paid', 'Paid') : inv.status === 'sent' ? t('common.sent', 'Sent') : t('common.draft', 'Draft')}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{new Date(inv.issueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{inv.customerName}</span>
@@ -739,10 +719,10 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
-      {/* ── Payment Aging ── */}
-      <div className="space-y-2">
+      {/* ── Payment Aging — only for invoice-based industries ── */}
+      {isModuleAllowed('invoices') && <div className="space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t('dashboard.paymentAging', 'Payment Alerts')}
         </h2>
@@ -779,10 +759,10 @@ const AdminDashboard = () => {
             );
           })}
         </div>
-      </div>
+      </div>}
 
-      {/* ── Complaint Metrics ── */}
-      {renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}
+      {/* ── Complaint Metrics — only for industries with complaints module ── */}
+      {isModuleAllowed('complaints') && renderCardSection(t('dashboard.complaintMetrics', 'Complaint Metrics'), complaintCards)}
 
       {/* ── Financial Overview - Combined Dashboard ── */}
       <div className="space-y-3">
@@ -969,13 +949,12 @@ const AdminDashboard = () => {
                   <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.name', 'Name')}</th>
                   <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.mobile', 'Mobile')}</th>
                   <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.connectionType', 'Type')}</th>
-                  <th className="text-left px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">{t('customers.status', 'Status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {lastCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center p-4 text-muted-foreground text-sm">
+                    <td colSpan={4} className="text-center p-4 text-muted-foreground text-sm">
                       {t('dashboard.noCustomers')}
                     </td>
                   </tr>
@@ -988,17 +967,7 @@ const AdminDashboard = () => {
                       <td className="px-3 py-2 text-xs sm:text-sm font-normal text-gray-600">{customer.id}</td>
                       <td className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-900">{customer.name}</td>
                       <td className="px-3 py-2 text-xs sm:text-sm font-normal text-gray-600">{customer.mobile}</td>
-                      <td className="px-3 py-2 text-xs sm:text-sm font-normal text-gray-600">{customer.connectionType}</td>
-                      <td className="px-3 py-2 text-xs sm:text-sm">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${customer.status === 'Active'
-                            ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
-                            : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
-                            }`}
-                        >
-                          {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                        </span>
-                      </td>
+                      <td className="px-3 py-2 text-xs sm:text-sm font-normal text-gray-600">{customer.connectionType || '-'}</td>
                     </tr>
                   ))
                 )}
@@ -1014,23 +983,11 @@ const AdminDashboard = () => {
               </div>
             ) : (
               lastCustomers.map((customer) => (
-                <div key={customer.id} className="bg-card border border-border rounded-lg p-3 space-y-1.5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{customer.name}</p>
-                      <p className="text-xs text-muted-foreground">{customer.mobile}</p>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${customer.status === 'Active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                        }`}
-                    >
-                      {customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{customer.connectionType}</span>
+                <div key={customer.id} className="bg-card border border-border rounded-lg p-3 space-y-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{customer.name}</p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{customer.mobile}</span>
+                    {customer.connectionType && <span>{customer.connectionType}</span>}
                   </div>
                 </div>
               ))

@@ -83,33 +83,6 @@ const Complaints = () => {
     setEditingComplaint(null);
   };
 
-  const getStatusColor = (status: ComplaintStatus) => {
-    switch (status) {
-      case 'active':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'on-hold':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusLabel = (status: ComplaintStatus) => {
-    switch (status) {
-      case 'active':
-        return t('complaints.active', 'Active');
-      case 'on-hold':
-        return t('complaints.onHold', 'On Hold');
-      case 'completed':
-        return t('complaints.completed', 'Completed');
-      default:
-        return status;
-    }
-  };
-
-  const statuses: ComplaintStatus[] = ['active', 'on-hold', 'completed'];
 
   return (
     <div className="space-y-3">
@@ -136,11 +109,9 @@ const Complaints = () => {
               className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
             >
               <option value="All">{t('complaints.allStatus', 'All Status')}</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {getStatusLabel(status)}
-                </option>
-              ))}
+              <option value="active">{t('complaints.active', 'Active')}</option>
+              <option value="on-hold">{t('complaints.onHold', 'On Hold')}</option>
+              <option value="completed">{t('complaints.completed', 'Completed')}</option>
             </Select>
             <Select
               value={priorityFilter}
@@ -194,7 +165,6 @@ const Complaints = () => {
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.product', 'Product')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[8rem]">{t('complaints.description', 'Description')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.priority', 'Priority')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('complaints.status', 'Status')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.sla', 'SLA')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('complaints.created', 'Created')}</th>
                     </tr>
@@ -227,15 +197,6 @@ const Complaints = () => {
                             </span>
                           ) : '-'}
                         </td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                              complaint.status
-                            )}`}
-                          >
-                            {getStatusLabel(complaint.status)}
-                          </span>
-                        </td>
                         <td className="px-3 py-2 text-sm">
                           {complaint.slaDeadline ? (
                             <span className={cn(
@@ -266,13 +227,6 @@ const Complaints = () => {
                         <p className="text-base font-semibold text-primary">{complaint.customerName}</p>
                         <p className="text-xs text-muted-foreground mt-1">{complaint.mobile}</p>
                       </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                          complaint.status
-                        )}`}
-                      >
-                        {getStatusLabel(complaint.status)}
-                      </span>
                     </div>
 
                     <div className="space-y-2 text-sm">

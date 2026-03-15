@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import {
   Plus, AlertCircle, LogOut, FileText, Download, CreditCard,
-  Wallet, IndianRupee, CalendarClock, Wifi, MessageSquare
+  Wallet, IndianRupee, CalendarClock, Wifi, MessageSquare, History, CheckCircle2
 } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -83,6 +83,18 @@ const CustomerDashboard = () => {
     () => myInvoices.filter((inv) => inv.status !== 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
     [myInvoices]
   );
+  const totalPaid = useMemo(
+    () => myInvoices.filter((inv) => inv.status === 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
+    [myInvoices]
+  );
+  const memberSince = useMemo(() => {
+    if (currentCustomer?.createdAt) return new Date(currentCustomer.createdAt);
+    if (myInvoices.length > 0) {
+      const sorted = [...myInvoices].sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+      return new Date(sorted[0].issueDate);
+    }
+    return null;
+  }, [currentCustomer, myInvoices]);
 
   const getStatusColor = (status: Complaint['status']) => {
     switch (status) {
@@ -192,6 +204,14 @@ const CustomerDashboard = () => {
       icon: Wallet,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
+      isText: true,
+    },
+    {
+      title: t('customerDashboard.totalPaid', 'Total Paid'),
+      value: formatCurrencyINR(totalPaid),
+      icon: CheckCircle2,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
       isText: true,
     },
   ];
@@ -337,7 +357,16 @@ const CustomerDashboard = () => {
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileText className="w-4 h-4 text-green-600 shrink-0" />
                     {myInvoices.length} {t('customerDashboard.invoicesCount', 'invoices')}
+                    {memberSince && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        · {t('customerDashboard.memberSince', 'Member since')} {formatDate(memberSince.toISOString())}
+                      </span>
+                    )}
                   </CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/customer/history')} className="flex items-center gap-1.5 text-xs">
+                    <History className="w-3.5 h-3.5" />
+                    {t('customerDashboard.viewFullHistory', 'Full History')}
+                  </Button>
                 </CardHeader>
                 <CardContent className="p-0">
                   {loadingInvoices ? (

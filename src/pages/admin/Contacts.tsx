@@ -11,11 +11,12 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import CustomerSheet from '@/components/CustomerSheet';
+import CustomerHistoryPanel from '@/components/CustomerHistoryPanel';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare, History } from 'lucide-react';
 import type { Customer, Supplier, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -54,6 +55,7 @@ const Contacts = () => {
     const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
     const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [paymentCustomer, setPaymentCustomer] = useState<Customer | null>(null);
+    const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
 
     // Customer filters
     const [customerSearch, setCustomerSearch] = useState('');
@@ -458,6 +460,7 @@ const Contacts = () => {
                                                     {listColumns.includes('creditLimit') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.creditLimit', 'Credit Limit')}</th>}
                                                     {listColumns.includes('loyaltyPoints') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.loyaltyPoints', 'Loyalty')}</th>}
                                                     {listColumns.includes('paymentStatus') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>}
+                                                    <th className="px-3 py-2 w-10"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -512,6 +515,15 @@ const Contacts = () => {
                                                                 )}
                                                             </td>
                                                         )}
+                                                        <td className="px-3 py-2">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setHistoryCustomer(customer); }}
+                                                                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                                                title={t('customerHistory.viewHistory', 'View History')}
+                                                            >
+                                                                <History className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -523,7 +535,7 @@ const Contacts = () => {
                                         {paginatedCustomers.map((customer) => (
                                             <div key={customer.id} className="bg-card border border-border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
                                                 <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         {isEmployee ? (
                                                             <span className="text-base font-semibold text-foreground">{customer.name}</span>
                                                         ) : (
@@ -533,6 +545,13 @@ const Contacts = () => {
                                                         )}
                                                         {listColumns.includes('id') && <p className="text-xs text-muted-foreground mt-1">{t('common.id', 'ID')}: {customer.id}</p>}
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setHistoryCustomer(customer); }}
+                                                        className="ml-2 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors shrink-0"
+                                                        title={t('customerHistory.viewHistory', 'View History')}
+                                                    >
+                                                        <History className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                                 <div className="space-y-2 text-sm">
                                                     {listColumns.includes('mobile') && (
@@ -719,6 +738,12 @@ const Contacts = () => {
             )}
 
             {/* ═══════════ MODALS ═══════════ */}
+
+            {/* Customer History Panel */}
+            <CustomerHistoryPanel
+                customer={historyCustomer}
+                onClose={() => setHistoryCustomer(null)}
+            />
 
             {/* Supplier Modal */}
             <SupplierModal

@@ -366,7 +366,6 @@ const Login = () => {
                     {t('login.demoCredentials')}
                   </p>
                   <div className="space-y-1.5 text-xs text-gray-600">
-                    <p className="font-medium text-gray-700">Super Admin: superadmin / test123</p>
                     <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
                       {[
                         { label: 'ISP / Cable', user: 'isp' },

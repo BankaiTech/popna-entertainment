@@ -236,11 +236,11 @@ const Organizations = () => {
                                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all',
                                                 selectedModules.includes(mod)
                                                     ? 'bg-primary/10 text-primary border-primary'
-                                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
                                             )}
                                         >
                                             {selectedModules.includes(mod) ? <Check className="w-3 h-3" /> : <div className="w-3 h-3" />}
-                                            {t(`superadmin.modules.${mod}`)}
+                                            {t(`superadmin.modules.${mod}`, mod.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}
                                         </button>
                                     ))}
                                 </div>
@@ -257,11 +257,11 @@ const Organizations = () => {
                                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all',
                                                 selectedTabs.includes(tab)
                                                     ? 'bg-primary/10 text-primary border-primary'
-                                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
                                             )}
                                         >
                                             {selectedTabs.includes(tab) ? <Check className="w-3 h-3" /> : <div className="w-3 h-3" />}
-                                            {t(`superadmin.settingsTabs.${tab}`)}
+                                            {t(`superadmin.settingsTabs.${tab}`, tab.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}
                                         </button>
                                     ))}
                                 </div>

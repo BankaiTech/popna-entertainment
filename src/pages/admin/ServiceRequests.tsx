@@ -61,21 +61,6 @@ const ServiceRequests = () => {
     }
   };
 
-  const statusBadge = (status: ServiceRequestStatus) => {
-    const colors: Record<ServiceRequestStatus, string> = {
-      new: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300',
-      assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      'in-progress': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-      resolved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      closed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    };
-    return (
-      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', colors[status])}>
-        {t(`serviceRequests.status${status.replace('-', '')}`, status)}
-      </span>
-    );
-  };
-
   const priorityBadge = (priority: PriorityLevel) => {
     const colors: Record<PriorityLevel, string> = {
       low: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
@@ -142,7 +127,6 @@ const ServiceRequests = () => {
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('serviceRequests.requestType', 'Type')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('serviceRequests.description', 'Description')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('serviceRequests.priority', 'Priority')}</th>
-                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.status', 'Status')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">SLA</th>
                       <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.actions', 'Actions')}</th>
                     </tr>
@@ -157,7 +141,6 @@ const ServiceRequests = () => {
                         <td className="py-3 px-3 text-gray-700 dark:text-gray-300">{r.requestType}</td>
                         <td className="py-3 px-3 text-gray-700 dark:text-gray-300 max-w-[200px] truncate">{r.description}</td>
                         <td className="py-3 px-3">{priorityBadge(r.priority)}</td>
-                        <td className="py-3 px-3">{statusBadge(r.status)}</td>
                         <td className="py-3 px-3 text-gray-500 dark:text-gray-400">
                           {r.slaDeadline ? formatDate(r.slaDeadline) : '–'}
                           {r.slaBreached && <AlertTriangle className="inline w-4 h-4 ml-1 text-red-500" />}
@@ -181,7 +164,6 @@ const ServiceRequests = () => {
                         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{r.customerName}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{r.requestType} • {r.priority}</p>
                       </div>
-                      {statusBadge(r.status)}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{r.description}</p>
                     {r.slaDeadline && <p className="text-xs text-gray-500">{t('serviceRequests.slaDeadline', 'SLA')}: {formatDate(r.slaDeadline)}{r.slaBreached && ' • Breached'}</p>}

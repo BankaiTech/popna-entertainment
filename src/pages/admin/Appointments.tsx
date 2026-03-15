@@ -10,7 +10,6 @@ import type { Appointment, AppointmentStatus } from '@/models/types';
 import { useAppointmentsStore } from '@/store/useAppointmentsStore';
 import { useTerminology } from '@/hooks/useTerminology';
 import AppointmentModal from '@/components/AppointmentModal';
-import { cn } from '@/lib/utils';
 
 const Appointments = () => {
   const { t } = useTranslation();
@@ -78,30 +77,6 @@ const Appointments = () => {
     return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
   };
 
-  const statusLabel: Record<AppointmentStatus, string> = {
-    scheduled: t('appointments.statusScheduled', 'Scheduled'),
-    confirmed: t('appointments.statusConfirmed', 'Confirmed'),
-    'in-progress': t('appointments.statusInProgress', 'In progress'),
-    completed: t('appointments.statusCompleted', 'Completed'),
-    cancelled: t('appointments.statusCancelled', 'Cancelled'),
-    'no-show': t('appointments.statusNoShow', 'No show'),
-  };
-  const statusBadge = (status: AppointmentStatus) => {
-    const colors: Record<AppointmentStatus, string> = {
-      scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      confirmed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      'in-progress': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-      completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      'no-show': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    };
-    return (
-      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', colors[status])}>
-        {statusLabel[status]}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-3">
       <Card>
@@ -159,7 +134,6 @@ const Appointments = () => {
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('appointments.serviceType', 'Service')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('appointments.scheduledAt', 'Scheduled')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('appointments.duration', 'Duration')}</th>
-                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.status', 'Status')}</th>
                       <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.actions', 'Actions')}</th>
                     </tr>
                   </thead>
@@ -173,7 +147,6 @@ const Appointments = () => {
                         <td className="py-3 px-3 text-gray-700 dark:text-gray-300">{apt.serviceType}</td>
                         <td className="py-3 px-3 text-gray-700 dark:text-gray-300">{formatDateTime(apt.scheduledAt)}</td>
                         <td className="py-3 px-3 text-gray-500 dark:text-gray-400">{apt.duration} min</td>
-                        <td className="py-3 px-3">{statusBadge(apt.status)}</td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button onClick={() => handleEdit(apt)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600">
@@ -198,7 +171,6 @@ const Appointments = () => {
                         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{apt.customerName}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{apt.customerMobile} • {apt.serviceType}</p>
                       </div>
-                      {statusBadge(apt.status)}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {formatDateTime(apt.scheduledAt)} • {apt.duration} min
