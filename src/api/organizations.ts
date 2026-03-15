@@ -1,19 +1,67 @@
 // SaaS Master Controller - Organizations mock API
-import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus } from '@/models/types';
+import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus, IndustryType } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
+import { getTemplateById } from '@/config/industryTemplates';
 
-// Mock organizations data
+function templateDefaults(type: IndustryType) {
+    const tpl = getTemplateById(type);
+    return {
+        industryType: type,
+        terminology: tpl?.terminology ?? {},
+        allowedModules: (tpl?.enabledModules ?? [...ALL_MODULES]) as ModuleKey[],
+        allowedSettingsTabs: (tpl?.enabledSettingsTabs ?? [...ALL_SETTINGS_TABS]) as SettingsTabKey[],
+    };
+}
+
+// Demo organizations for each industry
 let organizations: Organization[] = [
     {
         id: 'org_001',
-        name: 'Popna',
+        name: 'Popna ISP',
         status: 'active',
-        allowedModules: [...ALL_MODULES],
-        allowedSettingsTabs: [...ALL_SETTINGS_TABS],
         subscriptionStart: '2025-01-01',
         subscriptionEnd: '2026-12-31',
-        industryType: 'isp-cable',
-        terminology: { customer: 'Subscriber', complaint: 'Ticket' },
+        ...templateDefaults('isp-cable'),
+    },
+    {
+        id: 'org_002',
+        name: 'Urban Retail Store',
+        status: 'active',
+        subscriptionStart: '2025-01-01',
+        subscriptionEnd: '2026-12-31',
+        ...templateDefaults('retail'),
+    },
+    {
+        id: 'org_003',
+        name: 'Glow Salon & Spa',
+        status: 'active',
+        subscriptionStart: '2025-01-01',
+        subscriptionEnd: '2026-12-31',
+        ...templateDefaults('salon-spa'),
+    },
+    {
+        id: 'org_004',
+        name: 'Spice Kitchen Restaurant',
+        status: 'active',
+        subscriptionStart: '2025-01-01',
+        subscriptionEnd: '2026-12-31',
+        ...templateDefaults('restaurant-cafe'),
+    },
+    {
+        id: 'org_005',
+        name: 'CareWell Pharmacy',
+        status: 'active',
+        subscriptionStart: '2025-01-01',
+        subscriptionEnd: '2026-12-31',
+        ...templateDefaults('healthcare-pharmacy'),
+    },
+    {
+        id: 'org_006',
+        name: 'FitZone Gym',
+        status: 'active',
+        subscriptionStart: '2025-01-01',
+        subscriptionEnd: '2026-12-31',
+        ...templateDefaults('gym-fitness'),
     },
 ];
 // Note: ALL_SETTINGS_TABS includes 'billing' for UPI/payment settings

@@ -8,11 +8,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Trash2, Pencil, Wrench, AlertTriangle } from 'lucide-react';
 import type { ServiceRequest, ServiceRequestStatus, PriorityLevel } from '@/models/types';
 import { useServiceRequestsStore } from '@/store/useServiceRequestsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import ServiceRequestModal from '@/components/ServiceRequestModal';
 import { cn } from '@/lib/utils';
 
 const ServiceRequests = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const pageLabel = term('serviceRequest', t('nav.serviceRequests', 'Service Requests'));
   const { serviceRequests, loading, fetchServiceRequests, addServiceRequest, updateServiceRequest, deleteServiceRequest } = useServiceRequestsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all');
@@ -117,7 +120,7 @@ const ServiceRequests = () => {
             </Select>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto ml-auto">
               <Plus className="w-3.5 h-3.5" />
-              {t('serviceRequests.addRequest', 'Add Service Request')}
+              {t('serviceRequests.addRequest', 'Add {{label}}', { label: pageLabel })}
             </Button>
           </div>
         </CardHeader>

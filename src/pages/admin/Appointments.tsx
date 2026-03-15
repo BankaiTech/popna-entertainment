@@ -8,11 +8,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Trash2, Pencil, Calendar } from 'lucide-react';
 import type { Appointment, AppointmentStatus } from '@/models/types';
 import { useAppointmentsStore } from '@/store/useAppointmentsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import AppointmentModal from '@/components/AppointmentModal';
 import { cn } from '@/lib/utils';
 
 const Appointments = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const pageLabel = term('appointment', t('nav.appointments', 'Appointments'));
   const { appointments, loading, fetchAppointments, addAppointment, updateAppointment, deleteAppointment } = useAppointmentsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
@@ -134,7 +137,7 @@ const Appointments = () => {
             />
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto ml-auto">
               <Plus className="w-3.5 h-3.5" />
-              {t('appointments.addAppointment', 'Add Appointment')}
+              {t('appointments.addAppointment', 'Add {{label}}', { label: pageLabel })}
             </Button>
           </div>
         </CardHeader>

@@ -8,12 +8,16 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Search } from 'lucide-react';
 import type { Quotation, QuotationStatus } from '@/models/types';
 import { useQuotationsStore } from '@/store/useQuotationsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import QuotationModal from '@/components/QuotationModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { showInfo } from '@/utils/toast';
 
 const Quotations = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const quotationLabel = term('quotation', t('quotations.title', 'Quotation'));
+  const customerLabel = term('customer', t('contacts.customer', 'Customer'));
   const {
     quotations,
     loading,
@@ -137,7 +141,7 @@ const Quotations = () => {
             </Select>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto">
               <span className="mr-1 text-lg leading-none">+</span>
-              {t('quotations.addQuotation', 'New Quotation')}
+              {t('quotations.addQuotation', 'New {{label}}', { label: quotationLabel })}
             </Button>
           </div>
         </CardHeader>
@@ -160,7 +164,7 @@ const Quotations = () => {
                         {t('quotations.colNumber', 'Number')}
                       </th>
                       <th className="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 w-40">
-                        {t('quotations.colCustomer', 'Customer')}
+                        {customerLabel}
                       </th>
                       <th className="text-right py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 w-28">
                         {t('quotations.colTotal', 'Total')}

@@ -667,9 +667,21 @@ export const mockCustomers: Customer[] = [
 ];
 
 // Mock Users (Admin/Employee). Password plain text for mock only.
+// Each demo organization gets an admin login
 export const mockUsers: User[] = [
-  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Admin User', username: 'bankaitech', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(365) },
-  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Employee User', username: 'bankaitech-emp', password: 'test123', role: 'employee', status: 'active', allowedModules: ['contacts', 'complaints'], createdAt: getDateString(180) },
+  // ISP Cable (org_001)
+  { id: 1, organizationId: 'org_001', name: 'ISP Admin', username: 'isp', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(365) },
+  { id: 2, organizationId: 'org_001', name: 'ISP Employee', username: 'isp-emp', password: 'test123', role: 'employee', status: 'active', allowedModules: ['contacts', 'complaints'], createdAt: getDateString(180) },
+  // Retail (org_002)
+  { id: 3, organizationId: 'org_002', name: 'Retail Admin', username: 'retail', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(300) },
+  // Salon & Spa (org_003)
+  { id: 4, organizationId: 'org_003', name: 'Salon Admin', username: 'salon', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(300) },
+  // Restaurant (org_004)
+  { id: 5, organizationId: 'org_004', name: 'Restaurant Admin', username: 'restaurant', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(300) },
+  // Healthcare Pharmacy (org_005)
+  { id: 6, organizationId: 'org_005', name: 'Pharmacy Admin', username: 'pharmacy', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(300) },
+  // Gym Fitness (org_006)
+  { id: 7, organizationId: 'org_006', name: 'Gym Admin', username: 'gym', password: 'test123', role: 'admin', status: 'active', createdAt: getDateString(300) },
 ];
 
 // Mock Complaints - Cable and Internet (internal ids unchanged; do not mix)

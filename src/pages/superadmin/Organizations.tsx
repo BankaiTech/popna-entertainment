@@ -8,8 +8,9 @@ import Select from '@/components/ui/Select';
 import { Plus, Building2, Check, Settings } from 'lucide-react';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { organizationsApi } from '@/api/organizations';
-import type { Organization, OrganizationStatus, ModuleKey, SettingsTabKey } from '@/models/types';
+import type { Organization, OrganizationStatus, ModuleKey, SettingsTabKey, IndustryType } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
+import { INDUSTRY_TEMPLATES, getTemplateById } from '@/config/industryTemplates';
 import { cn } from '@/lib/utils';
 
 const Organizations = () => {
@@ -24,6 +25,7 @@ const Organizations = () => {
 
     const [formData, setFormData] = useState({
         name: '',
+        industryType: 'general' as IndustryType,
         subscriptionStart: new Date().toISOString().split('T')[0],
         subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
@@ -40,19 +42,34 @@ const Organizations = () => {
     };
 
     const handleAdd = async () => {
+        const tpl = getTemplateById(formData.industryType);
         await organizationsApi.create({
             name: formData.name,
             status: 'active',
-            allowedModules: [...ALL_MODULES],
-            allowedSettingsTabs: [...ALL_SETTINGS_TABS],
+            industryType: formData.industryType,
+            terminology: tpl?.terminology ?? {},
+            allowedModules: (tpl?.enabledModules ?? [...ALL_MODULES]) as ModuleKey[],
+            allowedSettingsTabs: (tpl?.enabledSettingsTabs ?? [...ALL_SETTINGS_TABS]) as SettingsTabKey[],
             subscriptionStart: formData.subscriptionStart,
             subscriptionEnd: formData.subscriptionEnd,
         });
         setShowAddModal(false);
         setFormData({
             name: '',
+            industryType: 'general',
             subscriptionStart: new Date().toISOString().split('T')[0],
             subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        });
+        await loadOrganizations();
+    };
+
+    const handleIndustryChange = async (orgId: string, newIndustry: IndustryType) => {
+        const tpl = getTemplateById(newIndustry);
+        await organizationsApi.update(orgId, {
+            industryType: newIndustry,
+            terminology: tpl?.terminology ?? {},
+            allowedModules: (tpl?.enabledModules ?? [...ALL_MODULES]) as ModuleKey[],
+            allowedSettingsTabs: (tpl?.enabledSettingsTabs ?? [...ALL_SETTINGS_TABS]) as SettingsTabKey[],
         });
         await loadOrganizations();
     };
@@ -132,19 +149,28 @@ const Organizations = () => {
                                 <div className="text-xs text-muted-foreground space-y-1">
                                     <p>{t('organizations.id', 'ID')}: <span className="font-mono">{org.id}</span></p>
                                     <p>{t('organizations.modules', 'Modules')}: {org.allowedModules.length} / {ALL_MODULES.length}</p>
-                                    <p>{t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} - {org.subscriptionEnd}</p>
+                                    <p>{t('organizations.subscription', 'Subscription')}: {org.subscriptionStart} — {org.subscriptionEnd}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
                                     <Select
+                                        value={org.industryType ?? 'general'}
+                                        onChange={(e) => handleIndustryChange(org.id, e.target.value as IndustryType)}
+                                        className="h-8 text-xs flex-1 min-w-[120px]"
+                                    >
+                                        {INDUSTRY_TEMPLATES.map((tpl) => (
+                                            <option key={tpl.id} value={tpl.id}>{t(tpl.labelKey)}</option>
+                                        ))}
+                                    </Select>
+                                    <Select
                                         value={org.status}
                                         onChange={(e) => handleStatusChange(org.id, e.target.value as OrganizationStatus)}
-                                        className="h-9 text-xs w-24"
+                                        className="h-8 text-xs w-24"
                                     >
                                         <option value="active">{t('organizations.active', 'Active')}</option>
                                         <option value="disabled">{t('organizations.disabled', 'Disabled')}</option>
                                         <option value="suspended">{t('organizations.suspended', 'Suspended')}</option>
                                     </Select>
-                                    <Button variant="outline" size="sm" onClick={() => openModulesEditor(org)} className="text-xs">
+                                    <Button variant="outline" size="sm" onClick={() => openModulesEditor(org)} className="text-xs h-8">
                                         <Settings className="w-3 h-3 mr-1" />
                                         {t('organizations.manageModules', 'Modules')}
                                     </Button>
@@ -164,6 +190,14 @@ const Organizations = () => {
                             <div>
                                 <label className="block text-sm font-medium mb-1">{t('organizations.orgName', 'Organization Name')}</label>
                                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder={t('organizations.placeholderOrgName', 'Enter organization name')} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">{t('organizations.industryType', 'Industry Type')}</label>
+                                <Select value={formData.industryType} onChange={(e) => setFormData({ ...formData, industryType: e.target.value as IndustryType })}>
+                                    {INDUSTRY_TEMPLATES.map((tpl) => (
+                                        <option key={tpl.id} value={tpl.id}>{t(tpl.labelKey)}</option>
+                                    ))}
+                                </Select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>

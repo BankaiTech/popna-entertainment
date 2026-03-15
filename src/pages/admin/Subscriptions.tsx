@@ -8,11 +8,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Trash2, Pencil, Repeat } from 'lucide-react';
 import type { Subscription, SubscriptionStatus } from '@/models/types';
 import { useSubscriptionsStore } from '@/store/useSubscriptionsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 
 const Subscriptions = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const pageLabel = term('subscription', t('nav.subscriptions', 'Subscriptions'));
   const { subscriptions, loading, fetchSubscriptions, addSubscription, updateSubscription, deleteSubscription } = useSubscriptionsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all'>('all');
@@ -91,7 +94,7 @@ const Subscriptions = () => {
             </Select>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto ml-auto">
               <Plus className="w-3.5 h-3.5" />
-              {t('subscriptions.addSubscription', 'Add Subscription')}
+              {t('subscriptions.addSubscription', 'Add {{label}}', { label: pageLabel })}
             </Button>
           </div>
         </CardHeader>

@@ -361,16 +361,32 @@ const Login = () => {
                 </div>
 
                 {/* Demo credentials */}
-                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 max-h-64 overflow-y-auto">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     {t('login.demoCredentials')}
                   </p>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-600">{t('login.demoAdmin')}</p>
-                    <p className="text-xs text-gray-600">{t('login.demoEmployee')}</p>
-                    <p className="text-xs text-gray-600">
-                      {t('login.demoCustomer', 'Customer: use your 10-digit mobile and password')}
-                    </p>
+                  <div className="space-y-1.5 text-xs text-gray-600">
+                    <p className="font-medium text-gray-700">Super Admin: superadmin / test123</p>
+                    <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
+                      {[
+                        { label: 'ISP / Cable', user: 'isp' },
+                        { label: 'Retail Store', user: 'retail' },
+                        { label: 'Salon & Spa', user: 'salon' },
+                        { label: 'Restaurant', user: 'restaurant' },
+                        { label: 'Healthcare', user: 'pharmacy' },
+                        { label: 'Gym / Fitness', user: 'gym' },
+                      ].map((d) => (
+                        <button
+                          key={d.user}
+                          type="button"
+                          onClick={() => { setUsername(d.user); setPassword('test123'); setError(''); }}
+                          className="flex items-center justify-between w-full rounded-lg px-2 py-1.5 hover:bg-blue-50 transition-colors text-left"
+                        >
+                          <span>{d.label}</span>
+                          <span className="font-mono text-blue-600">{d.user} / test123</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </>

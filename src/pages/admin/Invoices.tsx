@@ -9,6 +9,8 @@ import Input from '@/components/ui/Input';
 import type { SalesInvoice, InvoiceStatus, Provider } from '@/models/types';
 import { salesInvoicesApi } from '@/api/invoices';
 import { useStore } from '@/store/useStore';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import InvoiceModal from '@/components/InvoiceModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -17,6 +19,10 @@ import { showError } from '@/utils/toast';
 
 const Invoices = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const industryType = useOrganizationStore((s) => s.currentOrganization?.industryType);
+  const isISP = industryType === 'isp-cable';
+  const customerLabel = term('customer', t('contacts.customer', 'Customer'));
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'All'>('All');
@@ -129,15 +135,17 @@ const Invoices = () => {
               <option value="paid">{t('invoices.statusPaid', 'Paid')}</option>
               <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
             </Select>
-            <Select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
-              className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
-            >
-              <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
-              <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
-              <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
-            </Select>
+            {isISP && (
+              <Select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
+                className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
+              >
+                <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
+                <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
+                <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+              </Select>
+            )}
             <Select
               value={productFilter}
               onChange={(e) => setProductFilter(e.target.value as Provider | 'All')}
@@ -173,9 +181,9 @@ const Invoices = () => {
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('invoices.colNumber', 'Number')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('invoices.colCustomer', 'Customer')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colService', 'Service')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colPlan', 'Plan')}</th>
+                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{customerLabel}</th>
+                      {isISP && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colService', 'Service')}</th>}
+                      {isISP && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colPlan', 'Plan')}</th>}
                       <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colTotal', 'Total')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('invoices.colStatus', 'Status')}</th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('invoices.colDue', 'Due')}</th>
@@ -190,8 +198,8 @@ const Invoices = () => {
                       )}>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{inv.invoiceNumber}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.customerName}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getProviderDisplayName(inv.serviceProvider)}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.planName}</td>
+                        {isISP && <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{getProviderDisplayName(inv.serviceProvider)}</td>}
+                        {isISP && <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.planName}</td>}
                         <td className="px-3 py-2 text-right text-sm font-medium text-foreground">{formatCurrencyINR(inv.totalAmount)}</td>
                         <td className="px-3 py-2 text-sm">{statusBadge(inv.status)}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600 dark:text-foreground">{inv.dueDate}</td>
@@ -218,14 +226,18 @@ const Invoices = () => {
                       {statusBadge(inv.status)}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{t('invoices.colService', 'Service')}</p>
-                        <p className="font-medium">{getProviderDisplayName(inv.serviceProvider)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{t('invoices.colPlan', 'Plan')}</p>
-                        <p className="font-medium">{inv.planName}</p>
-                      </div>
+                      {isISP && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">{t('invoices.colService', 'Service')}</p>
+                          <p className="font-medium">{getProviderDisplayName(inv.serviceProvider)}</p>
+                        </div>
+                      )}
+                      {isISP && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">{t('invoices.colPlan', 'Plan')}</p>
+                          <p className="font-medium">{inv.planName}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-xs text-muted-foreground">{t('invoices.colTotal', 'Total')}</p>
                         <p className="font-bold text-foreground">{formatCurrencyINR(inv.totalAmount)}</p>
