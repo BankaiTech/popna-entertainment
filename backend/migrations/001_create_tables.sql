@@ -1,30 +1,25 @@
 -- =============================================================================
--- Popna Entertainment — ISP Management Platform
+-- Popna — Multi-Industry Business Management Platform
 -- PostgreSQL Schema Migration: 001_create_tables (Consolidated)
 -- =============================================================================
 -- Consolidated structure:
---   • Single invoices table (type: sales | purchase)
---   • Single users table (role: super_admin | admin | employee; customers in contacts)
---   • Company profile holds: branches, sms_status, sms_templates, upi_config
---   • Single inventory table (categories, units, tax, warranty as denormalized/JSONB)
---   • Single pos table (line items in items JSONB)
+--   • organizations (industry_type, terminology for multi-industry)
+--   • users (unified: super_admin | admin | employee)
+--   • contacts (customers/suppliers/vendors + credit_limit, loyalty_points, tags, custom_fields JSONB)
+--   • products, plans (ISP/service categories)
+--   • activities (single table: complaints, connection_requests, appointments, service_requests, leads via kind + payload JSONB)
+--   • invoices (kind: sales | purchase; single table)
+--   • invoice_items (line items for invoices)
+--   • documents (single table: quotations, purchase_orders, expenses via kind + items/payload JSONB)
+--   • subscriptions (recurring billing)
+--   • company_profile (branches, sms, upi, custom_field_schema JSONB)
+--   • website_settings
+--   • inventory (single table: product + variants/category/unit/tax in one)
+--   • pos (header + items JSONB)
+--   • audit_log (single table for all entity audit trail)
+--   • signup_requests, sms_logs
 --
--- Tables: 15
---   1.  organizations
---   2.  users              (unified: super_admin, admin, employee)
---   3.  contacts           (customers, suppliers, vendors; branch_id logical ref)
---   4.  products           (ISP service categories)
---   5.  plans
---   6.  complaints
---   7.  invoices           (type: sales | purchase)
---   8.  invoice_items      (line items for invoices)
---   9.  connection_requests
---  10.  company_profile    (branches, sms_status, sms_templates, upi_config)
---  11.  website_settings
---  12.  inventory          (single table: product + variants/category/unit/tax in one)
---  13.  pos                (single table: header + items JSONB)
---  14.  signup_requests
---  15.  sms_logs           (audit only)
+-- Tables: 17 (minimal set for full platform)
 -- =============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -39,11 +34,9 @@ CREATE TYPE customer_status         AS ENUM ('Active', 'Inactive');
 CREATE TYPE payment_status          AS ENUM ('paid', 'not_paid');
 CREATE TYPE payment_method          AS ENUM ('cash', 'upi', 'card', 'other');
 CREATE TYPE product_type            AS ENUM ('cable', 'internet');
-CREATE TYPE complaint_status        AS ENUM ('active', 'on-hold', 'completed');
 CREATE TYPE invoice_status          AS ENUM ('draft', 'sent', 'paid', 'overdue');
 CREATE TYPE invoice_type            AS ENUM ('tax_invoice', 'bill_of_supply');
 CREATE TYPE invoice_kind            AS ENUM ('sales', 'purchase');
-CREATE TYPE connection_req_status   AS ENUM ('New', 'Converted');
 CREATE TYPE tax_type                AS ENUM ('inclusive', 'exclusive', 'none');
 CREATE TYPE tax_rate_type           AS ENUM ('inclusive', 'exclusive');
 CREATE TYPE inventory_product_type  AS ENUM ('physical', 'service', 'digital', 'bundle');
@@ -53,10 +46,11 @@ CREATE TYPE duration_unit           AS ENUM ('days', 'months', 'years');
 CREATE TYPE pos_payment_method      AS ENUM ('cash', 'upi', 'card', 'bank_transfer', 'other');
 CREATE TYPE pos_status              AS ENUM ('completed', 'refunded', 'voided');
 CREATE TYPE sms_status              AS ENUM ('sent', 'failed', 'pending');
+CREATE TYPE activity_kind           AS ENUM ('complaint', 'connection_request', 'appointment', 'service_request', 'lead');
+CREATE TYPE document_kind           AS ENUM ('quotation', 'purchase_order', 'expense');
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 1: organizations
--- Multi-tenancy root. allowed_modules controls sidebar visibility per tenant.
 -- =============================================================================
 
 CREATE TABLE organizations (
@@ -65,30 +59,31 @@ CREATE TABLE organizations (
     status                organization_status   NOT NULL DEFAULT 'active',
     allowed_modules       JSONB                 NOT NULL DEFAULT '[]',
     allowed_settings_tabs JSONB                 NOT NULL DEFAULT '[]',
+    industry_type         VARCHAR(50)           DEFAULT 'general',
+    terminology           JSONB                 NOT NULL DEFAULT '{}',
     subscription_start    DATE                  NOT NULL,
     subscription_end      DATE                  NOT NULL,
     created_at            TIMESTAMP             NOT NULL DEFAULT NOW(),
     updated_at            TIMESTAMP             NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE organizations IS 'SaaS master table — root of all tenant data';
+COMMENT ON TABLE organizations IS 'Multi-tenant root; industry_type + terminology for multi-industry support';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 2: users (unified: super_admin, admin, employee)
--- organization_id NULL for super_admin. Customers use contacts with password_hash.
+-- TABLE 2: users
 -- =============================================================================
 
 CREATE TABLE users (
     id               SERIAL        PRIMARY KEY,
     organization_id  VARCHAR(50)   REFERENCES organizations(id) ON DELETE CASCADE,
-    name             VARCHAR(255)   NOT NULL,
+    name             VARCHAR(255)  NOT NULL,
     username         VARCHAR(100)  NOT NULL,
     password_hash    VARCHAR(255)  NOT NULL,
     role             user_role     NOT NULL DEFAULT 'employee',
     status           user_status   NOT NULL DEFAULT 'active',
     allowed_modules  JSONB         NOT NULL DEFAULT '[]',
-    branch_id        INT,                    -- logical ref to company_profile.branches[n].id (no FK)
-    allowed_permissions JSONB      DEFAULT '[]',  -- for super_admin managers
+    branch_id        INT,
+    allowed_permissions JSONB      DEFAULT '[]',
     created_at       TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 
@@ -96,14 +91,9 @@ CREATE UNIQUE INDEX idx_users_org_username ON users(organization_id, username) W
 CREATE UNIQUE INDEX idx_users_superadmin_username ON users(username) WHERE organization_id IS NULL;
 CREATE INDEX idx_users_org    ON users(organization_id);
 CREATE INDEX idx_users_role   ON users(role);
-CREATE INDEX idx_users_username ON users(username);
-
-COMMENT ON TABLE users IS 'Unified: super_admin (org NULL), admin, employee. Customers in contacts.';
-COMMENT ON COLUMN users.branch_id IS 'Logical reference to branch id in company_profile.branches JSONB';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 3: contacts (customers, suppliers, vendors)
--- branch_id is logical ref to company_profile.branches (no FK).
+-- TABLE 3: contacts (customers, suppliers, vendors + universal fields)
 -- =============================================================================
 
 CREATE TABLE contacts (
@@ -123,15 +113,13 @@ CREATE TABLE contacts (
     pincode               VARCHAR(10),
     additional_addresses  JSONB           DEFAULT '[]',
 
-    -- Customer-specific
+    -- Customer / payment
     password_hash         VARCHAR(255),
     connection_type       VARCHAR(100),
     package               VARCHAR(255),
     status                customer_status,
     description           TEXT,
     payment_status        payment_status  DEFAULT 'not_paid',
-    payment_description   TEXT,
-    payment_updated_at    TIMESTAMP,
     payment_method        payment_method,
     collected_amount      DECIMAL(10,2)   DEFAULT 0,
     balance_amount        DECIMAL(10,2)   DEFAULT 0,
@@ -143,11 +131,19 @@ CREATE TABLE contacts (
     area                  VARCHAR(100),
     permanent_discount    DECIMAL(5,2)    DEFAULT 0,
     branch_id             INT,
+    payment_description   TEXT,
+    payment_updated_at    TIMESTAMP,
 
-    -- Supplier/Vendor-specific
+    -- Supplier/Vendor
     contact_person        VARCHAR(255),
     tax_number            VARCHAR(30),
-    opening_balance       DECIMAL(12,2)   DEFAULT 0,
+    opening_balance      DECIMAL(12,2)   DEFAULT 0,
+
+    -- Universal (multi-industry)
+    credit_limit          DECIMAL(12,2),
+    loyalty_points        INT             DEFAULT 0,
+    tags                  JSONB           NOT NULL DEFAULT '[]',
+    custom_fields         JSONB           NOT NULL DEFAULT '{}',
 
     created_at            TIMESTAMP       NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, contact_type, mobile)
@@ -159,10 +155,8 @@ CREATE INDEX idx_contacts_status   ON contacts(organization_id, status);
 CREATE INDEX idx_contacts_payment  ON contacts(organization_id, payment_status);
 CREATE INDEX idx_contacts_mobile   ON contacts(organization_id, mobile);
 
-COMMENT ON COLUMN contacts.branch_id IS 'Logical reference to branch id in company_profile.branches JSONB';
-
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 4: products (ISP service categories)
+-- TABLE 4: products
 -- =============================================================================
 
 CREATE TABLE products (
@@ -177,7 +171,7 @@ CREATE TABLE products (
     UNIQUE (organization_id, name)
 );
 
-CREATE INDEX idx_products_org    ON products(organization_id);
+CREATE INDEX idx_products_org ON products(organization_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TABLE 5: plans
@@ -185,63 +179,66 @@ CREATE INDEX idx_products_org    ON products(organization_id);
 
 CREATE TABLE plans (
     id                    SERIAL          PRIMARY KEY,
-    organization_id       VARCHAR(50)    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    provider              VARCHAR(100)   NOT NULL,
-    plan_name             VARCHAR(255)   NOT NULL,
+    organization_id       VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    provider              VARCHAR(100)    NOT NULL,
+    plan_name             VARCHAR(255)    NOT NULL,
     image_url             TEXT,
-    price                 DECIMAL(10,2)  NOT NULL,
-    gst_rate              DECIMAL(5,2)   NOT NULL DEFAULT 18,
-    installation_amount   DECIMAL(10,2)  NOT NULL DEFAULT 0,
+    price                 DECIMAL(10,2)   NOT NULL,
+    gst_rate              DECIMAL(5,2)    NOT NULL DEFAULT 18,
+    installation_amount   DECIMAL(10,2)   NOT NULL DEFAULT 0,
     description           TEXT,
-    permanent_discount    DECIMAL(5,2)   DEFAULT 0,
-    created_at            TIMESTAMP      NOT NULL DEFAULT NOW()
+    permanent_discount    DECIMAL(5,2)    DEFAULT 0,
+    created_at            TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_plans_org      ON plans(organization_id);
 CREATE INDEX idx_plans_provider ON plans(organization_id, provider);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 6: complaints
+-- TABLE 6: activities (complaints, connection_requests, appointments, service_requests, leads)
+-- kind + payload JSONB hold all kind-specific fields. Minimal columns for filter/sort.
 -- =============================================================================
 
-CREATE TABLE complaints (
-    id                     SERIAL           PRIMARY KEY,
-    organization_id        VARCHAR(50)      NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    contact_id             INT              REFERENCES contacts(id) ON DELETE SET NULL,
-    customer_name          VARCHAR(255)     NOT NULL,
-    mobile                 VARCHAR(15)      NOT NULL,
-    connection_type        VARCHAR(100)     NOT NULL,
-    customer_description   TEXT             NOT NULL,
-    internal_description   TEXT,
-    status                 complaint_status NOT NULL DEFAULT 'active',
-    closure_image_url      TEXT,
-    closed_at              TIMESTAMP,
-    created_at             TIMESTAMP        NOT NULL DEFAULT NOW()
+CREATE TABLE activities (
+    id               SERIAL          PRIMARY KEY,
+    organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    kind             activity_kind   NOT NULL,
+    contact_id       INT             REFERENCES contacts(id) ON DELETE SET NULL,
+    status           VARCHAR(50)     NOT NULL DEFAULT 'new',
+    priority         VARCHAR(20),
+    assigned_to      VARCHAR(255),
+    payload          JSONB           NOT NULL DEFAULT '{}',
+    created_at       TIMESTAMP       NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_complaints_org     ON complaints(organization_id);
-CREATE INDEX idx_complaints_status  ON complaints(organization_id, status);
-CREATE INDEX idx_complaints_contact ON complaints(contact_id);
+CREATE INDEX idx_activities_org     ON activities(organization_id);
+CREATE INDEX idx_activities_kind   ON activities(organization_id, kind);
+CREATE INDEX idx_activities_status ON activities(organization_id, kind, status);
+CREATE INDEX idx_activities_contact ON activities(contact_id);
+CREATE INDEX idx_activities_created ON activities(organization_id, created_at DESC);
+
+COMMENT ON TABLE activities IS 'Unified: complaints, connection_requests, appointments, service_requests, leads. payload holds kind-specific fields.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 7: invoices (single table: sales | purchase via kind)
+-- TABLE 7: invoices (sales | purchase)
 -- =============================================================================
 
 CREATE TABLE invoices (
     id               SERIAL          PRIMARY KEY,
-    organization_id  VARCHAR(50)    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     kind             invoice_kind   NOT NULL,
 
     invoice_number   VARCHAR(50)    NOT NULL,
-    status           invoice_status NOT NULL DEFAULT 'draft',
-    issue_date       DATE           NOT NULL,
+    status           invoice_status  NOT NULL DEFAULT 'draft',
+    issue_date       DATE            NOT NULL,
     due_date         DATE,
-    created_at       TIMESTAMP      NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMP      NOT NULL DEFAULT NOW(),
+    created_at       TIMESTAMP       NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP       NOT NULL DEFAULT NOW(),
 
-    -- Sales-specific (kind = 'sales')
+    -- Sales (kind = sales); also used for POS-originated invoices
     branch_id        INT,
-    contact_id       INT            REFERENCES contacts(id) ON DELETE SET NULL,
+    contact_id       INT             REFERENCES contacts(id) ON DELETE SET NULL,
     customer_name    VARCHAR(255),
     service_provider VARCHAR(100),
     plan_name        VARCHAR(255),
@@ -249,16 +246,16 @@ CREATE TABLE invoices (
     gst_rate         DECIMAL(5,2),
     gst_amount       DECIMAL(10,2),
     total_amount     DECIMAL(10,2),
-    invoice_type     invoice_type   DEFAULT 'tax_invoice',
+    invoice_type     invoice_type    DEFAULT 'tax_invoice',
     place_of_supply  VARCHAR(100),
     hsn_sac          VARCHAR(20),
 
-    -- Purchase-specific (kind = 'purchase')
+    -- Purchase (kind = purchase)
     vendor_name      VARCHAR(255),
     reference        VARCHAR(100),
-    cgst             DECIMAL(10,2)  DEFAULT 0,
-    sgst             DECIMAL(10,2)  DEFAULT 0,
-    igst             DECIMAL(10,2)  DEFAULT 0,
+    cgst             DECIMAL(10,2)   DEFAULT 0,
+    sgst             DECIMAL(10,2)   DEFAULT 0,
+    igst             DECIMAL(10,2)   DEFAULT 0,
 
     UNIQUE (organization_id, invoice_number)
 );
@@ -269,91 +266,65 @@ CREATE INDEX idx_invoices_status ON invoices(organization_id, status);
 CREATE INDEX idx_invoices_contact ON invoices(contact_id);
 CREATE INDEX idx_invoices_date   ON invoices(organization_id, issue_date);
 
-COMMENT ON TABLE invoices IS 'Unified invoices: kind = sales | purchase';
-
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 8: invoice_items (line items for both sales and purchase)
+-- TABLE 8: invoice_items
 -- =============================================================================
 
 CREATE TABLE invoice_items (
     id              SERIAL          PRIMARY KEY,
-    invoice_id      INT            NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
-    product_id       INT,           -- inventory.id for purchase; FK added after inventory table
-    product_name    VARCHAR(255)   NOT NULL,
-    quantity        INT            NOT NULL DEFAULT 1,
-    unit_price      DECIMAL(10,2)  NOT NULL,
-    tax_rate        DECIMAL(5,2)   NOT NULL DEFAULT 0,
-    tax_amount      DECIMAL(10,2)  NOT NULL DEFAULT 0,
-    line_total      DECIMAL(10,2)  NOT NULL,
-    created_at      TIMESTAMP      NOT NULL DEFAULT NOW()
+    invoice_id      INT             NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    product_id      INT,
+    product_name    VARCHAR(255)    NOT NULL,
+    quantity        INT             NOT NULL DEFAULT 1,
+    unit_price      DECIMAL(10,2)   NOT NULL,
+    tax_rate        DECIMAL(5,2)    NOT NULL DEFAULT 0,
+    discount        DECIMAL(10,2)   NOT NULL DEFAULT 0,
+    line_total      DECIMAL(10,2)   NOT NULL,
+    created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_invoice_items_invoice ON invoice_items(invoice_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 9: connection_requests
--- =============================================================================
-
-CREATE TABLE connection_requests (
-    id               SERIAL                  PRIMARY KEY,
-    organization_id  VARCHAR(50)             NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    name             VARCHAR(255)            NOT NULL,
-    mobile           VARCHAR(15)             NOT NULL,
-    email            VARCHAR(255),
-    package_id       INT                     REFERENCES plans(id) ON DELETE SET NULL,
-    product_id       INT                     REFERENCES products(id) ON DELETE SET NULL,
-    plan_name        VARCHAR(255)            NOT NULL,
-    product_name     VARCHAR(100)            NOT NULL,
-    status           connection_req_status   NOT NULL DEFAULT 'New',
-    created_at       TIMESTAMP               NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_conn_req_org    ON connection_requests(organization_id);
-CREATE INDEX idx_conn_req_status ON connection_requests(organization_id, status);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 10: company_profile (branches, sms, upi in one place)
--- branches: JSONB array of { id, name, location, address, phone, gstin, ... }
--- sms_*: provider, api_key, sender_id, template_id, enabled, templates JSONB
--- upi_*: upi_id, upi_display_name, upi_enabled, supported_apps JSONB
+-- TABLE 9: company_profile (branches, sms, upi, custom_field_schema)
 -- =============================================================================
 
 CREATE TABLE company_profile (
-    id               SERIAL        PRIMARY KEY,
-    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    company_name     VARCHAR(255)  NOT NULL DEFAULT '',
-    gstin            VARCHAR(20),
-    address_line1    VARCHAR(255),
-    address_line2    VARCHAR(255),
-    city             VARCHAR(100),
-    state            VARCHAR(100),
-    country          VARCHAR(100)  DEFAULT 'India',
-    pincode          VARCHAR(10),
-    contact_number   VARCHAR(20),
-    email            VARCHAR(255),
+    id                   SERIAL        PRIMARY KEY,
+    organization_id      VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    company_name         VARCHAR(255)  NOT NULL DEFAULT '',
+    gstin                VARCHAR(20),
+    address_line1        VARCHAR(255),
+    address_line2        VARCHAR(255),
+    city                 VARCHAR(100),
+    state                VARCHAR(100),
+    country              VARCHAR(100)  DEFAULT 'India',
+    pincode              VARCHAR(10),
+    contact_number       VARCHAR(20),
+    email                VARCHAR(255),
 
-    branches         JSONB         NOT NULL DEFAULT '[]',
-    sms_enabled      BOOLEAN       NOT NULL DEFAULT FALSE,
-    sms_provider     VARCHAR(50)   DEFAULT '',
-    sms_api_key      VARCHAR(255)  DEFAULT '',
-    sms_sender_id    VARCHAR(20)   DEFAULT '',
-    sms_template_id  VARCHAR(100)  DEFAULT '',
-    sms_templates    JSONB         NOT NULL DEFAULT '{}',
-    upi_id           VARCHAR(100)  DEFAULT '',
-    upi_display_name VARCHAR(255)  DEFAULT '',
-    upi_enabled      BOOLEAN       NOT NULL DEFAULT FALSE,
-    upi_supported_apps JSONB       NOT NULL DEFAULT '["gpay","phonepe","paytm","bhim"]',
+    branches             JSONB         NOT NULL DEFAULT '[]',
+    sms_enabled          BOOLEAN       NOT NULL DEFAULT FALSE,
+    sms_provider         VARCHAR(50)   DEFAULT '',
+    sms_api_key          VARCHAR(255)  DEFAULT '',
+    sms_sender_id        VARCHAR(20)   DEFAULT '',
+    sms_template_id      VARCHAR(100)  DEFAULT '',
+    sms_templates        JSONB         NOT NULL DEFAULT '{}',
+    upi_id               VARCHAR(100)  DEFAULT '',
+    upi_display_name     VARCHAR(255)  DEFAULT '',
+    upi_enabled          BOOLEAN       NOT NULL DEFAULT FALSE,
+    upi_supported_apps   JSONB         NOT NULL DEFAULT '["gpay","phonepe","paytm","bhim"]',
 
-    updated_at       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    custom_field_schema  JSONB         NOT NULL DEFAULT '[]',
+
+    updated_at           TIMESTAMP     NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id)
 );
 
-COMMENT ON COLUMN company_profile.branches IS 'JSONB array of { id, name, location, address, phone, gstin, address_line1, city, state, country, pincode, is_active }';
-COMMENT ON COLUMN company_profile.sms_templates IS 'JSONB e.g. { payment: "...", reminder: "..." } with placeholders';
-COMMENT ON COLUMN company_profile.upi_supported_apps IS 'JSONB array of app keys';
+COMMENT ON COLUMN company_profile.custom_field_schema IS 'Array of { id, name, label, labels?, type, entity } for custom fields';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 11: website_settings
+-- TABLE 10: website_settings
 -- =============================================================================
 
 CREATE TABLE website_settings (
@@ -372,16 +343,14 @@ CREATE TABLE website_settings (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 12: inventory (single table: product + category/unit/tax/warranty/variants)
--- category, subcategory, unit, tax_rate, warranty stored as names/denorm or JSONB.
--- variants: JSONB array of { name, sku, price, barcode, current_stock, ... }
+-- TABLE 11: inventory
 -- =============================================================================
 
 CREATE TABLE inventory (
     id                SERIAL                  PRIMARY KEY,
     organization_id   VARCHAR(50)             NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name              VARCHAR(255)            NOT NULL,
-    sku               VARCHAR(100)           NOT NULL,
+    sku               VARCHAR(100)            NOT NULL,
     category          VARCHAR(255),
     category_code     VARCHAR(50),
     subcategory       VARCHAR(255),
@@ -394,7 +363,7 @@ CREATE TABLE inventory (
     warranty_duration INT,
     warranty_unit     duration_unit           DEFAULT 'months',
     description       TEXT,
-    price             DECIMAL(10,2)          NOT NULL DEFAULT 0,
+    price             DECIMAL(10,2)           NOT NULL DEFAULT 0,
     purchase_price    DECIMAL(10,2),
     mrp               DECIMAL(10,2),
     image             TEXT,
@@ -411,6 +380,8 @@ CREATE TABLE inventory (
     weight_unit       weight_unit,
     expiry_tracking   BOOLEAN                 NOT NULL DEFAULT FALSE,
     branch_id         INT,
+    batch_number      VARCHAR(100),
+    expiry_date       DATE,
     variants          JSONB                   NOT NULL DEFAULT '[]',
     created_at        TIMESTAMP               NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, sku)
@@ -425,12 +396,8 @@ ALTER TABLE invoice_items
     ADD CONSTRAINT fk_invoice_items_product
     FOREIGN KEY (product_id) REFERENCES inventory(id) ON DELETE SET NULL;
 
-COMMENT ON TABLE inventory IS 'Single inventory table: product + denormalized category/unit/tax/warranty; variants in JSONB';
-COMMENT ON COLUMN inventory.variants IS 'JSONB array of variant objects (name, sku, price, barcode, current_stock, etc.)';
-
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 13: pos (single table: header + items JSONB)
--- method: payment_method for the transaction.
+-- TABLE 12: pos
 -- =============================================================================
 
 CREATE TABLE pos (
@@ -455,32 +422,103 @@ CREATE INDEX idx_pos_org     ON pos(organization_id);
 CREATE INDEX idx_pos_contact ON pos(contact_id);
 CREATE INDEX idx_pos_date    ON pos(organization_id, created_at);
 
-COMMENT ON COLUMN pos.items IS 'JSONB array of { product_id, product_name, quantity, unit_price, tax_rate, tax_amount, line_total }';
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 13: documents (quotations, purchase_orders, expenses)
+-- kind + items JSONB (for quotation/PO line items) + payload JSONB (kind-specific)
+-- =============================================================================
+
+CREATE TABLE documents (
+    id               SERIAL          PRIMARY KEY,
+    organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    kind             document_kind   NOT NULL,
+    contact_id       INT             REFERENCES contacts(id) ON DELETE SET NULL,
+    vendor_id        INT             REFERENCES contacts(id) ON DELETE SET NULL,
+    document_number  VARCHAR(50)     NOT NULL,
+    status           VARCHAR(50)     NOT NULL DEFAULT 'draft',
+    subtotal         DECIMAL(12,2)   DEFAULT 0,
+    tax_total        DECIMAL(12,2)   DEFAULT 0,
+    discount_amount  DECIMAL(12,2)   DEFAULT 0,
+    total_amount     DECIMAL(12,2)   NOT NULL DEFAULT 0,
+    items            JSONB           NOT NULL DEFAULT '[]',
+    payload          JSONB           NOT NULL DEFAULT '{}',
+    created_at       TIMESTAMP       NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP       NOT NULL DEFAULT NOW(),
+    UNIQUE (organization_id, kind, document_number)
+);
+
+CREATE INDEX idx_documents_org   ON documents(organization_id);
+CREATE INDEX idx_documents_kind  ON documents(organization_id, kind);
+CREATE INDEX idx_documents_status ON documents(organization_id, kind, status);
+CREATE INDEX idx_documents_contact ON documents(contact_id);
+
+COMMENT ON TABLE documents IS 'Unified: quotations, purchase_orders, expenses. items = line items; payload = kind-specific (e.g. valid_until, category, payment_method, payment_date).';
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 14: signup_requests
+-- TABLE 14: subscriptions
+-- =============================================================================
+
+CREATE TABLE subscriptions (
+    id                SERIAL          PRIMARY KEY,
+    organization_id   VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    contact_id        INT             NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    plan_name         VARCHAR(255)    NOT NULL,
+    amount            DECIMAL(10,2)   NOT NULL,
+    billing_cycle     VARCHAR(20)     NOT NULL DEFAULT 'monthly',
+    start_date        DATE            NOT NULL,
+    next_billing_date DATE            NOT NULL,
+    status            VARCHAR(20)     NOT NULL DEFAULT 'active',
+    auto_renew        BOOLEAN         NOT NULL DEFAULT TRUE,
+    created_at        TIMESTAMP       NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_subscriptions_org    ON subscriptions(organization_id);
+CREATE INDEX idx_subscriptions_contact ON subscriptions(contact_id);
+CREATE INDEX idx_subscriptions_status ON subscriptions(organization_id, status);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 15: audit_log
+-- =============================================================================
+
+CREATE TABLE audit_log (
+    id               SERIAL          PRIMARY KEY,
+    organization_id  VARCHAR(50)     NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id          INT             REFERENCES users(id) ON DELETE SET NULL,
+    username         VARCHAR(100),
+    entity_type      VARCHAR(100)    NOT NULL,
+    entity_id        VARCHAR(50),
+    action           VARCHAR(50)     NOT NULL,
+    meta             JSONB           DEFAULT '{}',
+    created_at       TIMESTAMP       NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_log_org   ON audit_log(organization_id);
+CREATE INDEX idx_audit_log_entity ON audit_log(organization_id, entity_type, entity_id);
+CREATE INDEX idx_audit_log_date  ON audit_log(organization_id, created_at DESC);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLE 16: signup_requests
 -- =============================================================================
 
 CREATE TABLE signup_requests (
-    id               SERIAL        PRIMARY KEY,
-    name             VARCHAR(255)  NOT NULL,
-    mobile           VARCHAR(15)   NOT NULL,
-    email            VARCHAR(255)  NOT NULL,
-    business_type    VARCHAR(100)  NOT NULL,
-    business_name    VARCHAR(255)  NOT NULL,
-    created_at       TIMESTAMP     NOT NULL DEFAULT NOW()
+    id             SERIAL        PRIMARY KEY,
+    name           VARCHAR(255)  NOT NULL,
+    mobile         VARCHAR(15)   NOT NULL,
+    email          VARCHAR(255)  NOT NULL,
+    business_type  VARCHAR(100)  NOT NULL,
+    business_name  VARCHAR(255)  NOT NULL,
+    created_at     TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_signup_requests_date ON signup_requests(created_at DESC);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TABLE 15: sms_logs (audit trail only; config in company_profile)
+-- TABLE 17: sms_logs
 -- =============================================================================
 
 CREATE TABLE sms_logs (
     id               SERIAL        PRIMARY KEY,
-    organization_id  VARCHAR(50)   NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    contact_id       INT           REFERENCES contacts(id) ON DELETE SET NULL,
+    organization_id  VARCHAR(50)    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    contact_id       INT            REFERENCES contacts(id) ON DELETE SET NULL,
     mobile           VARCHAR(15)   NOT NULL,
     message          TEXT          NOT NULL,
     sms_type         VARCHAR(50)   NOT NULL DEFAULT 'payment',
@@ -520,4 +558,12 @@ CREATE TRIGGER set_updated_at_website_settings
 
 CREATE TRIGGER set_updated_at_invoices
     BEFORE UPDATE ON invoices
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER set_updated_at_activities
+    BEFORE UPDATE ON activities
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER set_updated_at_documents
+    BEFORE UPDATE ON documents
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
