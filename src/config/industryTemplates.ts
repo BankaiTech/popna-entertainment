@@ -3,6 +3,22 @@ import type { IndustryType, ModuleKey, SettingsTabKey } from '@/models/types';
 /** Dashboard widget keys for industry-specific KPIs */
 export type DashboardWidgetKey = 'revenue' | 'contacts' | 'lowStock' | 'complaints' | 'appointments' | 'expiringSoon' | 'pendingInvoices' | 'todaySales';
 
+/** Contact list column keys – used to show/hide columns per industry */
+export type ContactListColumnKey =
+  | 'id' | 'name' | 'mobile' | 'email' | 'connectionType' | 'package'
+  | 'stbNumber' | 'canCafId' | 'cin' | 'area' | 'status' | 'paymentStatus'
+  | 'creditLimit' | 'loyaltyPoints';
+
+/** Contact form/sheet visibility per industry */
+export interface ContactFormConfig {
+  /** Show Plan tab (connection type, package, ISP-style fields) */
+  showPlanTab: boolean;
+  /** Show ISP-specific fields: box, STB, CAN/CAF, CIN, area, connection type, package */
+  showIspFields: boolean;
+  /** Show credit limit & loyalty points in More tab */
+  showLoyaltyCredit: boolean;
+}
+
 export interface IndustryTemplate {
   id: IndustryType;
   labelKey: string;
@@ -17,6 +33,11 @@ export interface IndustryTemplate {
   dashboardWidgets?: DashboardWidgetKey[];
   /** Inventory: show batch/expiry columns when true */
   inventoryConfig?: { batchExpiry?: boolean };
+  /** Contact list columns and add/edit form visibility */
+  contactConfig?: {
+    listColumns: ContactListColumnKey[];
+    form: ContactFormConfig;
+  };
 }
 
 export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
@@ -36,6 +57,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     defaultCategories: ['Modems', 'Cables', 'Set-Top Boxes', 'Routers'],
     color: 'blue',
     dashboardWidgets: ['revenue', 'contacts', 'complaints', 'pendingInvoices'],
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus'],
+      form: { showPlanTab: true, showIspFields: true, showLoyaltyCredit: false },
+    },
   },
   {
     id: 'retail',
@@ -53,6 +78,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     color: 'emerald',
     dashboardWidgets: ['revenue', 'contacts', 'lowStock', 'todaySales'],
     inventoryConfig: { batchExpiry: false },
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'wholesale',
@@ -68,6 +97,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Dealer' },
     defaultCategories: ['Bulk Items', 'Packaged Goods', 'Raw Materials'],
     color: 'amber',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'restaurant-cafe',
@@ -84,6 +117,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     defaultCategories: ['Starters', 'Main Course', 'Beverages', 'Desserts'],
     color: 'orange',
     dashboardWidgets: ['revenue', 'appointments', 'todaySales', 'contacts'],
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'salon-spa',
@@ -100,6 +137,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     defaultCategories: ['Hair Care', 'Skin Care', 'Spa Treatments', 'Retail Products'],
     color: 'pink',
     dashboardWidgets: ['appointments', 'revenue', 'contacts', 'todaySales'],
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'grocery',
@@ -117,6 +158,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     color: 'green',
     dashboardWidgets: ['revenue', 'lowStock', 'expiringSoon', 'todaySales'],
     inventoryConfig: { batchExpiry: true },
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'electronics',
@@ -132,6 +177,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { complaint: 'Warranty Claim' },
     defaultCategories: ['Mobiles', 'Laptops', 'Accessories', 'Components', 'Peripherals'],
     color: 'cyan',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'clothing-fashion',
@@ -147,6 +196,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: {},
     defaultCategories: ['Men', 'Women', 'Kids', 'Accessories', 'Footwear'],
     color: 'violet',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'healthcare-pharmacy',
@@ -164,6 +217,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     color: 'red',
     dashboardWidgets: ['expiringSoon', 'appointments', 'revenue', 'lowStock', 'contacts'],
     inventoryConfig: { batchExpiry: true },
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'gym-fitness',
@@ -179,6 +236,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Member', subscription: 'Membership', appointment: 'Session' },
     defaultCategories: ['Supplements', 'Equipment', 'Apparel', 'Accessories'],
     color: 'lime',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'real-estate',
@@ -193,6 +254,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Client', quotation: 'Proposal', lead: 'Prospect' },
     defaultCategories: ['Residential', 'Commercial', 'Land', 'Rental'],
     color: 'teal',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'education',
@@ -207,6 +272,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Student', subscription: 'Enrollment', appointment: 'Class' },
     defaultCategories: ['Courses', 'Materials', 'Equipment'],
     color: 'indigo',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: false },
+    },
   },
   {
     id: 'automotive',
@@ -222,6 +291,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Vehicle Owner', serviceRequest: 'Job Card', appointment: 'Service Booking' },
     defaultCategories: ['Spare Parts', 'Oils & Fluids', 'Tires', 'Batteries', 'Accessories'],
     color: 'slate',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'professional-services',
@@ -236,6 +309,10 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Client', quotation: 'Proposal' },
     defaultCategories: ['Consulting', 'Legal', 'Accounting', 'Design'],
     color: 'sky',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
+      form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
+    },
   },
   {
     id: 'general',
@@ -253,10 +330,25 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: {},
     defaultCategories: ['General'],
     color: 'gray',
+    contactConfig: {
+      listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],
+      form: { showPlanTab: true, showIspFields: true, showLoyaltyCredit: true },
+    },
   },
 ];
+
+/** Default contact config when template has none (e.g. general: all columns, all form sections) */
+const DEFAULT_CONTACT_CONFIG: NonNullable<IndustryTemplate['contactConfig']> = {
+  listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],
+  form: { showPlanTab: true, showIspFields: true, showLoyaltyCredit: true },
+};
 
 /** Get an industry template by its ID */
 export function getTemplateById(id: IndustryType): IndustryTemplate | undefined {
   return INDUSTRY_TEMPLATES.find((t) => t.id === id);
+}
+
+/** Get contact config for an industry (never undefined) */
+export function getContactConfig(template: IndustryTemplate | undefined): NonNullable<IndustryTemplate['contactConfig']> {
+  return template?.contactConfig ?? DEFAULT_CONTACT_CONFIG;
 }

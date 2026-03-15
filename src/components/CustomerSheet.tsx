@@ -12,6 +12,9 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { Customer, Provider, CustomerStatus, Address } from '@/models/types';
 import { getConnectionTypeLabel, isCableProvider } from '@/lib/providerUtils';
 import { showError } from '@/utils/toast';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { getTemplateById, getContactConfig } from '@/config/industryTemplates';
+import { useTerminology } from '@/hooks/useTerminology';
 
 interface CustomerSheetProps {
   isOpen: boolean;
@@ -29,8 +32,15 @@ interface CustomerSheetProps {
 
 const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: CustomerSheetProps) => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
   const { role } = useAuthStore();
   const { products, fetchActiveProducts, plans, fetchPlans } = useStore();
+  const { currentOrganization } = useOrganizationStore();
+  const contactFormConfig = useMemo(() => {
+    const template = currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined;
+    return getContactConfig(template).form;
+  }, [currentOrganization?.industryType]);
+  const { showPlanTab, showIspFields, showLoyaltyCredit } = contactFormConfig;
 
   // Load products and plans when sheet opens so dropdowns are always populated
   useEffect(() => {
@@ -193,7 +203,12 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     }
   }, [isOpen, isReadOnly, customer, onClose, t]);
 
-  const sheetTitle = isReadOnly ? t('customerSheet.details', 'Customer Details') : customer ? t('customerSheet.edit', 'Edit Customer') : t('customerSheet.add', 'Add New Customer');
+  const customerTerm = term('customer', t('customerSheet.customer', 'Customer'));
+  const sheetTitle = isReadOnly
+    ? t('customerSheet.details', '{{label}} Details', { label: customerTerm })
+    : customer
+      ? t('customerSheet.edit', 'Edit {{label}}', { label: customerTerm })
+      : t('customerSheet.add', 'Add New {{label}}', { label: customerTerm });
 
   if (!isOpen) return null;
 
@@ -201,32 +216,34 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     <Dialog open={isOpen} onClose={onClose} size="lg" className="sm:max-w-[600px]">
       <DialogHeader title={sheetTitle} onClose={onClose} />
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-border shrink-0">
+        {/* Tabs - Plan tab visibility from industry contactConfig */}
+        <div className="flex border-b border-border shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setActiveTab('info')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'info'
+            className={`flex-1 min-w-0 px-4 sm:px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'info'
               ? 'border-b-2 border-primary text-primary'
               : 'text-muted-foreground hover:text-foreground'
               }`}
           >
             {t('customerSheet.information', 'Information')}
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('plan')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'plan'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            {t('customerSheet.plan', 'Plan')}
-          </button>
+          {showPlanTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('plan')}
+              className={`flex-1 min-w-0 px-4 sm:px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'plan'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              {term('connectionType', t('customerSheet.plan', 'Plan'))}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setActiveTab('address')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'address'
+            className={`flex-1 min-w-0 px-4 sm:px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'address'
               ? 'border-b-2 border-primary text-primary'
               : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -236,7 +253,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
           <button
             type="button"
             onClick={() => setActiveTab('more')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'more'
+            className={`flex-1 min-w-0 px-4 sm:px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'more'
               ? 'border-b-2 border-primary text-primary'
               : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -310,10 +327,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
             </>
           )}
 
-          {/* Plan Tab */}
-          {activeTab === 'plan' && (
+          {/* Plan Tab - content visibility from industry showIspFields */}
+          {activeTab === 'plan' && showPlanTab && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -330,6 +348,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     className="uppercase"
                   />
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.area', 'Area')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -341,6 +361,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     disabled={isReadOnly}
                   />
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
                   <Select
@@ -362,6 +384,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     )}
                   </Select>
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.package', 'Package')}</label>
                   <Select
@@ -375,6 +399,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     ))}
                   </Select>
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.permanentDiscount', 'Permanent Discount')} <span className="text-xs text-muted-foreground font-normal">(%)</span>
@@ -393,6 +419,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     disabled={isReadOnly}
                   />
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.stbNumber', 'STB No.')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -405,6 +433,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     title={t('customerSheet.stbNumberTooltip', 'Set-Top Box number or User ID')}
                   />
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.canCafId', 'CAF/CAN ID')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -417,6 +447,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     title={t('customerSheet.canCafIdTooltip', 'Customer Application Form ID or Customer Account Number')}
                   />
                 </div>
+                )}
+                {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.cin', 'CIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -429,8 +461,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     title={t('customerSheet.cinTooltip', 'Customer Identification Number')}
                   />
                 </div>
-                {/* Box Number - only for cable product customers */}
-                {isCableProvider(formData.connectionType, products) && (
+                )}
+                {/* Box Number - only for cable product customers when showIspFields */}
+                {showIspFields && isCableProvider(formData.connectionType, products) && (
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       {t('customerSheet.boxNumber', 'Box Number')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -691,9 +724,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
             </div>
           )}
 
-          {/* More tab: credit limit, loyalty, tags, custom fields */}
+          {/* More tab: credit limit, loyalty (industry-driven), tags, custom fields */}
           {activeTab === 'more' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showLoyaltyCredit && (
+              <>
               <div>
                 <label className="block text-sm font-medium mb-2">{t('customerSheet.creditLimit', 'Credit Limit')}</label>
                 <Input
@@ -724,6 +759,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   disabled={isReadOnly}
                 />
               </div>
+              </>
+              )}
               <div className="col-span-full">
                 <label className="block text-sm font-medium mb-2">{t('customerSheet.tags', 'Tags')}</label>
                 <Input
