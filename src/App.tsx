@@ -16,7 +16,6 @@ import AdminPurchase from './pages/admin/Purchase';
 import Appointments from './pages/admin/Appointments';
 import ServiceRequests from './pages/admin/ServiceRequests';
 import Leads from './pages/admin/Leads';
-import Subscriptions from './pages/admin/Subscriptions';
 import Reports from './pages/admin/Reports';
 import AuditTrail from './pages/admin/AuditTrail';
 import AdminComplaints from './pages/admin/Complaints';
@@ -200,14 +199,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="subscriptions"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <Subscriptions />
-              </ProtectedRoute>
-            }
-          />
+          {/* Subscriptions consolidated into CustomerSheet */}
+          <Route path="subscriptions" element={<Navigate to="/admin/contacts" replace />} />
           <Route
             path="reports"
             element={

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, FileText, ShoppingCart,
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
-  Calendar, Wrench, UserPlus, Repeat, BarChart3, Activity
+  Calendar, Wrench, UserPlus, BarChart3, Activity
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -83,7 +83,6 @@ const AdminLayout = () => {
         { path: '/admin/appointments', labelKey: 'nav.appointments', icon: Calendar, moduleKey: 'appointments', color: 'text-sky-500', terminologyKey: 'appointment' },
         { path: '/admin/service-requests', labelKey: 'nav.serviceRequests', icon: Wrench, moduleKey: 'service-requests', color: 'text-rose-500', terminologyKey: 'serviceRequest' },
         { path: '/admin/leads', labelKey: 'nav.leads', icon: UserPlus, moduleKey: 'crm-leads', color: 'text-fuchsia-500', terminologyKey: 'lead' },
-        { path: '/admin/subscriptions', labelKey: 'nav.subscriptions', icon: Repeat, moduleKey: 'subscriptions', color: 'text-lime-500', terminologyKey: 'subscription' },
       ],
     },
     {

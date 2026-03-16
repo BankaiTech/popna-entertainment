@@ -115,28 +115,28 @@ export default function AuditTrail() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-border bg-muted/30">
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-36">{t('auditTrail.timestamp', 'Time')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('auditTrail.user', 'User')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('auditTrail.action', 'Action')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('auditTrail.entity', 'Module')}</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.details', 'Details')}</th>
+                      <th className="text-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.timestamp', 'Time')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.user', 'User')}</th>
+                      <th className="text-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.action', 'Action')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.entity', 'Module')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.details', 'Details')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {entries.map((e, idx) => (
                       <tr
                         key={e.id}
-                        className={`border-b border-border hover:bg-muted/50 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'}`}
+                        className={`border-b border-border hover:bg-muted/50 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}
                       >
-                        <td className="py-2 px-3 text-sm text-muted-foreground whitespace-nowrap">{formatTime(e.timestamp)}</td>
-                        <td className="py-2 px-3 text-sm font-medium text-foreground">{e.username}</td>
-                        <td className="py-2 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ACTION_COLORS[e.action] ?? 'bg-gray-100 text-gray-700'}`}>
+                        <td className="py-2.5 px-4 text-sm text-muted-foreground whitespace-nowrap text-center">{formatTime(e.timestamp)}</td>
+                        <td className="py-2.5 px-4 text-sm font-medium text-foreground truncate">{e.username}</td>
+                        <td className="py-2.5 px-4 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${ACTION_COLORS[e.action] ?? 'bg-gray-100 text-gray-700'}`}>
                             {t(`auditTrail.action_${e.action}`, e.action)}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-sm text-foreground">{e.entity}{e.entityId ? ` #${e.entityId}` : ''}</td>
-                        <td className="py-2 px-3 text-sm text-muted-foreground max-w-xs truncate">{e.details ?? '–'}</td>
+                        <td className="py-2.5 px-4 text-sm text-foreground truncate">{e.entity}{e.entityId ? ` #${e.entityId}` : ''}</td>
+                        <td className="py-2.5 px-4 text-sm text-muted-foreground truncate" title={e.details ?? ''}>{e.details ?? '–'}</td>
                       </tr>
                     ))}
                   </tbody>

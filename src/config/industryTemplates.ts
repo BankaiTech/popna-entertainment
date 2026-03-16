@@ -1,7 +1,40 @@
 import type { IndustryType, ModuleKey, SettingsTabKey } from '@/models/types';
 
 /** Dashboard widget keys for industry-specific KPIs */
-export type DashboardWidgetKey = 'revenue' | 'contacts' | 'lowStock' | 'complaints' | 'appointments' | 'expiringSoon' | 'pendingInvoices' | 'todaySales';
+export type DashboardWidgetKey =
+  // Common KPIs
+  | 'revenue' | 'todaySales' | 'contacts' | 'lowStock'
+  | 'pendingInvoices' | 'complaints' | 'appointments' | 'expiringSoon'
+  // ISP-specific
+  | 'ispMrr' | 'ispChurnRate' | 'ispConnectionRequests' | 'ispOpenTickets' | 'ispOverduePayments'
+  | 'ispSubscriberGrowthChart' | 'ispAreaDistributionChart'
+  // Retail-specific
+  | 'retailAvgOrderValue' | 'retailItemsSoldToday'
+  | 'retailTopSellingChart' | 'retailSalesByCategoryChart'
+  // Restaurant-specific
+  | 'restaurantOrdersToday' | 'restaurantAvgBillValue' | 'restaurantTableOccupancy'
+  | 'restaurantPopularDishesChart' | 'restaurantPeakHoursChart'
+  // Salon/Spa
+  | 'salonAvgServiceValue' | 'salonStylistUtilization' | 'salonClientRetention'
+  | 'salonPopularServicesChart'
+  // Grocery
+  | 'groceryAvgBasketSize' | 'groceryFastMovingItems'
+  | 'groceryCategorySalesChart' | 'groceryWastageChart'
+  // Healthcare
+  | 'healthcarePatientsToday' | 'healthcarePrescriptionsFilled'
+  | 'healthcareMedicineAlerts' | 'healthcareAppointmentScheduleChart'
+  // Gym/Fitness
+  | 'gymActiveMembers' | 'gymCheckInsToday' | 'gymExpiringMemberships' | 'gymNewSignups'
+  | 'gymPeakHoursChart'
+  // Electronics
+  | 'electronicsWarrantyClaims' | 'electronicsRepairJobs'
+  | 'electronicsTopRevenueChart'
+  // Charts (shared)
+  | 'revenueChart' | 'invoiceStatusPie'
+  // Tables (shared)
+  | 'recentSalesTable' | 'recentContactsTable'
+  // Sections (shared)
+  | 'financialOverview' | 'paymentAging' | 'inventoryByCategory';
 
 /** Contact list column keys – used to show/hide columns per industry */
 export type ContactListColumnKey =
@@ -110,7 +143,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Modems', 'Cables', 'Set-Top Boxes', 'Routers', 'Splitters'],
     color: 'blue',
-    dashboardWidgets: ['revenue', 'contacts', 'complaints', 'pendingInvoices'],
+    dashboardWidgets: [
+      'contacts', 'ispMrr', 'ispChurnRate', 'ispConnectionRequests', 'ispOpenTickets', 'ispOverduePayments',
+      'ispSubscriberGrowthChart', 'revenueChart', 'ispAreaDistributionChart',
+      'paymentAging', 'recentContactsTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus'],
       form: { showPlanTab: true, showIspFields: true, showLoyaltyCredit: false },
@@ -147,7 +184,12 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { complaint: 'Return/Refund' },
     defaultCategories: ['General', 'Electronics', 'Clothing', 'Accessories', 'Stationery'],
     color: 'emerald',
-    dashboardWidgets: ['revenue', 'contacts', 'lowStock', 'todaySales'],
+    dashboardWidgets: [
+      'todaySales', 'retailAvgOrderValue', 'retailItemsSoldToday', 'lowStock',
+      'retailTopSellingChart', 'retailSalesByCategoryChart',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentSalesTable',
+    ],
     inventoryConfig: { batchExpiry: false },
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],
@@ -186,6 +228,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { customer: 'Dealer', contact: 'Dealers', lead: 'Prospects' },
     defaultCategories: ['Bulk Items', 'Packaged Goods', 'Raw Materials', 'Industrial'],
     color: 'amber',
+    dashboardWidgets: [
+      'revenue', 'contacts', 'lowStock', 'pendingInvoices', 'todaySales',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -229,7 +276,12 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Starters', 'Main Course', 'Beverages', 'Desserts', 'Specials'],
     color: 'orange',
-    dashboardWidgets: ['revenue', 'appointments', 'todaySales', 'contacts'],
+    dashboardWidgets: [
+      'todaySales', 'restaurantOrdersToday', 'restaurantAvgBillValue', 'restaurantTableOccupancy',
+      'restaurantPopularDishesChart', 'restaurantPeakHoursChart',
+      'revenueChart', 'invoiceStatusPie',
+      'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -272,7 +324,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Hair Services', 'Skin Care', 'Spa Treatments', 'Nail Care', 'Retail Products'],
     color: 'pink',
-    dashboardWidgets: ['appointments', 'revenue', 'contacts', 'todaySales'],
+    dashboardWidgets: [
+      'appointments', 'revenue', 'salonAvgServiceValue', 'salonStylistUtilization', 'salonClientRetention', 'contacts',
+      'salonPopularServicesChart', 'revenueChart',
+      'invoiceStatusPie', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -308,7 +364,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: {},
     defaultCategories: ['Fruits & Vegetables', 'Dairy', 'Staples', 'Snacks', 'Beverages', 'Personal Care'],
     color: 'green',
-    dashboardWidgets: ['revenue', 'lowStock', 'expiringSoon', 'todaySales'],
+    dashboardWidgets: [
+      'todaySales', 'groceryAvgBasketSize', 'expiringSoon', 'groceryFastMovingItems', 'lowStock', 'revenue',
+      'groceryCategorySalesChart', 'groceryWastageChart',
+      'revenueChart', 'recentSalesTable',
+    ],
     inventoryConfig: { batchExpiry: true },
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
@@ -348,6 +408,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { complaint: 'Warranty Claim', serviceRequest: 'Repair Job' },
     defaultCategories: ['Mobiles', 'Laptops', 'Accessories', 'Components', 'Peripherals', 'Home Appliances'],
     color: 'cyan',
+    dashboardWidgets: [
+      'todaySales', 'electronicsWarrantyClaims', 'electronicsRepairJobs', 'lowStock', 'pendingInvoices', 'contacts',
+      'electronicsTopRevenueChart', 'revenueChart',
+      'invoiceStatusPie', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -384,6 +449,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: { complaint: 'Return / Alteration' },
     defaultCategories: ['Men', 'Women', 'Kids', 'Accessories', 'Footwear', 'Ethnic Wear'],
     color: 'violet',
+    dashboardWidgets: [
+      'todaySales', 'revenue', 'lowStock', 'contacts',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -428,7 +498,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Prescription Medicines', 'OTC Medicines', 'Medical Devices', 'Supplements', 'Personal Care'],
     color: 'red',
-    dashboardWidgets: ['expiringSoon', 'appointments', 'revenue', 'lowStock'],
+    dashboardWidgets: [
+      'healthcarePatientsToday', 'healthcarePrescriptionsFilled', 'expiringSoon', 'healthcareMedicineAlerts', 'revenue', 'lowStock',
+      'healthcareAppointmentScheduleChart', 'revenueChart',
+      'invoiceStatusPie', 'recentSalesTable',
+    ],
     inventoryConfig: { batchExpiry: true },
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
@@ -472,7 +546,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Supplements', 'Equipment', 'Apparel', 'Accessories'],
     color: 'lime',
-    dashboardWidgets: ['revenue', 'appointments', 'contacts', 'pendingInvoices'],
+    dashboardWidgets: [
+      'gymActiveMembers', 'gymCheckInsToday', 'gymExpiringMemberships', 'gymNewSignups', 'revenue', 'appointments',
+      'gymPeakHoursChart', 'revenueChart',
+      'invoiceStatusPie', 'recentContactsTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'loyaltyPoints'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -514,6 +592,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Residential', 'Commercial', 'Land / Plot', 'Rental'],
     color: 'teal',
+    dashboardWidgets: [
+      'revenue', 'contacts', 'appointments', 'pendingInvoices',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentContactsTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: false },
@@ -554,6 +637,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Courses', 'Books', 'Stationery', 'Uniforms', 'Equipment'],
     color: 'indigo',
+    dashboardWidgets: [
+      'revenue', 'contacts', 'appointments', 'pendingInvoices', 'todaySales',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: false },
@@ -599,6 +687,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Spare Parts', 'Oils & Fluids', 'Tyres', 'Batteries', 'Accessories', 'Body Parts'],
     color: 'slate',
+    dashboardWidgets: [
+      'todaySales', 'revenue', 'appointments', 'lowStock', 'pendingInvoices', 'contacts',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentSalesTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: true },
@@ -640,6 +733,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     },
     defaultCategories: ['Consulting', 'Legal', 'Accounting', 'Design', 'IT Services'],
     color: 'sky',
+    dashboardWidgets: [
+      'revenue', 'contacts', 'appointments', 'pendingInvoices', 'todaySales',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'recentContactsTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'status', 'paymentStatus', 'creditLimit'],
       form: { showPlanTab: false, showIspFields: false, showLoyaltyCredit: false },
@@ -666,6 +764,11 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     terminology: {},
     defaultCategories: ['General'],
     color: 'gray',
+    dashboardWidgets: [
+      'revenue', 'contacts', 'lowStock', 'complaints', 'pendingInvoices', 'todaySales',
+      'revenueChart', 'invoiceStatusPie',
+      'financialOverview', 'paymentAging', 'inventoryByCategory', 'recentSalesTable', 'recentContactsTable',
+    ],
     contactConfig: {
       listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],
       form: { showPlanTab: true, showIspFields: true, showLoyaltyCredit: true },
