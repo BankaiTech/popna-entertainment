@@ -11,6 +11,9 @@ import type { PurchaseOrder, PurchaseOrderStatus } from '@/models/types';
 import { usePurchaseOrdersStore } from '@/store/usePurchaseOrdersStore';
 import PurchaseOrderModal from '@/components/PurchaseOrderModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
+import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
+import { useAuthStore } from '@/store/useAuthStore';
+import { showSuccess, showInfo } from '@/utils/toast';
 
 const PurchaseOrders = () => {
   const { t } = useTranslation();
@@ -75,6 +78,34 @@ const PurchaseOrders = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm(t('purchaseOrders.deleteConfirm', 'Delete this purchase order?'))) {
       await deletePurchaseOrder(id);
+    }
+  };
+
+  const handleCreatePurchaseInvoice = async (po: PurchaseOrder) => {
+    if (po.status === 'draft' || po.status === 'cancelled') {
+      showInfo(t('purchaseOrders.cannotConvert', 'Cannot create invoice from a {{status}} order.', { status: po.status }));
+      return;
+    }
+    try {
+      const orgId = useAuthStore.getState().organizationId ?? po.organizationId;
+      const gstAmt = po.taxTotal;
+      const halfGst = Math.round(gstAmt / 2 * 100) / 100;
+      const newPI = await purchaseInvoicesApi.create({
+        organizationId: orgId,
+        invoiceNumber: `PINV-${po.poNumber.replace('PO-', '')}`,
+        vendorId: po.vendorId,
+        vendorName: po.vendorName,
+        reference: po.poNumber,
+        amount: po.subtotal,
+        gstBreakup: { cgst: halfGst, sgst: halfGst },
+        totalAmount: po.grandTotal,
+        issueDate: new Date().toISOString().slice(0, 10),
+      });
+      showSuccess(
+        t('purchaseOrders.piCreated', 'Purchase Invoice {{number}} created.', { number: newPI.invoiceNumber })
+      );
+    } catch {
+      showInfo(t('purchaseOrders.piError', 'Failed to create purchase invoice.'));
     }
   };
 
@@ -188,6 +219,15 @@ const PurchaseOrders = () => {
                         </td>
                         <td className="px-3 py-2 text-right">
                           <div className="inline-flex items-center gap-1">
+                            {(po.status === 'received' || po.status === 'partial' || po.status === 'sent') && (
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleCreatePurchaseInvoice(po)}
+                              >
+                                {t('purchaseOrders.createPI', 'Create PI')}
+                              </Button>
+                            )}
                             <Button
                               size="xs"
                               variant="outline"
@@ -239,6 +279,11 @@ const PurchaseOrders = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                      {(po.status === 'received' || po.status === 'partial' || po.status === 'sent') && (
+                        <Button size="xs" variant="outline" onClick={() => handleCreatePurchaseInvoice(po)}>
+                          {t('purchaseOrders.createPI', 'Create PI')}
+                        </Button>
+                      )}
                       <Button size="xs" variant="outline" onClick={() => openEdit(po)}>
                         {t('common.edit', 'Edit')}
                       </Button>

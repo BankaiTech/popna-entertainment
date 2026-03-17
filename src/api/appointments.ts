@@ -1,55 +1,28 @@
 import type { Appointment } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { useAuthStore } from '@/store/useAuthStore';
+import { getIndustryAppointments } from './industryMockData';
+
+function getCurrentOrgId(): string {
+  return useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
+}
 
 const now = new Date().toISOString();
 
-let appointmentsData: Appointment[] = [
-  {
-    id: 1,
-    organizationId: MOCK_ORGANIZATION_ID,
-    customerId: 1,
-    customerName: 'John Doe',
-    customerMobile: '9876543210',
-    serviceType: 'Haircut',
-    staffAssigned: 'Jane',
-    scheduledAt: '2026-03-10T10:00:00.000Z',
-    duration: 30,
-    status: 'scheduled',
-    notes: 'First visit',
-    createdAt: now,
-  },
-  {
-    id: 2,
-    organizationId: MOCK_ORGANIZATION_ID,
-    customerId: 2,
-    customerName: 'Jane Smith',
-    customerMobile: '9876543211',
-    serviceType: 'Consultation',
-    scheduledAt: '2026-03-10T14:00:00.000Z',
-    duration: 60,
-    status: 'confirmed',
-    createdAt: now,
-  },
-  {
-    id: 3,
-    organizationId: MOCK_ORGANIZATION_ID,
-    customerId: 1,
-    customerName: 'John Doe',
-    customerMobile: '9876543210',
-    serviceType: 'Follow-up',
-    staffAssigned: 'Tech1',
-    scheduledAt: '2026-03-09T09:00:00.000Z',
-    duration: 45,
-    status: 'completed',
-    createdAt: now,
-  },
+// ISP appointments (org_001) – kept for backward compat
+const ispAppointments: Appointment[] = [
+  { id: 1, organizationId: MOCK_ORGANIZATION_ID, customerId: 1, customerName: 'Rajesh Kumar', customerMobile: '9876543210', serviceType: 'Site Survey', staffAssigned: 'Tech1', scheduledAt: '2026-03-18T10:00:00.000Z', duration: 30, status: 'scheduled', notes: 'New connection survey', createdAt: now },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, customerId: 2, customerName: 'Naresh', customerMobile: '9876543211', serviceType: 'Router Installation', scheduledAt: '2026-03-18T14:00:00.000Z', duration: 60, status: 'confirmed', createdAt: now },
+  { id: 3, organizationId: MOCK_ORGANIZATION_ID, customerId: 1, customerName: 'Rajesh Kumar', customerMobile: '9876543210', serviceType: 'Follow-up', staffAssigned: 'Tech1', scheduledAt: '2026-03-17T09:00:00.000Z', duration: 45, status: 'completed', createdAt: now },
 ];
 
-let nextId = 4;
+let appointmentsData: Appointment[] = [...ispAppointments, ...getIndustryAppointments()];
+let nextId = Math.max(0, ...appointmentsData.map((a) => a.id)) + 1;
 
 export const appointmentsApi = {
   getAll: async (): Promise<Appointment[]> => {
-    return Promise.resolve([...appointmentsData]);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(appointmentsData.filter((a) => a.organizationId === orgId));
   },
   getById: async (id: number): Promise<Appointment> => {
     const item = appointmentsData.find((a) => a.id === id);
@@ -59,7 +32,7 @@ export const appointmentsApi = {
   create: async (appointment: Omit<Appointment, 'id' | 'createdAt'>): Promise<Appointment> => {
     const newAppointment: Appointment = {
       ...appointment,
-      organizationId: appointment.organizationId ?? MOCK_ORGANIZATION_ID,
+      organizationId: appointment.organizationId ?? getCurrentOrgId(),
       id: nextId++,
       createdAt: new Date().toISOString(),
     };
