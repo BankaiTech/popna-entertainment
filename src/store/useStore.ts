@@ -6,15 +6,56 @@ import { complaintsApi } from '@/api/complaints';
 import { productsApi } from '@/api/products';
 import { companyProfileApi } from '@/api/companyProfile';
 import { websiteSettingsApi } from '@/api/websiteSettings';
-import { mockPlans, mockCustomers, mockComplaints } from '@/api/mockData';
+import { mockPlans, mockCustomers, mockComplaints, mockPlansExtra, mockCustomersExtra } from '@/api/mockData';
+import { useAuthStore } from '@/store/useAuthStore';
 
-// Products fully dynamic - initial mock data for dashboard and catalog to work out-of-the-box
-const mockProducts: Product[] = [
-  { id: 1, organizationId: MOCK_ORGANIZATION_ID, name: 'Cable', productType: 'cable', isActive: true, createdAt: new Date().toISOString(), cutoffDate: 10 },
-  { id: 2, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 1', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
-  { id: 3, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 2', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
-  { id: 4, organizationId: MOCK_ORGANIZATION_ID, name: 'Internet 3', productType: 'internet', isActive: true, createdAt: new Date().toISOString(), cutoffDays: 30 },
-];
+function resolveOrgId(): string {
+  const { organizationId, customerId, role } = useAuthStore.getState();
+  if (organizationId) return organizationId;
+  // For customer role, look up their org from all mock customers
+  if (role === 'customer' && customerId) {
+    const allCusts = [...mockCustomers, ...mockCustomersExtra];
+    const found = allCusts.find((c) => c.id === customerId);
+    if (found?.organizationId) return found.organizationId;
+  }
+  return MOCK_ORGANIZATION_ID;
+}
+
+function getOrgMockProducts(): Product[] {
+  const orgId = resolveOrgId();
+  const ts = new Date().toISOString();
+  const allProducts: Product[] = [
+    { id: 1, organizationId: 'org_001', name: 'Cable', productType: 'cable', isActive: true, createdAt: ts, cutoffDate: 10 },
+    { id: 2, organizationId: 'org_001', name: 'Internet 1', productType: 'internet', isActive: true, createdAt: ts, cutoffDays: 30 },
+    { id: 3, organizationId: 'org_001', name: 'Internet 2', productType: 'internet', isActive: true, createdAt: ts, cutoffDays: 30 },
+    { id: 4, organizationId: 'org_001', name: 'Internet 3', productType: 'internet', isActive: true, createdAt: ts, cutoffDays: 30 },
+    { id: 5, organizationId: 'org_002', name: 'Clothing', productType: 'physical', isActive: true, createdAt: ts },
+    { id: 6, organizationId: 'org_002', name: 'Electronics', productType: 'physical', isActive: true, createdAt: ts },
+    { id: 7, organizationId: 'org_002', name: 'Accessories', productType: 'general', isActive: true, createdAt: ts },
+    { id: 8, organizationId: 'org_003', name: 'Hair Services', productType: 'service', isActive: true, createdAt: ts },
+    { id: 9, organizationId: 'org_003', name: 'Spa Treatments', productType: 'service', isActive: true, createdAt: ts },
+    { id: 10, organizationId: 'org_003', name: 'Retail Products', productType: 'physical', isActive: true, createdAt: ts },
+    { id: 11, organizationId: 'org_004', name: 'Food', productType: 'food', isActive: true, createdAt: ts },
+    { id: 12, organizationId: 'org_004', name: 'Beverages', productType: 'food', isActive: true, createdAt: ts },
+    { id: 13, organizationId: 'org_005', name: 'Medicines', productType: 'physical', isActive: true, createdAt: ts },
+    { id: 14, organizationId: 'org_005', name: 'Medical Services', productType: 'service', isActive: true, createdAt: ts },
+    { id: 15, organizationId: 'org_006', name: 'Memberships', productType: 'service', isActive: true, createdAt: ts },
+    { id: 16, organizationId: 'org_006', name: 'Personal Training', productType: 'service', isActive: true, createdAt: ts },
+  ];
+  return allProducts.filter((p) => p.organizationId === orgId);
+}
+
+function getOrgMockData() {
+  const orgId = resolveOrgId();
+  const allCustomers = [...mockCustomers, ...mockCustomersExtra];
+  const allPlans = [...mockPlans, ...mockPlansExtra];
+  return {
+    customers: allCustomers.filter((c) => c.organizationId === orgId),
+    plans: allPlans.filter((p) => p.organizationId === orgId),
+    complaints: mockComplaints.filter((c) => c.organizationId === orgId),
+    products: getOrgMockProducts(),
+  };
+}
 
 // SaaS Ready - Admin Full Control: company profile loaded from API, no static defaults in production
 const mockCompanyProfile: CompanyProfile = {
@@ -62,6 +103,7 @@ interface AppState {
   initialized: boolean;
 
   // Actions
+  resetStore: () => void;
   initialize: () => Promise<void>;
   fetchPlans: () => Promise<void>;
   fetchPlansByProvider: (provider: string) => Promise<void>;
@@ -101,31 +143,39 @@ export const useStore = create<AppState>((set, get) => ({
   customers: [],
   complaints: [],
   dashboardStats: null,
-  products: mockProducts, // Initialize with mock data immediately
+  products: getOrgMockProducts(), // Initialize with org-specific mock data immediately
   companyProfile: mockCompanyProfile, // Initialize with mock data immediately
   websiteSettings: mockWebsiteSettings, // Initialize with mock data immediately
   loading: false,
   error: null,
   initialized: false,
 
+  resetStore: () => {
+    set({ initialized: false, customers: [], plans: [], complaints: [], products: getOrgMockProducts() });
+  },
+
   initialize: async () => {
-    if (get().initialized) return;
+    const targetOrgId = resolveOrgId();
+    const state = get();
+    // Return early only if already initialized AND data is for the correct org
+    if (state.initialized && (state.customers.length === 0 || state.customers[0]?.organizationId === targetOrgId)) return;
     set({ loading: true });
     try {
-      // Initialize with mock data immediately (no loading screen)
+      const orgData = getOrgMockData();
+      // Initialize with org-specific mock data immediately (no loading screen)
       set({
-        plans: [...mockPlans],
-        customers: [...mockCustomers],
-        complaints: [...mockComplaints],
-        products: [...mockProducts], // Initialize with mock products
+        plans: orgData.plans,
+        customers: orgData.customers,
+        complaints: orgData.complaints,
+        products: orgData.products,
         companyProfile: { ...mockCompanyProfile }, // Initialize with mock company profile
         websiteSettings: { ...mockWebsiteSettings }, // Initialize with mock website settings
         initialized: true,
         loading: false
       });
-      // Sync customers to localStorage for customer login
+      // Sync org customers to localStorage for customer login
       try {
-        localStorage.setItem('customers-data', JSON.stringify(mockCustomers));
+        localStorage.setItem('customers-data', JSON.stringify(orgData.customers));
       } catch (e) {
         // Ignore localStorage errors
       }
@@ -136,7 +186,7 @@ export const useStore = create<AppState>((set, get) => ({
           plansApi.getAll(),
           customersApi.getAll(),
           complaintsApi.getAll(),
-          productsApi.getAll().catch(() => mockProducts),
+          productsApi.getAll().catch(() => getOrgMockProducts()),
           companyProfileApi.get().catch(() => mockCompanyProfile),
           websiteSettingsApi.get().catch(() => mockWebsiteSettings),
         ]);
@@ -144,7 +194,7 @@ export const useStore = create<AppState>((set, get) => ({
           plans: apiPlans,
           customers: apiCustomers,
           complaints: apiComplaints,
-          products: apiProducts || mockProducts,
+          products: apiProducts || getOrgMockProducts(),
           companyProfile: apiCompanyProfile || mockCompanyProfile,
           websiteSettings: apiWebsiteSettings || mockWebsiteSettings,
         });
@@ -152,7 +202,7 @@ export const useStore = create<AppState>((set, get) => ({
         console.error('Error loading data:', error);
         // Keep mock data if API fails
         set({
-          products: mockProducts,
+          products: getOrgMockProducts(),
           companyProfile: mockCompanyProfile,
           websiteSettings: mockWebsiteSettings,
         });
@@ -387,10 +437,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const apiProducts = await productsApi.getAll();
-      set({ products: apiProducts || mockProducts, loading: false });
+      set({ products: apiProducts || getOrgMockProducts(), loading: false });
     } catch (error) {
       console.error('Failed to fetch products:', error);
-      set({ error: 'Failed to fetch products', loading: false, products: mockProducts });
+      set({ error: 'Failed to fetch products', loading: false, products: getOrgMockProducts() });
     }
   },
 
@@ -398,10 +448,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const apiProducts = await productsApi.getActive();
-      set({ products: apiProducts || mockProducts.filter(p => p.isActive), loading: false });
+      set({ products: apiProducts || getOrgMockProducts().filter(p => p.isActive), loading: false });
     } catch (error) {
       console.error('Failed to fetch active products:', error);
-      set({ error: 'Failed to fetch active products', loading: false, products: mockProducts.filter(p => p.isActive) });
+      set({ error: 'Failed to fetch active products', loading: false, products: getOrgMockProducts().filter(p => p.isActive) });
     }
   },
 

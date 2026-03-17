@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { useStore } from '@/store/useStore';
 import { useTerminology } from '@/hooks/useTerminology';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -38,6 +39,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
   const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
+  const { resetStore } = useStore();
   const { term } = useTerminology();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
@@ -45,8 +47,9 @@ const AdminLayout = () => {
   useEffect(() => {
     if (organizationId) {
       fetchOrganization(organizationId);
+      resetStore(); // Reset store data when org changes so pages reload with correct org data
     }
-  }, [organizationId, fetchOrganization]);
+  }, [organizationId, fetchOrganization, resetStore]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);

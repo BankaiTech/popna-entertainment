@@ -26,7 +26,7 @@ const Invoices = () => {
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'All'>('All');
-  const [categoryFilter, setCategoryFilter] = useState<'All' | 'cable' | 'internet'>('All');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [productFilter, setProductFilter] = useState<Provider | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,15 +135,23 @@ const Invoices = () => {
               <option value="paid">{t('invoices.statusPaid', 'Paid')}</option>
               <option value="overdue">{t('invoices.statusOverdue', 'Overdue')}</option>
             </Select>
-            {isISP && (
+            {(isISP || (Array.isArray(products) && products.length > 0 && !['real-estate', 'professional-services'].includes(industryType ?? ''))) && (
               <Select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value as 'All' | 'cable' | 'internet')}
+                onChange={(e) => setCategoryFilter(e.target.value)}
                 className="h-8 text-xs w-[calc(50%-4px)] sm:w-36"
               >
                 <option value="All">{t('invoices.allCategories', 'All Categories')}</option>
-                <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
-                <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+                {isISP ? (
+                  <>
+                    <option value="cable">{t('invoices.categoryCable', 'Cable')}</option>
+                    <option value="internet">{t('invoices.categoryInternet', 'Internet')}</option>
+                  </>
+                ) : (
+                  [...new Set(products.map(p => p.productType).filter(Boolean))].map(pt => (
+                    <option key={pt} value={pt}>{pt}</option>
+                  ))
+                )}
               </Select>
             )}
             <Select

@@ -2,14 +2,20 @@
 import type { Complaint } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { mockComplaints } from './mockData';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // Multi-tenant ready - backend will enforce org isolation
 let complaintsData: Complaint[] = [...mockComplaints];
 
+function getCurrentOrgId(): string {
+  const { organizationId } = useAuthStore.getState();
+  return organizationId ?? MOCK_ORGANIZATION_ID;
+}
+
 export const complaintsApi = {
   getAll: async (): Promise<Complaint[]> => {
-    // Replace with real API call later
-    return Promise.resolve([...complaintsData]);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(complaintsData.filter((c) => c.organizationId === orgId));
   },
   getById: async (id: number): Promise<Complaint> => {
     // Replace with real API call later
@@ -42,7 +48,7 @@ export const complaintsApi = {
     return Promise.resolve();
   },
   getActiveCount: async (): Promise<number> => {
-    // Replace with real API call later
-    return Promise.resolve(complaintsData.filter((c) => c.status === 'active').length);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(complaintsData.filter((c) => c.organizationId === orgId && c.status === 'active').length);
   },
 };

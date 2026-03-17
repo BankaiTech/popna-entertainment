@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTerminology } from '@/hooks/useTerminology';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,6 +14,8 @@ import { cn, formatCurrencyINR } from '@/lib/utils';
 
 const PurchaseOrders = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const vendorLabel = term('vendor', t('purchaseOrders.colVendor', 'Vendor'));
   const {
     purchaseOrders,
     loading,
@@ -105,7 +108,7 @@ const PurchaseOrders = () => {
             <div className="relative w-full sm:w-56 shrink-0">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder={t('purchaseOrders.searchPlaceholder', 'Search by vendor or PO number...')}
+                placeholder={t('purchaseOrders.searchPlaceholder', 'Search by {{vendorLabel}} or PO number...', { vendorLabel: vendorLabel.toLowerCase() })}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs w-full"
@@ -147,7 +150,7 @@ const PurchaseOrders = () => {
                         {t('purchaseOrders.colNumber', 'Number')}
                       </th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-40">
-                        {t('purchaseOrders.colVendor', 'Vendor')}
+                        {vendorLabel}
                       </th>
                       <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">
                         {t('purchaseOrders.colTotal', 'Total')}

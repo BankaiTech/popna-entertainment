@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTerminology } from '@/hooks/useTerminology';
 import { useInventoryStore } from '@/store/useInventoryStore';
 import { useStore } from '@/store/useStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -21,6 +22,7 @@ type ProductTab = 'list' | 'labels' | 'import';
 
 const InventoryProducts = () => {
     const { t } = useTranslation();
+    const { term } = useTerminology();
     const [activeTab, setActiveTab] = useState<ProductTab>('list');
     const [search, setSearch] = useState('');
     const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'needs_reorder'>('all');
@@ -199,8 +201,10 @@ const InventoryProducts = () => {
         await importProducts(productsToImport);
     };
 
+    const productTerm = term('product', t('inventory.tabList', 'Products'));
+
     const tabs = [
-        { id: 'list' as const, label: t('inventory.tabList', 'Products'), icon: Package, count: products.length },
+        { id: 'list' as const, label: productTerm, icon: Package, count: products.length },
         { id: 'labels' as const, label: t('inventory.tabLabels', 'Print Labels'), icon: Printer, count: undefined },
         { id: 'import' as const, label: t('inventory.tabImport', 'Import'), icon: Upload, count: undefined },
     ];
@@ -215,7 +219,7 @@ const InventoryProducts = () => {
                 <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200/80 dark:border-gray-700 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <Package className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.totalProducts', 'Total Products')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{t('inventory.totalItemsLabel', 'Total {{itemLabel}}', { itemLabel: productTerm })}</span>
                     </div>
                     <p className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{totalProducts}</p>
                 </div>

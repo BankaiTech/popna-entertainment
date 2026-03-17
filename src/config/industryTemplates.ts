@@ -225,7 +225,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     ],
     // No POS (wholesale counter billing unusual), no appointments, no subscriptions
     enabledSettingsTabs: ['company', 'products', 'billing', 'custom-fields'],
-    terminology: { customer: 'Dealer', contact: 'Dealers', lead: 'Prospects' },
+    terminology: { customer: 'Dealer', contact: 'Dealers', lead: 'Prospects', vendor: 'Distributor' },
     defaultCategories: ['Bulk Items', 'Packaged Goods', 'Raw Materials', 'Industrial'],
     color: 'amber',
     dashboardWidgets: [
@@ -495,6 +495,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
       appointment: 'Consultation',
       serviceRequest: 'Treatment Request',
       subscription: 'Health Package',
+      vendor: 'Supplier',
     },
     defaultCategories: ['Prescription Medicines', 'OTC Medicines', 'Medical Devices', 'Supplements', 'Personal Care'],
     color: 'red',
@@ -684,6 +685,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
       serviceRequest: 'Job Card',
       appointment: 'Service Booking',
       complaint: 'Vehicle Complaint',
+      vendor: 'Supplier',
     },
     defaultCategories: ['Spare Parts', 'Oils & Fluids', 'Tyres', 'Batteries', 'Accessories', 'Body Parts'],
     color: 'slate',

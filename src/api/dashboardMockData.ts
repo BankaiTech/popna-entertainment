@@ -1,14 +1,14 @@
 // Industry-specific mock data for dashboard widgets
 
-function generateMonthlyTrend(months: number, baseValue: number, growthRate: number) {
+function generateSubscriberGrowth(months: number, baseValue: number, growthRate: number) {
   const data = [];
   let value = baseValue;
   const now = new Date();
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const label = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+    const month = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
     value = Math.round(value * (1 + growthRate + (Math.random() - 0.5) * 0.02));
-    data.push({ name: label, value });
+    data.push({ month, subscribers: value });
   }
   return data;
 }
@@ -23,7 +23,7 @@ export function getIspMockData() {
     connectionRequests: { pending: 12, approved: 8 },
     openTickets: 23,
     overduePayments: 45600,
-    subscriberGrowth: generateMonthlyTrend(6, 1100, 0.03),
+    subscriberGrowth: generateSubscriberGrowth(6, 1100, 0.03),
     areaDistribution: [
       { name: 'Downtown', value: 320 },
       { name: 'Suburb East', value: 280 },
@@ -154,15 +154,15 @@ export function getGymMockData() {
     newSignups: 12,
     newSignupsTrend: { value: 15, isPositive: true },
     peakHours: [
-      { hour: '6AM', count: 28 },
-      { hour: '7AM', count: 42 },
-      { hour: '8AM', count: 35 },
-      { hour: '9AM', count: 18 },
-      { hour: '10AM', count: 12 },
-      { hour: '5PM', count: 32 },
-      { hour: '6PM', count: 45 },
-      { hour: '7PM', count: 38 },
-      { hour: '8PM', count: 22 },
+      { hour: '6AM', checkIns: 28 },
+      { hour: '7AM', checkIns: 42 },
+      { hour: '8AM', checkIns: 35 },
+      { hour: '9AM', checkIns: 18 },
+      { hour: '10AM', checkIns: 12 },
+      { hour: '5PM', checkIns: 32 },
+      { hour: '6PM', checkIns: 45 },
+      { hour: '7PM', checkIns: 38 },
+      { hour: '8PM', checkIns: 22 },
     ],
   };
 }

@@ -45,51 +45,54 @@ function isIspIndustry(industryType?: IndustryType | null): boolean {
 }
 
 /** Industry-specific type options for non-ISP industries */
-function getTypeOptions(industryType?: IndustryType | null): { value: ProductType; label: string }[] {
+function getTypeOptions(
+  t: (key: string, fallback: string) => string,
+  industryType?: IndustryType | null
+): { value: ProductType; label: string }[] {
   switch (industryType) {
     case 'restaurant-cafe':
       return [
-        { value: 'food', label: 'Food Item' },
-        { value: 'service', label: 'Beverage' },
-        { value: 'general', label: 'Other' },
+        { value: 'food', label: t('productType.foodItem', 'Food Item') },
+        { value: 'service', label: t('productType.beverage', 'Beverage') },
+        { value: 'general', label: t('productType.other', 'Other') },
       ];
     case 'salon-spa':
       return [
-        { value: 'service', label: 'Service / Treatment' },
-        { value: 'physical', label: 'Retail Product' },
+        { value: 'service', label: t('productType.serviceTreatment', 'Service / Treatment') },
+        { value: 'physical', label: t('productType.retailProduct', 'Retail Product') },
       ];
     case 'gym-fitness':
       return [
-        { value: 'service', label: 'Membership / Session' },
-        { value: 'physical', label: 'Supplement / Merchandise' },
+        { value: 'service', label: t('productType.membershipSession', 'Membership / Session') },
+        { value: 'physical', label: t('productType.supplementMerchandise', 'Supplement / Merchandise') },
       ];
     case 'healthcare-pharmacy':
       return [
-        { value: 'physical', label: 'Medicine / Drug' },
-        { value: 'service', label: 'Medical Service' },
-        { value: 'general', label: 'Supplement / Device' },
+        { value: 'physical', label: t('productType.medicineDrug', 'Medicine / Drug') },
+        { value: 'service', label: t('productType.medicalService', 'Medical Service') },
+        { value: 'general', label: t('productType.supplementDevice', 'Supplement / Device') },
       ];
     case 'automotive':
       return [
-        { value: 'physical', label: 'Spare Part' },
-        { value: 'service', label: 'Service / Labour' },
-        { value: 'general', label: 'Consumable / Accessory' },
+        { value: 'physical', label: t('productType.sparePart', 'Spare Part') },
+        { value: 'service', label: t('productType.serviceLabour', 'Service / Labour') },
+        { value: 'general', label: t('productType.consumableAccessory', 'Consumable / Accessory') },
       ];
     case 'electronics':
       return [
-        { value: 'physical', label: 'Product' },
-        { value: 'service', label: 'Repair / Service' },
-        { value: 'general', label: 'Accessory' },
+        { value: 'physical', label: t('productType.product', 'Product') },
+        { value: 'service', label: t('productType.repairService', 'Repair / Service') },
+        { value: 'general', label: t('productType.accessory', 'Accessory') },
       ];
     case 'education':
       return [
-        { value: 'service', label: 'Course / Subject' },
-        { value: 'physical', label: 'Book / Material' },
+        { value: 'service', label: t('productType.courseSubject', 'Course / Subject') },
+        { value: 'physical', label: t('productType.bookMaterial', 'Book / Material') },
       ];
     case 'real-estate':
       return [
-        { value: 'service', label: 'Property Type' },
-        { value: 'general', label: 'Other Service' },
+        { value: 'service', label: t('productType.propertyType', 'Property Type') },
+        { value: 'general', label: t('productType.otherService', 'Other Service') },
       ];
     case 'wholesale':
     case 'retail':
@@ -97,9 +100,9 @@ function getTypeOptions(industryType?: IndustryType | null): { value: ProductTyp
     case 'clothing-fashion':
     default:
       return [
-        { value: 'physical', label: 'Physical Product' },
-        { value: 'service', label: 'Service' },
-        { value: 'general', label: 'Other' },
+        { value: 'physical', label: t('productType.physicalProduct', 'Physical Product') },
+        { value: 'service', label: t('productType.service', 'Service') },
+        { value: 'general', label: t('productType.other', 'Other') },
       ];
   }
 }
@@ -160,7 +163,7 @@ interface ProductFormModalProps {
 const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: ProductFormModalProps) => {
   const { t } = useTranslation();
   const isIsp = isIspIndustry(industryType);
-  const typeOptions = getTypeOptions(industryType);
+  const typeOptions = getTypeOptions(t, industryType);
 
   const defaultType: ProductType = isIsp ? 'internet' : (typeOptions[0]?.value ?? 'general');
 
@@ -425,7 +428,7 @@ const ProductManagement = () => {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const typeOptions = getTypeOptions(industryType);
+  const typeOptions = getTypeOptions(t, industryType);
 
   // ── Label helpers ──────────────────────────────────────────────────────────
   const getTypeLabel = (productType: ProductType): string => {

@@ -2,6 +2,11 @@
 // Product display names updated to generic labels (serviceProvider id unchanged)
 import type { SalesInvoice } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { useAuthStore } from '@/store/useAuthStore';
+
+function getCurrentOrgId(): string {
+  return useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
+}
 
 const getDate = (daysAgo: number) => {
   const d = new Date();
@@ -64,7 +69,10 @@ let invoicesData: SalesInvoice[] = [
 ];
 
 export const salesInvoicesApi = {
-  getAll: async (): Promise<SalesInvoice[]> => Promise.resolve([...invoicesData]),
+  getAll: async (): Promise<SalesInvoice[]> => {
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(invoicesData.filter((i) => i.organizationId === orgId));
+  },
   getById: async (id: number): Promise<SalesInvoice> => {
     const inv = invoicesData.find((i) => i.id === id);
     if (!inv) throw new Error('Invoice not found');
