@@ -12,7 +12,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
     Search, Plus, Minus, CreditCard, Receipt, X,
-    WifiOff, ScanBarcode, UserPlus, Pause, RotateCcw, ShoppingCart,
+    WifiOff, ScanBarcode, UserPlus, Pause, RotateCcw, ShoppingCart, History,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import {
@@ -341,9 +341,25 @@ const PointOfSale = () => {
             )}
 
             {/* Header */}
-            <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('pos.title', 'Point of Sale')}</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('pos.subtitle', 'Scan barcode or search to add items')}</p>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('pos.title', 'Point of Sale')}</h1>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('pos.subtitle', 'Scan barcode or search to add items')}</p>
+                </div>
+                {heldBills.length > 0 && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowRetrieveList(true)}
+                        className="flex items-center gap-2 border-amber-400 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950"
+                    >
+                        <History className="w-4 h-4" />
+                        {t('pos.retrieveBill', 'Retrieve')}
+                        <span className="bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                            {heldBills.length}
+                        </span>
+                    </Button>
+                )}
             </div>
 
             {/* Search + Scan + Product Lookup bar */}

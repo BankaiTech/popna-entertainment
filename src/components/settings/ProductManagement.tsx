@@ -303,9 +303,9 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
                 <option value="">{t('productManagement.selectCutoffDate', '— Select cutoff day —')}</option>
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                   <option key={day} value={day}>
-                    {t('productManagement.dayOfMonth', '{{day}}{{suffix}} of every month', {
+                    {t('productManagement.cutoffDayOfMonth', '{{day}}{{suffix}} of every month', {
                       day,
-                      suffix: day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th',
+                      suffix: t('productManagement.cutoffDaySuffix', day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'),
                     })}
                   </option>
                 ))}
@@ -441,7 +441,7 @@ const ProductManagement = () => {
     if (!isIsp) return null;
     if (product.productType === 'cable' && product.cutoffDate) {
       const d = product.cutoffDate;
-      const suffix = d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+      const suffix = t('productManagement.cutoffDaySuffix', d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th');
       return t('productManagement.cutoffDayLabel', 'Cutoff: {{day}}{{suffix}} each month', { day: d, suffix });
     }
     if (product.productType === 'internet' && product.cutoffDays) {
@@ -612,7 +612,7 @@ const ProductManagement = () => {
                         onClick={() => toggleActive(product)}
                         title={product.isActive ? t('productManagement.clickToDeactivate', 'Click to deactivate') : t('productManagement.clickToActivate', 'Click to activate')}
                         className="shrink-0 p-1 rounded-md transition-colors hover:bg-muted"
-                        aria-label={product.isActive ? 'Deactivate' : 'Activate'}
+                        aria-label={product.isActive ? t('productManagement.deactivate', 'Deactivate') : t('productManagement.activate', 'Activate')}
                       >
                         {product.isActive
                           ? <ToggleRight className="w-5 h-5 text-primary" />
