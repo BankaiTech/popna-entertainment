@@ -2022,5 +2022,14 @@
   "websiteSettings.save": "വെബ്‌സൈറ്റ് സെറ്റിംഗുകൾ സംരക്ഷിക്കുക",
   "websiteSettings.saveFailed": "വെബ്‌സൈറ്റ് സെറ്റിംഗുകൾ അപ്ഡേറ്റ് ചെയ്യുന്നതിൽ പരാജയം",
   "websiteSettings.saveSuccess": "വെബ്‌സൈറ്റ് സെറ്റിംഗുകൾ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു!",
-  "websiteSettings.title": "വെബ്‌സൈറ്റ് സെറ്റിംഗുകൾ"
+  "websiteSettings.title": "വെബ്‌സൈറ്റ് സെറ്റിംഗുകൾ",
+  "quotations.cannotConvert": "{{status}} ക്വട്ടേഷൻ പരിവർത്തനം ചെയ്യാൻ കഴിയില്ല.",
+  "quotations.convertedSuccess": "ക്വട്ടേഷനിൽ നിന്ന് ഇൻവോയ്സ് {{number}} സൃഷ്ടിച്ചു.",
+  "quotations.convertError": "ക്വട്ടേഷൻ പരിവർത്തനം പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.",
+  "quotations.convert": "പരിവർത്തനം",
+  "purchaseOrders.createPI": "PI സൃഷ്ടിക്കുക",
+  "purchaseOrders.cannotConvert": "{{status}} ഓർഡറിൽ നിന്ന് ഇൻവോയ്സ് സൃഷ്ടിക്കാൻ കഴിയില്ല.",
+  "purchaseOrders.piCreated": "വാങ്ങൽ ഇൻവോയ്സ് {{number}} സൃഷ്ടിച്ചു.",
+  "purchaseOrders.piError": "വാങ്ങൽ ഇൻവോയ്സ് സൃഷ്ടിക്കുന്നതിൽ പരാജയം.",
+  "purchaseOrders.deleteConfirm": "ഈ വാങ്ങൽ ഓർഡർ ഇല്ലാതാക്കണോ?"
 }

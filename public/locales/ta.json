@@ -2022,5 +2022,14 @@
   "websiteSettings.save": "இணைய அமைப்புகளை சேமி",
   "websiteSettings.saveFailed": "இணைய அமைப்புகள் புதுப்பிக்க தோல்வி",
   "websiteSettings.saveSuccess": "இணைய அமைப்புகள் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!",
-  "websiteSettings.title": "இணைய அமைப்புகள்"
+  "websiteSettings.title": "இணைய அமைப்புகள்",
+  "quotations.cannotConvert": "{{status}} நிலையிலுள்ள மேற்கோளை மாற்ற இயலாது.",
+  "quotations.convertedSuccess": "மேற்கோளிலிருந்து விலைப்பட்டியல் {{number}} உருவாக்கப்பட்டது.",
+  "quotations.convertError": "மேற்கோளை மாற்ற இயலவில்லை. மீண்டும் முயற்சிக்கவும்.",
+  "quotations.convert": "மாற்று",
+  "purchaseOrders.createPI": "PI உருவாக்கு",
+  "purchaseOrders.cannotConvert": "{{status}} நிலையிலுள்ள ஆர்டரிலிருந்து விலைப்பட்டியல் உருவாக்க இயலாது.",
+  "purchaseOrders.piCreated": "கொள்முதல் விலைப்பட்டியல் {{number}} உருவாக்கப்பட்டது.",
+  "purchaseOrders.piError": "கொள்முதல் விலைப்பட்டியல் உருவாக்க இயலவில்லை.",
+  "purchaseOrders.deleteConfirm": "இந்த கொள்முதல் ஆர்டரை நீக்கவா?"
 }

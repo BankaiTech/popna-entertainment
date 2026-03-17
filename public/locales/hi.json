@@ -2022,5 +2022,14 @@
   "websiteSettings.save": "वेबसाइट सेटिंग्स सहेजें",
   "websiteSettings.saveFailed": "वेबसाइट सेटिंग्स अपडेट करने में विफल",
   "websiteSettings.saveSuccess": "वेबसाइट सेटिंग्स सफलतापूर्वक अपडेट!",
-  "websiteSettings.title": "वेबसाइट सेटिंग्स"
+  "websiteSettings.title": "वेबसाइट सेटिंग्स",
+  "quotations.cannotConvert": "{{status}} कोटेशन को परिवर्तित नहीं किया जा सकता।",
+  "quotations.convertedSuccess": "कोटेशन से इनवॉइस {{number}} बनाया गया।",
+  "quotations.convertError": "कोटेशन परिवर्तित करने में विफल। कृपया पुनः प्रयास करें।",
+  "quotations.convert": "परिवर्तित करें",
+  "purchaseOrders.createPI": "PI बनाएं",
+  "purchaseOrders.cannotConvert": "{{status}} ऑर्डर से इनवॉइस नहीं बनाया जा सकता।",
+  "purchaseOrders.piCreated": "खरीद इनवॉइस {{number}} बनाया गया।",
+  "purchaseOrders.piError": "खरीद इनवॉइस बनाने में विफल।",
+  "purchaseOrders.deleteConfirm": "इस खरीद ऑर्डर को हटाएं?"
 }

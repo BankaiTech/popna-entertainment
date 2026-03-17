@@ -2022,5 +2022,14 @@
   "websiteSettings.save": "వెబ్‌సైట్ సెట్టింగ్‌లు సేవ్ చేయండి",
   "websiteSettings.saveFailed": "వెబ్‌సైట్ సెట్టింగ్‌లు నవీకరించడం విఫలమైంది",
   "websiteSettings.saveSuccess": "వెబ్‌సైట్ సెట్టింగ్‌లు విజయవంతంగా నవీకరించబడినాయి!",
-  "websiteSettings.title": "వెబ్‌సైట్ సెట్టింగ్‌లు"
+  "websiteSettings.title": "వెబ్‌సైట్ సెట్టింగ్‌లు",
+  "quotations.cannotConvert": "{{status}} కోటేషన్‌ను మార్చడం సాధ్యం కాదు.",
+  "quotations.convertedSuccess": "కోటేషన్ నుండి ఇన్‌వాయిస్ {{number}} సృష్టించబడింది.",
+  "quotations.convertError": "కోటేషన్ మార్చడం విఫలమైంది. మళ్ళీ ప్రయత్నించండి.",
+  "quotations.convert": "మార్చు",
+  "purchaseOrders.createPI": "PI సృష్టించు",
+  "purchaseOrders.cannotConvert": "{{status}} ఆర్డర్ నుండి ఇన్‌వాయిస్ సృష్టించడం సాధ్యం కాదు.",
+  "purchaseOrders.piCreated": "కొనుగోలు ఇన్‌వాయిస్ {{number}} సృష్టించబడింది.",
+  "purchaseOrders.piError": "కొనుగోలు ఇన్‌వాయిస్ సృష్టించడం విఫలమైంది.",
+  "purchaseOrders.deleteConfirm": "ఈ కొనుగోలు ఆర్డర్‌ను తొలగించాలా?"
 }

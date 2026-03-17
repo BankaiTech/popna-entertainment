@@ -531,30 +531,6 @@ const ProductManagement = () => {
         </Button>
       </div>
 
-      {/* ── ISP explanation banner ── */}
-      {isIsp && (
-        <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-            <div className="space-y-2 min-w-0">
-              <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                {t('productManagement.ispInfoTitle', 'Products vs Plans — What\'s the difference?')}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-blue-700 dark:text-blue-300">
-                <div className="rounded-lg bg-white/60 dark:bg-blue-800/30 p-3 border border-blue-100 dark:border-blue-700">
-                  <p className="font-semibold mb-1">📡 {t('productManagement.ispProductsHere', 'Products (this page)')}</p>
-                  <p>{t('productManagement.ispProductsDesc', 'Connection categories — e.g., "Cable TV" (type: cable) or "Fiber Internet" (type: internet). Defines the billing cutoff schedule.')}</p>
-                </div>
-                <div className="rounded-lg bg-white/60 dark:bg-blue-800/30 p-3 border border-blue-100 dark:border-blue-700">
-                  <p className="font-semibold mb-1">💰 {t('productManagement.ispPlansElsewhere', 'Plans (Settings → Billing tab)')}</p>
-                  <p>{t('productManagement.ispPlansDesc', 'Pricing packages within a product — e.g., Gold ₹999/mo, Silver ₹599/mo. Each plan belongs to a product type.')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Suggested categories ── */}
       {suggestedCategories.length > 0 && (
         <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 dark:bg-primary/10 p-4">

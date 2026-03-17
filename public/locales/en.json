@@ -2024,5 +2024,14 @@
   "productType.service": "Service",
   "settings.translateLabels": "Translate labels",
   "settings.translatedLabels": "Translated labels",
-  "pos.walkIn": "Walk-in Customer"
+  "pos.walkIn": "Walk-in Customer",
+  "quotations.cannotConvert": "Cannot convert a {{status}} quotation.",
+  "quotations.convertedSuccess": "Invoice {{number}} created from quotation.",
+  "quotations.convertError": "Failed to convert quotation. Please try again.",
+  "quotations.convert": "Convert",
+  "purchaseOrders.createPI": "Create PI",
+  "purchaseOrders.cannotConvert": "Cannot create invoice from a {{status}} order.",
+  "purchaseOrders.piCreated": "Purchase Invoice {{number}} created.",
+  "purchaseOrders.piError": "Failed to create purchase invoice.",
+  "purchaseOrders.deleteConfirm": "Delete this purchase order?"
 }

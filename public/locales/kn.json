@@ -2022,5 +2022,14 @@
   "websiteSettings.save": "ವೆಬ್‌ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",
   "websiteSettings.saveFailed": "ವೆಬ್‌ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ನವೀಕರಿಸಲು ವಿಫಲವಾಯಿತು",
   "websiteSettings.saveSuccess": "ವೆಬ್‌ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!",
-  "websiteSettings.title": "ವೆಬ್‌ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
+  "websiteSettings.title": "ವೆಬ್‌ಸೈಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+  "quotations.cannotConvert": "{{status}} ಉಲ್ಲೇಖವನ್ನು ಪರಿವರ್ತಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "quotations.convertedSuccess": "ಉಲ್ಲೇಖದಿಂದ ಇನ್‌ವಾಯ್ಸ್ {{number}} ರಚಿಸಲಾಗಿದೆ.",
+  "quotations.convertError": "ಉಲ್ಲೇಖ ಪರಿವರ್ತನೆ ವಿಫಲವಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "quotations.convert": "ಪರಿವರ್ತಿಸಿ",
+  "purchaseOrders.createPI": "PI ರಚಿಸಿ",
+  "purchaseOrders.cannotConvert": "{{status}} ಆರ್ಡರ್‌ನಿಂದ ಇನ್‌ವಾಯ್ಸ್ ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "purchaseOrders.piCreated": "ಖರೀದಿ ಇನ್‌ವಾಯ್ಸ್ {{number}} ರಚಿಸಲಾಗಿದೆ.",
+  "purchaseOrders.piError": "ಖರೀದಿ ಇನ್‌ವಾಯ್ಸ್ ರಚಿಸಲು ವಿಫಲವಾಗಿದೆ.",
+  "purchaseOrders.deleteConfirm": "ಈ ಖರೀದಿ ಆರ್ಡರ್ ಅನ್ನು ಅಳಿಸಬೇಕೇ?"
 }
