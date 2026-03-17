@@ -1,5 +1,5 @@
 // Module access controlled by organization permissions
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -7,10 +7,12 @@ import {
   LayoutDashboard, Package, FileText, ShoppingCart,
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
-  Calendar, Wrench, UserPlus, Repeat, BarChart3, Activity
+  Calendar, Wrench, UserPlus, BarChart3, Activity
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { useStore } from '@/store/useStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
@@ -28,6 +30,7 @@ interface SidebarItem {
   icon: typeof LayoutDashboard;
   moduleKey: ModuleKey;
   color: string;
+  terminologyKey?: string;
 }
 
 const AdminLayout = () => {
@@ -36,14 +39,17 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
   const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
+  const { resetStore } = useStore();
+  const { term } = useTerminology();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (organizationId) {
       fetchOrganization(organizationId);
+      resetStore(); // Reset store data when org changes so pages reload with correct org data
     }
-  }, [organizationId, fetchOrganization]);
+  }, [organizationId, fetchOrganization, resetStore]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -58,7 +64,7 @@ const AdminLayout = () => {
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const sidebarGroups: SidebarGroup[] = [
+  const sidebarGroups: SidebarGroup[] = useMemo(() => [
     {
       labelKey: 'nav.groupMain',
       items: [
@@ -68,8 +74,8 @@ const AdminLayout = () => {
     {
       labelKey: 'nav.groupBusiness',
       items: [
-        { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500' },
-        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
+        { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500', terminologyKey: 'contact' },
+        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500', terminologyKey: 'product' },
         { path: '/admin/sales', labelKey: 'nav.sales', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
         { path: '/admin/purchase', labelKey: 'nav.purchase', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
       ],
@@ -77,10 +83,9 @@ const AdminLayout = () => {
     {
       labelKey: 'nav.groupServices',
       items: [
-        { path: '/admin/appointments', labelKey: 'nav.appointments', icon: Calendar, moduleKey: 'appointments', color: 'text-sky-500' },
-        { path: '/admin/service-requests', labelKey: 'nav.serviceRequests', icon: Wrench, moduleKey: 'service-requests', color: 'text-rose-500' },
-        { path: '/admin/leads', labelKey: 'nav.leads', icon: UserPlus, moduleKey: 'crm-leads', color: 'text-fuchsia-500' },
-        { path: '/admin/subscriptions', labelKey: 'nav.subscriptions', icon: Repeat, moduleKey: 'subscriptions', color: 'text-lime-500' },
+        { path: '/admin/appointments', labelKey: 'nav.appointments', icon: Calendar, moduleKey: 'appointments', color: 'text-sky-500', terminologyKey: 'appointment' },
+        { path: '/admin/service-requests', labelKey: 'nav.serviceRequests', icon: Wrench, moduleKey: 'service-requests', color: 'text-rose-500', terminologyKey: 'serviceRequest' },
+        { path: '/admin/leads', labelKey: 'nav.leads', icon: UserPlus, moduleKey: 'crm-leads', color: 'text-fuchsia-500', terminologyKey: 'lead' },
       ],
     },
     {
@@ -99,7 +104,7 @@ const AdminLayout = () => {
         { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings', color: 'text-gray-500' },
       ],
     },
-  ];
+  ], []);
 
   const filteredGroups = sidebarGroups
     .map((group) => ({
@@ -207,6 +212,9 @@ const AdminLayout = () => {
                       {group.items.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
+                        const label = item.terminologyKey
+                          ? term(item.terminologyKey, t(item.labelKey))
+                          : t(item.labelKey);
                         return (
                           <Link
                             key={item.path}
@@ -224,7 +232,7 @@ const AdminLayout = () => {
                                 isActive ? 'text-blue-600 dark:text-blue-400' : item.color + ' opacity-70 group-hover:opacity-100'
                               )}
                             />
-                            <span className="truncate">{t(item.labelKey)}</span>
+                            <span className="truncate">{label}</span>
                             {isActive && (
                               <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0" />
                             )}

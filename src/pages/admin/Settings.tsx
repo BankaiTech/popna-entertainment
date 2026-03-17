@@ -12,28 +12,31 @@ import CustomFieldsSettings from '@/components/settings/CustomFieldsSettings';
 import IndustrySettings from '@/components/settings/IndustrySettings';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import type { SettingsTabKey } from '@/models/types';
 
 type SettingsTab = SettingsTabKey;
 
 const Settings = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const { isSettingsTabAllowed } = useOrganizationStore();
 
-  const allTabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = [
+  const productsTabLabel = term('product', t('settings.tabProducts', 'Products'));
+  const allTabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = useMemo(() => [
     { id: 'company', label: t('settings.tabCompany', 'Company Details'), icon: Building2, description: t('settings.companyDesc', 'Configure company information for invoices and documents') },
-    { id: 'products', label: t('settings.tabProducts', 'Products'), icon: Package, description: t('settings.productsDesc', 'Manage products, plans, and pricing') },
+    { id: 'products', label: productsTabLabel, icon: Package, description: t('settings.productsDesc', 'Manage {{label}}, plans, and pricing', { label: productsTabLabel.toLowerCase() }) },
     { id: 'billing', label: t('settings.tabBilling', 'Billing & UPI'), icon: CreditCard, description: t('settings.billingDesc', 'Pay by UPI apps and manage subscription') },
     { id: 'pos', label: t('settings.tabPOS', 'POS / Checkout'), icon: ShoppingCart, description: t('settings.posTabDesc', 'Invoice format and checkout settings') },
     { id: 'custom-fields', label: t('settings.tabCustomFields', 'Custom Fields'), icon: Sliders, description: t('settings.customFieldsTabDesc', 'Define custom fields for customers and products') },
     { id: 'industry', label: t('settings.tabIndustry', 'Industry'), icon: LayoutGrid, description: t('settings.industryTabDesc', 'Business type and module visibility') },
-  ];
+  ], [t, productsTabLabel]);
 
   const tabs = useMemo(
     () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
-    [isSettingsTabAllowed, t]
+    [isSettingsTabAllowed, allTabs]
   );
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(tabs.length > 0 ? tabs[0].id : 'company');
@@ -119,7 +122,7 @@ const Settings = () => {
       {/* Tab panel */}
       <Card className="overflow-hidden">
         <CardContent className="p-4 sm:p-6">
-          
+
           <div
             role="tabpanel"
             id={`settings-panel-${activeTab}`}

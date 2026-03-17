@@ -8,12 +8,18 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Search } from 'lucide-react';
 import type { Quotation, QuotationStatus } from '@/models/types';
 import { useQuotationsStore } from '@/store/useQuotationsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import QuotationModal from '@/components/QuotationModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
-import { showInfo } from '@/utils/toast';
+import { showInfo, showSuccess } from '@/utils/toast';
+import { salesInvoicesApi } from '@/api/invoices';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const Quotations = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const quotationLabel = term('quotation', t('quotations.title', 'Quotation'));
+  const customerLabel = term('customer', t('contacts.customer', 'Customer'));
   const {
     quotations,
     loading,
@@ -76,15 +82,46 @@ const Quotations = () => {
     }
   };
 
-  const handleConvertToInvoice = (q: Quotation) => {
-    // Placeholder: actual conversion will create invoice in future phase
-    showInfo(
-      t(
-        'quotations.convertInfo',
-        'Quotation {{number}} would be converted to an invoice in the full backend implementation.',
-        { number: q.quotationNumber }
-      )
-    );
+  const handleConvertToInvoice = async (q: Quotation) => {
+    if (q.status === 'rejected' || q.status === 'expired') {
+      showInfo(t('quotations.cannotConvert', 'Cannot convert a {{status}} quotation.', { status: q.status }));
+      return;
+    }
+    try {
+      const orgId = useAuthStore.getState().organizationId ?? q.organizationId;
+      const newInvoice = await salesInvoicesApi.create({
+        organizationId: orgId,
+        invoiceNumber: `INV-Q-${q.quotationNumber.replace('QTN-', '')}`,
+        customerId: q.customerId,
+        customerName: q.customerName,
+        serviceProvider: 'Quotation',
+        planName: q.items.map((i) => `${i.productName} × ${i.quantity}`).join(', '),
+        amount: q.subtotal,
+        gstRate: q.subtotal > 0 ? Math.round((q.taxTotal / q.subtotal) * 10000) / 100 : 0,
+        gstAmount: q.taxTotal,
+        totalAmount: q.grandTotal,
+        status: 'sent',
+        issueDate: new Date().toISOString().slice(0, 10),
+        dueDate: q.validUntil,
+        invoiceType: 'tax_invoice',
+        items: q.items.map((item) => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          taxRate: item.taxRate,
+          discount: item.discount,
+          lineTotal: item.lineTotal,
+        })),
+      });
+      // Mark quotation as accepted
+      await updateQuotation(q.id, { status: 'accepted' });
+      showSuccess(
+        t('quotations.convertedSuccess', 'Invoice {{number}} created from quotation.', { number: newInvoice.invoiceNumber })
+      );
+    } catch {
+      showInfo(t('quotations.convertError', 'Failed to convert quotation. Please try again.'));
+    }
   };
 
   const statusBadge = (status: QuotationStatus) => {
@@ -137,7 +174,7 @@ const Quotations = () => {
             </Select>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto">
               <span className="mr-1 text-lg leading-none">+</span>
-              {t('quotations.addQuotation', 'New Quotation')}
+              {t('quotations.addQuotation', 'New {{label}}', { label: quotationLabel })}
             </Button>
           </div>
         </CardHeader>
@@ -160,7 +197,7 @@ const Quotations = () => {
                         {t('quotations.colNumber', 'Number')}
                       </th>
                       <th className="text-left py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 w-40">
-                        {t('quotations.colCustomer', 'Customer')}
+                        {customerLabel}
                       </th>
                       <th className="text-right py-2.5 px-3 font-medium text-gray-500 dark:text-gray-400 w-28">
                         {t('quotations.colTotal', 'Total')}

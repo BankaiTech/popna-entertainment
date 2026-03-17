@@ -272,6 +272,19 @@ const PointOfSale = () => {
             // Silent fail for mock; in production this would show an error
         }
 
+        // Deduct stock for sold items
+        try {
+            for (const item of cart) {
+                const product = inventoryStore.products.find((p) => p.id === item.productId);
+                if (product && product.productType !== 'service' && product.currentStock !== undefined) {
+                    const newStock = Math.max(0, (product.currentStock ?? 0) - item.quantity);
+                    await inventoryStore.updateProduct(product.id, { currentStock: newStock });
+                }
+            }
+        } catch {
+            // Stock deduction failed silently; in production this would queue a retry
+        }
+
         if (settings.autoPrint) {
             if (settings.invoiceFormat === 'thermal') {
                 generatePOSReceipt(receiptData, companyProfile);

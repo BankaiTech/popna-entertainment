@@ -128,10 +128,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       saPermissions = matchedSA.role === 'super_admin'
         ? [...ALL_SA_PERMISSIONS]
         : (matchedSA.allowedPermissions || []);
-    } else if (username === 'bankaitech' && password === 'test123') {
-      // 2) Hardcoded admin
-      role = 'admin';
-      organizationId = 'org_001';
     } else {
       // 3) Try org users (admin/employee)
       const allUsers = await usersApi.getAll();

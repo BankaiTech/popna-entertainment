@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -18,6 +19,7 @@ interface InlineAddModalProps {
 }
 
 const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddModalProps) => {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -26,7 +28,7 @@ const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddMod
         e.preventDefault();
         const missingRequired = fields.filter((f) => f.required && !formData[f.name]?.trim());
         if (missingRequired.length) {
-            setError(`${missingRequired.map((f) => f.label).join(', ')} required`);
+            setError(t('common.fieldsRequired', '{{fields}} required', { fields: missingRequired.map((f) => f.label).join(', ') }));
             return;
         }
         setSaving(true);
@@ -36,7 +38,7 @@ const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddMod
             setError('');
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save');
+            setError(err instanceof Error ? err.message : t('common.failedToSave', 'Failed to save'));
         } finally {
             setSaving(false);
         }
@@ -61,7 +63,7 @@ const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddMod
                                         onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
                                         disabled={saving}
                                     >
-                                        <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                                        <option value="">{field.placeholder || t('common.selectField', 'Select {{field}}', { field: field.label })}</option>
                                         {field.options.map((opt) => (
                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                                         ))}
@@ -83,8 +85,8 @@ const InlineAddModal = ({ isOpen, onClose, title, fields, onSave }: InlineAddMod
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={onClose} disabled={saving} size="sm">Cancel</Button>
-                    <Button type="submit" disabled={saving} size="sm">{saving ? 'Saving...' : 'Add'}</Button>
+                    <Button type="button" variant="outline" onClick={onClose} disabled={saving} size="sm">{t('common.cancel', 'Cancel')}</Button>
+                    <Button type="submit" disabled={saving} size="sm">{saving ? t('common.saving', 'Saving...') : t('common.add', 'Add')}</Button>
                 </DialogFooter>
             </form>
         </Dialog>

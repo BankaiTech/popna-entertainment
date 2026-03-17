@@ -1,12 +1,22 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardHeading } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardHeading, CardToolbar } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { auditTrailApi } from '@/api/auditTrail';
 import type { AuditEntry, AuditAction } from '@/models/types';
-import { Activity } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 const ACTIONS: AuditAction[] = ['create', 'update', 'delete', 'login', 'logout', 'export'];
+
+const ACTION_COLORS: Record<AuditAction, string> = {
+  create: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  update: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  delete: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  login: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  logout: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  export: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+};
 
 export default function AuditTrail() {
   const { t } = useTranslation();
@@ -42,99 +52,113 @@ export default function AuditTrail() {
   const formatTime = (iso: string) => new Date(iso).toLocaleString();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <Card>
-        <CardHeader>
-          <CardHeading>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              {t('auditTrail.title', 'Audit Trail')}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('auditTrail.subtitle', 'Activity log with filtering by user, module, action and date range.')}
-            </p>
-          </CardHeading>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('auditTrail.user', 'User')}</label>
+        <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <CardHeading className="p-0 w-full md:w-auto md:min-w-0 shrink-0">
+            <div className="relative w-full min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none shrink-0" />
               <Input
-                placeholder={t('auditTrail.usernamePlaceholder', 'Username')}
+                placeholder={t('auditTrail.usernamePlaceholder', 'Search by username...')}
                 value={usernameFilter}
                 onChange={(e) => setUsernameFilter(e.target.value)}
-                className="w-40"
+                className="pl-9 h-9 text-sm w-full min-w-0"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('auditTrail.entity', 'Entity / Module')}</label>
-              <select
-                value={entityFilter}
-                onChange={(e) => setEntityFilter(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm w-40"
-              >
-                <option value="">{t('common.all', 'All')}</option>
-                {entities.map((e) => (
-                  <option key={e} value={e}>{e}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('auditTrail.action', 'Action')}</label>
-              <select
-                value={actionFilter}
-                onChange={(e) => setActionFilter(e.target.value as AuditAction | '')}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm w-36"
-              >
-                <option value="">{t('common.all', 'All')}</option>
-                {ACTIONS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('common.fromDate', 'From date')}</label>
-              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('common.toDate', 'To date')}</label>
-              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-            </div>
-          </div>
-
+          </CardHeading>
+          <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
+            <Select
+              value={entityFilter}
+              onChange={(e) => setEntityFilter(e.target.value)}
+              className="h-9 text-sm w-full min-w-0 sm:w-40"
+            >
+              <option value="">{t('auditTrail.allEntities', 'All Modules')}</option>
+              {entities.map((e) => (
+                <option key={e} value={e}>{e}</option>
+              ))}
+            </Select>
+            <Select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value as AuditAction | '')}
+              className="h-9 text-sm w-full min-w-0 sm:w-36"
+            >
+              <option value="">{t('auditTrail.allActions', 'All Actions')}</option>
+              {ACTIONS.map((a) => (
+                <option key={a} value={a}>{t(`auditTrail.action_${a}`, a)}</option>
+              ))}
+            </Select>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="h-9 text-sm w-full min-w-0 sm:w-36"
+              title={t('common.fromDate', 'From date')}
+            />
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="h-9 text-sm w-full min-w-0 sm:w-36"
+              title={t('common.toDate', 'To date')}
+            />
+          </CardToolbar>
+        </CardHeader>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-sm text-gray-500 py-8">{t('common.loading', 'Loading...')}</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">{t('common.loading', 'Loading...')}</div>
           ) : entries.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">{t('auditTrail.noEntries', 'No audit entries found')}</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">{t('auditTrail.noEntries', 'No audit entries found')}</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">{t('auditTrail.timestamp', 'Time')}</th>
-                    <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">{t('auditTrail.user', 'User')}</th>
-                    <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">{t('auditTrail.action', 'Action')}</th>
-                    <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">{t('auditTrail.entity', 'Entity')}</th>
-                    <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">{t('auditTrail.details', 'Details')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((e) => (
-                    <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="py-2 px-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatTime(e.timestamp)}</td>
-                      <td className="py-2 px-2 text-gray-900 dark:text-gray-100">{e.username}</td>
-                      <td className="py-2 px-2">
-                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                          {e.action}
-                        </span>
-                      </td>
-                      <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{e.entity}{e.entityId ? ` #${e.entityId}` : ''}</td>
-                      <td className="py-2 px-2 text-gray-600 dark:text-gray-400 max-w-[300px] truncate">{e.details ?? '–'}</td>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-border bg-muted/30">
+                      <th className="text-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.timestamp', 'Time')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.user', 'User')}</th>
+                      <th className="text-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.action', 'Action')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.entity', 'Module')}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground">{t('auditTrail.details', 'Details')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {entries.map((e, idx) => (
+                      <tr
+                        key={e.id}
+                        className={`border-b border-border hover:bg-muted/50 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}
+                      >
+                        <td className="py-2.5 px-4 text-sm text-muted-foreground whitespace-nowrap text-center">{formatTime(e.timestamp)}</td>
+                        <td className="py-2.5 px-4 text-sm font-medium text-foreground truncate">{e.username}</td>
+                        <td className="py-2.5 px-4 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${ACTION_COLORS[e.action] ?? 'bg-gray-100 text-gray-700'}`}>
+                            {t(`auditTrail.action_${e.action}`, e.action)}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 text-sm text-foreground truncate">{e.entity}{e.entityId ? ` #${e.entityId}` : ''}</td>
+                        <td className="py-2.5 px-4 text-sm text-muted-foreground truncate" title={e.details ?? ''}>{e.details ?? '–'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3 p-3">
+                {entries.map((e) => (
+                  <div key={e.id} className="bg-card border border-border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">{e.username}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ACTION_COLORS[e.action] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {t(`auditTrail.action_${e.action}`, e.action)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{e.entity}{e.entityId ? ` #${e.entityId}` : ''}</div>
+                    {e.details && <div className="text-xs text-muted-foreground line-clamp-2">{e.details}</div>}
+                    <div className="text-xs text-muted-foreground">{formatTime(e.timestamp)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -3,12 +3,11 @@
 // Multi-tenant SaaS Isolation
 
 import { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import HomePage from './pages/public/HomePage';
-import ErrorShowPage from './pages/ErrorShowPage';
 import AdminDashboard from './pages/admin/Dashboard';
 // Catalog module removed - merged into Inventory
 // Customers module removed - merged into Contacts
@@ -17,7 +16,6 @@ import AdminPurchase from './pages/admin/Purchase';
 import Appointments from './pages/admin/Appointments';
 import ServiceRequests from './pages/admin/ServiceRequests';
 import Leads from './pages/admin/Leads';
-import Subscriptions from './pages/admin/Subscriptions';
 import Reports from './pages/admin/Reports';
 import AuditTrail from './pages/admin/AuditTrail';
 import AdminComplaints from './pages/admin/Complaints';
@@ -34,15 +32,13 @@ import SignupRequests from './pages/superadmin/SignupRequests';
 import SuperAdminUsers from './pages/superadmin/Users';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
+import CustomerHistory from './pages/customer/History';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { PWAFeatures } from './components/PWAFeatures';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const showErrorPage = location.pathname === '/' && searchParams.has('error_show');
 
   // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames)
   useEffect(() => {
@@ -63,7 +59,6 @@ function App() {
     <>
       <ScrollToTop />
       <PWAFeatures />
-      {showErrorPage && <ErrorShowPage />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
@@ -79,6 +74,14 @@ function App() {
           element={
             <ProtectedRoute customerOnly>
               <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customer/history"
+          element={
+            <ProtectedRoute customerOnly>
+              <CustomerHistory />
             </ProtectedRoute>
           }
         />
@@ -196,14 +199,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="subscriptions"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <Subscriptions />
-              </ProtectedRoute>
-            }
-          />
+          {/* Subscriptions consolidated into CustomerSheet */}
+          <Route path="subscriptions" element={<Navigate to="/admin/contacts" replace />} />
           <Route
             path="reports"
             element={

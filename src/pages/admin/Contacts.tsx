@@ -11,11 +11,12 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import CustomerSheet from '@/components/CustomerSheet';
+import CustomerHistoryPanel from '@/components/CustomerHistoryPanel';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
-import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare, History } from 'lucide-react';
 import type { Customer, Supplier, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -23,11 +24,22 @@ import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword } from '@/lib/utils';
 import { organizationsApi } from '@/api/organizations';
 import { showError, showSuccess, showInfo } from '@/utils/toast';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { getTemplateById, getContactConfig } from '@/config/industryTemplates';
+import { useTerminology } from '@/hooks/useTerminology';
 
 type ContactTab = 'customers' | 'suppliers' | 'import';
 
 const Contacts = () => {
     const { t } = useTranslation();
+    const { term } = useTerminology();
+    const { currentOrganization } = useOrganizationStore();
+    const template = useMemo(
+        () => (currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined),
+        [currentOrganization?.industryType]
+    );
+    const contactConfig = useMemo(() => getContactConfig(template), [template]);
+    const listColumns = contactConfig.listColumns;
     const [activeTab, setActiveTab] = useState<ContactTab>('customers');
 
     // Auth
@@ -43,6 +55,7 @@ const Contacts = () => {
     const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
     const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [paymentCustomer, setPaymentCustomer] = useState<Customer | null>(null);
+    const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
 
     // Customer filters
     const [customerSearch, setCustomerSearch] = useState('');
@@ -290,8 +303,9 @@ const Contacts = () => {
         }
     };
 
+    const customerLabel = term('customer', t('contacts.customers', 'Customers'));
     const tabs = [
-        { id: 'customers' as const, label: t('contacts.customers', 'Customers'), icon: Users, count: customers.length },
+        { id: 'customers' as const, label: customerLabel, icon: Users, count: customers.length },
         { id: 'suppliers' as const, label: t('contacts.suppliers', 'Suppliers'), icon: Truck, count: suppliers.length },
         { id: 'import' as const, label: t('contacts.import', 'Import'), icon: Upload, count: undefined },
     ];
@@ -345,7 +359,7 @@ const Contacts = () => {
                             </Button>
                             <Button onClick={handleAddCustomer} size="xs">
                                 <Plus className="w-3.5 h-3.5" />
-                                {t('customers.addCustomer', 'Add')}
+                                {t('contacts.addContact', 'Add {{label}}', { label: customerLabel })}
                             </Button>
                         </>
                     )}
@@ -389,20 +403,22 @@ const Contacts = () => {
                                         ))}
                                     </Select>
                                 )}
-                                <Select
-                                    value={connectionFilter}
-                                    onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
-                                    className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
-                                >
-                                    <option value="All">{t('customers.allConnections', 'All Categories')}</option>
-                                    {Array.isArray(products) && products.length > 0 ? (
-                                        products.map((product) => (
-                                            <option key={product.id} value={product.name}>
-                                                {product.name}
-                                            </option>
-                                        ))
-                                    ) : null}
-                                </Select>
+                                {listColumns.includes('connectionType') && (
+                                    <Select
+                                        value={connectionFilter}
+                                        onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
+                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+                                    >
+                                        <option value="All">{t('customers.allConnections', 'All Categories')}</option>
+                                        {Array.isArray(products) && products.length > 0 ? (
+                                            products.map((product) => (
+                                                <option key={product.id} value={product.name}>
+                                                    {product.name}
+                                                </option>
+                                            ))
+                                        ) : null}
+                                    </Select>
+                                )}
                                 {!isEmployee && (
                                     <Select
                                         value={paymentStatusFilter}
@@ -425,23 +441,26 @@ const Contacts = () => {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Desktop Table */}
+                                    {/* Desktop Table - columns driven by industry contactConfig */}
                                     <div className="hidden md:block overflow-x-auto">
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="border-b-2 border-border bg-muted/30">
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('common.id', 'ID')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.name', 'Name')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.mobile', 'Mobile')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.category', 'Category')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.planItem', 'Plan / Item')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.deviceId', 'Device ID')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.refNo', 'Ref No')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.creditLimit', 'Credit Limit')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.loyaltyPoints', 'Loyalty')}</th>
-                                                    <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>
+                                                    {listColumns.includes('id') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-14">{t('common.id', 'ID')}</th>}
+                                                    {listColumns.includes('name') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.name', 'Name')}</th>}
+                                                    {listColumns.includes('mobile') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.mobile', 'Mobile')}</th>}
+                                                    {listColumns.includes('email') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.email', 'Email')}</th>}
+                                                    {listColumns.includes('connectionType') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">{t('common.category', 'Category')}</th>}
+                                                    {listColumns.includes('package') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-32">{t('common.planItem', 'Plan / Item')}</th>}
+                                                    {listColumns.includes('stbNumber') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.deviceId', 'Device ID')}</th>}
+                                                    {listColumns.includes('canCafId') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.refNo', 'Ref No')}</th>}
+                                                    {listColumns.includes('cin') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.taxId', 'Tax ID')}</th>}
+                                                    {listColumns.includes('area') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.area', 'Area')}</th>}
+                                                    {listColumns.includes('status') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('common.status', 'Status')}</th>}
+                                                    {listColumns.includes('creditLimit') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.creditLimit', 'Credit Limit')}</th>}
+                                                    {listColumns.includes('loyaltyPoints') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-20">{t('customers.loyaltyPoints', 'Loyalty')}</th>}
+                                                    {listColumns.includes('paymentStatus') && <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-24">{t('common.payment', 'Payment')}</th>}
+                                                    <th className="px-3 py-2 w-10"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -453,42 +472,57 @@ const Contacts = () => {
                                                             idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-muted/20'
                                                         )}
                                                     >
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.id}</td>
+                                                        {listColumns.includes('id') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.id}</td>}
+                                                        {listColumns.includes('name') && (
+                                                            <td className="px-3 py-2">
+                                                                {isEmployee ? (
+                                                                    <span className="text-sm font-medium text-foreground">{customer.name}</span>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleEditCustomer(customer)}
+                                                                        className="text-sm font-medium text-primary hover:underline"
+                                                                    >
+                                                                        {customer.name}
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        )}
+                                                        {listColumns.includes('mobile') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.mobile}</td>}
+                                                        {listColumns.includes('email') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.email || '-'}</td>}
+                                                        {listColumns.includes('connectionType') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{getConnectionTypeLabel(customer.connectionType, products) || '-'}</td>}
+                                                        {listColumns.includes('package') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.package || '-'}</td>}
+                                                        {listColumns.includes('stbNumber') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.stbNumber || '-'}</td>}
+                                                        {listColumns.includes('canCafId') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.canCafId || '-'}</td>}
+                                                        {listColumns.includes('cin') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.cin || '-'}</td>}
+                                                        {listColumns.includes('area') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.area || '-'}</td>}
+                                                        {listColumns.includes('status') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}</td>}
+                                                        {listColumns.includes('creditLimit') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.creditLimit != null ? formatCurrencyINR(customer.creditLimit) : '-'}</td>}
+                                                        {listColumns.includes('loyaltyPoints') && <td className="px-3 py-2 text-sm font-normal text-muted-foreground">{customer.loyaltyPoints != null ? customer.loyaltyPoints : '-'}</td>}
+                                                        {listColumns.includes('paymentStatus') && (
+                                                            <td className="px-3 py-2 text-sm">
+                                                                {customer.paymentStatus !== 'paid' ? (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); setPaymentCustomer(customer); }}
+                                                                        className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50 cursor-pointer transition-colors"
+                                                                        title={t('customers.clickToCollect', 'Click to collect payment')}
+                                                                    >
+                                                                        {t('customers.unpaid', 'Unpaid')}
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                                                                        {t('customers.paid', 'Paid')}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        )}
                                                         <td className="px-3 py-2">
-                                                            {isEmployee ? (
-                                                                <span className="text-sm font-medium text-foreground">{customer.name}</span>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => handleEditCustomer(customer)}
-                                                                    className="text-sm font-medium text-primary hover:underline"
-                                                                >
-                                                                    {customer.name}
-                                                                </button>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.mobile}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{getConnectionTypeLabel(customer.connectionType)}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.package}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.stbNumber || '-'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.canCafId || '-'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.cin || '-'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.area || '-'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.creditLimit != null ? formatCurrencyINR(customer.creditLimit) : '-'}</td>
-                                                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{customer.loyaltyPoints != null ? customer.loyaltyPoints : '-'}</td>
-                                                        <td className="px-3 py-2 text-sm">
-                                                            {customer.paymentStatus !== 'paid' ? (
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setPaymentCustomer(customer); }}
-                                                                    className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
-                                                                    title={t('customers.clickToCollect', 'Click to collect payment')}
-                                                                >
-                                                                    {t('customers.unpaid', 'Unpaid')}
-                                                                </button>
-                                                            ) : (
-                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                                                    {t('customers.paid', 'Paid')}
-                                                                </span>
-                                                            )}
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setHistoryCustomer(customer); }}
+                                                                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                                                title={t('customerHistory.viewHistory', 'View History')}
+                                                            >
+                                                                <History className="w-3.5 h-3.5" />
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -501,7 +535,7 @@ const Contacts = () => {
                                         {paginatedCustomers.map((customer) => (
                                             <div key={customer.id} className="bg-card border border-border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
                                                 <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         {isEmployee ? (
                                                             <span className="text-base font-semibold text-foreground">{customer.name}</span>
                                                         ) : (
@@ -509,41 +543,76 @@ const Contacts = () => {
                                                                 {customer.name}
                                                             </button>
                                                         )}
-                                                        <p className="text-xs text-muted-foreground mt-1">{t('customers.id', 'ID')}: {customer.id}</p>
+                                                        {listColumns.includes('id') && <p className="text-xs text-muted-foreground mt-1">{t('common.id', 'ID')}: {customer.id}</p>}
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setHistoryCustomer(customer); }}
+                                                        className="ml-2 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors shrink-0"
+                                                        title={t('customerHistory.viewHistory', 'View History')}
+                                                    >
+                                                        <History className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                                 <div className="space-y-2 text-sm">
-                                                    <div>
-                                                        <span className="text-muted-foreground">{t('customers.mobile', 'Mobile')}: </span>
-                                                        <span className="font-medium">{customer.mobile}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-muted-foreground">{t('customers.connectionType', 'Connection')}: </span>
-                                                        <span className="font-medium">{getConnectionTypeLabel(customer.connectionType)}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-muted-foreground">{t('customers.package', 'Package')}: </span>
-                                                        <span className="font-medium">{customer.package || t('common.na', 'N/A')}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-muted-foreground">{t('customers.stbNo', 'STB No')}: </span>
-                                                        <span className="font-medium">{customer.stbNumber || t('common.na', 'N/A')}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-muted-foreground">{t('customers.paymentStatus', 'Payment')}: </span>
-                                                        {customer.paymentStatus !== 'paid' ? (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); setPaymentCustomer(customer); }}
-                                                                className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
-                                                            >
-                                                                {t('customers.unpaid', 'Unpaid')}
-                                                            </button>
-                                                        ) : (
-                                                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                                                {t('customers.paid', 'Paid')}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    {listColumns.includes('mobile') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.mobile', 'Mobile')}: </span>
+                                                            <span className="font-medium">{customer.mobile}</span>
+                                                        </div>
+                                                    )}
+                                                    {listColumns.includes('email') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.email', 'Email')}: </span>
+                                                            <span className="font-medium">{customer.email || t('common.na', 'N/A')}</span>
+                                                        </div>
+                                                    )}
+                                                    {listColumns.includes('connectionType') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.category', 'Category')}: </span>
+                                                            <span className="font-medium">{getConnectionTypeLabel(customer.connectionType, products) || t('common.na', 'N/A')}</span>
+                                                        </div>
+                                                    )}
+                                                    {listColumns.includes('package') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.planItem', 'Plan / Item')}: </span>
+                                                            <span className="font-medium">{customer.package || t('common.na', 'N/A')}</span>
+                                                        </div>
+                                                    )}
+                                                    {listColumns.includes('stbNumber') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.deviceId', 'Device ID')}: </span>
+                                                            <span className="font-medium">{customer.stbNumber || t('common.na', 'N/A')}</span>
+                                                        </div>
+                                                    )}
+                                                    {(listColumns.includes('creditLimit') && customer.creditLimit != null) && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('customers.creditLimit', 'Credit Limit')}: </span>
+                                                            <span className="font-medium">{formatCurrencyINR(customer.creditLimit)}</span>
+                                                        </div>
+                                                    )}
+                                                    {(listColumns.includes('loyaltyPoints') && customer.loyaltyPoints != null) && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('customers.loyaltyPoints', 'Loyalty')}: </span>
+                                                            <span className="font-medium">{customer.loyaltyPoints}</span>
+                                                        </div>
+                                                    )}
+                                                    {listColumns.includes('paymentStatus') && (
+                                                        <div>
+                                                            <span className="text-muted-foreground">{t('common.payment', 'Payment')}: </span>
+                                                            {customer.paymentStatus !== 'paid' ? (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setPaymentCustomer(customer); }}
+                                                                    className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 cursor-pointer transition-colors"
+                                                                >
+                                                                    {t('customers.unpaid', 'Unpaid')}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                                                                    {t('customers.paid', 'Paid')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -669,6 +738,12 @@ const Contacts = () => {
             )}
 
             {/* ═══════════ MODALS ═══════════ */}
+
+            {/* Customer History Panel */}
+            <CustomerHistoryPanel
+                customer={historyCustomer}
+                onClose={() => setHistoryCustomer(null)}
+            />
 
             {/* Supplier Modal */}
             <SupplierModal

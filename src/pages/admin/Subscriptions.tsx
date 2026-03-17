@@ -8,11 +8,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Trash2, Pencil, Repeat } from 'lucide-react';
 import type { Subscription, SubscriptionStatus } from '@/models/types';
 import { useSubscriptionsStore } from '@/store/useSubscriptionsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import SubscriptionModal from '@/components/SubscriptionModal';
-import { cn, formatCurrencyINR } from '@/lib/utils';
+import { formatCurrencyINR } from '@/lib/utils';
 
 const Subscriptions = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const pageLabel = term('subscription', t('nav.subscriptions', 'Subscriptions'));
   const { subscriptions, loading, fetchSubscriptions, addSubscription, updateSubscription, deleteSubscription } = useSubscriptionsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all'>('all');
@@ -54,20 +57,6 @@ const Subscriptions = () => {
     }
   };
 
-  const statusBadge = (status: SubscriptionStatus) => {
-    const colors: Record<SubscriptionStatus, string> = {
-      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      paused: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      expired: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    };
-    return (
-      <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', colors[status])}>
-        {t(`subscriptions.status${status.charAt(0).toUpperCase() + status.slice(1)}`, status)}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-3">
       <Card>
@@ -91,7 +80,7 @@ const Subscriptions = () => {
             </Select>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto ml-auto">
               <Plus className="w-3.5 h-3.5" />
-              {t('subscriptions.addSubscription', 'Add Subscription')}
+              {t('subscriptions.addSubscription', 'Add {{label}}', { label: pageLabel })}
             </Button>
           </div>
         </CardHeader>
@@ -114,7 +103,6 @@ const Subscriptions = () => {
                       <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('subscriptions.amount', 'Amount')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('subscriptions.billingCycle', 'Cycle')}</th>
                       <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('subscriptions.nextBillingDate', 'Next billing')}</th>
-                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.status', 'Status')}</th>
                       <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.actions', 'Actions')}</th>
                     </tr>
                   </thead>
@@ -126,7 +114,6 @@ const Subscriptions = () => {
                         <td className="py-3 px-3 text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrencyINR(s.amount)}</td>
                         <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{t(`subscriptions.${s.billingCycle}`, s.billingCycle)}</td>
                         <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{s.nextBillingDate}</td>
-                        <td className="py-3 px-3">{statusBadge(s.status)}</td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button onClick={() => handleEdit(s)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
@@ -145,7 +132,6 @@ const Subscriptions = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400">{s.planName} • {t(`subscriptions.${s.billingCycle}`, s.billingCycle)}</p>
                     <p className="text-sm font-medium text-primary mt-1">{formatCurrencyINR(s.amount)}</p>
                     <div className="flex items-center justify-between mt-2">
-                      {statusBadge(s.status)}
                       <span className="text-xs text-gray-500">{t('subscriptions.nextBillingDate', 'Next')}: {s.nextBillingDate}</span>
                     </div>
                     <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">

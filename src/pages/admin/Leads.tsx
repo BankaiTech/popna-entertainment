@@ -7,12 +7,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Plus, Search, Trash2, Pencil, UserPlus } from 'lucide-react';
 import type { Lead, LeadStage } from '@/models/types';
 import { useLeadsStore } from '@/store/useLeadsStore';
+import { useTerminology } from '@/hooks/useTerminology';
 import LeadModal from '@/components/LeadModal';
 import { formatCurrencyINR } from '@/lib/utils';
 
-
 const Leads = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const pageLabel = term('lead', t('nav.leads', 'Leads'));
   const { leads, loading, fetchLeads, addLead, updateLead, deleteLead } = useLeadsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,7 +79,7 @@ const Leads = () => {
             </div>
             <Button onClick={handleAdd} size="xs" className="shrink-0 w-full sm:w-auto ml-auto">
               <Plus className="w-3.5 h-3.5" />
-              {t('leads.addLead', 'Add Lead')}
+              {t('leads.addLead', 'Add {{label}}', { label: pageLabel })}
             </Button>
           </div>
         </CardHeader>
@@ -92,54 +94,54 @@ const Leads = () => {
           ) : (
             <>
               <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.name', 'Name')}</th>
-                          <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.mobile', 'Mobile')}</th>
-                          <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.stage', 'Stage')}</th>
-                          <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.source', 'Source')}</th>
-                          <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.value', 'Value')}</th>
-                          <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.actions', 'Actions')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedLeads.map((lead) => (
-                          <tr key={lead.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td className="py-3 px-3 font-medium text-gray-900 dark:text-gray-100">{lead.name}</td>
-                            <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{lead.mobile}</td>
-                            <td className="py-3 px-3">{stageLabel(lead.stage)}</td>
-                            <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{lead.source}</td>
-                            <td className="py-3 px-3 text-right">{lead.value != null && lead.value > 0 ? formatCurrencyINR(lead.value) : '–'}</td>
-                            <td className="py-3 px-3 text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <button onClick={() => handleEdit(lead)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(lead.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="md:hidden space-y-3">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.name', 'Name')}</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.mobile', 'Mobile')}</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.stage', 'Stage')}</th>
+                      <th className="text-left py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.source', 'Source')}</th>
+                      <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('leads.value', 'Value')}</th>
+                      <th className="text-right py-3 px-3 font-medium text-gray-500 dark:text-gray-400">{t('common.actions', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {paginatedLeads.map((lead) => (
-                      <div key={lead.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">{lead.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{lead.mobile} • {stageLabel(lead.stage)}</p>
-                        {lead.value != null && lead.value > 0 && <p className="text-sm font-medium text-primary mt-1">{formatCurrencyINR(lead.value)}</p>}
-                        <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                          <button onClick={() => handleEdit(lead)} className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">{t('common.edit', 'Edit')}</button>
-                          <button onClick={() => handleDelete(lead.id)} className="px-2 py-1 rounded-md text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40">{t('common.delete', 'Delete')}</button>
-                        </div>
-                      </div>
+                      <tr key={lead.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="py-3 px-3 font-medium text-gray-900 dark:text-gray-100">{lead.name}</td>
+                        <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{lead.mobile}</td>
+                        <td className="py-3 px-3">{stageLabel(lead.stage)}</td>
+                        <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{lead.source}</td>
+                        <td className="py-3 px-3 text-right">{lead.value != null && lead.value > 0 ? formatCurrencyINR(lead.value) : '–'}</td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => handleEdit(lead)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(lead.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="mt-4">
-                      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  </tbody>
+                </table>
+              </div>
+              <div className="md:hidden space-y-3">
+                {paginatedLeads.map((lead) => (
+                  <div key={lead.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">{lead.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{lead.mobile} • {stageLabel(lead.stage)}</p>
+                    {lead.value != null && lead.value > 0 && <p className="text-sm font-medium text-primary mt-1">{formatCurrencyINR(lead.value)}</p>}
+                    <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <button onClick={() => handleEdit(lead)} className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">{t('common.edit', 'Edit')}</button>
+                      <button onClick={() => handleDelete(lead.id)} className="px-2 py-1 rounded-md text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40">{t('common.delete', 'Delete')}</button>
                     </div>
-                  )}
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-4">
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                </div>
+              )}
             </>
           )}
         </CardContent>

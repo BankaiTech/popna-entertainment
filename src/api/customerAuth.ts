@@ -1,6 +1,8 @@
-import { mockCustomers } from './mockData';
-import { customersApi } from './api';
+import { mockCustomers, mockCustomersExtra } from './mockData';
 import type { Customer } from '@/models/types';
+
+// All customers across all orgs, for authentication purposes only
+const allMockCustomers = [...mockCustomers, ...mockCustomersExtra];
 
 /**
  * Mock Customer Authentication Service
@@ -40,27 +42,17 @@ export const loginCustomer = async (mobile: string, password: string): Promise<C
     };
   }
 
-  // Get all customers from API (includes newly created ones)
-  // Fallback chain: API → localStorage → mockCustomers
+  // Get all customers across all orgs for authentication (not org-scoped)
+  // Fallback chain: localStorage (org-specific) → allMockCustomers (all orgs)
   let customers: Customer[] = [];
   try {
-    customers = await customersApi.getAll();
-    // If API customers have no passwords, fall back to mockCustomers for auth
-    // (db.json may not store password field; mockCustomers always have passwords set)
-    const hasPasswordsInApi = customers.some((c) => c.password);
-    if (!hasPasswordsInApi) {
-      customers = mockCustomers;
-    }
+    const stored = localStorage.getItem('customers-data');
+    const parsed: Customer[] = stored ? JSON.parse(stored) : [];
+    // Merge stored customers with all mock customers (covers all orgs)
+    const storedIds = new Set(parsed.map((c) => c.id));
+    customers = [...parsed, ...allMockCustomers.filter((c) => !storedIds.has(c.id))];
   } catch {
-    // Fallback to localStorage, then mockCustomers
-    try {
-      const stored = localStorage.getItem('customers-data');
-      const parsed: Customer[] = stored ? JSON.parse(stored) : [];
-      const hasPasswords = parsed.some((c) => c.password);
-      customers = hasPasswords ? parsed : mockCustomers;
-    } catch {
-      customers = mockCustomers;
-    }
+    customers = allMockCustomers;
   }
 
   // Find customer by mobile and validate password
@@ -89,8 +81,7 @@ export const loginCustomer = async (mobile: string, password: string): Promise<C
  * @returns Customer object or null
  */
 export const getCustomerById = (customerId: number): Customer | null => {
-  const customer = mockCustomers.find((c: Customer) => c.id === customerId);
-  return customer || null;
+  return allMockCustomers.find((c: Customer) => c.id === customerId) || null;
 };
 
 /**
@@ -100,6 +91,5 @@ export const getCustomerById = (customerId: number): Customer | null => {
  * @returns Customer object or null
  */
 export const getCustomerByMobile = (mobile: string): Customer | null => {
-  const customer = mockCustomers.find((c: Customer) => c.mobile === mobile);
-  return customer || null;
+  return allMockCustomers.find((c: Customer) => c.mobile === mobile) || null;
 };

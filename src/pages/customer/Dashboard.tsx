@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import {
   Plus, AlertCircle, LogOut, FileText, Download, CreditCard,
-  Wallet, IndianRupee, CalendarClock, Wifi, MessageSquare
+  Wallet, IndianRupee, CalendarClock, Wifi, MessageSquare, History, CheckCircle2,
+  Dumbbell, GraduationCap, Briefcase, Heart, Star, Award
 } from 'lucide-react';
 import type { Complaint, SalesInvoice } from '@/models/types';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -23,6 +24,7 @@ import { upiPaymentApi } from '@/api/upiPayment';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { getNextDueDateForCustomer } from '@/lib/billingUtils';
 import { showInfo } from '@/utils/toast';
+import { organizationsApi } from '@/api/organizations';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
@@ -32,6 +34,8 @@ const CustomerDashboard = () => {
   const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
   const [myInvoices, setMyInvoices] = useState<SalesInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
+
+  const [orgIndustryType, setOrgIndustryType] = useState<string | null>(null);
 
   // UPI Payment: customer pays org - use organization admin's UPI
   const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
@@ -78,11 +82,32 @@ const CustomerDashboard = () => {
     return () => { cancelled = true; };
   }, [currentCustomer?.organizationId]);
 
+  useEffect(() => {
+    if (!currentCustomer?.organizationId) { setOrgIndustryType(null); return; }
+    let cancelled = false;
+    organizationsApi.getById(currentCustomer.organizationId).then((org) => {
+      if (!cancelled) setOrgIndustryType(org?.industryType ?? null);
+    }).catch(() => { if (!cancelled) setOrgIndustryType(null); });
+    return () => { cancelled = true; };
+  }, [currentCustomer?.organizationId]);
+
   const myComplaints = complaints.filter((c) => c.customerId === customerId);
   const totalPending = useMemo(
     () => myInvoices.filter((inv) => inv.status !== 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
     [myInvoices]
   );
+  const totalPaid = useMemo(
+    () => myInvoices.filter((inv) => inv.status === 'paid').reduce((sum, inv) => sum + inv.totalAmount, 0),
+    [myInvoices]
+  );
+  const memberSince = useMemo(() => {
+    if (currentCustomer?.createdAt) return new Date(currentCustomer.createdAt);
+    if (myInvoices.length > 0) {
+      const sorted = [...myInvoices].sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+      return new Date(sorted[0].issueDate);
+    }
+    return null;
+  }, [currentCustomer, myInvoices]);
 
   const getStatusColor = (status: Complaint['status']) => {
     switch (status) {
@@ -158,16 +183,51 @@ const CustomerDashboard = () => {
   const isRenewWindow = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 7;
   const isCableCustomer = customerProduct?.productType === 'cable';
 
+  // Industry-aware flags
+  const isGym = orgIndustryType === 'gym-fitness';
+  const isEducation = orgIndustryType === 'education';
+  const isProfessional = orgIndustryType === 'professional-services';
+  const isHealthcare = orgIndustryType === 'healthcare-pharmacy';
+  const isSalon = orgIndustryType === 'salon-spa';
+  const isRetailLike = ['retail', 'restaurant-cafe', 'grocery', 'clothing-fashion'].includes(orgIndustryType ?? '');
+
+  const activePlanTitle = isGym || isSalon
+    ? t('customerDashboard.activeMembership', 'Active Membership')
+    : isEducation ? t('customerDashboard.activeEnrollment', 'Active Enrollment')
+    : isProfessional ? t('customerDashboard.activePackage', 'Active Package')
+    : t('customerDashboard.activePlan', 'Active Plan');
+
+  const activePlanIcon = isGym ? Dumbbell : isSalon ? Star : isEducation ? GraduationCap
+    : isProfessional ? Briefcase : isHealthcare ? Heart : Wifi;
+
+  const renewButtonText = isGym || isSalon
+    ? t('customerDashboard.renewMembership', 'Renew Membership')
+    : t('customerDashboard.renewNow', 'Renew Subscription');
+
+  const planColumnLabel = isGym || isSalon
+    ? t('customerDashboard.activeMembership', 'Active Membership')
+    : isEducation ? t('customerDashboard.activeEnrollment', 'Active Enrollment')
+    : t('customerDashboard.plan', 'Plan');
+
   // KPI cards - same style as admin dashboard
   const kpiCards = [
-    {
-      title: t('customerDashboard.activePlan', 'Active Plan'),
-      value: currentCustomer.package || t('common.na', 'N/A'),
-      icon: Wifi,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      isText: true,
-    },
+    isRetailLike
+      ? {
+          title: t('customerDashboard.loyaltyPoints', 'Loyalty Points'),
+          value: currentCustomer.loyaltyPoints !== undefined ? String(currentCustomer.loyaltyPoints) : t('common.na', 'N/A'),
+          icon: Award,
+          color: 'text-amber-600',
+          bgColor: 'bg-amber-50',
+          isText: true,
+        }
+      : {
+          title: activePlanTitle,
+          value: currentCustomer.package || t('common.na', 'N/A'),
+          icon: activePlanIcon,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
+          isText: true,
+        },
     {
       title: t('customerDashboard.paymentStatus', 'Payment Status'),
       value: currentCustomer.paymentStatus === 'paid'
@@ -192,6 +252,14 @@ const CustomerDashboard = () => {
       icon: Wallet,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
+      isText: true,
+    },
+    {
+      title: t('customerDashboard.totalPaid', 'Total Paid'),
+      value: formatCurrencyINR(totalPaid),
+      icon: CheckCircle2,
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
       isText: true,
     },
   ];
@@ -231,9 +299,7 @@ const CustomerDashboard = () => {
                   className="flex-1 min-h-[48px] sm:min-h-0 shadow-md text-base sm:text-sm"
                 >
                   <IndianRupee className="w-5 h-5 sm:w-4 sm:h-4 mr-2 shrink-0" />
-                  {isRenewWindow
-                    ? t('customerDashboard.renewNow', 'Renew Subscription')
-                    : t('customerDashboard.payNow', 'Pay Now')}
+                  {isRenewWindow ? renewButtonText : t('customerDashboard.payNow', 'Pay Now')}
                 </Button>
                 <Button
                   variant="outline"
@@ -337,7 +403,16 @@ const CustomerDashboard = () => {
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileText className="w-4 h-4 text-green-600 shrink-0" />
                     {myInvoices.length} {t('customerDashboard.invoicesCount', 'invoices')}
+                    {memberSince && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        · {t('customerDashboard.memberSince', 'Member since')} {formatDate(memberSince.toISOString())}
+                      </span>
+                    )}
                   </CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/customer/history')} className="flex items-center gap-1.5 text-xs">
+                    <History className="w-3.5 h-3.5" />
+                    {t('customerDashboard.viewFullHistory', 'Full History')}
+                  </Button>
                 </CardHeader>
                 <CardContent className="p-0">
                   {loadingInvoices ? (
@@ -355,7 +430,7 @@ const CustomerDashboard = () => {
                           <thead>
                             <tr className="border-b-2 border-border bg-muted/30">
                               <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.invoiceNo', 'Invoice #')}</th>
-                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.plan')}</th>
+                              <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{planColumnLabel}</th>
                               <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.amount')}</th>
                               <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.issueDate')}</th>
                               <th className="text-left px-3 py-2 text-sm font-medium text-foreground">{t('customerDashboard.dueDate')}</th>

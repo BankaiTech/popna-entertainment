@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTerminology } from '@/hooks/useTerminology';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -10,9 +11,14 @@ import type { PurchaseOrder, PurchaseOrderStatus } from '@/models/types';
 import { usePurchaseOrdersStore } from '@/store/usePurchaseOrdersStore';
 import PurchaseOrderModal from '@/components/PurchaseOrderModal';
 import { cn, formatCurrencyINR } from '@/lib/utils';
+import { purchaseInvoicesApi } from '@/api/purchaseInvoices';
+import { useAuthStore } from '@/store/useAuthStore';
+import { showSuccess, showInfo } from '@/utils/toast';
 
 const PurchaseOrders = () => {
   const { t } = useTranslation();
+  const { term } = useTerminology();
+  const vendorLabel = term('vendor', t('purchaseOrders.colVendor', 'Vendor'));
   const {
     purchaseOrders,
     loading,
@@ -75,6 +81,34 @@ const PurchaseOrders = () => {
     }
   };
 
+  const handleCreatePurchaseInvoice = async (po: PurchaseOrder) => {
+    if (po.status === 'draft' || po.status === 'cancelled') {
+      showInfo(t('purchaseOrders.cannotConvert', 'Cannot create invoice from a {{status}} order.', { status: po.status }));
+      return;
+    }
+    try {
+      const orgId = useAuthStore.getState().organizationId ?? po.organizationId;
+      const gstAmt = po.taxTotal;
+      const halfGst = Math.round(gstAmt / 2 * 100) / 100;
+      const newPI = await purchaseInvoicesApi.create({
+        organizationId: orgId,
+        invoiceNumber: `PINV-${po.poNumber.replace('PO-', '')}`,
+        vendorId: po.vendorId,
+        vendorName: po.vendorName,
+        reference: po.poNumber,
+        amount: po.subtotal,
+        gstBreakup: { cgst: halfGst, sgst: halfGst },
+        totalAmount: po.grandTotal,
+        issueDate: new Date().toISOString().slice(0, 10),
+      });
+      showSuccess(
+        t('purchaseOrders.piCreated', 'Purchase Invoice {{number}} created.', { number: newPI.invoiceNumber })
+      );
+    } catch {
+      showInfo(t('purchaseOrders.piError', 'Failed to create purchase invoice.'));
+    }
+  };
+
   const statusBadge = (status: PurchaseOrderStatus) => {
     const colors: Record<PurchaseOrderStatus, string> = {
       draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-100',
@@ -105,7 +139,7 @@ const PurchaseOrders = () => {
             <div className="relative w-full sm:w-56 shrink-0">
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder={t('purchaseOrders.searchPlaceholder', 'Search by vendor or PO number...')}
+                placeholder={t('purchaseOrders.searchPlaceholder', 'Search by {{vendorLabel}} or PO number...', { vendorLabel: vendorLabel.toLowerCase() })}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs w-full"
@@ -147,7 +181,7 @@ const PurchaseOrders = () => {
                         {t('purchaseOrders.colNumber', 'Number')}
                       </th>
                       <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-40">
-                        {t('purchaseOrders.colVendor', 'Vendor')}
+                        {vendorLabel}
                       </th>
                       <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground w-28">
                         {t('purchaseOrders.colTotal', 'Total')}
@@ -185,6 +219,15 @@ const PurchaseOrders = () => {
                         </td>
                         <td className="px-3 py-2 text-right">
                           <div className="inline-flex items-center gap-1">
+                            {(po.status === 'received' || po.status === 'partial' || po.status === 'sent') && (
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleCreatePurchaseInvoice(po)}
+                              >
+                                {t('purchaseOrders.createPI', 'Create PI')}
+                              </Button>
+                            )}
                             <Button
                               size="xs"
                               variant="outline"
@@ -236,6 +279,11 @@ const PurchaseOrders = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                      {(po.status === 'received' || po.status === 'partial' || po.status === 'sent') && (
+                        <Button size="xs" variant="outline" onClick={() => handleCreatePurchaseInvoice(po)}>
+                          {t('purchaseOrders.createPI', 'Create PI')}
+                        </Button>
+                      )}
                       <Button size="xs" variant="outline" onClick={() => openEdit(po)}>
                         {t('common.edit', 'Edit')}
                       </Button>

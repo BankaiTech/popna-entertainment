@@ -1,33 +1,23 @@
 import type { Expense } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { useAuthStore } from '@/store/useAuthStore';
+import { getIndustryExpenses } from './industryMockData';
+
+function getCurrentOrgId(): string {
+  return useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
+}
 
 const now = new Date().toISOString();
 
-let expensesData: Expense[] = [
-  {
-    id: 1, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-001',
-    category: 'Office Supplies', description: 'Printer paper and ink cartridges',
-    amount: 2500, taxAmount: 450, totalAmount: 2950,
-    paymentMethod: 'upi', paymentDate: '2026-03-01', status: 'approved',
-    approvedBy: 'admin', createdAt: now,
-  },
-  {
-    id: 2, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-002',
-    category: 'Utilities', description: 'Electricity bill - March',
-    amount: 8500, taxAmount: 1530, totalAmount: 10030,
-    paymentMethod: 'bank_transfer' as Expense['paymentMethod'], paymentDate: '2026-03-05',
-    status: 'pending', createdAt: now,
-  },
-  {
-    id: 3, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-003',
-    category: 'Travel', description: 'Client visit - fuel and toll',
-    amount: 1200, taxAmount: 0, totalAmount: 1200,
-    paymentMethod: 'cash', paymentDate: '2026-03-10', status: 'approved',
-    approvedBy: 'admin', createdAt: now,
-  },
+// ISP expenses (org_001)
+const ispExpenses: Expense[] = [
+  { id: 1, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-001', category: 'Office Supplies', description: 'Printer paper and ink cartridges', amount: 2500, taxAmount: 450, totalAmount: 2950, paymentMethod: 'upi', paymentDate: '2026-03-01', status: 'approved', approvedBy: 'admin', createdAt: now },
+  { id: 2, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-002', category: 'Utilities', description: 'Electricity bill - March', amount: 8500, taxAmount: 1530, totalAmount: 10030, paymentMethod: 'other', paymentDate: '2026-03-05', status: 'pending', createdAt: now },
+  { id: 3, organizationId: MOCK_ORGANIZATION_ID, expenseNumber: 'EXP-2026-003', category: 'Travel', description: 'Client visit - fuel and toll', amount: 1200, taxAmount: 0, totalAmount: 1200, paymentMethod: 'cash', paymentDate: '2026-03-10', status: 'approved', approvedBy: 'admin', createdAt: now },
 ];
 
-let nextId = 4;
+let expensesData: Expense[] = [...ispExpenses, ...getIndustryExpenses()];
+let nextId = Math.max(0, ...expensesData.map((e) => e.id)) + 1;
 
 function generateExpenseNumber(): string {
   const year = new Date().getFullYear();
@@ -37,7 +27,8 @@ function generateExpenseNumber(): string {
 
 export const expensesApi = {
   getAll: async (): Promise<Expense[]> => {
-    return Promise.resolve([...expensesData]);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(expensesData.filter((e) => e.organizationId === orgId));
   },
   getById: async (id: number): Promise<Expense> => {
     const item = expensesData.find((e) => e.id === id);
@@ -47,7 +38,7 @@ export const expensesApi = {
   create: async (expense: Omit<Expense, 'id' | 'createdAt' | 'expenseNumber'>): Promise<Expense> => {
     const newExpense: Expense = {
       ...expense,
-      organizationId: expense.organizationId ?? MOCK_ORGANIZATION_ID,
+      organizationId: expense.organizationId ?? getCurrentOrgId(),
       id: nextId++,
       expenseNumber: generateExpenseNumber(),
       createdAt: new Date().toISOString(),

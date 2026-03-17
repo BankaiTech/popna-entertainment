@@ -1,26 +1,39 @@
 // Replace with real API call later
 import type { Plan, Customer, DashboardStats, Provider } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { mockPlans, mockCustomers } from './mockData';
+import { mockPlans, mockCustomers, mockPlansExtra, mockCustomersExtra } from './mockData';
 import { complaintsApi } from './complaints';
 import { connectionRequestsApi } from './connectionRequests';
 import { salesInvoicesApi } from './invoices';
 import { productsApi } from './products';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // Multi-tenant ready - backend will enforce org isolation. All data scoped by organizationId.
-// In-memory storage for mock data (simulates backend)
-let plansData: Plan[] = [...mockPlans];
-let customersData: Customer[] = [...mockCustomers];
+// In-memory storage for mock data (simulates backend) — all orgs combined
+let plansData: Plan[] = [...mockPlans, ...mockPlansExtra];
+let customersData: Customer[] = [...mockCustomers, ...mockCustomersExtra];
+
+function getCurrentOrgId(): string {
+  const { organizationId, customerId, role } = useAuthStore.getState();
+  if (organizationId) return organizationId;
+  // For customer role, infer org from customer record
+  if (role === 'customer' && customerId) {
+    const allCusts = [...mockCustomers, ...mockCustomersExtra];
+    const found = allCusts.find((c) => c.id === customerId);
+    if (found?.organizationId) return found.organizationId;
+  }
+  return MOCK_ORGANIZATION_ID;
+}
 
 // Plans API
 export const plansApi = {
   getAll: async (): Promise<Plan[]> => {
-    // Replace with real API call later
-    return Promise.resolve([...plansData]);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(plansData.filter((p) => p.organizationId === orgId));
   },
   getByProvider: async (provider: Provider): Promise<Plan[]> => {
-    // Replace with real API call later
-    return Promise.resolve(plansData.filter((p) => p.provider === provider));
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(plansData.filter((p) => p.organizationId === orgId && p.provider === provider));
   },
   getById: async (id: number): Promise<Plan> => {
     // Replace with real API call later
@@ -56,8 +69,8 @@ export const plansApi = {
 // Customers API
 export const customersApi = {
   getAll: async (): Promise<Customer[]> => {
-    // Replace with real API call later
-    return Promise.resolve([...customersData]);
+    const orgId = getCurrentOrgId();
+    return Promise.resolve(customersData.filter((c) => c.organizationId === orgId));
   },
   getById: async (id: number): Promise<Customer> => {
     // Replace with real API call later
