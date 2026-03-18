@@ -37,7 +37,7 @@ const Settings = () => {
   ], [t, productsTabLabel]);
 
   const tabs = useMemo(
-    () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
+    () => allTabs.filter((tab) => tab.id === 'sms-templates' || isSettingsTabAllowed(tab.id)),
     [isSettingsTabAllowed, allTabs]
   );
 

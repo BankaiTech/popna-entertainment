@@ -33,6 +33,18 @@ import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById } from '@/config/industryTemplates';
 import type { IndustryType } from '@/models/types';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function getCutoffSuffix(t: any, day: number): string {
+  const j = day % 10;
+  const k = day % 100;
+  let suffix = 'th';
+  if (j === 1 && k !== 11) suffix = 'st';
+  else if (j === 2 && k !== 12) suffix = 'nd';
+  else if (j === 3 && k !== 13) suffix = 'rd';
+  
+  return t(`productManagement.cutoffDaySuffix_${suffix}`, suffix);
+}
+
 // ── Constants ────────────────────────────────────────────────────────────────
 const FREE_PRODUCT_LIMIT = 4;
 const ADDITIONAL_PRODUCT_COST = 200;
@@ -305,7 +317,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
                   <option key={day} value={day}>
                     {t('productManagement.cutoffDayOfMonth', '{{day}}{{suffix}} of every month', {
                       day,
-                      suffix: t('productManagement.cutoffDaySuffix', day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'),
+                      suffix: getCutoffSuffix(t, day),
                     })}
                   </option>
                 ))}
@@ -441,7 +453,7 @@ const ProductManagement = () => {
     if (!isIsp) return null;
     if (product.productType === 'cable' && product.cutoffDate) {
       const d = product.cutoffDate;
-      const suffix = t('productManagement.cutoffDaySuffix', d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th');
+      const suffix = getCutoffSuffix(t, d);
       return t('productManagement.cutoffDayLabel', 'Cutoff: {{day}}{{suffix}} each month', { day: d, suffix });
     }
     if (product.productType === 'internet' && product.cutoffDays) {
