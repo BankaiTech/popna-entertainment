@@ -33,6 +33,18 @@ import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById } from '@/config/industryTemplates';
 import type { IndustryType } from '@/models/types';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function getCutoffSuffix(t: any, day: number): string {
+  const j = day % 10;
+  const k = day % 100;
+  let suffix = 'th';
+  if (j === 1 && k !== 11) suffix = 'st';
+  else if (j === 2 && k !== 12) suffix = 'nd';
+  else if (j === 3 && k !== 13) suffix = 'rd';
+
+  return t(`productManagement.cutoffDaySuffix_${suffix}`, suffix);
+}
+
 // ── Constants ────────────────────────────────────────────────────────────────
 const FREE_PRODUCT_LIMIT = 4;
 const ADDITIONAL_PRODUCT_COST = 200;
@@ -303,9 +315,9 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
                 <option value="">{t('productManagement.selectCutoffDate', '— Select cutoff day —')}</option>
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                   <option key={day} value={day}>
-                    {t('productManagement.dayOfMonth', '{{day}}{{suffix}} of every month', {
+                    {t('productManagement.cutoffDayOfMonth', '{{day}}{{suffix}} of every month', {
                       day,
-                      suffix: day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th',
+                      suffix: getCutoffSuffix(t, day),
                     })}
                   </option>
                 ))}
@@ -441,7 +453,7 @@ const ProductManagement = () => {
     if (!isIsp) return null;
     if (product.productType === 'cable' && product.cutoffDate) {
       const d = product.cutoffDate;
-      const suffix = d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th';
+      const suffix = getCutoffSuffix(t, d);
       return t('productManagement.cutoffDayLabel', 'Cutoff: {{day}}{{suffix}} each month', { day: d, suffix });
     }
     if (product.productType === 'internet' && product.cutoffDays) {
@@ -612,7 +624,7 @@ const ProductManagement = () => {
                         onClick={() => toggleActive(product)}
                         title={product.isActive ? t('productManagement.clickToDeactivate', 'Click to deactivate') : t('productManagement.clickToActivate', 'Click to activate')}
                         className="shrink-0 p-1 rounded-md transition-colors hover:bg-muted"
-                        aria-label={product.isActive ? 'Deactivate' : 'Activate'}
+                        aria-label={product.isActive ? t('productManagement.deactivate', 'Deactivate') : t('productManagement.activate', 'Activate')}
                       >
                         {product.isActive
                           ? <ToggleRight className="w-5 h-5 text-primary" />

@@ -3,13 +3,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Package, Building2, CreditCard, ShoppingCart, Sliders, LayoutGrid } from 'lucide-react';
+import { Package, Building2, CreditCard, ShoppingCart, Sliders, LayoutGrid, MessageSquare } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import BillingSettings from '@/components/settings/BillingSettings';
 import POSSettings from '@/components/settings/POSSettings';
 import CustomFieldsSettings from '@/components/settings/CustomFieldsSettings';
 import IndustrySettings from '@/components/settings/IndustrySettings';
+import SmsTemplates from '@/components/settings/SmsTemplates';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { useTerminology } from '@/hooks/useTerminology';
@@ -32,10 +33,11 @@ const Settings = () => {
     { id: 'pos', label: t('settings.tabPOS', 'POS / Checkout'), icon: ShoppingCart, description: t('settings.posTabDesc', 'Invoice format and checkout settings') },
     { id: 'custom-fields', label: t('settings.tabCustomFields', 'Custom Fields'), icon: Sliders, description: t('settings.customFieldsTabDesc', 'Define custom fields for customers and products') },
     { id: 'industry', label: t('settings.tabIndustry', 'Industry'), icon: LayoutGrid, description: t('settings.industryTabDesc', 'Business type and module visibility') },
+    { id: 'sms-templates', label: t('settings.tabSmsTemplates', 'SMS Templates'), icon: MessageSquare, description: t('settings.smsTemplatesDesc', 'Manage SMS message templates for customer communication') },
   ], [t, productsTabLabel]);
 
   const tabs = useMemo(
-    () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
+    () => allTabs.filter((tab) => tab.id === 'sms-templates' || isSettingsTabAllowed(tab.id)),
     [isSettingsTabAllowed, allTabs]
   );
 
@@ -135,6 +137,7 @@ const Settings = () => {
             {activeTab === 'pos' && <POSSettings />}
             {activeTab === 'custom-fields' && <CustomFieldsSettings />}
             {activeTab === 'industry' && <IndustrySettings />}
+            {activeTab === 'sms-templates' && <SmsTemplates />}
           </div>
         </CardContent>
       </Card>

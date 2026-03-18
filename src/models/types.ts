@@ -35,7 +35,7 @@ export const ALL_MODULES = [
 
 /** All available settings tabs that can be assigned to an organization */
 export const ALL_SETTINGS_TABS = [
-  'company', 'products', 'billing', 'pos', 'custom-fields', 'industry'
+  'company', 'products', 'billing', 'pos', 'custom-fields', 'industry', 'sms-templates'
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
@@ -753,6 +753,28 @@ export interface AuditEntry {
   entityId?: string;
   details?: string;
   timestamp: string;
+}
+
+/** SMS Templates */
+export type SmsLanguage = 'en' | 'hi' | 'ta' | 'te' | 'kn' | 'ml';
+
+export interface SmsTemplate {
+  id: string;
+  organizationId: string;
+  name: string;
+  language: SmsLanguage;
+  content: string;
+  variableHints: string;
+  isDefault: boolean;
+  updatedAt: string;
+}
+
+export interface SmsApiConfig {
+  organizationId: string;
+  apiUrl: string;
+  apiKey: string;
+  senderId: string;
+  isEnabled: boolean;
 }
 
 /** Label print configuration */

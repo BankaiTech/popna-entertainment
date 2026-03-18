@@ -12,7 +12,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import {
     Search, Plus, Minus, CreditCard, Receipt, X,
-    WifiOff, ScanBarcode, UserPlus, Pause, RotateCcw, ShoppingCart,
+    WifiOff, ScanBarcode, UserPlus, Pause, ShoppingCart, History,
 } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 import {
@@ -341,9 +341,48 @@ const PointOfSale = () => {
             )}
 
             {/* Header */}
-            <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('pos.title', 'Point of Sale')}</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('pos.subtitle', 'Scan barcode or search to add items')}</p>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('pos.title', 'Point of Sale')}</h1>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('pos.subtitle', 'Scan barcode or search to add items')}</p>
+                </div>
+                {heldBills.length > 0 && (
+                    <div className="relative">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowRetrieveList((v) => !v)}
+                            className="flex items-center gap-2 border-amber-400 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        >
+                            <History className="w-4 h-4" />
+                            {t('pos.retrieveBill', 'Retrieve')}
+                            <span className="bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                                {heldBills.length}
+                            </span>
+                        </Button>
+                        {showRetrieveList && (
+                            <>
+                                <div className="absolute right-0 top-full z-20 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 w-64 max-h-48 overflow-y-auto">
+                                    {heldBills.map((bill) => (
+                                        <button
+                                            key={bill.id}
+                                            type="button"
+                                            onClick={() => { retrieveBill(bill.id); setShowRetrieveList(false); }}
+                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm flex justify-between items-center border-b border-gray-100 dark:border-gray-800 last:border-0"
+                                        >
+                                            <div>
+                                                <span className="block font-medium">{new Date(bill.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-xs text-gray-500">{new Date(bill.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <span className="font-semibold text-blue-600 dark:text-blue-400">{bill.cart.length} {t('pos.items', 'items')}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="fixed inset-0 z-10" onClick={() => setShowRetrieveList(false)} aria-hidden="true" />
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Search + Scan + Product Lookup bar */}
@@ -592,30 +631,7 @@ const PointOfSale = () => {
                             <Pause className="w-5 h-5 mr-2" />
                             {t('pos.holdBill', 'Hold Bill')}
                         </Button>
-                        <div className="relative flex-1">
-                            <Button variant="outline" onClick={() => setShowRetrieveList((v) => !v)} disabled={heldBills.length === 0} className="w-full min-h-[44px]" size="lg">
-                                <RotateCcw className="w-5 h-5 mr-2" />
-                                {t('pos.retrieveBill', 'Retrieve')} {heldBills.length > 0 ? `(${heldBills.length})` : ''}
-                            </Button>
-                            {showRetrieveList && heldBills.length > 0 && (
-                                <>
-                                    <div className="absolute inset-0 top-full z-20 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
-                                        {heldBills.map((bill) => (
-                                            <button
-                                                key={bill.id}
-                                                type="button"
-                                                onClick={() => { retrieveBill(bill.id); setShowRetrieveList(false); }}
-                                                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm flex justify-between items-center"
-                                            >
-                                                <span>{new Date(bill.createdAt).toLocaleString()}</span>
-                                                <span className="font-medium">{bill.cart.length} {t('pos.items', 'items')}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowRetrieveList(false)} aria-hidden="true" />
-                                </>
-                            )}
-                        </div>
+
                         <Button onClick={() => setShowCheckout(true)} disabled={!isOnline || cart.length === 0} className="flex-1 min-h-[48px] text-base font-semibold" size="lg">
                             <CreditCard className="w-5 h-5 mr-2" />
                             {t('pos.checkout', 'Checkout')} - {formatCurrencyINR(grandTotal)}

@@ -274,7 +274,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
               : 'text-muted-foreground hover:text-foreground'
               }`}
           >
-            {t('customerSheet.address', 'Address')}
+            {t('customerSheet.more', 'More')}
           </button>
           <button
             type="button"
