@@ -1,12 +1,15 @@
 // Replace with real API call later
 import type { Plan, Customer, DashboardStats, Provider } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import apiClient from '@/lib/apiClient';
+import { isMockMode, toCamelCase, toSnakeCase, unwrapApiData } from '@/lib/apiHelpers';
 import { mockPlans, mockCustomers, mockPlansExtra, mockCustomersExtra } from './mockData';
 import { complaintsApi } from './complaints';
 import { connectionRequestsApi } from './connectionRequests';
 import { salesInvoicesApi } from './invoices';
 import { productsApi } from './products';
 import { useAuthStore } from '@/store/useAuthStore';
+import { endpoints } from './endpoints';
 
 // Multi-tenant ready - backend will enforce org isolation. All data scoped by organizationId.
 // In-memory storage for mock data (simulates backend) — all orgs combined
@@ -23,6 +26,39 @@ function getCurrentOrgId(): string {
     if (found?.organizationId) return found.organizationId;
   }
   return MOCK_ORGANIZATION_ID;
+}
+
+const emptyAddress = { line1: '', line2: '', city: '', state: '', country: 'India' };
+
+function mapContactToCustomer(raw: Record<string, unknown>): Customer {
+  const c = toCamelCase<Record<string, unknown>>(raw);
+  return {
+    id: Number(c.id),
+    organizationId: String(c.organizationId ?? getCurrentOrgId()),
+    name: String(c.name ?? ''),
+    email: String(c.email ?? ''),
+    mobile: String(c.mobile ?? ''),
+    password: c.password != null ? String(c.password) : undefined,
+    connectionType: (c.connectionType ?? c.contactType ?? '') as Provider,
+    package: String(c.package ?? c.planName ?? ''),
+    status: (c.status === 'Inactive' || c.status === 'inactive' ? 'Inactive' : 'Active') as Customer['status'],
+    description: c.description != null ? String(c.description) : undefined,
+    address: (c.address as Customer['address']) ?? emptyAddress,
+    additionalAddresses: c.additionalAddresses as Customer['additionalAddresses'],
+    createdAt: String(c.createdAt ?? new Date().toISOString()),
+    paymentStatus: c.paymentStatus as Customer['paymentStatus'],
+    paymentDescription: c.paymentDescription != null ? String(c.paymentDescription) : undefined,
+    paymentUpdatedAt: c.paymentUpdatedAt != null ? String(c.paymentUpdatedAt) : undefined,
+    paymentMethod: c.paymentMethod as Customer['paymentMethod'],
+    collectedAmount: c.collectedAmount != null ? Number(c.collectedAmount) : undefined,
+    balanceAmount: c.balanceAmount != null ? Number(c.balanceAmount) : undefined,
+  };
+}
+
+function contactPayload(customer: Partial<Customer>): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...customer };
+  if (customer.connectionType) payload.contact_type = 'customer';
+  return toSnakeCase(payload);
 }
 
 // Plans API
@@ -66,41 +102,58 @@ export const plansApi = {
   },
 };
 
-// Customers API
+// Customers API (backend: /contacts)
 export const customersApi = {
   getAll: async (): Promise<Customer[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(customersData.filter((c) => c.organizationId === orgId));
+    if (isMockMode()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(customersData.filter((c) => c.organizationId === orgId));
+    }
+    const response = await apiClient.get(endpoints.contacts);
+    const list = unwrapApiData<Record<string, unknown>[]>(response);
+    return (Array.isArray(list) ? list : []).map(mapContactToCustomer);
   },
   getById: async (id: number): Promise<Customer> => {
-    // Replace with real API call later
-    const customer = customersData.find((c) => c.id === id);
-    if (!customer) throw new Error('Customer not found');
-    return Promise.resolve(customer);
+    if (isMockMode()) {
+      const customer = customersData.find((c) => c.id === id);
+      if (!customer) throw new Error('Customer not found');
+      return Promise.resolve(customer);
+    }
+    const response = await apiClient.get(`${endpoints.contacts}/${id}`);
+    return mapContactToCustomer(unwrapApiData<Record<string, unknown>>(response));
   },
   create: async (customer: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> => {
-    const newCustomer: Customer = {
-      ...customer,
-      organizationId: customer.organizationId ?? MOCK_ORGANIZATION_ID,
-      id: Math.max(...customersData.map((c) => c.id), 0) + 1,
-      createdAt: new Date().toISOString(),
-    };
-    customersData.push(newCustomer);
-    return Promise.resolve(newCustomer);
+    if (isMockMode()) {
+      const newCustomer: Customer = {
+        ...customer,
+        organizationId: customer.organizationId ?? MOCK_ORGANIZATION_ID,
+        id: Math.max(...customersData.map((c) => c.id), 0) + 1,
+        createdAt: new Date().toISOString(),
+      };
+      customersData.push(newCustomer);
+      return Promise.resolve(newCustomer);
+    }
+    const response = await apiClient.post(endpoints.contacts, contactPayload(customer));
+    return mapContactToCustomer(unwrapApiData<Record<string, unknown>>(response));
   },
   update: async (id: number, customer: Partial<Customer>): Promise<Customer> => {
-    // SaaS Ready - Payment Collection System: collectedAmount, balanceAmount, paymentStatus apply to ALL product types.
-    const index = customersData.findIndex((c) => c.id === id);
-    if (index === -1) throw new Error('Customer not found');
-    customersData[index] = { ...customersData[index], ...customer };
-    return Promise.resolve(customersData[index]);
+    if (isMockMode()) {
+      const index = customersData.findIndex((c) => c.id === id);
+      if (index === -1) throw new Error('Customer not found');
+      customersData[index] = { ...customersData[index], ...customer };
+      return Promise.resolve(customersData[index]);
+    }
+    const response = await apiClient.patch(`${endpoints.contacts}/${id}`, contactPayload(customer));
+    return mapContactToCustomer(unwrapApiData<Record<string, unknown>>(response));
   },
   delete: async (id: number): Promise<void> => {
-    // Replace with real API call later
-    const index = customersData.findIndex((c) => c.id === id);
-    if (index === -1) throw new Error('Customer not found');
-    customersData.splice(index, 1);
-    return Promise.resolve();
+    if (isMockMode()) {
+      const index = customersData.findIndex((c) => c.id === id);
+      if (index === -1) throw new Error('Customer not found');
+      customersData.splice(index, 1);
+      return Promise.resolve();
+    }
+    await apiClient.delete(`${endpoints.contacts}/${id}`);
   },
 };
 
@@ -110,8 +163,10 @@ export const customersApi = {
 // Multi-tenant ready - backend will calculate stats per organization.
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
-    // Replace with real API call later
-    // Multi-tenant ready - backend will isolate by organization
+    if (!isMockMode()) {
+      const response = await apiClient.get(endpoints.dashboardStats);
+      return toCamelCase<DashboardStats>(unwrapApiData(response));
+    }
     const [customers, complaints, connectionRequests, invoices, plans, products] = await Promise.all([
       customersApi.getAll(),
       complaintsApi.getAll(),
@@ -186,7 +241,11 @@ export const dashboardApi = {
     };
   },
   getLastCustomers: async (limit: number = 5): Promise<Customer[]> => {
-    // Replace with real API call later
+    if (!isMockMode()) {
+      const response = await apiClient.get(endpoints.dashboardLastCustomers, { params: { limit } });
+      const list = unwrapApiData<Record<string, unknown>[]>(response);
+      return (Array.isArray(list) ? list : []).map(mapContactToCustomer);
+    }
     const customers = await customersApi.getAll();
     return customers
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

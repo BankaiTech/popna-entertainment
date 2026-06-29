@@ -1,18 +1,21 @@
 // Client folder removed - SaaS multi-tenant architecture used
 import { create } from 'zustand';
+import { authApi } from '@/api/auth';
 import { loginCustomer } from '@/api/customerAuth';
 import { usersApi } from '@/api/users';
 import { superadminUsersApi } from '@/api/superadminUsers';
+import { env } from '@/lib/env';
 import type { ModuleKey, SAPermissionKey, SuperAdminRole } from '@/models/types';
 import { ALL_SA_PERMISSIONS } from '@/models/types';
 
-// SaaS Ready - superadmin for product owner, admin/employee for organizations
 export type UserRole = 'superadmin' | 'admin' | 'employee' | 'customer';
 
 interface AuthState {
   isAuthenticated: boolean;
   role: UserRole | null;
   username: string | null;
+  token: string | null;
+  refreshToken: string | null;
   customerId: number | null;
   customerMobile: string | null;
   organizationId: string | null;
@@ -37,6 +40,8 @@ const loadAuthFromStorage = () => {
         isAuthenticated: true,
         role: 'customer' as UserRole,
         username: customerMobile,
+        token: null,
+        refreshToken: null,
         customerId: parseInt(customerId, 10),
         customerMobile,
         organizationId: null,
@@ -61,14 +66,15 @@ const loadAuthFromStorage = () => {
     // Ignore errors
   }
   return {
-    isAuthenticated: false, role: null, username: null, customerId: null,
-    customerMobile: null, organizationId: null, allowedModules: null,
+    isAuthenticated: false, role: null, username: null, token: null, refreshToken: null,
+    customerId: null, customerMobile: null, organizationId: null, allowedModules: null,
     superAdminRole: null, saPermissions: null,
   };
 };
 
 const saveAuthToStorage = (state: {
   isAuthenticated: boolean; role: UserRole | null; username: string | null;
+  token?: string | null; refreshToken?: string | null;
   customerId: number | null; customerMobile: string | null;
   organizationId?: string | null; allowedModules?: ModuleKey[] | null;
   superAdminRole?: SuperAdminRole | null; saPermissions?: SAPermissionKey[] | null;
@@ -104,19 +110,51 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   hasSAPermission: (key: SAPermissionKey) => {
     const { role, superAdminRole, saPermissions } = get();
     if (role !== 'superadmin') return false;
-    // Full access for super_admin role or legacy sessions without superAdminRole set
     if (superAdminRole === 'super_admin' || superAdminRole === null) return true;
     return saPermissions?.includes(key) ?? false;
   },
 
   login: async (username: string, password: string) => {
+    if (!env.USE_MOCK_API) {
+      try {
+        const tokens = await authApi.login({ username, password });
+        localStorage.setItem('auth-storage', JSON.stringify({ token: tokens.access }));
+
+        const me = await authApi.me();
+        const role: UserRole = me.role === 'superadmin' || me.role === 'super_admin'
+          ? 'superadmin'
+          : me.role === 'admin' ? 'admin' : 'employee';
+
+        const newState = {
+          isAuthenticated: true,
+          role,
+          username: me.username,
+          token: tokens.access,
+          refreshToken: tokens.refresh,
+          customerId: null,
+          customerMobile: null,
+          organizationId: me.organizationId ?? null,
+          allowedModules: me.allowedModules ?? null,
+          superAdminRole: me.superAdminRole ?? (role === 'superadmin' ? 'super_admin' : null),
+          saPermissions: me.saPermissions ?? (role === 'superadmin' ? [...ALL_SA_PERMISSIONS] : null),
+        };
+        set(newState);
+        saveAuthToStorage(newState);
+        if (newState.organizationId) {
+          localStorage.setItem('current_org_id', newState.organizationId);
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     let role: UserRole = 'employee';
     let organizationId: string | null = null;
     let allowedModules: ModuleKey[] | null = null;
     let superAdminRole: SuperAdminRole | null = null;
     let saPermissions: SAPermissionKey[] | null = null;
 
-    // 1) Try superadmin users
     const saUsers = await superadminUsersApi.getAll();
     const matchedSA = saUsers.find(
       (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password && u.status === 'active'
@@ -129,7 +167,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         ? [...ALL_SA_PERMISSIONS]
         : (matchedSA.allowedPermissions || []);
     } else {
-      // 3) Try org users (admin/employee)
       const allUsers = await usersApi.getAll();
       const matchedUser = allUsers.find(
         (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password && u.status === 'active'
@@ -144,6 +181,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
       role,
       username,
+      token: null,
+      refreshToken: null,
       customerId: null,
       customerMobile: null,
       organizationId,
@@ -164,6 +203,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         role: 'customer' as UserRole,
         username: result.customerMobile,
+        token: null,
+        refreshToken: null,
         customerId: result.customerId,
         customerMobile: result.customerMobile,
         organizationId: null,
@@ -183,10 +224,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    if (!env.USE_MOCK_API) {
+      authApi.logout().catch(() => {});
+    }
     const newState = {
       isAuthenticated: false,
       role: null,
       username: null,
+      token: null,
+      refreshToken: null,
       customerId: null,
       customerMobile: null,
       organizationId: null,
@@ -200,6 +246,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem('customer_auth');
     localStorage.removeItem('customer_id');
     localStorage.removeItem('customer_mobile');
+    localStorage.removeItem('current_org_id');
   },
 
   initialize: () => {

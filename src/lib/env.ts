@@ -5,7 +5,7 @@
 
 export const env = {
   /** Base URL for the real backend API. Ignored when USE_MOCK_API is true. */
-  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '',
+  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:3000/api',
 
   /** When true (default) the app uses in-memory mock APIs. Set to false to use the real backend. */
   USE_MOCK_API: (import.meta.env.VITE_USE_MOCK_API as string | undefined) !== 'false',

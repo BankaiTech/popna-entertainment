@@ -1,5 +1,8 @@
 import type { InventoryProduct, Category, SubCategory, Unit, Branch, TaxRate, Warranty } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import apiClient from '@/lib/apiClient';
+import { isMockMode, toCamelCase, toSnakeCase, unwrapApiData } from '@/lib/apiHelpers';
+import { endpoints } from './endpoints';
 
 const now = () => new Date().toISOString();
 
@@ -245,36 +248,69 @@ export const warrantiesApi = {
     },
 };
 
-// ===== Inventory Products API =====
+// ===== Inventory Products API (backend: /inventory) =====
 export const inventoryProductsApi = {
-    getAll: async (): Promise<InventoryProduct[]> => Promise.resolve([...inventoryProductsData]),
+    getAll: async (): Promise<InventoryProduct[]> => {
+        if (isMockMode()) return Promise.resolve([...inventoryProductsData]);
+        const response = await apiClient.get(endpoints.inventory);
+        const list = unwrapApiData<Record<string, unknown>[]>(response);
+        return (Array.isArray(list) ? list : []).map((item) => toCamelCase<InventoryProduct>(item));
+    },
 
     getById: async (id: number): Promise<InventoryProduct> => {
-        const product = inventoryProductsData.find((p) => p.id === id);
-        if (!product) throw new Error('Product not found');
-        return Promise.resolve(product);
+        if (isMockMode()) {
+            const product = inventoryProductsData.find((p) => p.id === id);
+            if (!product) throw new Error('Product not found');
+            return Promise.resolve(product);
+        }
+        const response = await apiClient.get(`${endpoints.inventory}/${id}`);
+        return toCamelCase<InventoryProduct>(unwrapApiData<Record<string, unknown>>(response));
     },
 
     create: async (product: Omit<InventoryProduct, 'id' | 'createdAt'>): Promise<InventoryProduct> => {
-        const newProduct: InventoryProduct = {
+        if (isMockMode()) {
+            const newProduct: InventoryProduct = {
+                ...product,
+                organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
+                id: nextId(inventoryProductsData),
+                createdAt: new Date().toISOString(),
+            };
+            inventoryProductsData.push(newProduct);
+            return Promise.resolve(newProduct);
+        }
+        const response = await apiClient.post(endpoints.inventory, toSnakeCase({
+            catalogType: 'product',
             ...product,
-            organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
-            id: nextId(inventoryProductsData),
-            createdAt: new Date().toISOString(),
-        };
-        inventoryProductsData.push(newProduct);
-        return Promise.resolve(newProduct);
+        } as Record<string, unknown>));
+        return toCamelCase<InventoryProduct>(unwrapApiData<Record<string, unknown>>(response));
     },
 
     update: async (id: number, product: Partial<InventoryProduct>): Promise<InventoryProduct> => {
-        const i = inventoryProductsData.findIndex((p) => p.id === id);
-        if (i === -1) throw new Error('Product not found');
-        inventoryProductsData[i] = { ...inventoryProductsData[i], ...product };
-        return Promise.resolve(inventoryProductsData[i]);
+        if (isMockMode()) {
+            const i = inventoryProductsData.findIndex((p) => p.id === id);
+            if (i === -1) throw new Error('Product not found');
+            inventoryProductsData[i] = { ...inventoryProductsData[i], ...product };
+            return Promise.resolve(inventoryProductsData[i]);
+        }
+        const response = await apiClient.patch(`${endpoints.inventory}/${id}`, toSnakeCase(product as Record<string, unknown>));
+        return toCamelCase<InventoryProduct>(unwrapApiData<Record<string, unknown>>(response));
     },
 
     delete: async (id: number): Promise<void> => {
-        inventoryProductsData = inventoryProductsData.filter((p) => p.id !== id);
+        if (isMockMode()) {
+            inventoryProductsData = inventoryProductsData.filter((p) => p.id !== id);
+            return;
+        }
+        await apiClient.delete(`${endpoints.inventory}/${id}`);
+    },
+
+    getLowStock: async (): Promise<InventoryProduct[]> => {
+        if (isMockMode()) {
+            return inventoryProductsData.filter((p) => p.currentStock != null && p.reorderLevel != null && p.currentStock <= p.reorderLevel);
+        }
+        const response = await apiClient.get(endpoints.inventoryLowStock);
+        const list = unwrapApiData<Record<string, unknown>[]>(response);
+        return (Array.isArray(list) ? list : []).map((item) => toCamelCase<InventoryProduct>(item));
     },
 
     importBulk: async (products: Omit<InventoryProduct, 'id' | 'createdAt'>[]): Promise<InventoryProduct[]> => {

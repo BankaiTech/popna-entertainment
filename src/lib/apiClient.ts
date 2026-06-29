@@ -27,8 +27,8 @@ apiClient.interceptors.request.use((config) => {
   try {
     const raw = localStorage.getItem('auth-storage');
     if (raw) {
-      const parsed = JSON.parse(raw) as { state?: { token?: string } };
-      const token = parsed?.state?.token;
+      const parsed = JSON.parse(raw) as { state?: { token?: string }; token?: string };
+      const token = parsed?.state?.token ?? parsed?.token;
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
