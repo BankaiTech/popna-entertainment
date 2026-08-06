@@ -304,7 +304,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"ORG001\",\n  \"name\": \"Demo Org\",\n  \"status\": \"active\",\n  \"subscription_start\": \"2026-01-01\",\n  \"subscription_end\": \"2027-01-01\"\n}"
+              "raw": "{\n  \"name\": \"Demo Org\",\n  \"status\": \"active\",\n  \"subscription_start\": \"2026-01-01\",\n  \"subscription_end\": \"2027-01-01\",\n  \"industry_type\": \"retail\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/organizations",

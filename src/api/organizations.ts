@@ -1,9 +1,22 @@
 // SaaS Master Controller - Organizations API
-import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus, IndustryType } from '@/models/types';
+import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus, IndustryType, User } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 import { apiGetList, apiGetOne, apiPatch, apiPost } from '@/api/resources';
 import { useMockApi } from '@/lib/http';
 import { getTemplateById } from '@/config/industryTemplates';
+import { usersApi } from '@/api/users';
+
+export interface OrgAdminCredentials {
+  username: string;
+  email: string;
+  password: string;
+  /** Display name; defaults to organization name + " Admin" */
+  name?: string;
+}
+
+export type CreateOrganizationInput = Omit<Organization, 'id'> & {
+  admin: OrgAdminCredentials;
+};
 
 function templateDefaults(type: IndustryType) {
   const tpl = getTemplateById(type);
@@ -85,16 +98,41 @@ export const organizationsApi = {
     }
   },
 
-  create: async (org: Omit<Organization, 'id'>): Promise<Organization> => {
+  create: async (input: CreateOrganizationInput): Promise<Organization> => {
+    const { admin, ...org } = input;
+    const adminName = admin.name?.trim() || `${org.name} Admin`;
+    const adminPayload = {
+      name: adminName,
+      username: admin.username.trim(),
+      email: admin.email.trim(),
+      password: admin.password,
+      role: 'admin' as const,
+      status: 'active' as const,
+    };
+
     if (useMockApi()) {
       const newOrg: Organization = {
         ...org,
         id: `org_${String(organizations.length + 1).padStart(3, '0')}`,
       };
       organizations.push(newOrg);
+      await usersApi.create({
+        ...adminPayload,
+        organizationId: newOrg.id,
+      });
       return newOrg;
     }
-    return apiPost<Organization>('/organizations', org);
+
+    // 1) Create organization
+    const created = await apiPost<Organization>('/organizations', org);
+
+    // 2) Create organization admin so they can log in to this org
+    await apiPost<User>('/users', {
+      ...adminPayload,
+      organizationId: created.id,
+    });
+
+    return created;
   },
 
   update: async (id: string, data: Partial<Organization>): Promise<Organization | null> => {

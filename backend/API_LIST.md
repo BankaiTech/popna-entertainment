@@ -34,6 +34,12 @@ APIs aligned with the consolidated backend schema: **inventory** (products + ISP
 | GET | `/organizations` | List all organizations | Super Admin |
 | GET | `/organizations/:id` | Get organization by id | Super Admin |
 | POST | `/organizations` | Create organization | Super Admin |
+| POST | `/users` | Create org admin/employee (include `organizationId`, `role: admin`) | Super Admin / Admin |
+
+When creating an organization from the Super Admin UI, the app:
+1. `POST /organizations` with org fields
+2. `POST /users` with `{ organizationId, username, email, password, role: "admin", status: "active" }` so the tenant can log in
+
 | PATCH | `/organizations/:id` | Update (name, status, industry_type, terminology, etc.) | Super Admin |
 | PATCH | `/organizations/:id/status` | Update status (active/disabled/suspended) | Super Admin |
 | PATCH | `/organizations/:id/modules` | Update allowed_modules | Super Admin |

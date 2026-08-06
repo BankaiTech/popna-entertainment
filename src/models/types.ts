@@ -228,6 +228,8 @@ export interface User {
   name: string;
   username: string;
   password: string;
+  /** Optional contact email for the login account */
+  email?: string;
   role: 'admin' | 'employee';
   status: 'active' | 'inactive';
   /** Module-based access - which sidebar modules this user can access (employees only) */
