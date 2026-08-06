@@ -51,5 +51,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      // Avoid browser CORS: frontend calls /api → backend on LAN
+      '/api': {
+        target: 'http://192.168.6.108:3000',
+        changeOrigin: true,
+      },
+    },
   },
 });

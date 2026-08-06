@@ -1,5 +1,7 @@
 import type { Expense } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { documentsResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getIndustryExpenses } from './industryMockData';
 
@@ -27,35 +29,50 @@ function generateExpenseNumber(): string {
 
 export const expensesApi = {
   getAll: async (): Promise<Expense[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(expensesData.filter((e) => e.organizationId === orgId));
+    if (useMockApi()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(expensesData.filter((e) => e.organizationId === orgId));
+    }
+    return documentsResource.list<Expense>('expense');
   },
   getById: async (id: number): Promise<Expense> => {
-    const item = expensesData.find((e) => e.id === id);
-    if (!item) throw new Error('Expense not found');
-    return Promise.resolve(item);
+    if (useMockApi()) {
+      const item = expensesData.find((e) => e.id === id);
+      if (!item) throw new Error('Expense not found');
+      return Promise.resolve(item);
+    }
+    return documentsResource.get<Expense>(id);
   },
   create: async (expense: Omit<Expense, 'id' | 'createdAt' | 'expenseNumber'>): Promise<Expense> => {
-    const newExpense: Expense = {
-      ...expense,
-      organizationId: expense.organizationId ?? getCurrentOrgId(),
-      id: nextId++,
-      expenseNumber: generateExpenseNumber(),
-      createdAt: new Date().toISOString(),
-    };
-    expensesData.push(newExpense);
-    return Promise.resolve(newExpense);
+    if (useMockApi()) {
+      const newExpense: Expense = {
+        ...expense,
+        organizationId: expense.organizationId ?? getCurrentOrgId(),
+        id: nextId++,
+        expenseNumber: generateExpenseNumber(),
+        createdAt: new Date().toISOString(),
+      };
+      expensesData.push(newExpense);
+      return Promise.resolve(newExpense);
+    }
+    return documentsResource.create<Expense>({ kind: 'expense', ...expense });
   },
   update: async (id: number, expense: Partial<Expense>): Promise<Expense> => {
-    const index = expensesData.findIndex((e) => e.id === id);
-    if (index === -1) throw new Error('Expense not found');
-    expensesData[index] = { ...expensesData[index], ...expense };
-    return Promise.resolve(expensesData[index]);
+    if (useMockApi()) {
+      const index = expensesData.findIndex((e) => e.id === id);
+      if (index === -1) throw new Error('Expense not found');
+      expensesData[index] = { ...expensesData[index], ...expense };
+      return Promise.resolve(expensesData[index]);
+    }
+    return documentsResource.update<Expense>(id, { ...expense });
   },
   delete: async (id: number): Promise<void> => {
-    const index = expensesData.findIndex((e) => e.id === id);
-    if (index === -1) throw new Error('Expense not found');
-    expensesData.splice(index, 1);
-    return Promise.resolve();
+    if (useMockApi()) {
+      const index = expensesData.findIndex((e) => e.id === id);
+      if (index === -1) throw new Error('Expense not found');
+      expensesData.splice(index, 1);
+      return Promise.resolve();
+    }
+    await documentsResource.remove(id);
   },
 };

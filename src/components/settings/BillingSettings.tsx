@@ -5,12 +5,13 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Save, Smartphone, CreditCard, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { upiPaymentApi } from '@/api/upiPayment';
-import { organizationsApi } from '@/api/organizations';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import type { Organization } from '@/models/types';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
 import { showError } from '@/utils/toast';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
 
 const UPI_APPS = [
   { id: 'gpay', label: 'Google Pay' },
@@ -40,10 +41,13 @@ const BillingSettings = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [upiData, org] = await Promise.all([
-          upiPaymentApi.getConfig(MOCK_ORGANIZATION_ID),
-          organizationsApi.getById(MOCK_ORGANIZATION_ID),
+        const orgId = useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
+        const [upiData] = await Promise.all([
+          upiPaymentApi.getConfig(orgId),
+          // Reuse AdminLayout-cached org — no second GET /organizations/:id
+          useOrganizationStore.getState().fetchOrganization(orgId),
         ]);
+        const org = useOrganizationStore.getState().currentOrganization;
         setOrganization(org ?? null);
         setForm({
           upiId: upiData.upiId ?? '',

@@ -27,10 +27,24 @@ apiClient.interceptors.request.use((config) => {
   try {
     const raw = localStorage.getItem('auth-storage');
     if (raw) {
-      const parsed = JSON.parse(raw) as { state?: { token?: string } };
-      const token = parsed?.state?.token;
+      // Supports both flat auth-storage and zustand-persist `{ state: { token } }` shapes
+      const parsed = JSON.parse(raw) as {
+        token?: string;
+        accessToken?: string;
+        organizationId?: string | null;
+        state?: { token?: string; accessToken?: string; organizationId?: string | null };
+      };
+      const token =
+        parsed.token ??
+        parsed.accessToken ??
+        parsed.state?.token ??
+        parsed.state?.accessToken;
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
+      }
+      const orgFromAuth = parsed.organizationId ?? parsed.state?.organizationId;
+      if (orgFromAuth && !localStorage.getItem('current_org_id')) {
+        config.headers['X-Organization-Id'] = orgFromAuth;
       }
     }
     // Multi-tenant: attach org id if present
@@ -44,29 +58,36 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-/** Response interceptor — handle 401 (redirect to login) and other errors */
+/** Response interceptor — handle 401 (session lost). Do not redirect on CORS/network/5xx. */
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
 
+      // CORS / offline: no response — never treat as logout
+      if (!error.response) {
+        return Promise.reject(error);
+      }
+
       if (status === 401) {
-        // Token expired or invalid — clear auth and go to login
-        localStorage.removeItem('auth-storage');
-        localStorage.removeItem('customer_auth');
-        if (window.location.pathname !== '/login') {
+        // Avoid redirect loop if already on login or login request itself failed
+        const url = String(error.config?.url ?? '');
+        const onLoginPage = window.location.pathname === '/login';
+        if (!url.includes('/auth/login') && !onLoginPage) {
+          localStorage.removeItem('auth-storage');
+          localStorage.removeItem('customer_auth');
           window.location.replace('/login');
         }
         return Promise.reject(error);
       }
 
-      if (status && status >= 500) {
-        // Server error — report to admin email
+      if (status != null && status >= 500) {
         const serverError = new Error(
           `API ${error.config?.method?.toUpperCase()} ${error.config?.url} → ${status}: ${error.message}`
         );
-        reportError(serverError, 'API server error');
+        // Report only — redirecting here caused login ↔ dashboard loops when APIs failed
+        void reportError(serverError, 'API server error');
         return Promise.reject(error);
       }
     }

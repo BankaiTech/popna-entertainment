@@ -1,5 +1,7 @@
 import type { InventoryProduct, Category, SubCategory, Unit, Branch, TaxRate, Warranty } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { inventoryResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 
 const now = () => new Date().toISOString();
 
@@ -247,44 +249,69 @@ export const warrantiesApi = {
 
 // ===== Inventory Products API =====
 export const inventoryProductsApi = {
-    getAll: async (): Promise<InventoryProduct[]> => Promise.resolve([...inventoryProductsData]),
+    getAll: async (): Promise<InventoryProduct[]> => {
+        if (useMockApi()) {
+            return Promise.resolve([...inventoryProductsData]);
+        }
+        return inventoryResource.list<InventoryProduct>({ catalogType: 'product' });
+    },
 
     getById: async (id: number): Promise<InventoryProduct> => {
-        const product = inventoryProductsData.find((p) => p.id === id);
-        if (!product) throw new Error('Product not found');
-        return Promise.resolve(product);
+        if (useMockApi()) {
+            const product = inventoryProductsData.find((p) => p.id === id);
+            if (!product) throw new Error('Product not found');
+            return Promise.resolve(product);
+        }
+        return inventoryResource.get<InventoryProduct>(id);
     },
 
     create: async (product: Omit<InventoryProduct, 'id' | 'createdAt'>): Promise<InventoryProduct> => {
-        const newProduct: InventoryProduct = {
-            ...product,
-            organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
-            id: nextId(inventoryProductsData),
-            createdAt: new Date().toISOString(),
-        };
-        inventoryProductsData.push(newProduct);
-        return Promise.resolve(newProduct);
+        if (useMockApi()) {
+            const newProduct: InventoryProduct = {
+                ...product,
+                organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
+                id: nextId(inventoryProductsData),
+                createdAt: new Date().toISOString(),
+            };
+            inventoryProductsData.push(newProduct);
+            return Promise.resolve(newProduct);
+        }
+        return inventoryResource.create<InventoryProduct>({ catalogType: 'product', ...product });
     },
 
     update: async (id: number, product: Partial<InventoryProduct>): Promise<InventoryProduct> => {
-        const i = inventoryProductsData.findIndex((p) => p.id === id);
-        if (i === -1) throw new Error('Product not found');
-        inventoryProductsData[i] = { ...inventoryProductsData[i], ...product };
-        return Promise.resolve(inventoryProductsData[i]);
+        if (useMockApi()) {
+            const i = inventoryProductsData.findIndex((p) => p.id === id);
+            if (i === -1) throw new Error('Product not found');
+            inventoryProductsData[i] = { ...inventoryProductsData[i], ...product };
+            return Promise.resolve(inventoryProductsData[i]);
+        }
+        return inventoryResource.update<InventoryProduct>(id, { ...product });
     },
 
     delete: async (id: number): Promise<void> => {
-        inventoryProductsData = inventoryProductsData.filter((p) => p.id !== id);
+        if (useMockApi()) {
+            inventoryProductsData = inventoryProductsData.filter((p) => p.id !== id);
+            return;
+        }
+        await inventoryResource.remove(id);
     },
 
     importBulk: async (products: Omit<InventoryProduct, 'id' | 'createdAt'>[]): Promise<InventoryProduct[]> => {
-        const created = products.map((p, i) => ({
-            ...p,
-            organizationId: p.organizationId ?? MOCK_ORGANIZATION_ID,
-            id: nextId(inventoryProductsData) + i,
-            createdAt: new Date().toISOString(),
-        }));
-        inventoryProductsData.push(...created);
-        return Promise.resolve(created);
+        if (useMockApi()) {
+            const created = products.map((p, i) => ({
+                ...p,
+                organizationId: p.organizationId ?? MOCK_ORGANIZATION_ID,
+                id: nextId(inventoryProductsData) + i,
+                createdAt: new Date().toISOString(),
+            }));
+            inventoryProductsData.push(...created);
+            return Promise.resolve(created);
+        }
+        const created: InventoryProduct[] = [];
+        for (const p of products) {
+            created.push(await inventoryResource.create<InventoryProduct>({ catalogType: 'product', ...p }));
+        }
+        return created;
     },
 };

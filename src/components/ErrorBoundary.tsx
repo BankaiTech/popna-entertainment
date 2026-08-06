@@ -1,13 +1,13 @@
 import React from 'react';
-import { reportError } from '@/lib/errorReporter';
+import { reportFatalError } from '@/lib/errorReporter';
 
 interface State {
   hasError: boolean;
 }
 
 /**
- * ErrorBoundary — catches any React render error, reports it via email,
- * and redirects the user to /login. No error UI is shown to end users.
+ * ErrorBoundary — catches React render errors and reports them.
+ * Redirects only for true render crashes, not API/network failures.
  */
 export class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
@@ -20,13 +20,11 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    reportError(error, errorInfo.componentStack ?? 'React componentDidCatch');
+    reportFatalError(error, errorInfo.componentStack ?? 'React componentDidCatch');
   }
 
   render() {
     if (this.state.hasError) {
-      // Show custom fallback if provided, otherwise render nothing while
-      // reportError() is redirecting to /login in the background.
       if (this.props.fallback) return this.props.fallback;
       return null;
     }

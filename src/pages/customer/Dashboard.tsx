@@ -19,12 +19,14 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import Logo from '@/components/Logo';
 import { salesInvoicesApi } from '@/api/invoices';
+import { dashboardApi } from '@/api/api';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { upiPaymentApi } from '@/api/upiPayment';
 import UpiPaymentModal from '@/components/UpiPaymentModal';
 import { getNextDueDateForCustomer } from '@/lib/billingUtils';
 import { showInfo } from '@/utils/toast';
-import { organizationsApi } from '@/api/organizations';
+import { useMockApi } from '@/lib/http';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
 
 const CustomerDashboard = () => {
   const { t } = useTranslation();
@@ -47,9 +49,20 @@ const CustomerDashboard = () => {
       await fetchProducts();
       if (customerId) {
         try {
-          const allInvoices = await salesInvoicesApi.getAll();
-          const customerInvoices = allInvoices.filter((inv) => inv.customerId === customerId);
-          setMyInvoices(customerInvoices);
+          if (!useMockApi()) {
+            const dash = await dashboardApi.getCustomerDashboard<{
+              invoices?: SalesInvoice[];
+            }>();
+            if (Array.isArray(dash.invoices)) {
+              setMyInvoices(dash.invoices);
+            } else {
+              const allInvoices = await salesInvoicesApi.getAll();
+              setMyInvoices(allInvoices.filter((inv) => inv.customerId === customerId));
+            }
+          } else {
+            const allInvoices = await salesInvoicesApi.getAll();
+            setMyInvoices(allInvoices.filter((inv) => inv.customerId === customerId));
+          }
         } catch (error) {
           console.error('Failed to load invoices:', error);
         } finally {
@@ -83,12 +96,26 @@ const CustomerDashboard = () => {
   }, [currentCustomer?.organizationId]);
 
   useEffect(() => {
-    if (!currentCustomer?.organizationId) { setOrgIndustryType(null); return; }
+    if (!currentCustomer?.organizationId) {
+      setOrgIndustryType(null);
+      return;
+    }
     let cancelled = false;
-    organizationsApi.getById(currentCustomer.organizationId).then((org) => {
-      if (!cancelled) setOrgIndustryType(org?.industryType ?? null);
-    }).catch(() => { if (!cancelled) setOrgIndustryType(null); });
-    return () => { cancelled = true; };
+    const orgId = currentCustomer.organizationId;
+    void useOrganizationStore
+      .getState()
+      .fetchOrganization(orgId)
+      .then(() => {
+        if (cancelled) return;
+        const org = useOrganizationStore.getState().currentOrganization;
+        setOrgIndustryType(org?.industryType ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setOrgIndustryType(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [currentCustomer?.organizationId]);
 
   const myComplaints = complaints.filter((c) => c.customerId === customerId);

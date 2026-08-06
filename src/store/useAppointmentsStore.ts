@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { Appointment } from '@/models/types';
 import { appointmentsApi } from '@/api/appointments';
+import { asyncOnce } from '@/lib/asyncOnce';
+
+const APPT_LIST_KEY = 'appointments:list';
 
 interface AppointmentsState {
   appointments: Appointment[];
@@ -18,13 +21,15 @@ export const useAppointmentsStore = create<AppointmentsState>((set) => ({
   error: null,
 
   fetchAppointments: async () => {
-    set({ loading: true, error: null });
-    try {
-      const appointments = await appointmentsApi.getAll();
-      set({ appointments, loading: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
-    }
+    return asyncOnce(APPT_LIST_KEY, async () => {
+      set({ loading: true, error: null });
+      try {
+        const appointments = await appointmentsApi.getAll();
+        set({ appointments, loading: false });
+      } catch (e) {
+        set({ error: (e as Error).message, loading: false });
+      }
+    });
   },
 
   addAppointment: async (appointment) => {

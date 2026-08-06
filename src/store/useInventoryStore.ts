@@ -4,6 +4,9 @@ import {
     inventoryProductsApi, categoriesApi, subCategoriesApi,
     unitsApi, branchesApi, taxRatesApi, warrantiesApi,
 } from '@/api/inventoryProducts';
+import { asyncOnce, clearAsyncOnce } from '@/lib/asyncOnce';
+
+const INV_INIT_KEY = 'inventory:initialize';
 
 interface InventoryState {
     products: InventoryProduct[];
@@ -18,6 +21,7 @@ interface InventoryState {
     initialized: boolean;
 
     initialize: () => Promise<void>;
+    reset: () => void;
     // Products
     fetchProducts: () => Promise<void>;
     addProduct: (product: Omit<InventoryProduct, 'id' | 'createdAt'>) => Promise<void>;
@@ -64,23 +68,41 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     error: null,
     initialized: false,
 
+    reset: () => {
+        clearAsyncOnce(INV_INIT_KEY);
+        set({
+            products: [],
+            categories: [],
+            subCategories: [],
+            units: [],
+            branches: [],
+            taxRates: [],
+            warranties: [],
+            initialized: false,
+            error: null,
+        });
+    },
+
     initialize: async () => {
         if (get().initialized) return;
-        set({ loading: true });
-        try {
-            const [products, categories, subCategories, units, branches, taxRates, warranties] = await Promise.all([
-                inventoryProductsApi.getAll(),
-                categoriesApi.getAll(),
-                subCategoriesApi.getAll(),
-                unitsApi.getAll(),
-                branchesApi.getAll(),
-                taxRatesApi.getAll(),
-                warrantiesApi.getAll(),
-            ]);
-            set({ products, categories, subCategories, units, branches, taxRates, warranties, loading: false, initialized: true });
-        } catch (err) {
-            set({ error: err instanceof Error ? err.message : 'Failed to initialize', loading: false });
-        }
+        return asyncOnce(INV_INIT_KEY, async () => {
+            if (get().initialized) return;
+            set({ loading: true });
+            try {
+                const [products, categories, subCategories, units, branches, taxRates, warranties] = await Promise.all([
+                    inventoryProductsApi.getAll(),
+                    categoriesApi.getAll(),
+                    subCategoriesApi.getAll(),
+                    unitsApi.getAll(),
+                    branchesApi.getAll(),
+                    taxRatesApi.getAll(),
+                    warrantiesApi.getAll(),
+                ]);
+                set({ products, categories, subCategories, units, branches, taxRates, warranties, loading: false, initialized: true });
+            } catch (err) {
+                set({ error: err instanceof Error ? err.message : 'Failed to initialize', loading: false });
+            }
+        });
     },
 
     // Products

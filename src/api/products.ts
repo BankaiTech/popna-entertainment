@@ -2,6 +2,8 @@
 // Products fully dynamic - no hardcoded service names. All product references come from Admin → Settings → Products.
 import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { inventoryResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 import { useAuthStore } from '@/store/useAuthStore';
 
 function getCurrentOrgId(): string {
@@ -10,7 +12,6 @@ function getCurrentOrgId(): string {
 }
 
 const ts = new Date().toISOString();
-// In-memory storage for mock data (simulates backend) — all orgs combined.
 let productsData: Product[] = [
   // org_001 ISP
   { id: 1, organizationId: 'org_001', name: 'Cable', productType: 'cable', isActive: true, createdAt: ts, cutoffDate: 10 },
@@ -38,38 +39,56 @@ let productsData: Product[] = [
 
 export const productsApi = {
   getAll: async (): Promise<Product[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(productsData.filter((p) => p.organizationId === orgId));
+    if (useMockApi()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(productsData.filter((p) => p.organizationId === orgId));
+    }
+    return inventoryResource.list<Product>({ catalogType: 'isp_category' });
   },
   getActive: async (): Promise<Product[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(productsData.filter((p) => p.organizationId === orgId && p.isActive));
+    if (useMockApi()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(productsData.filter((p) => p.organizationId === orgId && p.isActive));
+    }
+    return inventoryResource.list<Product>({ catalogType: 'isp_category', isActive: true });
   },
   getById: async (id: number): Promise<Product> => {
-    const product = productsData.find((p) => p.id === id);
-    if (!product) throw new Error('Product not found');
-    return Promise.resolve(product);
+    if (useMockApi()) {
+      const product = productsData.find((p) => p.id === id);
+      if (!product) throw new Error('Product not found');
+      return Promise.resolve(product);
+    }
+    return inventoryResource.get<Product>(id);
   },
   create: async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
-    const newProduct: Product = {
-      ...product,
-      organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
-      id: Math.max(...productsData.map((p) => p.id), 0) + 1,
-      createdAt: new Date().toISOString(),
-    };
-    productsData.push(newProduct);
-    return Promise.resolve(newProduct);
+    if (useMockApi()) {
+      const newProduct: Product = {
+        ...product,
+        organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
+        id: Math.max(...productsData.map((p) => p.id), 0) + 1,
+        createdAt: new Date().toISOString(),
+      };
+      productsData.push(newProduct);
+      return Promise.resolve(newProduct);
+    }
+    return inventoryResource.create<Product>({ catalogType: 'isp_category', ...product });
   },
   update: async (id: number, product: Partial<Product>): Promise<Product> => {
-    const index = productsData.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    productsData[index] = { ...productsData[index], ...product };
-    return Promise.resolve(productsData[index]);
+    if (useMockApi()) {
+      const index = productsData.findIndex((p) => p.id === id);
+      if (index === -1) throw new Error('Product not found');
+      productsData[index] = { ...productsData[index], ...product };
+      return Promise.resolve(productsData[index]);
+    }
+    return inventoryResource.update<Product>(id, { ...product });
   },
   delete: async (id: number): Promise<void> => {
-    const index = productsData.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    productsData.splice(index, 1);
-    return Promise.resolve();
+    if (useMockApi()) {
+      const index = productsData.findIndex((p) => p.id === id);
+      if (index === -1) throw new Error('Product not found');
+      productsData.splice(index, 1);
+      return Promise.resolve();
+    }
+    await inventoryResource.remove(id);
   },
 };

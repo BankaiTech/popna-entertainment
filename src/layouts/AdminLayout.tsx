@@ -1,5 +1,5 @@
 // Module access controlled by organization permissions
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { useStore } from '@/store/useStore';
 import { useTerminology } from '@/hooks/useTerminology';
+import { useMountFetch } from '@/hooks/useMountFetch';
+import { useInventoryStore } from '@/store/useInventoryStore';
 import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
@@ -38,18 +40,30 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, logout, organizationId, allowedModules } = useAuthStore();
-  const { fetchOrganization, isModuleAllowed, currentOrganization } = useOrganizationStore();
+  const { fetchOrganization, isModuleAllowed, currentOrganization, clearOrganizationCache } =
+    useOrganizationStore();
   const { resetStore } = useStore();
+  const resetInventory = useInventoryStore((s) => s.reset);
   const { term } = useTerminology();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const prevOrgIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchOrganization(organizationId);
-      resetStore(); // Reset store data when org changes so pages reload with correct org data
-    }
-  }, [organizationId, fetchOrganization, resetStore]);
+  // Load org once per organizationId. Skip if store already has it (Strict Mode remount).
+  useMountFetch(
+    () => {
+      if (!organizationId) return;
+      const prev = prevOrgIdRef.current;
+      if (prev !== null && prev !== organizationId) {
+        clearOrganizationCache(prev);
+        resetStore();
+        resetInventory();
+      }
+      prevOrgIdRef.current = organizationId;
+      void fetchOrganization(organizationId);
+    },
+    [organizationId]
+  );
 
   useEffect(() => {
     setIsMobileMenuOpen(false);

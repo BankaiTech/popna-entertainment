@@ -1,5 +1,10 @@
 # API List — Popna (Multi-Industry, Consolidated Schema — 11 Tables)
 
+**Live backend (LAN):** `http://192.168.6.108:3000/api`  
+**Local frontend:** set `VITE_API_BASE_URL=/api` — Vite proxies `/api` → that host (avoids CORS).  
+**Postman:** `backend/postman/Popna_API_Collection.postman_collection.json`  
+**Frontend:** `VITE_API_BASE_URL` + `VITE_USE_MOCK_API=false` (see `.env.example`)
+
 APIs aligned with the consolidated backend schema: **inventory** (products + ISP categories + ISP plans via `catalog_type`), **activities** (complaints, connection_requests, appointments, service_requests, leads), **invoices** (sales + purchase + POS with items JSONB), **documents** (quotations, purchase_orders, expenses), **subscriptions**, **settings** (company profile + website), **audit_log** (+ SMS logs).
 
 ---

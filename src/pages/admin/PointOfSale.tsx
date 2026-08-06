@@ -22,10 +22,12 @@ import {
 } from '@/lib/posReceiptUtils';
 import type { InventoryProduct, Customer } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { salesInvoicesApi } from '@/api/invoices';
+import { posApi } from '@/api/pos';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const PointOfSale = () => {
     const { t } = useTranslation();
+    const organizationId = useAuthStore((s) => s.organizationId) ?? MOCK_ORGANIZATION_ID;
     const { customers, fetchCustomers, addCustomer, companyProfile } = useStore();
     const inventoryStore = useInventoryStore();
     const {
@@ -243,8 +245,8 @@ const PointOfSale = () => {
             const total = getGrandTotal();
             const avgTaxRate = sub > 0 ? Math.round((tax / sub) * 10000) / 100 : 0;
 
-            await salesInvoicesApi.create({
-                organizationId: MOCK_ORGANIZATION_ID,
+            await posApi.create({
+                organizationId,
                 invoiceNumber,
                 customerId: selectedCustomer?.id ?? 0,
                 customerName: selectedCustomer?.name ?? t('pos.walkIn', 'Walk-in Customer'),

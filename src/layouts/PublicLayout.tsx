@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '@/store/useStore';
 import { useTheme } from '@/components/ThemeProvider';
+import { useMountFetch } from '@/hooks/useMountFetch';
 import { cn } from '@/lib/utils';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import FooterCredit from '@/components/FooterCredit';
@@ -41,17 +42,18 @@ const PublicLayout = () => {
   const [activeSection, setActiveSection] = useState('home');
   const { companyProfile, fetchCompanyProfile, fetchActiveProducts } = useStore();
 
-  useEffect(() => {
-    const loadData = async () => {
+  useMountFetch(
+    async (signal) => {
       try {
         await fetchCompanyProfile();
+        if (signal.cancelled) return;
         await fetchActiveProducts();
       } catch (error) {
-        console.error('Error loading layout data:', error);
+        if (!signal.cancelled) console.error('Error loading layout data:', error);
       }
-    };
-    loadData();
-  }, [fetchCompanyProfile, fetchActiveProducts]);
+    },
+    []
+  );
 
   useEffect(() => {
     const onScroll = () => {

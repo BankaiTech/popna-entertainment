@@ -2,6 +2,8 @@
 // SaaS Ready - Admin Full Control: website settings configurable per organization
 import type { WebsiteSettings } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { apiGetOne, apiPatch } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 
 // In-memory storage for mock data (simulates backend)
 let websiteSettingsData: WebsiteSettings | null = {
@@ -36,35 +38,43 @@ let websiteSettingsData: WebsiteSettings | null = {
 
 export const websiteSettingsApi = {
   get: async (): Promise<WebsiteSettings> => {
-    // Replace with real API call later
-    if (!websiteSettingsData) {
-      throw new Error('Website settings not found');
+    if (useMockApi()) {
+      if (!websiteSettingsData) {
+        throw new Error('Website settings not found');
+      }
+      return Promise.resolve(websiteSettingsData);
     }
-    return Promise.resolve(websiteSettingsData);
+    return apiGetOne<WebsiteSettings>('/settings/website');
   },
   update: async (settings: Partial<WebsiteSettings>): Promise<WebsiteSettings> => {
-    // Replace with real API call later
-    if (!websiteSettingsData) {
-      websiteSettingsData = {
-        id: 1,
-        organizationId: MOCK_ORGANIZATION_ID,
-        heroTitle: '',
-        heroSubtitle: '',
-        heroDescription: '',
-        highlightSectionTitle: '',
-        highlightCards: [],
-        ctaButtonText: '',
-        ctaButtonLink: '',
-        updatedAt: new Date().toISOString(),
-        ...settings,
-      };
-    } else {
-      websiteSettingsData = {
-        ...websiteSettingsData,
-        ...settings,
-        updatedAt: new Date().toISOString(),
-      };
+    if (useMockApi()) {
+      if (!websiteSettingsData) {
+        websiteSettingsData = {
+          id: 1,
+          organizationId: MOCK_ORGANIZATION_ID,
+          heroTitle: '',
+          heroSubtitle: '',
+          heroDescription: '',
+          highlightSectionTitle: '',
+          highlightCards: [],
+          ctaButtonText: '',
+          ctaButtonLink: '',
+          updatedAt: new Date().toISOString(),
+          ...settings,
+        };
+      } else {
+        websiteSettingsData = {
+          ...websiteSettingsData,
+          ...settings,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return Promise.resolve(websiteSettingsData);
     }
-    return Promise.resolve(websiteSettingsData);
+    try {
+      return await apiPatch<WebsiteSettings>('/settings/website', settings);
+    } catch {
+      return apiPatch<WebsiteSettings>('/settings', { website: settings });
+    }
   },
 };

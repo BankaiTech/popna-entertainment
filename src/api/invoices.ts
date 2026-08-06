@@ -1,6 +1,8 @@
 // Multi-tenant ready - backend will enforce org isolation
 import type { SalesInvoice } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { invoicesResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getIndustryInvoices } from './industryMockData';
 
@@ -25,32 +27,48 @@ let invoicesData: SalesInvoice[] = [...ispInvoices, ...getIndustryInvoices()];
 
 export const salesInvoicesApi = {
   getAll: async (): Promise<SalesInvoice[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(invoicesData.filter((i) => i.organizationId === orgId));
+    if (useMockApi()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(invoicesData.filter((i) => i.organizationId === orgId));
+    }
+    return invoicesResource.list<SalesInvoice>('sales');
   },
   getById: async (id: number): Promise<SalesInvoice> => {
-    const inv = invoicesData.find((i) => i.id === id);
-    if (!inv) throw new Error('Invoice not found');
-    return inv;
+    if (useMockApi()) {
+      const inv = invoicesData.find((i) => i.id === id);
+      if (!inv) throw new Error('Invoice not found');
+      return inv;
+    }
+    return invoicesResource.get<SalesInvoice>(id);
   },
   create: async (invoice: Omit<SalesInvoice, 'id' | 'createdAt'>): Promise<SalesInvoice> => {
-    const newInv: SalesInvoice = {
-      ...invoice,
-      organizationId: invoice.organizationId ?? getCurrentOrgId(),
-      id: Math.max(0, ...invoicesData.map((i) => i.id)) + 1,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    invoicesData.push(newInv);
-    return newInv;
+    if (useMockApi()) {
+      const newInv: SalesInvoice = {
+        ...invoice,
+        organizationId: invoice.organizationId ?? getCurrentOrgId(),
+        id: Math.max(0, ...invoicesData.map((i) => i.id)) + 1,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+      invoicesData.push(newInv);
+      return newInv;
+    }
+    return invoicesResource.create<SalesInvoice>({ kind: 'sales', ...invoice });
   },
   update: async (id: number, data: Partial<SalesInvoice>): Promise<SalesInvoice> => {
-    const idx = invoicesData.findIndex((i) => i.id === id);
-    if (idx === -1) throw new Error('Invoice not found');
-    invoicesData[idx] = { ...invoicesData[idx], ...data };
-    return invoicesData[idx];
+    if (useMockApi()) {
+      const idx = invoicesData.findIndex((i) => i.id === id);
+      if (idx === -1) throw new Error('Invoice not found');
+      invoicesData[idx] = { ...invoicesData[idx], ...data };
+      return invoicesData[idx];
+    }
+    return invoicesResource.update<SalesInvoice>(id, { ...data });
   },
   downloadPdf: async (id: number): Promise<void> => {
-    const inv = invoicesData.find((i) => i.id === id);
-    if (!inv) throw new Error('Invoice not found');
+    if (useMockApi()) {
+      const inv = invoicesData.find((i) => i.id === id);
+      if (!inv) throw new Error('Invoice not found');
+      return;
+    }
+    await invoicesResource.get<SalesInvoice>(id);
   },
 };

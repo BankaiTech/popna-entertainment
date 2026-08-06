@@ -8,6 +8,12 @@ import { companyProfileApi } from '@/api/companyProfile';
 import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints, mockPlansExtra, mockCustomersExtra } from '@/api/mockData';
 import { useAuthStore } from '@/store/useAuthStore';
+import { asyncOnce, clearAsyncOnce } from '@/lib/asyncOnce';
+
+const STORE_INIT_KEY = 'store:initialize';
+const STORE_STATS_KEY = 'store:dashboardStats';
+const STORE_COMPANY_KEY = 'store:companyProfile';
+const STORE_PRODUCTS_ACTIVE_KEY = 'store:activeProducts';
 
 function resolveOrgId(): string {
   const { organizationId, customerId, role } = useAuthStore.getState();
@@ -151,74 +157,82 @@ export const useStore = create<AppState>((set, get) => ({
   initialized: false,
 
   resetStore: () => {
-    set({ initialized: false, customers: [], plans: [], complaints: [], products: getOrgMockProducts() });
+    clearAsyncOnce(STORE_INIT_KEY);
+    clearAsyncOnce(STORE_STATS_KEY);
+    set({ initialized: false, customers: [], plans: [], complaints: [], products: getOrgMockProducts(), dashboardStats: null });
   },
 
   initialize: async () => {
     const targetOrgId = resolveOrgId();
     const state = get();
-    // Return early only if already initialized AND data is for the correct org
-    if (state.initialized && (state.customers.length === 0 || state.customers[0]?.organizationId === targetOrgId)) return;
-    set({ loading: true });
-    try {
-      const orgData = getOrgMockData();
-      // Initialize with org-specific mock data immediately (no loading screen)
-      set({
-        plans: orgData.plans,
-        customers: orgData.customers,
-        complaints: orgData.complaints,
-        products: orgData.products,
-        companyProfile: { ...mockCompanyProfile }, // Initialize with mock company profile
-        websiteSettings: { ...mockWebsiteSettings }, // Initialize with mock website settings
-        initialized: true,
-        loading: false
-      });
-      // Sync org customers to localStorage for customer login
-      try {
-        localStorage.setItem('customers-data', JSON.stringify(orgData.customers));
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-      // Sync with API (which has the same mock data initially, but will have updates)
-      // Multi-tenant ready - backend will isolate by organization
-      try {
-        const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile, apiWebsiteSettings] = await Promise.all([
-          plansApi.getAll(),
-          customersApi.getAll(),
-          complaintsApi.getAll(),
-          productsApi.getAll().catch(() => getOrgMockProducts()),
-          companyProfileApi.get().catch(() => mockCompanyProfile),
-          websiteSettingsApi.get().catch(() => mockWebsiteSettings),
-        ]);
-        set({
-          plans: apiPlans,
-          customers: apiCustomers,
-          complaints: apiComplaints,
-          products: apiProducts || getOrgMockProducts(),
-          companyProfile: apiCompanyProfile || mockCompanyProfile,
-          websiteSettings: apiWebsiteSettings || mockWebsiteSettings,
-        });
-      } catch (error) {
-        console.error('Error loading data:', error);
-        // Keep mock data if API fails
-        set({
-          products: getOrgMockProducts(),
-          companyProfile: mockCompanyProfile,
-          websiteSettings: mockWebsiteSettings,
-        });
-      }
-      // Sync updated customers to localStorage
-      try {
-        const currentCustomers = get().customers;
-        localStorage.setItem('customers-data', JSON.stringify(currentCustomers));
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-      // Calculate and set dashboard stats
-      await get().fetchDashboardStats();
-    } catch (error) {
-      set({ error: 'Failed to initialize', loading: false });
+    if (state.initialized && (state.customers.length === 0 || state.customers[0]?.organizationId === targetOrgId)) {
+      return;
     }
+
+    return asyncOnce(STORE_INIT_KEY, async () => {
+      // Re-check after winning the gate (Strict Mode / parallel callers)
+      const latest = get();
+      if (latest.initialized && (latest.customers.length === 0 || latest.customers[0]?.organizationId === targetOrgId)) {
+        return;
+      }
+
+      set({ loading: true });
+      try {
+        const orgData = getOrgMockData();
+        set({
+          plans: orgData.plans,
+          customers: orgData.customers,
+          complaints: orgData.complaints,
+          products: orgData.products,
+          companyProfile: { ...mockCompanyProfile },
+          websiteSettings: { ...mockWebsiteSettings },
+          initialized: true,
+          loading: false,
+        });
+        try {
+          localStorage.setItem('customers-data', JSON.stringify(orgData.customers));
+        } catch {
+          // Ignore localStorage errors
+        }
+
+        try {
+          const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile, apiWebsiteSettings] =
+            await Promise.all([
+              plansApi.getAll(),
+              customersApi.getAll(),
+              complaintsApi.getAll(),
+              productsApi.getAll().catch(() => getOrgMockProducts()),
+              companyProfileApi.get().catch(() => mockCompanyProfile),
+              websiteSettingsApi.get().catch(() => mockWebsiteSettings),
+            ]);
+          set({
+            plans: apiPlans,
+            customers: apiCustomers,
+            complaints: apiComplaints,
+            products: apiProducts || getOrgMockProducts(),
+            companyProfile: apiCompanyProfile || mockCompanyProfile,
+            websiteSettings: apiWebsiteSettings || mockWebsiteSettings,
+          });
+        } catch (error) {
+          console.error('Error loading data:', error);
+          set({
+            products: getOrgMockProducts(),
+            companyProfile: mockCompanyProfile,
+            websiteSettings: mockWebsiteSettings,
+          });
+        }
+
+        try {
+          localStorage.setItem('customers-data', JSON.stringify(get().customers));
+        } catch {
+          // Ignore
+        }
+
+        await get().fetchDashboardStats();
+      } catch {
+        set({ error: 'Failed to initialize', loading: false });
+      }
+    });
   },
 
   fetchPlans: async () => {
@@ -423,13 +437,15 @@ export const useStore = create<AppState>((set, get) => ({
       await get().initialize();
       return;
     }
-    set({ loading: true, error: null });
-    try {
-      const stats = await dashboardApi.getStats();
-      set({ dashboardStats: stats, loading: false });
-    } catch (error) {
-      set({ error: 'Failed to fetch dashboard stats', loading: false });
-    }
+    return asyncOnce(STORE_STATS_KEY, async () => {
+      set({ loading: true, error: null });
+      try {
+        const stats = await dashboardApi.getStats();
+        set({ dashboardStats: stats, loading: false });
+      } catch {
+        set({ error: 'Failed to fetch dashboard stats', loading: false });
+      }
+    });
   },
 
   // Product Management - Multi-tenant ready - backend will isolate by organization
@@ -445,14 +461,20 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   fetchActiveProducts: async () => {
-    set({ loading: true, error: null });
-    try {
-      const apiProducts = await productsApi.getActive();
-      set({ products: apiProducts || getOrgMockProducts().filter(p => p.isActive), loading: false });
-    } catch (error) {
-      console.error('Failed to fetch active products:', error);
-      set({ error: 'Failed to fetch active products', loading: false, products: getOrgMockProducts().filter(p => p.isActive) });
-    }
+    return asyncOnce(STORE_PRODUCTS_ACTIVE_KEY, async () => {
+      set({ loading: true, error: null });
+      try {
+        const apiProducts = await productsApi.getActive();
+        set({ products: apiProducts || getOrgMockProducts().filter((p) => p.isActive), loading: false });
+      } catch (error) {
+        console.error('Failed to fetch active products:', error);
+        set({
+          error: 'Failed to fetch active products',
+          loading: false,
+          products: getOrgMockProducts().filter((p) => p.isActive),
+        });
+      }
+    });
   },
 
   addProduct: async (product) => {
@@ -496,14 +518,16 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Company Profile - Multi-tenant ready - backend will isolate by organization
   fetchCompanyProfile: async () => {
-    set({ loading: true, error: null });
-    try {
-      const profile = await companyProfileApi.get();
-      set({ companyProfile: profile || mockCompanyProfile, loading: false });
-    } catch (error) {
-      console.error('Failed to fetch company profile:', error);
-      set({ error: 'Failed to fetch company profile', loading: false, companyProfile: mockCompanyProfile });
-    }
+    return asyncOnce(STORE_COMPANY_KEY, async () => {
+      set({ loading: true, error: null });
+      try {
+        const profile = await companyProfileApi.get();
+        set({ companyProfile: profile || mockCompanyProfile, loading: false });
+      } catch (error) {
+        console.error('Failed to fetch company profile:', error);
+        set({ error: 'Failed to fetch company profile', loading: false, companyProfile: mockCompanyProfile });
+      }
+    });
   },
 
   updateCompanyProfile: async (profile) => {

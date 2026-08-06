@@ -1,5 +1,7 @@
 import type { PurchaseOrder, PurchaseOrderStatus } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { documentsResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getIndustryPurchaseOrders } from './industryMockData';
 
@@ -13,7 +15,6 @@ const getDate = (daysAgo: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-// ISP purchase orders (org_001)
 const ispPurchaseOrders: PurchaseOrder[] = [
   { id: 1, organizationId: MOCK_ORGANIZATION_ID, poNumber: 'PO-2026-001', vendorId: 1, vendorName: 'Cable', items: [{ productId: 1, productName: 'Internet Router AX73', quantity: 10, unitPrice: 4500, taxRate: 18, lineTotal: 10 * 4500 * 1.18, receivedQuantity: 5 }], subtotal: 45000, taxTotal: 8100, grandTotal: 53100, status: 'partial', expectedDate: getDate(7), notes: 'Urgent stock for routers.', createdAt: getDate(-3) },
 ];
@@ -29,36 +30,51 @@ function generatePoNumber(): string {
 
 export const purchaseOrdersApi = {
   getAll: async (): Promise<PurchaseOrder[]> => {
-    const orgId = getCurrentOrgId();
-    return Promise.resolve(purchaseOrdersData.filter((p) => p.organizationId === orgId));
+    if (useMockApi()) {
+      const orgId = getCurrentOrgId();
+      return Promise.resolve(purchaseOrdersData.filter((p) => p.organizationId === orgId));
+    }
+    return documentsResource.list<PurchaseOrder>('purchase_order');
   },
   getById: async (id: number): Promise<PurchaseOrder> => {
-    const po = purchaseOrdersData.find((p) => p.id === id);
-    if (!po) throw new Error('Purchase order not found');
-    return po;
+    if (useMockApi()) {
+      const po = purchaseOrdersData.find((p) => p.id === id);
+      if (!po) throw new Error('Purchase order not found');
+      return po;
+    }
+    return documentsResource.get<PurchaseOrder>(id);
   },
   create: async (po: Omit<PurchaseOrder, 'id' | 'createdAt' | 'poNumber'>): Promise<PurchaseOrder> => {
-    const newPo: PurchaseOrder = {
-      ...po,
-      organizationId: po.organizationId ?? getCurrentOrgId(),
-      id: nextId++,
-      poNumber: generatePoNumber(),
-      createdAt: new Date().toISOString(),
-    };
-    purchaseOrdersData.push(newPo);
-    return newPo;
+    if (useMockApi()) {
+      const newPo: PurchaseOrder = {
+        ...po,
+        organizationId: po.organizationId ?? getCurrentOrgId(),
+        id: nextId++,
+        poNumber: generatePoNumber(),
+        createdAt: new Date().toISOString(),
+      };
+      purchaseOrdersData.push(newPo);
+      return newPo;
+    }
+    return documentsResource.create<PurchaseOrder>({ kind: 'purchase_order', ...po });
   },
   update: async (id: number, data: Partial<PurchaseOrder>): Promise<PurchaseOrder> => {
-    const idx = purchaseOrdersData.findIndex((p) => p.id === id);
-    if (idx === -1) throw new Error('Purchase order not found');
-    purchaseOrdersData[idx] = { ...purchaseOrdersData[idx], ...data };
-    return purchaseOrdersData[idx];
+    if (useMockApi()) {
+      const idx = purchaseOrdersData.findIndex((p) => p.id === id);
+      if (idx === -1) throw new Error('Purchase order not found');
+      purchaseOrdersData[idx] = { ...purchaseOrdersData[idx], ...data };
+      return purchaseOrdersData[idx];
+    }
+    return documentsResource.update<PurchaseOrder>(id, { ...data });
   },
   updateStatus: async (id: number, status: PurchaseOrderStatus): Promise<PurchaseOrder> => {
     return purchaseOrdersApi.update(id, { status });
   },
   delete: async (id: number): Promise<void> => {
-    purchaseOrdersData = purchaseOrdersData.filter((p) => p.id !== id);
-    return Promise.resolve();
+    if (useMockApi()) {
+      purchaseOrdersData = purchaseOrdersData.filter((p) => p.id !== id);
+      return Promise.resolve();
+    }
+    await documentsResource.remove(id);
   },
 };

@@ -1,36 +1,34 @@
 // API ready - replace mock with real backend
 import type { Plan } from '@/models/types';
+import { inventoryResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 import { plansApi as basePlansApi } from './api';
 
 /**
  * Plans API - unified interface for fetching plans
- * Replace with real API call later
+ * Real path: /inventory?catalogType=isp_plan
  */
 export const plansApi = {
-  /**
-   * Get all plans from all services
-   * API ready - replace mock with real backend
-   */
   getAll: async (): Promise<Plan[]> => {
-    return basePlansApi.getAll();
+    if (useMockApi()) {
+      return basePlansApi.getAll();
+    }
+    return inventoryResource.list<Plan>({ catalogType: 'isp_plan' });
   },
 
-  /**
-   * Get plans filtered by product/service name
-   * API ready - replace mock with real backend
-   * @param productName - Name of the product/service (e.g., Cable, Internet 1)
-   */
   getByProductName: async (productName: string): Promise<Plan[]> => {
-    const allPlans = await basePlansApi.getAll();
-    // Filter plans where provider matches product name
+    if (useMockApi()) {
+      const allPlans = await basePlansApi.getAll();
+      return allPlans.filter((plan) => plan.provider === productName);
+    }
+    const allPlans = await inventoryResource.list<Plan>({ catalogType: 'isp_plan' });
     return allPlans.filter((plan) => plan.provider === productName);
   },
 
-  /**
-   * Get plan by ID
-   * API ready - replace mock with real backend
-   */
   getById: async (id: number): Promise<Plan> => {
-    return basePlansApi.getById(id);
+    if (useMockApi()) {
+      return basePlansApi.getById(id);
+    }
+    return inventoryResource.get<Plan>(id);
   },
 };

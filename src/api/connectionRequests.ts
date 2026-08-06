@@ -1,7 +1,7 @@
-// API ready - replace mock with real backend
-// Replace with real backend API later
 import type { ConnectionRequest, ConnectionRequestStatus } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { activitiesResource } from '@/api/resources';
+import { useMockApi } from '@/lib/http';
 
 // Mock data initialization - API ready structure
 const generateMockConnectionRequests = (): ConnectionRequest[] => {
@@ -104,73 +104,66 @@ export interface CreateConnectionRequestPayload {
  * Backend will handle WhatsApp & Email sending
  */
 export const connectionRequestsApi = {
-  /**
-   * Create a new connection request
-   * API ready - replace mock with real backend
-   * Backend will handle WhatsApp & Email sending
-   */
   create: async (payload: CreateConnectionRequestPayload): Promise<ConnectionRequest> => {
-    const newRequest: ConnectionRequest = {
-      id: connectionRequestsData.length > 0
-        ? Math.max(...connectionRequestsData.map((r) => r.id), 0) + 1
-        : 1,
-      organizationId: MOCK_ORGANIZATION_ID,
-      name: payload.name,
-      mobile: payload.mobile,
-      email: payload.email,
-      packageId: payload.packageId,
-      productId: payload.productId,
-      planName: payload.planName,
-      productName: payload.productName,
+    if (useMockApi()) {
+      const newRequest: ConnectionRequest = {
+        id: connectionRequestsData.length > 0
+          ? Math.max(...connectionRequestsData.map((r) => r.id), 0) + 1
+          : 1,
+        organizationId: MOCK_ORGANIZATION_ID,
+        name: payload.name,
+        mobile: payload.mobile,
+        email: payload.email,
+        packageId: payload.packageId,
+        productId: payload.productId,
+        planName: payload.planName,
+        productName: payload.productName,
+        status: 'New',
+        createdAt: new Date().toISOString(),
+      };
+      connectionRequestsData.push(newRequest);
+      return Promise.resolve(newRequest);
+    }
+    return activitiesResource.create<ConnectionRequest>({
+      kind: 'connection_request',
+      ...payload,
       status: 'New',
-      createdAt: new Date().toISOString(),
-    };
-    connectionRequestsData.push(newRequest);
-
-    // Backend will handle WhatsApp & Email sending
-    // WhatsApp Template: Hello {Name}, Thank you for choosing {Plan Name}. Our team will contact you shortly.
-    // Email Template: Subject: New Plan Request - {Plan Name}
-
-    return Promise.resolve(newRequest);
+    });
   },
 
-  /**
-   * Get all connection requests
-   * API ready - replace mock with real backend
-   */
   getAll: async (): Promise<ConnectionRequest[]> => {
-    return Promise.resolve([...connectionRequestsData]);
+    if (useMockApi()) {
+      return Promise.resolve([...connectionRequestsData]);
+    }
+    return activitiesResource.list<ConnectionRequest>('connection_request');
   },
 
-  /**
-   * Get connection request by ID
-   * API ready - replace mock with real backend
-   */
   getById: async (id: number): Promise<ConnectionRequest> => {
-    const request = connectionRequestsData.find((r) => r.id === id);
-    if (!request) throw new Error('Connection request not found');
-    return Promise.resolve(request);
+    if (useMockApi()) {
+      const request = connectionRequestsData.find((r) => r.id === id);
+      if (!request) throw new Error('Connection request not found');
+      return Promise.resolve(request);
+    }
+    return activitiesResource.get<ConnectionRequest>(id);
   },
 
-  /**
-   * Update connection request status
-   * API ready - replace mock with real backend
-   */
   updateStatus: async (id: number, status: ConnectionRequestStatus): Promise<ConnectionRequest> => {
-    const index = connectionRequestsData.findIndex((r) => r.id === id);
-    if (index === -1) throw new Error('Connection request not found');
-    connectionRequestsData[index] = { ...connectionRequestsData[index], status };
-    return Promise.resolve(connectionRequestsData[index]);
+    if (useMockApi()) {
+      const index = connectionRequestsData.findIndex((r) => r.id === id);
+      if (index === -1) throw new Error('Connection request not found');
+      connectionRequestsData[index] = { ...connectionRequestsData[index], status };
+      return Promise.resolve(connectionRequestsData[index]);
+    }
+    return activitiesResource.update<ConnectionRequest>(id, { status });
   },
 
-  /**
-   * Delete connection request
-   * API ready - replace mock with real backend
-   */
   delete: async (id: number): Promise<void> => {
-    const index = connectionRequestsData.findIndex((r) => r.id === id);
-    if (index === -1) throw new Error('Connection request not found');
-    connectionRequestsData.splice(index, 1);
-    return Promise.resolve();
+    if (useMockApi()) {
+      const index = connectionRequestsData.findIndex((r) => r.id === id);
+      if (index === -1) throw new Error('Connection request not found');
+      connectionRequestsData.splice(index, 1);
+      return Promise.resolve();
+    }
+    await activitiesResource.remove(id);
   },
 };

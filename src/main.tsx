@@ -14,8 +14,8 @@ import { sendErrorToPage } from './utils/errorPage';
 // Initialize auth synchronously (reads from localStorage only)
 useAuthStore.getState().initialize();
 
-// Global handlers: log uncaught errors but only redirect for fatal ones.
-// Benign browser errors (ResizeObserver, Script error, etc.) are logged silently.
+// Global handlers: log unexpected errors. Never redirect for API/CORS/network failures —
+// that cleared the page while auth stayed set and bounced login ↔ dashboard in a loop.
 const BENIGN_PATTERNS = [
   'ResizeObserver',
   'Script error',
@@ -23,11 +23,24 @@ const BENIGN_PATTERNS = [
   'Loading CSS chunk',
   'Failed to fetch dynamically imported module',
   'NetworkError',
+  'Network Error',
   'Load failed',
   'cancelled',
+  'CORS',
+  'ERR_NETWORK',
+  'ERR_FAILED',
+  'Failed to fetch',
+  'timeout',
+  'ECONNABORTED',
 ];
 function isBenignError(msg: string): boolean {
-  return BENIGN_PATTERNS.some((p) => msg.includes(p));
+  const lower = msg.toLowerCase();
+  return BENIGN_PATTERNS.some((p) => msg.includes(p) || lower.includes(p.toLowerCase()));
+}
+function isAxiosOrApiRejection(reason: unknown): boolean {
+  if (!reason || typeof reason !== 'object') return false;
+  const r = reason as { isAxiosError?: boolean; config?: unknown; response?: unknown; code?: string };
+  return Boolean(r.isAxiosError || r.config || r.code === 'ERR_NETWORK' || r.code === 'ECONNABORTED');
 }
 window.addEventListener('error', (event) => {
   const msg = event.error?.message ?? event.message ?? '';
@@ -36,12 +49,14 @@ window.addEventListener('error', (event) => {
     return;
   }
   const err = event.error ?? new Error(event.message);
+  // Report only — do not redirect (avoids auth bounce loops)
   sendErrorToPage(err, 'Uncaught error');
 });
 window.addEventListener('unhandledrejection', (event) => {
   const msg = event.reason instanceof Error ? event.reason.message : String(event.reason);
-  if (isBenignError(msg)) {
-    console.warn('[Benign rejection ignored]', msg);
+  if (isBenignError(msg) || isAxiosOrApiRejection(event.reason)) {
+    console.warn('[API/network rejection ignored]', msg);
+    event.preventDefault();
     return;
   }
   const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
@@ -63,8 +78,12 @@ if (rootEl) {
       </ThemeProvider>
     </React.StrictMode>
   );
-  // Run store init after React has mounted (app already has mock data in initial state)
+  // Defer store hydrate until authenticated — avoids firing contacts/org APIs on the login page
   Promise.resolve()
-    .then(() => useStore.getState().initialize())
+    .then(() => {
+      if (useAuthStore.getState().isAuthenticated) {
+        return useStore.getState().initialize();
+      }
+    })
     .catch((err) => console.error('Store init failed:', err));
 }
