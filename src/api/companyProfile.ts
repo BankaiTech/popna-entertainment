@@ -17,7 +17,7 @@ let companyProfileData: CompanyProfile | null = {
   country: 'India',
   pincode: '560001',
   contactNumber: '+91 9876543210',
-  email: 'contact@Popna.com',
+  email: 'contact@example.com',
   updatedAt: new Date().toISOString(),
 };
 

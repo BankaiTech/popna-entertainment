@@ -1,5 +1,5 @@
 /**
- * Central REST endpoint paths for the Popna backend API.
+ * Central REST endpoint paths for the LCO Desk backend API.
  * Base URL is configured via VITE_API_BASE_URL (default: http://127.0.0.1:3000/api).
  */
 export const endpoints = {

@@ -5,4 +5,4 @@
 export { reportError as sendErrorToPage } from '@/lib/errorReporter';
 
 /** @deprecated key no longer used */
-export const ERROR_STORAGE_KEY = '__Popna_error__';
+export const ERROR_STORAGE_KEY = '__lcodesk_error__';

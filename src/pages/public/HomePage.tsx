@@ -396,7 +396,7 @@ const HomePage = () => {
             <p className="mt-4 text-sm sm:text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
               {t(
                 'home.benefits.lead',
-                'Popna brings POS, invoicing, inventory, contacts, and complaint tracking into one simple workflow - so you spend less time managing software and more time growing your business.'
+                'LCO Desk brings subscribers, monthly bills, field collection, SMS reminders and complaints into one simple workflow — so you spend less time chasing payments and more time growing your network.'
               )}
             </p>
 
@@ -473,13 +473,13 @@ const HomePage = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" ref={contactRef}>
           <div className="scroll-reveal opacity-0">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-black mb-6 tracking-tight">
-              {t('home.about.heading', 'About Popna')}
+              {t('home.about.heading', 'About LCO Desk')}
             </h2>
             <div className="mx-auto max-w-3xl mb-10 sm:mb-12 space-y-4 text-left">
               <p className="text-base sm:text-lg text-gray-700 font-medium leading-relaxed">
                 {t(
                   'home.about.p1',
-                  'Popna is a comprehensive business management platform designed for small and medium businesses.'
+                  'LCO Desk is a billing and collection platform built for cable TV and broadband operators.'
                 )}
               </p>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">

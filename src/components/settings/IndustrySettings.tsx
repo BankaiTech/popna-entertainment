@@ -15,7 +15,7 @@ const ICON_MAP: Record<string, string> = {
 const IndustrySettings = () => {
   const { t } = useTranslation();
   const { currentOrganization } = useOrganizationStore();
-  const currentId = (currentOrganization?.industryType ?? 'general') as IndustryType;
+  const currentId = (currentOrganization?.industryType ?? 'isp-cable') as IndustryType;
   const currentTemplate = getTemplateById(currentId);
 
   return (

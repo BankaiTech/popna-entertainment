@@ -8,7 +8,7 @@ interface LogoProps {
     variant?: 'full' | 'icon';
 }
 
-export default function Logo({ className = '', alt = 'Popna', variant = 'full' }: LogoProps) {
+export default function Logo({ className = '', alt = 'LCO Desk', variant = 'full' }: LogoProps) {
     const { resolvedTheme } = useTheme();
 
     if (variant === 'icon') {

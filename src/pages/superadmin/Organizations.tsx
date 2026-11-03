@@ -10,7 +10,7 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import { organizationsApi } from '@/api/organizations';
 import type { Organization, OrganizationStatus, ModuleKey, SettingsTabKey, IndustryType } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
-import { INDUSTRY_TEMPLATES, getTemplateById } from '@/config/industryTemplates';
+import { SELECTABLE_INDUSTRY_TEMPLATES, getTemplateById } from '@/config/industryTemplates';
 import { cn } from '@/lib/utils';
 
 const Organizations = () => {
@@ -25,7 +25,7 @@ const Organizations = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        industryType: 'general' as IndustryType,
+        industryType: 'isp-cable' as IndustryType,
         subscriptionStart: new Date().toISOString().split('T')[0],
         subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
@@ -56,7 +56,7 @@ const Organizations = () => {
         setShowAddModal(false);
         setFormData({
             name: '',
-            industryType: 'general',
+            industryType: 'isp-cable',
             subscriptionStart: new Date().toISOString().split('T')[0],
             subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         });
@@ -157,7 +157,7 @@ const Organizations = () => {
                                         onChange={(e) => handleIndustryChange(org.id, e.target.value as IndustryType)}
                                         className="h-8 text-xs flex-1 min-w-[120px]"
                                     >
-                                        {INDUSTRY_TEMPLATES.map((tpl) => (
+                                        {SELECTABLE_INDUSTRY_TEMPLATES.map((tpl) => (
                                             <option key={tpl.id} value={tpl.id}>{t(tpl.labelKey)}</option>
                                         ))}
                                     </Select>
@@ -194,7 +194,7 @@ const Organizations = () => {
                             <div>
                                 <label className="block text-sm font-medium mb-1">{t('organizations.industryType', 'Industry Type')}</label>
                                 <Select value={formData.industryType} onChange={(e) => setFormData({ ...formData, industryType: e.target.value as IndustryType })}>
-                                    {INDUSTRY_TEMPLATES.map((tpl) => (
+                                    {SELECTABLE_INDUSTRY_TEMPLATES.map((tpl) => (
                                         <option key={tpl.id} value={tpl.id}>{t(tpl.labelKey)}</option>
                                     ))}
                                 </Select>

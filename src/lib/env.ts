@@ -17,7 +17,7 @@ export const env = {
   ERROR_REPORT_EMAIL: (import.meta.env.VITE_ERROR_REPORT_EMAIL as string | undefined) ?? 'bankai.tech12@gmail.com',
 
   /** App metadata */
-  APP_NAME: (import.meta.env.VITE_APP_NAME as string | undefined) ?? 'Popna Billing',
+  APP_NAME: (import.meta.env.VITE_APP_NAME as string | undefined) ?? 'LCO Desk',
   IS_DEV: import.meta.env.DEV as boolean,
   IS_PROD: import.meta.env.PROD as boolean,
 } as const;

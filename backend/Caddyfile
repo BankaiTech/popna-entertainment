@@ -1,0 +1,10 @@
+# Caddy gets and renews the HTTPS certificate automatically, and redirects HTTP to HTTPS.
+{$API_DOMAIN} {
+	encode gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	reverse_proxy web:8000
+}
