@@ -3,6 +3,35 @@
 import type { Product } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { useAuthStore } from '@/store/useAuthStore';
+import apiClient from '@/lib/apiClient';
+import { isMockMode, toCamelCase, unwrapApiData } from '@/lib/apiHelpers';
+import { endpoints } from './endpoints';
+
+function mapProduct(raw: Record<string, unknown>): Product {
+  const p = toCamelCase<Record<string, unknown>>(raw);
+  return {
+    id: Number(p.id),
+    organizationId: String(p.organizationId ?? getCurrentOrgId()),
+    name: String(p.name ?? ''),
+    productType: (p.productType ?? 'cable') as Product['productType'],
+    isActive: Boolean(p.isActive ?? true),
+    createdAt: String(p.createdAt ?? new Date().toISOString()),
+    description: p.description ? String(p.description) : undefined,
+    cutoffDate: p.cutoffDate != null ? Number(p.cutoffDate) : undefined,
+    cutoffDays: p.cutoffDays != null ? Number(p.cutoffDays) : undefined,
+  };
+}
+
+function productPayload(product: Partial<Product>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (product.name !== undefined) payload.name = product.name;
+  if (product.productType !== undefined) payload.product_type = product.productType;
+  if (product.isActive !== undefined) payload.is_active = product.isActive;
+  if (product.description !== undefined) payload.description = product.description;
+  if (product.cutoffDate !== undefined) payload.cutoff_date = product.cutoffDate;
+  if (product.cutoffDays !== undefined) payload.cutoff_days = product.cutoffDays;
+  return payload;
+}
 
 function getCurrentOrgId(): string {
   const { organizationId } = useAuthStore.getState();
@@ -38,19 +67,35 @@ let productsData: Product[] = [
 
 export const productsApi = {
   getAll: async (): Promise<Product[]> => {
+    if (!isMockMode()) {
+      const response = await apiClient.get(endpoints.products);
+      const list = unwrapApiData<Record<string, unknown>[]>(response);
+      return (Array.isArray(list) ? list : []).map(mapProduct);
+    }
     const orgId = getCurrentOrgId();
     return Promise.resolve(productsData.filter((p) => p.organizationId === orgId));
   },
   getActive: async (): Promise<Product[]> => {
+    if (!isMockMode()) {
+      return (await productsApi.getAll()).filter((p) => p.isActive);
+    }
     const orgId = getCurrentOrgId();
     return Promise.resolve(productsData.filter((p) => p.organizationId === orgId && p.isActive));
   },
   getById: async (id: number): Promise<Product> => {
+    if (!isMockMode()) {
+      const response = await apiClient.get(`${endpoints.products}/${id}`);
+      return mapProduct(unwrapApiData<Record<string, unknown>>(response));
+    }
     const product = productsData.find((p) => p.id === id);
     if (!product) throw new Error('Product not found');
     return Promise.resolve(product);
   },
   create: async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
+    if (!isMockMode()) {
+      const response = await apiClient.post(endpoints.products, productPayload(product));
+      return mapProduct(unwrapApiData<Record<string, unknown>>(response));
+    }
     const newProduct: Product = {
       ...product,
       organizationId: product.organizationId ?? MOCK_ORGANIZATION_ID,
@@ -61,12 +106,20 @@ export const productsApi = {
     return Promise.resolve(newProduct);
   },
   update: async (id: number, product: Partial<Product>): Promise<Product> => {
+    if (!isMockMode()) {
+      const response = await apiClient.patch(`${endpoints.products}/${id}`, productPayload(product));
+      return mapProduct(unwrapApiData<Record<string, unknown>>(response));
+    }
     const index = productsData.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Product not found');
     productsData[index] = { ...productsData[index], ...product };
     return Promise.resolve(productsData[index]);
   },
   delete: async (id: number): Promise<void> => {
+    if (!isMockMode()) {
+      await apiClient.delete(`${endpoints.products}/${id}`);
+      return;
+    }
     const index = productsData.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Product not found');
     productsData.splice(index, 1);

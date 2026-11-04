@@ -3,7 +3,7 @@ from rest_framework import serializers
 from core.mixins import OrgScopedPKField, require_org
 from core.validators import normalize_mobile
 
-from .models import Area, Customer, Plan
+from .models import Area, Customer, Plan, Provider
 
 
 class AreaSerializer(serializers.ModelSerializer):
@@ -21,6 +21,29 @@ class AreaSerializer(serializers.ModelSerializer):
         return value.strip()
 
 
+class ProviderSerializer(serializers.ModelSerializer):
+    """Field names match the React app's `Product` type."""
+
+    organization_id = serializers.CharField(read_only=True)
+    product_type = serializers.ChoiceField(source="category", choices=["cable", "internet"])
+    cutoff_date = serializers.IntegerField(source="cutoff_day", required=False, allow_null=True, min_value=1,
+                                           max_value=28)
+
+    class Meta:
+        model = Provider
+        fields = ["id", "organization_id", "name", "product_type", "is_active", "description", "cutoff_date",
+                  "cutoff_days", "created_at"]
+
+    def validate_name(self, value):
+        org = require_org(self.context["request"].user)
+        qs = Provider.objects.filter(organization=org, name__iexact=value.strip())
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A provider with this name already exists.")
+        return value.strip()
+
+
 class PlanSerializer(serializers.ModelSerializer):
     final_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     plan_name = serializers.CharField(source="name", read_only=True)  # frontend field name
@@ -31,11 +54,27 @@ class PlanSerializer(serializers.ModelSerializer):
             "id", "provider", "name", "plan_name", "category", "price", "gst_rate", "final_price",
             "installation_amount", "description", "is_active", "created_at",
         ]
+        extra_kwargs = {"category": {"required": False}}
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, "copy") else dict(data)
+        if data.get("plan_name") and not data.get("name"):
+            data["name"] = data["plan_name"]  # React app sends planName
+        return super().to_internal_value(data)
 
     def validate(self, attrs):
         org = require_org(self.context["request"].user)
         provider = attrs.get("provider", getattr(self.instance, "provider", None))
         name = attrs.get("name", getattr(self.instance, "name", None))
+        # The provider decides cable vs internet, so a plan can never be in the wrong category.
+        known = Provider.objects.filter(organization=org, name__iexact=provider).first() if provider else None
+        if known:
+            attrs["provider"] = known.name
+            attrs["category"] = known.category
+        elif self.instance is None:
+            if not attrs.get("category"):
+                raise serializers.ValidationError({"provider": "Unknown provider. Add it under Products first."})
+            Provider.objects.create(organization=org, name=provider, category=attrs["category"])
         qs = Plan.objects.filter(organization=org, provider__iexact=provider, name__iexact=name)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)

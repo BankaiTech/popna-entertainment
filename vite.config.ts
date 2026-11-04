@@ -1,9 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const fileEnv = loadEnv(mode, process.cwd(), '');
+  // Dev only: '/api' is forwarded to Django, so the browser sees one origin (no CORS setup needed).
+  const devApiTarget = fileEnv.VITE_DEV_API_TARGET || 'http://127.0.0.1:8000';
+
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -16,30 +21,14 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MiB
         navigateFallback: 'index.html',
         navigateFallbackAllowlist: [/^(?!\/(api|v1))/],
-        runtimeCaching: [
-          {
-            urlPattern: /^http:\/\/localhost:3001\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
-              networkTimeoutSeconds: 10,
-            },
-          },
-          // Production API: cache list/data for offline; set VITE_API_ORIGIN or use same origin
-          {
-            urlPattern: /^\/(api|v1)\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
-              networkTimeoutSeconds: 10,
-            },
-          },
-        ],
+        // API responses are NOT cached by the service worker on purpose: they contain customer data,
+        // and on a shared phone the next staff member could otherwise read the previous user's data.
+        runtimeCaching: [],
       },
       devOptions: {
-        enabled: true,
+        // Off in development: a dev service worker keeps old code and shows "New version" on every change.
+        // Turn on only to test PWA install/offline: VITE_PWA_DEV=true in .env
+        enabled: fileEnv.VITE_PWA_DEV === 'true',
         navigateFallbackDenylist: [/^\/api/, /^\/v1/],
       },
     }),
@@ -51,5 +40,9 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/api': { target: devApiTarget, changeOrigin: true },
+    },
   },
+  };
 });

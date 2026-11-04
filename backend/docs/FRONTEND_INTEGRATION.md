@@ -3,7 +3,7 @@
 ## 0. Environment
 ```
 VITE_USE_MOCK_API=false
-VITE_API_BASE_URL=http://127.0.0.1:8000/api      # production: https://api.lcodesk.in/api
+VITE_API_BASE_URL=/api      # dev: Vite proxies /api to Django on :8000. Production: https://<api-domain>/api
 VITE_APP_NAME=LCO Desk
 ```
 

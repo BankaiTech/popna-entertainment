@@ -58,7 +58,7 @@ In the frontend `.env`:
 
 ```
 VITE_USE_MOCK_API=false
-VITE_API_BASE_URL=http://127.0.0.1:8000/api
+VITE_API_BASE_URL=/api            # Vite forwards /api to Django on :8000 (no CORS setup)
 VITE_APP_NAME=LCO Desk
 ```
 

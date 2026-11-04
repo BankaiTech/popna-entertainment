@@ -8,14 +8,28 @@ from core.audit import audit
 from core.mixins import OrgScopedViewSet
 from core.permissions import Roles
 
-from .models import Area, Customer, Plan
-from .serializers import AreaSerializer, CustomerSerializer, PlanSerializer
+from .models import Area, Customer, Plan, Provider
+from .serializers import AreaSerializer, CustomerSerializer, PlanSerializer, ProviderSerializer
 
 
 class AreaViewSet(OrgScopedViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
     search_fields = ["name"]
+
+
+class ProviderViewSet(OrgScopedViewSet):
+    """Mounted at /api/products — the React app's name for providers (GTPL, RailWire...)."""
+
+    queryset = Provider.objects.all()
+    serializer_class = ProviderSerializer
+    filterset_fields = ["category", "is_active"]
+    search_fields = ["name"]
+
+    def perform_destroy(self, instance):
+        if Plan.objects.filter(organization=instance.organization, provider__iexact=instance.name).exists():
+            raise ValidationError({"detail": "Plans use this provider. Mark it inactive instead."})
+        instance.delete()
 
 
 class PlanViewSet(OrgScopedViewSet):
