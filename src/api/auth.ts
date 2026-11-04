@@ -23,6 +23,13 @@ export interface AuthUser {
   allowedModules?: ModuleKey[] | null;
   superAdminRole?: SuperAdminRole | null;
   saPermissions?: SAPermissionKey[] | null;
+  /** Operator users only. Checked when the dashboard opens. */
+  subscription?: {
+    state: 'active' | 'expired' | 'not_started';
+    start: string | null;
+    end: string | null;
+    daysLeft: number | null;
+  } | null;
 }
 
 function normalizeRole(role: string): AuthUser['role'] {
@@ -43,6 +50,7 @@ function mapAuthUser(raw: Record<string, unknown>): AuthUser {
     allowedModules: (user.allowedModules as ModuleKey[] | null) ?? null,
     superAdminRole: (user.superAdminRole as SuperAdminRole | null) ?? null,
     saPermissions: (user.saPermissions as SAPermissionKey[] | null) ?? null,
+    subscription: (user.subscription as AuthUser['subscription']) ?? null,
   };
 }
 

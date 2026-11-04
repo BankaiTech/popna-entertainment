@@ -35,13 +35,28 @@ class MeSerializer(serializers.ModelSerializer):
     super_admin_role = serializers.SerializerMethodField()
     sa_permissions = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    subscription = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "name", "username", "mobile", "role", "lco_role", "status", "organization_id",
             "organization_name", "distributor_id", "allowed_modules", "super_admin_role", "sa_permissions",
+            "subscription",
         ]
+
+    def get_subscription(self, obj):
+        """The app checks this when the dashboard opens. The server also blocks every API call."""
+        org = obj.organization
+        if org is None:
+            return None
+        return {
+            "state": org.subscription_state(),
+            "start": org.subscription_start,
+            "end": org.subscription_end,
+            "days_left": org.days_left(),
+            "organization_status": org.status,
+        }
 
     def get_role(self, obj):
         return FRONTEND_ROLE.get(obj.role, "employee")

@@ -1,7 +1,7 @@
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework import viewsets
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
@@ -12,7 +12,13 @@ from core.permissions import ReadWriteRoles, Roles, role_in
 from customers.models import Customer
 
 from .models import Distributor, Organization
-from .serializers import DistributorSerializer, OrganizationOwnerSerializer, OrganizationSerializer
+from .serializers import (
+    DistributorOrganizationSerializer,
+    DistributorSerializer,
+    OrganizationOwnerSerializer,
+    OrganizationSerializer,
+    OrganizationStatusSerializer,
+)
 
 
 class DistributorViewSet(viewsets.ModelViewSet):
@@ -39,8 +45,11 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         return qs.filter(pk=user.organization_id)
 
     def get_serializer_class(self):
-        if self.request.user.role in (Roles.OWNER, Roles.MANAGER):
+        role = self.request.user.role
+        if role in (Roles.OWNER, Roles.MANAGER):
             return OrganizationOwnerSerializer
+        if role == Roles.DISTRIBUTOR:
+            return DistributorOrganizationSerializer
         return OrganizationSerializer
 
     def perform_create(self, serializer):
@@ -48,20 +57,30 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         if user.role == Roles.OWNER:
             raise PermissionDenied("Owners cannot create operators.")
         if user.role == Roles.DISTRIBUTOR:
-            obj = serializer.save(distributor=user.distributor)
+            # Stays disabled until the app owner sets the subscription and activates it.
+            obj = serializer.save(distributor=user.distributor, status=Organization.Status.DISABLED)
         else:
             obj = serializer.save()
         audit(user, "organization_created", obj)
 
     def perform_update(self, serializer):
         user = self.request.user
-        if user.role == Roles.DISTRIBUTOR and "distributor" in serializer.validated_data:
-            serializer.validated_data["distributor"] = user.distributor
         obj = serializer.save()
         audit(user, "organization_updated", obj, fields=",".join(sorted(serializer.validated_data)))
 
     def perform_destroy(self, instance):
         raise PermissionDenied("Operators are never deleted. Set status to 'suspended' instead.")
+
+    @action(detail=True, methods=["patch"], url_path="status", permission_classes=[role_in(Roles.PLATFORM_ADMIN)])
+    def set_status(self, request, pk=None):
+        """PATCH /api/organizations/{id}/status {"status": "suspended"} — app owner only."""
+        org = self.get_object()
+        body = OrganizationStatusSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        org.status = body.validated_data["status"]
+        org.save(update_fields=["status", "updated_at"])
+        audit(request.user, "organization_status", org, status=org.status)
+        return Response(OrganizationSerializer(org, context={"request": request}).data)
 
 
 @api_view(["GET"])

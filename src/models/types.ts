@@ -22,6 +22,7 @@ export const MOCK_ORGANIZATION_ID = 'org_001';
 
 // SaaS Master Controller created
 export type OrganizationStatus = 'active' | 'disabled' | 'suspended';
+export type SubscriptionState = 'active' | 'expired' | 'not_started';
 
 /** All available modules that can be assigned to an organization */
 export const ALL_MODULES = [
@@ -81,6 +82,16 @@ export interface Organization {
   allowedSettingsTabs: SettingsTabKey[];
   subscriptionStart: string;
   subscriptionEnd: string;
+  /** Short code used in receipt numbers (set by the app owner) */
+  code?: string;
+  /** Limits set by the app owner. null/undefined = unlimited */
+  maxProviders?: number | null;
+  maxPlans?: number | null;
+  providersUsed?: number;
+  plansUsed?: number;
+  /** Computed by the server using the Indian date */
+  subscriptionState?: SubscriptionState;
+  daysLeft?: number | null;
   /** Industry type selected during signup */
   industryType?: IndustryType;
   /** Terminology overrides for industry-specific labels */
