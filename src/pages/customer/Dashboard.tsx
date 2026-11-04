@@ -1,4 +1,4 @@
-// Customer Dashboard - Popna: Plan, Payment, Complaints, Invoices; mobile-first
+// Customer Dashboard - LCO Desk: Plan, Payment, Complaints, Invoices; mobile-first
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

@@ -13,7 +13,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTheme } from '@/components/ThemeProvider';
 import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
-import { INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
+import { SELECTABLE_INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
 
 const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
@@ -36,7 +36,7 @@ const Login = () => {
     name: '',
     mobile: '',
     email: '',
-    businessType: '',
+    businessType: 'isp-cable',
     businessName: '',
   });
 
@@ -162,7 +162,7 @@ const Login = () => {
         businessName: businessName.trim(),
       });
       showSuccess(t('signup.success', 'Sign up request submitted successfully! We will contact you soon.'));
-      setSignupForm({ name: '', mobile: '', email: '', businessType: '', businessName: '' });
+      setSignupForm({ name: '', mobile: '', email: '', businessType: 'isp-cable', businessName: '' });
       setIsSignup(false);
     } catch {
       showError(t('signup.error', 'Failed to submit. Please try again.'));
@@ -194,7 +194,7 @@ const Login = () => {
         />
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 py-16">
           <div className="mb-10">
-            <img src="/Popna Dark.png" alt="Popna" className="h-12 w-auto mb-8" />
+            <img src="/Popna Dark.png" alt="LCO Desk" className="h-12 w-auto mb-8" />
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
               {isSignup ? t('signup.welcomeTitle', 'Get Started') : t('login.welcomeBack', 'Welcome Back')}
             </h1>
@@ -248,7 +248,7 @@ const Login = () => {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-8 lg:hidden">
-              <img src="/Popna.png" alt="Popna" className="h-12 w-auto" />
+              <img src="/Popna.png" alt="LCO Desk" className="h-12 w-auto" />
             </div>
 
             {!isSignup ? (
@@ -369,11 +369,6 @@ const Login = () => {
                     <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
                       {[
                         { label: 'ISP / Cable', user: 'isp' },
-                        { label: 'Retail Store', user: 'retail' },
-                        { label: 'Salon & Spa', user: 'salon' },
-                        { label: 'Restaurant', user: 'restaurant' },
-                        { label: 'Healthcare', user: 'pharmacy' },
-                        { label: 'Gym / Fitness', user: 'gym' },
                       ].map((d) => (
                         <button
                           key={d.user}
@@ -468,7 +463,7 @@ const Login = () => {
                       {t('signup.businessType', 'Business / Company Type')} *
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-1">
-                      {INDUSTRY_TEMPLATES.map((template) => {
+                      {SELECTABLE_INDUSTRY_TEMPLATES.map((template) => {
                         const IconComp = INDUSTRY_ICON_MAP[template.icon] || LayoutGrid;
                         const isSelected = signupForm.businessType === template.id;
                         return (

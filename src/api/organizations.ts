@@ -19,7 +19,7 @@ function templateDefaults(type: IndustryType) {
 let organizations: Organization[] = [
     {
         id: 'org_001',
-        name: 'Popna ISP',
+        name: 'Demo Cable & Net',
         status: 'active',
         subscriptionStart: '2025-01-01',
         subscriptionEnd: '2026-12-31',

@@ -778,6 +778,16 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
   },
 ];
 
+/**
+ * LCO Desk v1 is for cable TV and broadband operators only.
+ * Other templates stay in the code but are not offered in signup or super-admin pickers.
+ */
+export const ENABLED_INDUSTRIES: IndustryType[] = ['isp-cable'];
+export const SELECTABLE_INDUSTRY_TEMPLATES: IndustryTemplate[] = INDUSTRY_TEMPLATES.filter((t) =>
+  ENABLED_INDUSTRIES.includes(t.id)
+);
+export const DEFAULT_INDUSTRY: IndustryType = 'isp-cable';
+
 /** Default contact config when template has none */
 const DEFAULT_CONTACT_CONFIG: NonNullable<IndustryTemplate['contactConfig']> = {
   listColumns: ['id', 'name', 'mobile', 'email', 'connectionType', 'package', 'stbNumber', 'canCafId', 'cin', 'area', 'status', 'paymentStatus', 'creditLimit', 'loyaltyPoints'],

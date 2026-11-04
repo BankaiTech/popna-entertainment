@@ -22,7 +22,7 @@ function buildEmailPayload(error: unknown, context?: string) {
   const err = error instanceof Error ? error : new Error(String(error));
   return {
     to_email: REPORT_EMAIL,
-    app_name: 'Popna Billing',
+    app_name: 'LCO Desk',
     error_message: err.message,
     error_stack: err.stack ?? 'No stack trace',
     error_context: context ?? 'Unknown context',

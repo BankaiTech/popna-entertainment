@@ -79,7 +79,7 @@ const PublicLayout = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const companyName = companyProfile?.companyName || 'Popna';
+  const companyName = companyProfile?.companyName || 'LCO Desk';
   const isHomePage = location.pathname === '/';
 
   const navLinks = isHomePage
@@ -104,7 +104,7 @@ const PublicLayout = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0 logo-nav-wrap">
-              <img src="/Popna Dark.png" alt="Popna" className="logo-nav h-8 w-auto" />
+              <img src="/Popna Dark.png" alt="LCO Desk" className="logo-nav h-8 w-auto" />
             </Link>
 
             {/* Desktop nav links */}
@@ -252,7 +252,7 @@ const PublicLayout = () => {
             {/* Brand column */}
             <div>
               <div className="mb-4">
-                <img src="/Popna Dark.png" alt="Popna" className="h-8 w-auto" />
+                <img src="/Popna Dark.png" alt="LCO Desk" className="h-8 w-auto" />
               </div>
               <h3 className="text-white font-semibold text-base mb-2">{companyName}</h3>
               <p className="text-sm text-gray-400 leading-relaxed">

@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
-import { getTemplateById } from '@/config/industryTemplates';
+import { DEFAULT_INDUSTRY, getTemplateById } from '@/config/industryTemplates';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Link } from 'react-router-dom';
 import { FileText, UserPlus, ShoppingCart, Calendar, RefreshCw } from 'lucide-react';
@@ -18,7 +18,7 @@ function DashboardContent() {
   const { loading, organization } = useDashboardData();
 
   const template = useMemo(
-    () => (currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined),
+    () => getTemplateById(currentOrganization?.industryType ?? DEFAULT_INDUSTRY),
     [currentOrganization?.industryType]
   );
 

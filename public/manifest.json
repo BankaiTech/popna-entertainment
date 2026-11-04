@@ -1,7 +1,7 @@
 {
-  "name": "Popna Business Manager",
-  "short_name": "Popna",
-  "description": "Multi-business admin dashboard for ISP, supermarket, textile, pharmacy, and more.",
+  "name": "LCO Desk",
+  "short_name": "LCO Desk",
+  "description": "Billing, collection and field tracking for cable TV and broadband operators.",
   "start_url": "/admin/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
