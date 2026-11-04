@@ -4,7 +4,7 @@ from django.db import transaction
 
 from accounts.models import User
 from billing.services import generate_bills, month_start
-from customers.models import Area, Customer, Plan
+from customers.models import Area, Customer, Plan, Provider
 from orgs.models import Distributor, Organization
 
 PASSWORD = "Demo@12345"
@@ -39,6 +39,8 @@ class Command(BaseCommand):
             u.set_password(PASSWORD)
             u.save()
         area = Area.objects.create(organization=org, name="Main Road")
+        Provider.objects.create(organization=org, name="GTPL", category="cable", cutoff_day=10)
+        Provider.objects.create(organization=org, name="RailWire", category="internet", cutoff_days=30)
         cable = Plan.objects.create(organization=org, provider="GTPL", name="Basic Pack", category="cable",
                                     price=230)
         net = Plan.objects.create(organization=org, provider="RailWire", name="40 Mbps", category="internet",

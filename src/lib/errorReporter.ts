@@ -1,6 +1,6 @@
 /**
  * Global error reporter — sends error details to the admin email via EmailJS
- * and redirects the user to /login. Never shows an error page to end users.
+ * It never redirects: redirecting a logged-in user to /login caused reload loops.
  *
  * Setup: set the following environment variables in .env
  *   VITE_EMAILJS_SERVICE_ID
@@ -48,29 +48,19 @@ async function sendEmail(payload: Record<string, string>): Promise<void> {
 }
 
 /**
- * Report an error: send email notification then redirect to /login.
+ * Report an error: send an email notification (debounced). No redirect.
  * Safe to call from anywhere (ErrorBoundary, global handlers, API interceptors).
  */
 export async function reportError(error: unknown, context?: string): Promise<void> {
   const now = Date.now();
   if (now - _lastReportTime < DEBOUNCE_MS) {
-    // Already reported recently — still redirect but skip email
-    redirectToLogin();
-    return;
+    return; // already reported recently
   }
   _lastReportTime = now;
 
   const payload = buildEmailPayload(error, context);
 
-  // Fire email without awaiting so redirect happens immediately
+  console.error('[LCO Desk] reported error:', error, context ?? '');
   sendEmail(payload).catch(() => undefined);
-
-  redirectToLogin();
 }
 
-function redirectToLogin(): void {
-  // Use replace so the broken page is removed from history
-  if (window.location.pathname !== '/login') {
-    window.location.replace('/login');
-  }
-}

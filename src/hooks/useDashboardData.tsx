@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store/useAuthStore';
 import { useEffect, useState, useMemo, createContext, useContext } from 'react';
 import { useStore } from '@/store/useStore';
 import { useInventoryStore } from '@/store/useInventoryStore';
@@ -81,7 +82,8 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
       setLastCustomers(sorted);
       const allInvoices = await salesInvoicesApi.getAll();
       setInvoices(allInvoices);
-      const org = await organizationsApi.getById(MOCK_ORGANIZATION_ID);
+      const orgId = useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
+      const org = await organizationsApi.getById(orgId).catch(() => null);
       setOrganization(org ?? null);
       await fetchAppointments();
     };

@@ -14,6 +14,30 @@ class ServiceCategory(models.TextChoices):
     INTERNET = "internet", "Internet"
 
 
+class Provider(OrgOwnedModel):
+    """A service the operator sells (GTPL cable, RailWire, BSNL...). The React app calls these 'products'."""
+
+    name = models.CharField(max_length=50)
+    category = models.CharField(max_length=20, choices=ServiceCategory.choices)
+    is_active = models.BooleanField(default=True)
+    description = models.TextField(blank=True)
+    cutoff_day = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(28)],
+        help_text="Cable: bill due day of month for this provider's customers",
+    )
+    cutoff_days = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(90)],
+        help_text="Internet: days of service per recharge (for information)",
+    )
+
+    class Meta:
+        ordering = ["category", "name"]
+        constraints = [models.UniqueConstraint(fields=["organization", "name"], name="uniq_provider_per_org")]
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
+
+
 class Area(OrgOwnedModel):
     name = models.CharField(max_length=100)
 
@@ -104,7 +128,15 @@ class Customer(OrgOwnedModel):
         return self.plan.category == ServiceCategory.CABLE
 
     def effective_due_day(self):
-        return self.due_day or self.organization.default_due_day
+        """Customer's own due day → provider's due day (cable) → operator default."""
+        if self.due_day:
+            return self.due_day
+        provider = Provider.objects.filter(
+            organization_id=self.organization_id, name__iexact=self.plan.provider
+        ).only("cutoff_day").first()
+        if provider and provider.cutoff_day:
+            return provider.cutoff_day
+        return self.organization.default_due_day
 
     def monthly_amount(self):
         amount = self.plan.final_price * (Decimal(100) - self.permanent_discount) / Decimal(100)

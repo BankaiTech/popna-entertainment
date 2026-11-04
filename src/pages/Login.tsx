@@ -14,6 +14,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
 import { SELECTABLE_INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
+import { env } from '@/lib/env';
 
 const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
@@ -360,7 +361,8 @@ const Login = () => {
                   </p>
                 </div>
 
-                {/* Demo credentials */}
+                {/* Demo credentials — mock mode only, never shown with the real backend */}
+                {env.USE_MOCK_API && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 max-h-64 overflow-y-auto">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     {t('login.demoCredentials')}
@@ -383,6 +385,7 @@ const Login = () => {
                     </div>
                   </div>
                 </div>
+                )}
               </>
             ) : (
               <>

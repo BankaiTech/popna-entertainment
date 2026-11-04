@@ -8,7 +8,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/useAuthStore';
 import { useStore } from './store/useStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ThemeProvider } from './components/ThemeProvider';
+import { ThemeProvider, ThemeRouteSync } from './components/ThemeProvider';
 import { sendErrorToPage } from './utils/errorPage';
 
 // Initialize auth synchronously (reads from localStorage only)
@@ -39,6 +39,11 @@ window.addEventListener('error', (event) => {
   sendErrorToPage(err, 'Uncaught error');
 });
 window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason as { isAxiosError?: boolean; response?: { status?: number } } | undefined;
+  if (reason?.isAxiosError && (reason.response?.status ?? 0) < 500) {
+    console.warn('[API error not handled by a screen]', event.reason);
+    return;
+  }
   const msg = event.reason instanceof Error ? event.reason.message : String(event.reason);
   if (isBenignError(msg)) {
     console.warn('[Benign rejection ignored]', msg);
@@ -56,6 +61,7 @@ if (rootEl) {
       <ThemeProvider>
         <ErrorBoundary>
           <BrowserRouter>
+            <ThemeRouteSync />
             <App />
             <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           </BrowserRouter>

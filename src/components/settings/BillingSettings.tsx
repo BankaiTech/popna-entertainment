@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store/useAuthStore';
 // Billing & UPI payment settings - API ready
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,9 +41,10 @@ const BillingSettings = () => {
   useEffect(() => {
     const load = async () => {
       try {
+        const orgId = useAuthStore.getState().organizationId ?? MOCK_ORGANIZATION_ID;
         const [upiData, org] = await Promise.all([
-          upiPaymentApi.getConfig(MOCK_ORGANIZATION_ID),
-          organizationsApi.getById(MOCK_ORGANIZATION_ID),
+          upiPaymentApi.getConfig(orgId),
+          organizationsApi.getById(orgId).catch(() => null),
         ]);
         setOrganization(org ?? null);
         setForm({

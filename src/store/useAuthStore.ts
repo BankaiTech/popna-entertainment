@@ -225,7 +225,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     if (!env.USE_MOCK_API) {
-      authApi.logout().catch(() => {});
+      authApi.logout(get().refreshToken).catch(() => {});
+      localStorage.removeItem('current_org_id');
     }
     const newState = {
       isAuthenticated: false,

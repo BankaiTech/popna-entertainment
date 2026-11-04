@@ -61,23 +61,66 @@ function contactPayload(customer: Partial<Customer>): Record<string, unknown> {
   return toSnakeCase(payload);
 }
 
+function mapPlan(raw: Record<string, unknown>): Plan {
+  const p = toCamelCase<Record<string, unknown>>(raw);
+  return {
+    id: Number(p.id),
+    organizationId: getCurrentOrgId(),
+    provider: String(p.provider ?? '') as Provider,
+    planName: String(p.planName ?? p.name ?? ''),
+    imageUrl: '',
+    price: Number(p.price ?? 0),
+    gstRate: Number(p.gstRate ?? 0),
+    installationAmount: Number(p.installationAmount ?? 0),
+    description: String(p.description ?? ''),
+    permanentDiscount: 0,
+  };
+}
+
+function planPayload(plan: Partial<Plan>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (plan.provider !== undefined) payload.provider = plan.provider;
+  if (plan.planName !== undefined) payload.name = plan.planName;
+  if (plan.price !== undefined) payload.price = plan.price;
+  if (plan.gstRate !== undefined) payload.gst_rate = plan.gstRate;
+  if (plan.installationAmount !== undefined) payload.installation_amount = plan.installationAmount;
+  if (plan.description !== undefined) payload.description = plan.description;
+  return payload;
+}
+
 // Plans API
 export const plansApi = {
   getAll: async (): Promise<Plan[]> => {
+    if (!isMockMode()) {
+      const response = await apiClient.get(endpoints.plans);
+      const list = unwrapApiData<Record<string, unknown>[]>(response);
+      return (Array.isArray(list) ? list : []).map(mapPlan);
+    }
     const orgId = getCurrentOrgId();
     return Promise.resolve(plansData.filter((p) => p.organizationId === orgId));
   },
   getByProvider: async (provider: Provider): Promise<Plan[]> => {
+    if (!isMockMode()) {
+      const all = await plansApi.getAll();
+      return all.filter((p) => p.provider.toLowerCase() === String(provider).toLowerCase());
+    }
     const orgId = getCurrentOrgId();
     return Promise.resolve(plansData.filter((p) => p.organizationId === orgId && p.provider === provider));
   },
   getById: async (id: number): Promise<Plan> => {
-    // Replace with real API call later
+    if (!isMockMode()) {
+      const response = await apiClient.get(`${endpoints.plans}/${id}`);
+      return mapPlan(unwrapApiData<Record<string, unknown>>(response));
+    }
     const plan = plansData.find((p) => p.id === id);
     if (!plan) throw new Error('Plan not found');
     return Promise.resolve(plan);
   },
   create: async (plan: Omit<Plan, 'id'>): Promise<Plan> => {
+    if (!isMockMode()) {
+      const response = await apiClient.post(endpoints.plans, planPayload(plan));
+      return mapPlan(unwrapApiData<Record<string, unknown>>(response));
+    }
     const newPlan: Plan = {
       ...plan,
       organizationId: plan.organizationId ?? MOCK_ORGANIZATION_ID,
@@ -87,14 +130,20 @@ export const plansApi = {
     return Promise.resolve(newPlan);
   },
   update: async (id: number, plan: Partial<Plan>): Promise<Plan> => {
-    // Replace with real API call later
+    if (!isMockMode()) {
+      const response = await apiClient.patch(`${endpoints.plans}/${id}`, planPayload(plan));
+      return mapPlan(unwrapApiData<Record<string, unknown>>(response));
+    }
     const index = plansData.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Plan not found');
     plansData[index] = { ...plansData[index], ...plan };
     return Promise.resolve(plansData[index]);
   },
   delete: async (id: number): Promise<void> => {
-    // Replace with real API call later
+    if (!isMockMode()) {
+      await apiClient.delete(`${endpoints.plans}/${id}`);
+      return;
+    }
     const index = plansData.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Plan not found');
     plansData.splice(index, 1);
@@ -165,7 +214,37 @@ export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
     if (!isMockMode()) {
       const response = await apiClient.get(endpoints.dashboardStats);
-      return toCamelCase<DashboardStats>(unwrapApiData(response));
+      const s = unwrapApiData<{
+        customers?: { total?: number; active?: number; inactive?: number; new_this_month?: number };
+        by_provider?: { provider: string; active: number; inactive: number }[];
+        this_month?: { billed?: string | number; collected?: string | number };
+      }>(response);
+      const activeByProvider: Record<string, number> = {};
+      const inactiveByProvider: Record<string, number> = {};
+      (s.by_provider ?? []).forEach((r) => {
+        activeByProvider[r.provider] = r.active;
+        inactiveByProvider[r.provider] = r.inactive;
+      });
+      const billed = Number(s.this_month?.billed ?? 0);
+      const collected = Number(s.this_month?.collected ?? 0);
+      return {
+        totalCustomers: s.customers?.total ?? 0,
+        newCustomersThisMonth: s.customers?.new_this_month ?? 0,
+        activeCustomers: s.customers?.active ?? 0,
+        inactiveCustomers: s.customers?.inactive ?? 0,
+        activeByProvider,
+        inactiveByProvider,
+        totalAmountCollected: collected,
+        totalPendingAmount: Math.max(billed - collected, 0),
+        overdueAmount: 0,
+        totalComplaints: 0,
+        activeComplaints: 0,
+        onHoldComplaints: 0,
+        newConnectionRequests: 0,
+        convertedConnections: 0,
+        totalActivePlans: 0,
+        totalProducts: Object.keys(activeByProvider).length,
+      };
     }
     const [customers, complaints, connectionRequests, invoices, plans, products] = await Promise.all([
       customersApi.getAll(),
@@ -242,9 +321,9 @@ export const dashboardApi = {
   },
   getLastCustomers: async (limit: number = 5): Promise<Customer[]> => {
     if (!isMockMode()) {
-      const response = await apiClient.get(endpoints.dashboardLastCustomers, { params: { limit } });
+      const response = await apiClient.get(endpoints.contacts, { params: { ordering: '-created_at' } });
       const list = unwrapApiData<Record<string, unknown>[]>(response);
-      return (Array.isArray(list) ? list : []).map(mapContactToCustomer);
+      return (Array.isArray(list) ? list : []).slice(0, limit).map(mapContactToCustomer);
     }
     const customers = await customersApi.getAll();
     return customers

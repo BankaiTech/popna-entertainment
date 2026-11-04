@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import LoginView, RefreshView, UserViewSet, logout_view, me_view
 from billing.views import BillViewSet, PaymentViewSet
 from core.views import dashboard_stats, health
-from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet
+from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet
 from notifications.views import SmsLogViewSet
 from orgs.views import DistributorViewSet, OrganizationViewSet, distributor_summary
 from tracking import views as tracking
@@ -16,6 +16,7 @@ router.register("organizations", OrganizationViewSet, basename="organization")
 router.register("distributors", DistributorViewSet, basename="distributor")
 router.register("areas", AreaViewSet, basename="area")
 router.register("plans", PlanViewSet, basename="plan")
+router.register("products", ProviderViewSet, basename="product")  # providers; name used by the React app
 router.register("contacts", CustomerViewSet, basename="contact")  # name used by the React app
 router.register("customers", CustomerViewSet, basename="customer")
 router.register("bills", BillViewSet, basename="bill")

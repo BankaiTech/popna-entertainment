@@ -1,16 +1,11 @@
 /**
- * Axios HTTP client for real backend API integration.
+ * Axios HTTP client for the LCO Desk Django API.
  *
- * Usage:
- *   Set VITE_USE_MOCK_API=false and VITE_API_BASE_URL=https://api.example.com in .env
- *   Then replace mock API calls with: apiClient.get('/contacts'), apiClient.post('/invoices', data), etc.
- *
- * Currently the app uses in-memory mock APIs (env.USE_MOCK_API === true).
- * When you are ready to connect a real backend, flip the env flag and update
- * each API module to call apiClient instead of the mock functions.
+ * Dev:  VITE_USE_MOCK_API=false and VITE_API_BASE_URL=/api  (Vite proxies /api to Django on :8000)
+ * Prod: VITE_API_BASE_URL=https://<your-api-domain>/api
  */
 
-import axios from 'axios';
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { env } from './env';
 import { reportError } from './errorReporter';
 
@@ -22,49 +17,121 @@ export const apiClient = axios.create({
   },
 });
 
-/** Inject auth token from localStorage on every request */
-apiClient.interceptors.request.use((config) => {
+type StoredAuth = { state?: { token?: string; refreshToken?: string }; token?: string; refreshToken?: string };
+
+function readAuth(): StoredAuth | null {
   try {
     const raw = localStorage.getItem('auth-storage');
-    if (raw) {
-      const parsed = JSON.parse(raw) as { state?: { token?: string }; token?: string };
-      const token = parsed?.state?.token ?? parsed?.token;
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-    // Multi-tenant: attach org id if present
-    const orgId = localStorage.getItem('current_org_id');
-    if (orgId) {
-      config.headers['X-Organization-Id'] = orgId;
-    }
+    return raw ? (JSON.parse(raw) as StoredAuth) : null;
   } catch {
-    // localStorage not available — continue without token
+    return null;
+  }
+}
+
+function getAccessToken(): string | undefined {
+  const a = readAuth();
+  return a?.state?.token ?? a?.token;
+}
+
+function getRefreshToken(): string | undefined {
+  const a = readAuth();
+  return a?.state?.refreshToken ?? a?.refreshToken;
+}
+
+function saveTokens(access: string, refresh?: string) {
+  const a = readAuth() ?? {};
+  const next = { ...a, token: access, ...(refresh ? { refreshToken: refresh } : {}) };
+  localStorage.setItem('auth-storage', JSON.stringify(next));
+}
+
+function clearAuthAndGoToLogin() {
+  localStorage.removeItem('auth-storage');
+  localStorage.removeItem('customer_auth');
+  localStorage.removeItem('current_org_id');
+  if (window.location.pathname !== '/login') {
+    window.location.replace('/login');
+  }
+}
+
+/**
+ * Modules the Django backend does not have yet. GET requests return an empty list instead of
+ * hitting the network (so screens stay usable); writes fail with a clear message.
+ * Remove an entry here when its backend endpoint is built.
+ */
+const NOT_BUILT_YET = [
+  '/superadmin/users', '/inventory', '/activities', '/invoices', '/pos', '/documents', '/subscriptions',
+  '/settings', '/audit-log', '/sms/send', '/signup-requests', '/customer/dashboard',
+];
+
+function isNotBuiltYet(url?: string): boolean {
+  if (!url) return false;
+  const path = url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/api/, '').split('?')[0];
+  return NOT_BUILT_YET.some((prefix) => path === prefix || path.startsWith(prefix + '/'));
+}
+
+/** Attach the access token. The organization comes from the token on the server — never from the client. */
+apiClient.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (!env.USE_MOCK_API && isNotBuiltYet(config.url)) {
+    const method = (config.method ?? 'get').toLowerCase();
+    config.adapter = async () => {
+      if (method === 'get') {
+        return { data: [], status: 200, statusText: 'OK', headers: {}, config };
+      }
+      throw new axios.AxiosError('This feature is not available yet.', 'ERR_NOT_BUILT', config);
+    };
   }
   return config;
 });
 
-/** Response interceptor — handle 401 (redirect to login) and other errors */
+// One refresh at a time; other 401s wait for it.
+let refreshing: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
+  try {
+    const res = await axios.post(`${env.API_BASE_URL}/auth/refresh`, { refresh }, { timeout: 15_000 });
+    const access = res.data?.access as string | undefined;
+    if (!access) return null;
+    saveTokens(access, res.data?.refresh);
+    return access;
+  } catch {
+    return null;
+  }
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
+      const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+      const url = original?.url ?? '';
 
-      if (status === 401) {
-        // Token expired or invalid — clear auth and go to login
-        localStorage.removeItem('auth-storage');
-        localStorage.removeItem('customer_auth');
-        if (window.location.pathname !== '/login') {
-          window.location.replace('/login');
+      if (status === 401 && original && !original._retried && !url.includes('/auth/')) {
+        original._retried = true;
+        refreshing = refreshing ?? refreshAccessToken().finally(() => { refreshing = null; });
+        const newToken = await refreshing;
+        if (newToken) {
+          original.headers['Authorization'] = `Bearer ${newToken}`;
+          return apiClient(original);
         }
+        clearAuthAndGoToLogin();
+        return Promise.reject(error);
+      }
+
+      if (status === 401 && !url.includes('/auth/login')) {
+        clearAuthAndGoToLogin();
         return Promise.reject(error);
       }
 
       if (status && status >= 500) {
-        // Server error — report to admin email
         const serverError = new Error(
-          `API ${error.config?.method?.toUpperCase()} ${error.config?.url} → ${status}: ${error.message}`
+          `API ${original?.method?.toUpperCase()} ${url} → ${status}: ${error.message}`
         );
         reportError(serverError, 'API server error');
         return Promise.reject(error);

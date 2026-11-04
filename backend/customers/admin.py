@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Area, Customer, Plan
+from .models import Area, Customer, Plan, Provider
 
 
 @admin.register(Area)
@@ -20,3 +20,9 @@ class CustomerAdmin(admin.ModelAdmin):
     list_display = ["name", "mobile", "plan", "area", "status", "organization"]
     list_filter = ["organization", "status", "plan__category"]
     search_fields = ["name", "mobile", "customer_code"]
+
+
+@admin.register(Provider)
+class ProviderAdmin(admin.ModelAdmin):
+    list_display = ["name", "category", "cutoff_day", "organization", "is_active"]
+    list_filter = ["organization", "category"]
