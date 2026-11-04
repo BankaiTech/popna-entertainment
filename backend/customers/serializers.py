@@ -6,6 +6,19 @@ from core.validators import normalize_mobile
 from .models import Area, Customer, Plan, Provider
 
 
+def check_limit(org, kind):
+    """Enforce the provider / plan limits the app owner set for this operator."""
+    limit = org.max_providers if kind == "providers" else org.max_plans
+    if limit is None:
+        return
+    model = Provider if kind == "providers" else Plan
+    if model.objects.filter(organization=org).count() >= limit:
+        raise serializers.ValidationError({
+            "detail": f"Your subscription allows up to {limit} {kind}. Contact LCO Desk to increase it.",
+            "code": f"limit_{kind}",
+        })
+
+
 class AreaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Area
@@ -33,6 +46,11 @@ class ProviderSerializer(serializers.ModelSerializer):
         model = Provider
         fields = ["id", "organization_id", "name", "product_type", "is_active", "description", "cutoff_date",
                   "cutoff_days", "created_at"]
+
+    def validate(self, attrs):
+        if self.instance is None:
+            check_limit(require_org(self.context["request"].user), "providers")
+        return attrs
 
     def validate_name(self, value):
         org = require_org(self.context["request"].user)
@@ -68,12 +86,15 @@ class PlanSerializer(serializers.ModelSerializer):
         name = attrs.get("name", getattr(self.instance, "name", None))
         # The provider decides cable vs internet, so a plan can never be in the wrong category.
         known = Provider.objects.filter(organization=org, name__iexact=provider).first() if provider else None
+        if self.instance is None:
+            check_limit(org, "plans")
         if known:
             attrs["provider"] = known.name
             attrs["category"] = known.category
         elif self.instance is None:
             if not attrs.get("category"):
                 raise serializers.ValidationError({"provider": "Unknown provider. Add it under Products first."})
+            check_limit(org, "providers")
             Provider.objects.create(organization=org, name=provider, category=attrs["category"])
         qs = Plan.objects.filter(organization=org, provider__iexact=provider, name__iexact=name)
         if self.instance:

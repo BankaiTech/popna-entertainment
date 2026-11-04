@@ -1,5 +1,5 @@
 // SaaS Master Controller - Organizations API
-import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus, IndustryType } from '@/models/types';
+import type { Organization, ModuleKey, SettingsTabKey, OrganizationStatus, IndustryType, SubscriptionState } from '@/models/types';
 import { ALL_MODULES, ALL_SETTINGS_TABS } from '@/models/types';
 import { getTemplateById } from '@/config/industryTemplates';
 import apiClient from '@/lib/apiClient';
@@ -79,7 +79,22 @@ function mapOrganization(raw: Record<string, unknown>): Organization {
         subscriptionEnd: String(o.subscriptionEnd ?? ''),
         industryType: o.industryType as IndustryType | undefined,
         terminology: o.terminology as Record<string, string> | undefined,
+        code: o.code ? String(o.code) : undefined,
+        maxProviders: o.maxProviders == null ? null : Number(o.maxProviders),
+        maxPlans: o.maxPlans == null ? null : Number(o.maxPlans),
+        providersUsed: Number(o.providersUsed ?? 0),
+        plansUsed: Number(o.plansUsed ?? 0),
+        subscriptionState: o.subscriptionState as SubscriptionState | undefined,
+        daysLeft: o.daysLeft == null ? null : Number(o.daysLeft),
     };
+}
+
+/** Extra fields used only when the app owner creates a new operator. */
+export interface NewOrganizationOwner {
+    ownerName?: string;
+    ownerUsername?: string;
+    ownerPassword?: string;
+    ownerMobile?: string;
 }
 
 export const organizationsApi = {
@@ -96,7 +111,7 @@ export const organizationsApi = {
         return mapOrganization(unwrapApiData<Record<string, unknown>>(response));
     },
 
-    create: async (org: Omit<Organization, 'id'> & { id?: string }): Promise<Organization> => {
+    create: async (org: Omit<Organization, 'id'> & { id?: string } & NewOrganizationOwner): Promise<Organization> => {
         if (isMockMode()) {
             const newOrg: Organization = {
                 ...org,
@@ -105,7 +120,7 @@ export const organizationsApi = {
             organizations.push(newOrg);
             return newOrg;
         }
-        const response = await apiClient.post(endpoints.organizations, toSnakeCase(org as Record<string, unknown>));
+        const response = await apiClient.post(endpoints.organizations, toSnakeCase(org as unknown as Record<string, unknown>));
         return mapOrganization(unwrapApiData<Record<string, unknown>>(response));
     },
 

@@ -1,14 +1,26 @@
+from datetime import date
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from core.models import TimeStampedModel
 from core.validators import normalize_mobile, validate_indian_mobile
 
-DEFAULT_MODULES = ["dashboard", "contacts", "complaints", "payments", "invoices", "users", "settings", "reports"]
+# Module keys understood by the React app (ALL_MODULES in src/models/types.ts).
+DEFAULT_MODULES = [
+    "dashboard", "contacts", "connection-requests", "complaints", "payments", "invoices",
+    "purchase-invoices", "inventory-products", "products", "users", "settings", "reports",
+]
+DEFAULT_SETTINGS_TABS = ["company", "products", "billing", "sms-templates"]
 
 
 def default_modules():
     return list(DEFAULT_MODULES)
+
+
+def default_settings_tabs():
+    return list(DEFAULT_SETTINGS_TABS)
 
 
 class Distributor(TimeStampedModel):
@@ -30,6 +42,7 @@ class Organization(TimeStampedModel):
 
     class Status(models.TextChoices):
         ACTIVE = "active", "Active"
+        DISABLED = "disabled", "Disabled (waiting for platform approval)"
         SUSPENDED = "suspended", "Suspended"
 
     class OwnerAlertMode(models.TextChoices):
@@ -42,8 +55,15 @@ class Organization(TimeStampedModel):
     name = models.CharField(max_length=150)
     code = models.SlugField(max_length=20, unique=True, help_text="Short code used in receipt numbers, e.g. CGP01")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    # Set only by the platform admin (app owner). The end date itself is still usable;
+    # the subscription stops at midnight IST after it. Empty end date = no expiry.
+    subscription_start = models.DateField(null=True, blank=True)
     subscription_end = models.DateField(null=True, blank=True)
     allowed_modules = models.JSONField(default=default_modules, blank=True)
+    allowed_settings_tabs = models.JSONField(default=default_settings_tabs, blank=True)
+    # Plan limits set by the platform admin. Empty = unlimited.
+    max_providers = models.PositiveIntegerField(null=True, blank=True, help_text="Empty = unlimited")
+    max_plans = models.PositiveIntegerField(null=True, blank=True, help_text="Empty = unlimited")
 
     owner_mobile = models.CharField(max_length=15, blank=True, validators=[validate_indian_mobile])
     extra_alert_mobiles = models.CharField(
@@ -80,6 +100,21 @@ class Organization(TimeStampedModel):
         self.owner_mobile = normalize_mobile(self.owner_mobile)
         self.code = (self.code or "").upper()
         super().save(*args, **kwargs)
+
+    def subscription_state(self, today=None):
+        """'active' | 'expired' | 'not_started'. Uses the Indian date, not the server's UTC date."""
+        today = today or timezone.localdate()
+        if self.subscription_start and today < self.subscription_start:
+            return "not_started"
+        if self.subscription_end and today > self.subscription_end:
+            return "expired"
+        return "active"
+
+    def days_left(self, today=None):
+        if not self.subscription_end:
+            return None
+        today = today or timezone.localdate()
+        return (self.subscription_end - today).days
 
     @property
     def display_name(self):

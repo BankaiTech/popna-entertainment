@@ -251,7 +251,8 @@ export const useStore = create<AppState>((set, get) => ({
       const newPlan = await plansApi.create(plan);
       set((state) => ({ plans: [...state.plans, newPlan], loading: false }));
     } catch (error) {
-      set({ error: 'Failed to add plan', loading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to add plan', loading: false });
+      throw error;
     }
   },
 
@@ -264,7 +265,8 @@ export const useStore = create<AppState>((set, get) => ({
         loading: false,
       }));
     } catch (error) {
-      set({ error: 'Failed to update plan', loading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to update plan', loading: false });
+      throw error;
     }
   },
 

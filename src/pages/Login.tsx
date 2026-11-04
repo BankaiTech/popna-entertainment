@@ -15,6 +15,7 @@ import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
 import { SELECTABLE_INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
 import { env } from '@/lib/env';
+import { SUBSCRIPTION_MSG_KEY } from '@/lib/subscription';
 
 const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
@@ -32,6 +33,11 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
+  // Set when an operator was logged out because the subscription ended
+  const [subscriptionNotice] = useState<string | null>(() => sessionStorage.getItem(SUBSCRIPTION_MSG_KEY));
+  useEffect(() => {
+    sessionStorage.removeItem(SUBSCRIPTION_MSG_KEY); // show once
+  }, []);
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupForm, setSignupForm] = useState({
     name: '',
@@ -263,6 +269,12 @@ const Login = () => {
                     {t('login.subtitle', 'Enter your username and password. You will be directed to the right dashboard.')}
                   </p>
                 </div>
+
+                {subscriptionNotice && (
+                  <div role="alert" className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+                    {subscriptionNotice}
+                  </div>
+                )}
 
                 <form
                   onSubmit={handleSubmit}

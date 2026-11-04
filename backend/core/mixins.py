@@ -1,15 +1,41 @@
-from rest_framework import serializers, viewsets
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import serializers, status, viewsets
+from rest_framework.exceptions import APIException, PermissionDenied
 
 from .permissions import ReadWriteRoles, Roles
 
 
+class SubscriptionInactive(APIException):
+    """403 with a machine-readable code so the app can show the 'subscription ended' screen."""
+
+    status_code = status.HTTP_403_FORBIDDEN
+    default_code = "subscription_inactive"
+
+    def __init__(self, org, state):
+        end = org.subscription_end.strftime("%d-%m-%Y") if org.subscription_end else ""
+        start = org.subscription_start.strftime("%d-%m-%Y") if org.subscription_start else ""
+        message = (
+            f"Your LCO Desk subscription ended on {end}. Contact LCO Desk to renew."
+            if state == "expired"
+            else f"Your LCO Desk subscription starts on {start}."
+        )
+        super().__init__({
+            "detail": message,
+            "code": f"subscription_{state}",
+            "subscription_start": org.subscription_start,
+            "subscription_end": org.subscription_end,
+        })
+
+
 def require_org(user):
+    """Every operator endpoint goes through here: right role, active account, valid subscription."""
     org = getattr(user, "organization", None)
     if org is None or user.role not in Roles.TENANT:
         raise PermissionDenied("This endpoint is only for operator accounts.")
     if org.status != "active":
-        raise PermissionDenied("This operator account is suspended. Contact LCO Desk support.")
+        raise PermissionDenied("This operator account is not active. Contact LCO Desk support.")
+    state = org.subscription_state()
+    if state != "active":
+        raise SubscriptionInactive(org, state)
     return org
 
 

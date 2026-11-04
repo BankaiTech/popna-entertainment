@@ -21,9 +21,15 @@ class Command(BaseCommand):
             self.stdout.write("Demo data already exists.")
             return
         dist = Distributor.objects.create(name="Demo Distributor", mobile="9000000001")
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        today = timezone.localdate()
         org = Organization.objects.create(
             name="Demo Cable & Net", code="DEMO01", distributor=dist, owner_mobile="9000000002",
-            sms_display_name="Demo Cable",
+            sms_display_name="Demo Cable", subscription_start=today - timedelta(days=30),
+            subscription_end=today + timedelta(days=365), max_providers=5, max_plans=20,
         )
         users = [
             ("platform", User.Role.PLATFORM_ADMIN, None, None, True),

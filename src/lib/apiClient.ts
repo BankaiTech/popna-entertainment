@@ -8,6 +8,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { env } from './env';
 import { reportError } from './errorReporter';
+import { SUBSCRIPTION_EVENT, SUBSCRIPTION_MSG_KEY, isGateMounted } from './subscription';
 
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
@@ -104,11 +105,51 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+/**
+ * Subscription ended/not started: let the dashboard show its "subscription ended" screen.
+ * On a fresh page load the dashboard may still be loading, so wait up to ~3 s for it.
+ * Anywhere else (or if it never appears): log out and show the message on the login page.
+ */
+function notifySubscriptionInactive(code: string, message: string, attempt = 0) {
+  if (isGateMounted()) {
+    window.dispatchEvent(new CustomEvent(SUBSCRIPTION_EVENT, { detail: { code, message } }));
+    return;
+  }
+  if (attempt < 10 && window.location.pathname.startsWith('/admin')) {
+    window.setTimeout(() => notifySubscriptionInactive(code, message, attempt + 1), 300);
+    return;
+  }
+  sessionStorage.setItem(SUBSCRIPTION_MSG_KEY, message);
+  clearAuthAndGoToLogin();
+}
+
+/** Turn Django error bodies into one readable sentence, so screens can show `error.message`. */
+function readableMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const body = data as Record<string, unknown>;
+  if (typeof body.detail === 'string') return body.detail;
+  for (const [field, value] of Object.entries(body)) {
+    const first = Array.isArray(value) ? value[0] : value;
+    if (typeof first === 'string') {
+      return field === 'non_field_errors' || field === 'detail' ? first : `${field.replace(/_/g, ' ')}: ${first}`;
+    }
+  }
+  return null;
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
+      const body = error.response?.data as { code?: string; detail?: string } | undefined;
+      const friendly = readableMessage(body);
+      if (friendly) error.message = friendly;
+
+      if (status === 403 && body?.code?.startsWith('subscription_')) {
+        notifySubscriptionInactive(body.code, body.detail ?? 'Your subscription is not active.');
+        return Promise.reject(error);
+      }
       const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
       const url = original?.url ?? '';
 

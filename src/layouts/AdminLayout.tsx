@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
+import { SubscriptionGate } from '@/components/SubscriptionGate';
 import { useStore } from '@/store/useStore';
 import { useTerminology } from '@/hooks/useTerminology';
 import FooterCredit from '@/components/FooterCredit';
@@ -124,6 +125,7 @@ const AdminLayout = () => {
   const showPOSFAB = currentOrganization && (currentOrganization.industryType === 'retail' || currentOrganization.industryType === 'restaurant-cafe') && isModuleAllowed('pos');
 
   return (
+    <SubscriptionGate>
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
@@ -304,6 +306,7 @@ const AdminLayout = () => {
         </Link>
       )}
     </div>
+    </SubscriptionGate>
   );
 };
 
