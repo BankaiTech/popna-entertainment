@@ -26,7 +26,7 @@ class SchedulerTests(TestCase):
         early = datetime(2026, 11, 1, 2, 0, tzinfo=IST)
         self.assertEqual(run_due_daily_jobs(early), [])
         later = datetime(2026, 11, 1, 9, 30, tzinfo=IST)
-        self.assertEqual(run_due_daily_jobs(later), ["generate_bills", "due_reminders", "purge_locations"])
+        self.assertEqual(run_due_daily_jobs(later), ["generate_bills", "internet_renewals", "due_reminders", "purge_locations"])
         self.assertEqual(run_due_daily_jobs(later), [])
         self.assertEqual(Bill.objects.count(), 1)
         self.assertEqual(JobRun.objects.filter(name="generate_bills").count(), 1)

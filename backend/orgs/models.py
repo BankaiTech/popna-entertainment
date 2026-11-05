@@ -78,6 +78,10 @@ class Organization(TimeStampedModel):
     reminder_days_before = models.PositiveSmallIntegerField(
         default=3, validators=[MinValueValidator(0), MaxValueValidator(15)]
     )
+    second_reminder_days_before = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(15)],
+        help_text="Optional second reminder, e.g. 1 day before or 0 = on the due date",
+    )
     # Cable reminders and cable payment SMS are ALWAYS on (operator requirement). Internet is optional.
     internet_reminders_enabled = models.BooleanField(default=False)
     internet_payment_sms_enabled = models.BooleanField(default=False)

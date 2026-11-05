@@ -95,6 +95,10 @@ class Customer(OrgOwnedModel):
         max_digits=5, decimal_places=2, default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     sms_opt_in = models.BooleanField(default=True, help_text="Internet only. Cable SMS are always sent.")
+    valid_until = models.DateField(
+        null=True, blank=True,
+        help_text="Internet: plan expiry date (rolling validity). Cable uses the monthly cut-off day instead.",
+    )
     box_number = models.CharField(max_length=50, blank=True)
     stb_number = models.CharField(max_length=50, blank=True)
     can_caf_id = models.CharField(max_length=50, blank=True)
@@ -137,6 +141,35 @@ class Customer(OrgOwnedModel):
         if provider and provider.cutoff_day:
             return provider.cutoff_day
         return self.organization.default_due_day
+
+    def validity_days(self):
+        """Internet plan length in days: provider's cutoff_days, default 30."""
+        provider = Provider.objects.filter(
+            organization_id=self.organization_id, name__iexact=self.plan.provider
+        ).only("cutoff_days").first()
+        return (provider.cutoff_days if provider and provider.cutoff_days else 30)
+
+    def service_status(self, current_bill=None, today=None):
+        """
+        Cable:    active | due (unpaid, before cut-off) | cut_off (unpaid after the cut-off date)
+        Internet: active | expiring (within reminder days) | expired | not_started
+        LCO Desk cannot switch the signal off itself; 'cut_off'/'expired' tell the operator to act
+        in the provider's portal (GTPL / RailWire / BSNL).
+        """
+        from django.utils import timezone
+
+        today = today or timezone.localdate()
+        if self.is_cable:
+            if current_bill is None or current_bill.status in ("paid", "cancelled"):
+                return "active"
+            return "cut_off" if today > current_bill.due_date else "due"
+        if self.valid_until is None:
+            return "not_started"
+        if today > self.valid_until:
+            return "expired"
+        if (self.valid_until - today).days <= self.organization.reminder_days_before:
+            return "expiring"
+        return "active"
 
     def monthly_amount(self):
         amount = self.plan.final_price * (Decimal(100) - self.permanent_discount) / Decimal(100)

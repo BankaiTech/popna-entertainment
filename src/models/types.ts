@@ -147,6 +147,14 @@ export interface Customer {
   collectedAmount?: number;
   /** Remaining balance after partial payment */
   balanceAmount?: number;
+  /** From the server. Cable: active | due | cut_off. Internet: active | expiring | expired | not_started */
+  serviceStatus?: 'active' | 'due' | 'cut_off' | 'expiring' | 'expired' | 'not_started';
+  /** Cable: this month's cut-off date. Internet: plan expiry date. (YYYY-MM-DD) */
+  dueDate?: string | null;
+  /** Internet plan expiry (YYYY-MM-DD) */
+  validUntil?: string | null;
+  /** 'cable' | 'internet' (from the plan's provider) */
+  category?: 'cable' | 'internet';
   /** Optional GSTIN field for GST invoice support */
   gstin?: string | null;
   /** Box number - only for cable product customers */

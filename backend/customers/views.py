@@ -1,12 +1,16 @@
+from datetime import timedelta
+
 from django.db.models import Prefetch
 from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from billing.models import Bill, Payment
 from billing.services import month_start
 from core.audit import audit
-from core.mixins import OrgScopedViewSet
-from core.permissions import Roles
+from core.mixins import OrgScopedViewSet, require_org
+from core.permissions import Roles, role_in
 
 from .models import Area, Customer, Plan, Provider
 from .serializers import AreaSerializer, CustomerSerializer, PlanSerializer, ProviderSerializer
@@ -54,12 +58,14 @@ class CustomerViewSet(OrgScopedViewSet):
     ordering_fields = ["name", "created_at"]
 
     def get_queryset(self):
-        period = month_start(timezone.localdate())
+        # Latest bill per customer = its current bill (cable: this month; internet: current renewal).
+        since = timezone.localdate() - timedelta(days=70)
         return super().get_queryset().prefetch_related(
-            Prefetch("bills", queryset=Bill.objects.filter(period=period), to_attr="current_bills"),
+            Prefetch("bills", queryset=Bill.objects.filter(period__gte=since).exclude(status="cancelled")
+                     .order_by("-period"), to_attr="current_bills"),
             Prefetch(
                 "payments",
-                queryset=Payment.objects.filter(bill__period=period, status=Payment.Status.VALID)
+                queryset=Payment.objects.filter(bill__period__gte=since, status=Payment.Status.VALID)
                 .select_related("collected_by")
                 .order_by("-collected_at"),
                 to_attr="current_payments",
@@ -77,3 +83,34 @@ class CustomerViewSet(OrgScopedViewSet):
             raise ValidationError({"detail": "This customer has bills. Mark them Inactive instead."})
         audit(self.request.user, "customer_deleted", instance, name=instance.name)
         instance.delete()
+
+
+@api_view(["GET"])
+@permission_classes([role_in(*Roles.OFFICE)])
+def cutoff_list(request):
+    """
+    GET /api/connections/cutoff — who should be switched off in the provider's portal today.
+    Cable: unpaid after this month's cut-off date. Internet: plan expired.
+    """
+    org = require_org(request.user)
+    today = timezone.localdate()
+    rows = []
+    cable_bills = (
+        Bill.objects.filter(organization=org, period=month_start(today), due_date__lt=today,
+                            status__in=[Bill.Status.UNPAID, Bill.Status.PARTIAL],
+                            customer__status=Customer.Status.ACTIVE, customer__plan__category="cable")
+        .select_related("customer__plan", "customer__area")
+    )
+    for b in cable_bills:
+        c = b.customer
+        rows.append({"customer_id": c.id, "name": c.name, "mobile": c.mobile, "provider": c.plan.provider,
+                     "category": "cable", "area": c.area.name if c.area else None, "box_number": c.box_number,
+                     "since": b.due_date, "balance": str(b.balance)})
+    expired = Customer.objects.filter(
+        organization=org, status=Customer.Status.ACTIVE, plan__category="internet", valid_until__lt=today
+    ).select_related("plan", "area")
+    for c in expired:
+        rows.append({"customer_id": c.id, "name": c.name, "mobile": c.mobile, "provider": c.plan.provider,
+                     "category": "internet", "area": c.area.name if c.area else None, "box_number": c.box_number,
+                     "since": c.valid_until, "balance": None})
+    return Response({"date": today, "count": len(rows), "customers": rows})

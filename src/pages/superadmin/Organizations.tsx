@@ -274,9 +274,9 @@ const Organizations = () => {
                                     <dd className="font-mono">{org.code ?? org.id}</dd>
                                     <dt className="text-muted-foreground">Subscription</dt>
                                     <dd>{formatDateIN(org.subscriptionStart)} → {formatDateIN(org.subscriptionEnd)}</dd>
-                                    <dt className="text-muted-foreground">Providers</dt>
+                                    <dt className="text-muted-foreground">Connection types</dt>
                                     <dd>{usage(org.providersUsed, org.maxProviders)}</dd>
-                                    <dt className="text-muted-foreground">Plans</dt>
+                                    <dt className="text-muted-foreground">Connection products</dt>
                                     <dd>{usage(org.plansUsed, org.maxPlans)}</dd>
                                     <dt className="text-muted-foreground">Status</dt>
                                     <dd className="capitalize">{org.status}</dd>
@@ -400,12 +400,12 @@ const Organizations = () => {
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="block text-sm">
-                                        <span className="block font-medium mb-1">Max providers</span>
+                                        <span className="block font-medium mb-1">Max service connection types</span>
                                         <Input type="number" min={0} value={form.maxProviders}
                                             onChange={(e) => setForm({ ...form, maxProviders: e.target.value })} placeholder="e.g. 5" />
                                     </label>
                                     <label className="block text-sm">
-                                        <span className="block font-medium mb-1">Max plans</span>
+                                        <span className="block font-medium mb-1">Max connection products</span>
                                         <Input type="number" min={0} value={form.maxPlans}
                                             onChange={(e) => setForm({ ...form, maxPlans: e.target.value })} placeholder="e.g. 20" />
                                     </label>

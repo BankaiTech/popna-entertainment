@@ -94,7 +94,9 @@ def queue_due_reminders(today=None):
     today = today or timezone.localdate()
     created = 0
     for org in Organization.objects.filter(status=Organization.Status.ACTIVE):
-        window_end = today + timedelta(days=org.reminder_days_before)
+        stages = sorted({org.reminder_days_before, *([org.second_reminder_days_before]
+                                                      if org.second_reminder_days_before is not None else [])})
+        window_end = today + timedelta(days=max(stages))
         bills = (
             Bill.objects.filter(
                 organization=org,
@@ -117,9 +119,13 @@ def queue_due_reminders(today=None):
                 "due_date": bill.due_date.strftime("%d-%m-%Y"),
                 "org": org.display_name,
             }
+            # One SMS per reminder stage: e.g. 3 days before, then 1 day before. The smallest stage that
+            # applies wins, so a late run never sends two reminders on the same day.
+            days_left = (bill.due_date - today).days
+            stage = min(s for s in stages if days_left <= s)
             if enqueue(
                 organization=org, kind=SmsMessage.Kind.DUE_REMINDER, to=customer.mobile, context=ctx,
-                dedupe_key=f"due:{bill.id}", bill=bill,
+                dedupe_key=f"due:{bill.id}:{stage}", bill=bill,
             ):
                 created += 1
     return created

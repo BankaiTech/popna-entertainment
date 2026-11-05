@@ -23,6 +23,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
 import AdminContacts from './pages/admin/Contacts';
+import MyDuty from './pages/admin/MyDuty';
 import InventoryProducts from './pages/admin/InventoryProducts';
 import AdminBranches from './pages/admin/Branches';
 import AdminPointOfSale from './pages/admin/PointOfSale';
@@ -256,6 +257,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
                 <AdminContacts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="duty"
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <MyDuty />
               </ProtectedRoute>
             }
           />

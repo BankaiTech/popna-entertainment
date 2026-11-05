@@ -19,7 +19,7 @@ class BillSerializer(serializers.ModelSerializer):
         model = Bill
         fields = [
             "id", "customer", "customer_name", "customer_mobile", "category", "period", "amount_due",
-            "amount_paid", "balance", "due_date", "status",
+            "amount_paid", "discount", "balance", "due_date", "status",
         ]
 
     def get_period(self, obj):
@@ -46,7 +46,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            "id", "receipt_no", "customer_id", "customer_name", "bill_id", "period", "amount", "method",
+            "id", "receipt_no", "customer_id", "customer_name", "bill_id", "period", "amount", "discount", "method",
             "collected_by", "collected_by_name", "collected_by_username", "collected_at", "latitude",
             "longitude", "accuracy", "note", "status", "cancel_reason", "cancelled_at",
         ]
