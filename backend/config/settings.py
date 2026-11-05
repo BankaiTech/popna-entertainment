@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "billing",
     "notifications",
     "tracking",
+    "inventory",
 ]
 
 MIDDLEWARE = [

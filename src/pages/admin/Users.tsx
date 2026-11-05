@@ -36,7 +36,7 @@ const AdminUsers = () => {
   const { t } = useTranslation();
   // Field staff can only get modules this operator has, and never office-only ones.
   const orgModules = useOrganizationStore((s) => s.currentOrganization?.allowedModules);
-  const staffModules = LCO_MODULES.filter((m) => m.staff && (!orgModules || orgModules.includes(m.key))).map((m) => m.key);
+  const staffModules = LCO_MODULES.filter((m) => m.staff && m.ready && (!orgModules || orgModules.includes(m.key))).map((m) => m.key);
   const defaultAgentModules = DEFAULT_AGENT_MODULES.filter((m) => staffModules.includes(m));
   const moduleName = (mod: string) => LCO_MODULES.find((m) => m.key === mod)?.label ?? t(MODULE_I18N_KEYS[mod] || mod, mod);
   const { customers, initialize, fetchCustomers } = useStore();
