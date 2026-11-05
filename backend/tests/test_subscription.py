@@ -146,3 +146,24 @@ class LimitTests(TestCase):
         for name in ("A", "B", "C"):
             self.assertEqual(self.c.post("/api/products", {"name": name, "product_type": "cable"},
                                          format="json").status_code, 201)
+
+
+class OwnerSettingsTests(TestCase):
+    def setUp(self):
+        self.org = make_org("SET")
+        self.c = client_for(make_user("owner", Roles.OWNER, self.org))
+
+    def test_owner_updates_profile_and_reminders(self):
+        res = self.c.patch(f"/api/organizations/{self.org.id}", {
+            "gstin": "33abcde1234f1z5", "upi_id": "sricable@okaxis", "contact_phone": "+91 98400 12345",
+            "reminder_days_before": 5, "second_reminder_days_before": 1, "owner_alert_mode": "daily_summary",
+        }, format="json")
+        self.assertEqual(res.status_code, 200, res.content)
+        self.org.refresh_from_db()
+        self.assertEqual((self.org.gstin, self.org.contact_phone, self.org.second_reminder_days_before),
+                         ("33ABCDE1234F1Z5", "9840012345", 1))
+
+    def test_bad_gstin_and_upi_rejected(self):
+        res = self.c.patch(f"/api/organizations/{self.org.id}", {"gstin": "123", "upi_id": "nope"}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(set(res.json()), {"gstin", "upi_id"})
