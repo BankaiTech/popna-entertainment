@@ -11,6 +11,7 @@ from core.permissions import Roles
 from .models import Distributor, Organization
 
 OWNER_EDITABLE = [
+    "business_address", "gstin", "contact_phone", "contact_email", "upi_id", "upi_payee_name",
     "owner_mobile", "extra_alert_mobiles", "sms_display_name", "default_due_day", "reminder_days_before",
     "second_reminder_days_before",
     "internet_reminders_enabled", "internet_payment_sms_enabled", "owner_alert_mode", "tracking_enabled",
@@ -44,6 +45,16 @@ class OrgComputedMixin(serializers.Serializer):
     days_left = serializers.SerializerMethodField()
     providers_used = serializers.SerializerMethodField()
     plans_used = serializers.SerializerMethodField()
+
+    def to_internal_value(self, data):
+        # Accept lowercase / spaced input from phones before the format checks run.
+        if hasattr(data, "get") and isinstance(data.get("gstin"), str):
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            data["gstin"] = data["gstin"].strip().upper()
+        if hasattr(data, "get") and isinstance(data.get("upi_id"), str):
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            data["upi_id"] = data["upi_id"].strip()
+        return super().to_internal_value(data)
 
     def get_industry_type(self, obj):
         return "isp-cable"

@@ -3,43 +3,40 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Package, Building2, CreditCard, ShoppingCart, Sliders, LayoutGrid, MessageSquare } from 'lucide-react';
+import { Package, Building2, CreditCard, MessageSquare } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import BillingSettings from '@/components/settings/BillingSettings';
-import POSSettings from '@/components/settings/POSSettings';
-import CustomFieldsSettings from '@/components/settings/CustomFieldsSettings';
-import IndustrySettings from '@/components/settings/IndustrySettings';
 import SmsTemplates from '@/components/settings/SmsTemplates';
+import BusinessProfile from '@/components/settings/lco/BusinessProfile';
+import BillingReminders from '@/components/settings/lco/BillingReminders';
+import SmsSettings from '@/components/settings/lco/SmsSettings';
+import { isMockMode } from '@/lib/apiHelpers';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
-import { useTerminology } from '@/hooks/useTerminology';
 import type { SettingsTabKey } from '@/models/types';
 
 type SettingsTab = SettingsTabKey;
 
 const Settings = () => {
   const { t } = useTranslation();
-  const { term } = useTerminology();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const { isSettingsTabAllowed } = useOrganizationStore();
 
-  const productsTabLabel = term('product', t('settings.tabProducts', 'Products'));
+  // LCO Desk settings: only what a cable / broadband operator needs.
   const allTabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = useMemo(() => [
-    { id: 'company', label: t('settings.tabCompany', 'Company Details'), icon: Building2, description: t('settings.companyDesc', 'Configure company information for invoices and documents') },
-    { id: 'products', label: productsTabLabel, icon: Package, description: t('settings.productsDesc', 'Manage {{label}}, plans, and pricing', { label: productsTabLabel.toLowerCase() }) },
-    { id: 'billing', label: t('settings.tabBilling', 'Billing & UPI'), icon: CreditCard, description: t('settings.billingDesc', 'Pay by UPI apps and manage subscription') },
-    { id: 'pos', label: t('settings.tabPOS', 'POS / Checkout'), icon: ShoppingCart, description: t('settings.posTabDesc', 'Invoice format and checkout settings') },
-    { id: 'custom-fields', label: t('settings.tabCustomFields', 'Custom Fields'), icon: Sliders, description: t('settings.customFieldsTabDesc', 'Define custom fields for customers and products') },
-    { id: 'industry', label: t('settings.tabIndustry', 'Industry'), icon: LayoutGrid, description: t('settings.industryTabDesc', 'Business type and module visibility') },
-    { id: 'sms-templates', label: t('settings.tabSmsTemplates', 'SMS Templates'), icon: MessageSquare, description: t('settings.smsTemplatesDesc', 'Manage SMS message templates for customer communication') },
-  ], [t, productsTabLabel]);
+    { id: 'company', label: 'Business Profile', icon: Building2, description: 'Your plan, business details and UPI' },
+    { id: 'products', label: 'Providers & Plans', icon: Package, description: 'Service connection types (GTPL, RailWire...) and their plans' },
+    { id: 'billing', label: 'Billing & Reminders', icon: CreditCard, description: 'Due dates, reminder SMS, payment SMS and field staff rules' },
+    { id: 'sms-templates', label: 'SMS', icon: MessageSquare, description: 'Sender name, the messages we send, and recent SMS' },
+  ], []);
 
   const tabs = useMemo(
-    () => allTabs.filter((tab) => tab.id === 'sms-templates' || isSettingsTabAllowed(tab.id)),
+    () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
     [isSettingsTabAllowed, allTabs]
   );
+  const realApi = !isMockMode();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(tabs.length > 0 ? tabs[0].id : 'company');
 
@@ -131,13 +128,10 @@ const Settings = () => {
             aria-labelledby={`tab-${activeTab}`}
             className="min-w-0"
           >
-            {activeTab === 'company' && <CompanyProfileSettings />}
+            {activeTab === 'company' && (realApi ? <BusinessProfile /> : <CompanyProfileSettings />)}
             {activeTab === 'products' && <ProductManagement />}
-            {activeTab === 'billing' && <BillingSettings />}
-            {activeTab === 'pos' && <POSSettings />}
-            {activeTab === 'custom-fields' && <CustomFieldsSettings />}
-            {activeTab === 'industry' && <IndustrySettings />}
-            {activeTab === 'sms-templates' && <SmsTemplates />}
+            {activeTab === 'billing' && (realApi ? <BillingReminders /> : <BillingSettings />)}
+            {activeTab === 'sms-templates' && (realApi ? <SmsSettings /> : <SmsTemplates />)}
           </div>
         </CardContent>
       </Card>

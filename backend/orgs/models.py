@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 
@@ -13,6 +13,11 @@ DEFAULT_MODULES = [
     "payments", "invoices", "purchase-invoices", "inventory-products", "products", "users", "settings", "reports",
 ]
 DEFAULT_SETTINGS_TABS = ["company", "products", "billing", "sms-templates"]
+
+gstin_validator = RegexValidator(
+    r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$", "Enter a valid 15-character GSTIN, e.g. 33ABCDE1234F1Z5."
+)
+upi_validator = RegexValidator(r"^[A-Za-z0-9.\-_]{2,256}@[A-Za-z]{2,64}$", "Enter a valid UPI ID, e.g. name@okaxis.")
 
 
 def default_modules():
@@ -71,6 +76,14 @@ class Organization(TimeStampedModel):
     )
     sms_display_name = models.CharField(max_length=30, blank=True, help_text="Name shown at the end of SMS")
 
+    # Business profile (shown on receipts / invoices)
+    business_address = models.TextField(blank=True)
+    gstin = models.CharField(max_length=15, blank=True, validators=[gstin_validator])
+    contact_phone = models.CharField(max_length=15, blank=True, validators=[validate_indian_mobile])
+    contact_email = models.EmailField(blank=True)
+    upi_id = models.CharField(max_length=100, blank=True, validators=[upi_validator])
+    upi_payee_name = models.CharField(max_length=60, blank=True)
+
     # Billing & reminders
     default_due_day = models.PositiveSmallIntegerField(
         default=10, validators=[MinValueValidator(1), MaxValueValidator(28)]
@@ -102,6 +115,8 @@ class Organization(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.owner_mobile = normalize_mobile(self.owner_mobile)
+        self.contact_phone = normalize_mobile(self.contact_phone)
+        self.gstin = (self.gstin or "").upper()
         self.code = (self.code or "").upper()
         super().save(*args, **kwargs)
 
