@@ -2086,5 +2086,8 @@
     "cutoffDaySuffix_rd": "rd",
     "cutoffDaySuffix_th": "th"
   },
-  "nav.myDuty": "My Duty"
+  "nav.myDuty": "My Duty",
+  "nav.collect": "Collect",
+  "nav.liveMap": "Live Map",
+  "nav.cutoff": "Cut-off List"
 }

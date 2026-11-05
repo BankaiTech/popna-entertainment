@@ -72,3 +72,39 @@ export const dutyApi = {
   checkOut: async (gps: GeoPoint) => apiClient.post('/tracking/check-out', gpsBody(gps)),
   ping: async (gps: GeoPoint) => apiClient.post('/tracking/ping', gpsBody(gps)),
 };
+
+export interface LiveAgent {
+  userId: number;
+  name: string;
+  role: string;
+  onDutySince: string;
+  latitude: number | null;
+  longitude: number | null;
+  accuracyM: number | null;
+  lastSeen: string | null;
+  minutesSinceLastSeen: number | null;
+}
+
+export interface RoutePoint { lat: number; lng: number; at: string; source: string; accuracyM: number | null }
+export interface RouteCollection {
+  receiptNo: string; customer: string; amount: string; method: string; at: string; status: string;
+  lat: number | null; lng: number | null;
+}
+export interface AgentRoute { user: { id: number; name: string }; date: string; points: RoutePoint[]; collections: RouteCollection[] }
+
+export interface CutoffRow {
+  customerId: number; name: string; mobile: string; provider: string; category: 'cable' | 'internet';
+  area: string | null; boxNumber: string; since: string; balance: string | null;
+}
+
+export const trackingApi = {
+  live: async (): Promise<LiveAgent[]> =>
+    toCamelCase<{ agents: LiveAgent[] }>(unwrapApiData(await apiClient.get('/tracking/live'))).agents ?? [],
+  route: async (userId: number, date: string): Promise<AgentRoute> =>
+    toCamelCase<AgentRoute>(unwrapApiData(await apiClient.get('/tracking/route', { params: { user_id: userId, date } }))),
+};
+
+export const connectionsApi = {
+  cutoff: async (): Promise<{ date: string; count: number; customers: CutoffRow[] }> =>
+    toCamelCase(unwrapApiData(await apiClient.get('/connections/cutoff'))),
+};

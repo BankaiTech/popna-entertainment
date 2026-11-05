@@ -14,6 +14,7 @@ import CustomerSheet from '@/components/CustomerSheet';
 import CustomerHistoryPanel from '@/components/CustomerHistoryPanel';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import CollectPaymentDialog from '@/components/CollectPaymentDialog';
+import ServiceStatusBadge from '@/components/ServiceStatusBadge';
 import { isMockMode } from '@/lib/apiHelpers';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
@@ -515,6 +516,7 @@ const Contacts = () => {
                                                                         {t('customers.paid', 'Paid')}
                                                                     </span>
                                                                 )}
+                                                                <ServiceStatusBadge status={customer.serviceStatus} className="ml-1" />
                                                             </td>
                                                         )}
                                                         <td className="px-3 py-2">
@@ -613,6 +615,7 @@ const Contacts = () => {
                                                                     {t('customers.paid', 'Paid')}
                                                                 </span>
                                                             )}
+                                                            <ServiceStatusBadge status={customer.serviceStatus} className="ml-1" />
                                                         </div>
                                                     )}
                                                 </div>

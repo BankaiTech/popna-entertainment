@@ -24,6 +24,9 @@ import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
 import AdminContacts from './pages/admin/Contacts';
 import MyDuty from './pages/admin/MyDuty';
+import LiveMap from './pages/admin/LiveMap';
+import CutoffList from './pages/admin/CutoffList';
+import CollectRoute from './pages/admin/CollectRoute';
 import InventoryProducts from './pages/admin/InventoryProducts';
 import AdminBranches from './pages/admin/Branches';
 import AdminPointOfSale from './pages/admin/PointOfSale';
@@ -265,6 +268,30 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <MyDuty />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="collect"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <CollectRoute />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="live-map"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <LiveMap />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="cutoff"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CutoffList />
               </ProtectedRoute>
             }
           />
