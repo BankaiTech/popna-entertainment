@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, FileText, ShoppingCart,
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
-  Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin
+  Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin, Map as MapIcon, Wallet, ScissorsLineDashed
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -34,6 +34,8 @@ interface SidebarItem {
   terminologyKey?: string;
   /** Only for field staff (agents / technicians) */
   employeeOnly?: boolean;
+  /** Only for owner / manager */
+  adminOnly?: boolean;
 }
 
 const AdminLayout = () => {
@@ -73,6 +75,9 @@ const AdminLayout = () => {
       items: [
         { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard', color: 'text-blue-500' },
         { path: '/admin/duty', labelKey: 'nav.myDuty', icon: MapPin, moduleKey: 'payments', color: 'text-green-500', employeeOnly: true },
+        { path: '/admin/collect', labelKey: 'nav.collect', icon: Wallet, moduleKey: 'payments', color: 'text-blue-500' },
+        { path: '/admin/live-map', labelKey: 'nav.liveMap', icon: MapIcon, moduleKey: 'payments', color: 'text-emerald-500', adminOnly: true },
+        { path: '/admin/cutoff', labelKey: 'nav.cutoff', icon: ScissorsLineDashed, moduleKey: 'contacts', color: 'text-red-500', adminOnly: true },
       ],
     },
     {
@@ -116,6 +121,7 @@ const AdminLayout = () => {
       items: group.items.filter((item) => {
         const orgAllowed = isModuleAllowed(item.moduleKey);
         if (item.employeeOnly && role !== 'employee') return false;
+        if (item.adminOnly && role !== 'admin') return false;
         if (role === 'employee') {
           return orgAllowed && allowedModules?.includes(item.moduleKey);
         }
