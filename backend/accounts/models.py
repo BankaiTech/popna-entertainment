@@ -24,6 +24,8 @@ class User(AbstractUser):
     distributor = models.ForeignKey(
         "orgs.Distributor", null=True, blank=True, on_delete=models.PROTECT, related_name="users"
     )
+    # Field staff only: menu modules the owner gave this person. Empty (null) = role defaults.
+    allowed_modules = models.JSONField(null=True, blank=True)
 
     def clean(self):
         super().clean()

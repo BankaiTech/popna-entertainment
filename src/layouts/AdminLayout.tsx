@@ -74,10 +74,10 @@ const AdminLayout = () => {
       labelKey: 'nav.groupMain',
       items: [
         { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard', color: 'text-blue-500' },
-        { path: '/admin/duty', labelKey: 'nav.myDuty', icon: MapPin, moduleKey: 'payments', color: 'text-green-500', employeeOnly: true },
-        { path: '/admin/collect', labelKey: 'nav.collect', icon: Wallet, moduleKey: 'payments', color: 'text-blue-500' },
-        { path: '/admin/live-map', labelKey: 'nav.liveMap', icon: MapIcon, moduleKey: 'payments', color: 'text-emerald-500', adminOnly: true },
-        { path: '/admin/cutoff', labelKey: 'nav.cutoff', icon: ScissorsLineDashed, moduleKey: 'contacts', color: 'text-red-500', adminOnly: true },
+        { path: '/admin/duty', labelKey: 'nav.myDuty', icon: MapPin, moduleKey: 'duty', color: 'text-green-500', employeeOnly: true },
+        { path: '/admin/collect', labelKey: 'nav.collect', icon: Wallet, moduleKey: 'collect', color: 'text-blue-500' },
+        { path: '/admin/live-map', labelKey: 'nav.liveMap', icon: MapIcon, moduleKey: 'live-map', color: 'text-emerald-500', adminOnly: true },
+        { path: '/admin/cutoff', labelKey: 'nav.cutoff', icon: ScissorsLineDashed, moduleKey: 'cutoff', color: 'text-red-500', adminOnly: true },
       ],
     },
     {

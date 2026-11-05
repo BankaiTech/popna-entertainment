@@ -27,6 +27,8 @@ export type SubscriptionState = 'active' | 'expired' | 'not_started';
 /** All available modules that can be assigned to an organization */
 export const ALL_MODULES = [
   'dashboard', 'contacts', 'complaints', 'payments',
+  // LCO Desk collection modules
+  'collect', 'duty', 'live-map', 'cutoff',
   'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
   'inventory-products', 'products', 'branches', 'pos',
   // Universal business modules

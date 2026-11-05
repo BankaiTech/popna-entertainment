@@ -89,7 +89,7 @@ class RoleTests(TestCase):
         self.assertEqual(me["role"], "employee")
         self.assertEqual(me["lco_role"], "agent")
         self.assertEqual(me["organization_id"], str(self.org.id))
-        self.assertIn("payments", me["allowed_modules"])
+        self.assertIn("collect", me["allowed_modules"])
 
     def test_suspended_operator_is_blocked(self):
         self.org.status = "suspended"
