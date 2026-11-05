@@ -5,7 +5,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from billing.models import Bill, Payment
-from billing.services import generate_bills
+from billing.services import generate_bills, generate_internet_renewals
 from core.permissions import Roles
 from notifications.gateway import SmsResult
 from notifications.models import SmsMessage
@@ -127,6 +127,9 @@ class ReminderTests(TestCase):
         self.assertIn("due on 05-11-2026", msg.body)
         self.org.internet_reminders_enabled = True
         self.org.save()
+        self.net_cust.valid_until = date(2026, 11, 5)
+        self.net_cust.save()
+        self.assertEqual(generate_internet_renewals(self.today), 1)
         self.assertEqual(queue_due_reminders(self.today), 1)
 
     def test_internet_customer_opt_out_respected_cable_cannot_opt_out(self):

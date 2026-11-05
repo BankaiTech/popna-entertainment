@@ -17,8 +17,11 @@ class Bill(OrgOwnedModel):
     period = models.DateField(help_text="First day of the billing month")
     amount_due = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    due_date = models.DateField()
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Instant discount given")
+    due_date = models.DateField(help_text="Cable: monthly cut-off date. Internet: plan expiry date.")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.UNPAID)
+    # Internet: the customer's expiry before this bill renewed it (restored if the payment is cancelled)
+    previous_valid_until = models.DateField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ["-period", "customer__name"]
@@ -33,14 +36,14 @@ class Bill(OrgOwnedModel):
 
     @property
     def balance(self):
-        return max(self.amount_due - self.amount_paid, 0)
+        return max(self.amount_due - self.discount - self.amount_paid, 0)
 
     def refresh_status(self):
         if self.status == self.Status.CANCELLED:
             return
-        if self.amount_paid <= 0:
+        if self.amount_paid <= 0 and self.discount < self.amount_due:
             self.status = self.Status.UNPAID
-        elif self.amount_paid < self.amount_due:
+        elif self.amount_paid + self.discount < self.amount_due:
             self.status = self.Status.PARTIAL
         else:
             self.status = self.Status.PAID
@@ -59,7 +62,8 @@ class Payment(OrgOwnedModel):
 
     bill = models.ForeignKey(Bill, on_delete=models.PROTECT, related_name="payments")
     customer = models.ForeignKey("customers.Customer", on_delete=models.PROTECT, related_name="payments")
-    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     method = models.CharField(max_length=10, choices=Method.choices, default=Method.CASH)
     collected_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="payments_collected"

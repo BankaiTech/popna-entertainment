@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 from django.db import IntegrityError, close_old_connections, transaction
 from django.utils import timezone
 
-from billing.services import generate_bills, month_start
+from billing.services import generate_bills, generate_internet_renewals, month_start
 from core.models import JobRun
 from notifications.services import process_outbox, queue_due_reminders, queue_owner_daily_summaries
 
@@ -31,6 +31,8 @@ def daily_jobs():
         ("generate_bills", settings.SCHEDULE_GENERATE_BILLS_AT,
          lambda today: today.day == settings.BILL_GENERATION_DAY,
          lambda today: generate_bills(month_start(today))),
+        ("internet_renewals", settings.SCHEDULE_GENERATE_BILLS_AT, None,
+         lambda today: generate_internet_renewals(today)),
         ("due_reminders", settings.SCHEDULE_DUE_REMINDERS_AT, None, lambda today: queue_due_reminders(today)),
         ("owner_summary", settings.SCHEDULE_OWNER_SUMMARY_AT, None,
          lambda today: queue_owner_daily_summaries(today)),

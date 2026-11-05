@@ -18,8 +18,9 @@ Dear {name}, Rs.{amount} received for {service} {period} on {date} {time} by {ag
 ```
 
 ## 3. Due reminder → customer (`SMS_TPL_DUE_REMINDER`)
+Sent N days before the due date (cable: monthly cut-off day; internet: plan expiry), and optionally a second time (e.g. 1 day before).
 ```
-Dear {name}, your {service} bill of Rs.{amount} for {period} is due on {due_date}. Please pay on time to avoid disconnection. -{org}
+Dear {name}, your {service} payment of Rs.{amount} is due on {due_date}. Please pay in advance to avoid disconnection. -{org}
 ```
 
 ## 4. Daily summary → owner (`SMS_TPL_OWNER_DAILY_SUMMARY`)

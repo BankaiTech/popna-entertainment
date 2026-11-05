@@ -15,8 +15,8 @@ DEFAULT_TEXTS = {
         "{agent} collected Rs.{amount} from {name} ({mobile}) on {date} {time}. Receipt {receipt}. -LCO Desk"
     ),
     "due_reminder": (
-        "Dear {name}, your {service} bill of Rs.{amount} for {period} is due on {due_date}. "
-        "Please pay on time to avoid disconnection. -{org}"
+        "Dear {name}, your {service} payment of Rs.{amount} is due on {due_date}. "
+        "Please pay in advance to avoid disconnection. -{org}"
     ),
     "owner_daily_summary": (
         "{org}: {date} collections Rs.{total} from {count} payments. Cash Rs.{cash}, UPI Rs.{upi}. -LCO Desk"

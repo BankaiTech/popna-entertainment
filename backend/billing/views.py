@@ -73,6 +73,7 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
             longitude=data.get("longitude"),
             accuracy=data.get("location_accuracy_m"),
             note=data.get("note", ""),
+            discount=data.get("discount", 0),
         )
         return Response(self.get_serializer(payment).data, status=status.HTTP_201_CREATED)
 

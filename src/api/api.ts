@@ -52,6 +52,10 @@ function mapContactToCustomer(raw: Record<string, unknown>): Customer {
     paymentMethod: c.paymentMethod as Customer['paymentMethod'],
     collectedAmount: c.collectedAmount != null ? Number(c.collectedAmount) : undefined,
     balanceAmount: c.balanceAmount != null ? Number(c.balanceAmount) : undefined,
+    serviceStatus: c.serviceStatus as Customer['serviceStatus'],
+    dueDate: c.dueDate != null ? String(c.dueDate) : null,
+    validUntil: c.validUntil != null ? String(c.validUntil) : null,
+    category: c.category as Customer['category'],
   };
 }
 

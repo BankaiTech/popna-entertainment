@@ -13,6 +13,8 @@ import { Pagination } from '@/components/ui/Pagination';
 import CustomerSheet from '@/components/CustomerSheet';
 import CustomerHistoryPanel from '@/components/CustomerHistoryPanel';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
+import CollectPaymentDialog from '@/components/CollectPaymentDialog';
+import { isMockMode } from '@/lib/apiHelpers';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
@@ -776,14 +778,20 @@ const Contacts = () => {
             )}
 
             {/* Payment Collection Modal */}
-            {paymentCustomer && (
+            {paymentCustomer && (isMockMode() ? (
                 <PaymentCollectionModal
                     isOpen={!!paymentCustomer}
                     onClose={() => setPaymentCustomer(null)}
                     customer={paymentCustomer}
                     onSubmit={handleUpdatePayment}
                 />
-            )}
+            ) : (
+                <CollectPaymentDialog
+                    customer={paymentCustomer}
+                    onClose={() => setPaymentCustomer(null)}
+                    onCollected={() => { fetchCustomers(); }}
+                />
+            ))}
 
             {/* Password Success Dialog */}
             {showPasswordDialog && generatedPassword && (

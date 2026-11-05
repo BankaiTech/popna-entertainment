@@ -12,9 +12,10 @@ def check_limit(org, kind):
     if limit is None:
         return
     model = Provider if kind == "providers" else Plan
+    label = "service connection types" if kind == "providers" else "connection products"
     if model.objects.filter(organization=org).count() >= limit:
         raise serializers.ValidationError({
-            "detail": f"Your subscription allows up to {limit} {kind}. Contact LCO Desk to increase it.",
+            "detail": f"Your subscription allows up to {limit} {label}. Contact LCO Desk to increase it.",
             "code": f"limit_{kind}",
         })
 
@@ -126,6 +127,8 @@ class CustomerSerializer(serializers.ModelSerializer):
     payment_method = serializers.SerializerMethodField()
     payment_updated_at = serializers.SerializerMethodField()
     collected_by_username = serializers.SerializerMethodField()
+    service_status = serializers.SerializerMethodField()
+    due_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -135,8 +138,9 @@ class CustomerSerializer(serializers.ModelSerializer):
             "monthly_amount", "sms_opt_in", "box_number", "stb_number", "can_caf_id", "address",
             "address_line1", "address_line2", "city", "state", "pincode", "notes", "created_at",
             "payment_status", "balance_amount", "collected_amount", "payment_method", "payment_updated_at",
-            "collected_by_username",
+            "collected_by_username", "service_status", "valid_until", "due_date",
         ]
+        read_only_fields = ["valid_until"]
         extra_kwargs = {
             "address_line1": {"write_only": True}, "address_line2": {"write_only": True},
             "city": {"write_only": True}, "state": {"write_only": True}, "pincode": {"write_only": True},
@@ -196,8 +200,19 @@ class CustomerSerializer(serializers.ModelSerializer):
         return bills[0] if bills else None
 
     def _last_payment(self, obj):
-        payments = getattr(obj, "current_payments", None)
+        bill = self._bill(obj)
+        payments = [p for p in getattr(obj, "current_payments", []) if bill and p.bill_id == bill.id]
         return payments[0] if payments else None
+
+    def get_service_status(self, obj):
+        return obj.service_status(self._bill(obj))
+
+    def get_due_date(self, obj):
+        """Cable: this month's cut-off date. Internet: plan expiry."""
+        bill = self._bill(obj)
+        if obj.is_cable:
+            return bill.due_date.isoformat() if bill else None
+        return obj.valid_until.isoformat() if obj.valid_until else None
 
     def get_payment_status(self, obj):
         bill = self._bill(obj)

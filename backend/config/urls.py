@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import LoginView, RefreshView, UserViewSet, logout_view, me_view
 from billing.views import BillViewSet, PaymentViewSet
 from core.views import dashboard_stats, health
-from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet
+from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet, cutoff_list
 from notifications.views import SmsLogViewSet
 from orgs.views import DistributorViewSet, OrganizationViewSet, distributor_summary
 from tracking import views as tracking
@@ -30,6 +30,7 @@ api = [
     path("auth/logout", logout_view),
     path("auth/me", me_view),
     path("dashboard/stats", dashboard_stats),
+    path("connections/cutoff", cutoff_list),
     path("distributor/summary", distributor_summary),
     path("tracking/status", tracking.duty_status),
     path("tracking/check-in", tracking.check_in),

@@ -12,6 +12,7 @@ from .models import Distributor, Organization
 
 OWNER_EDITABLE = [
     "owner_mobile", "extra_alert_mobiles", "sms_display_name", "default_due_day", "reminder_days_before",
+    "second_reminder_days_before",
     "internet_reminders_enabled", "internet_payment_sms_enabled", "owner_alert_mode", "tracking_enabled",
     "require_gps_for_collection", "require_checkin_for_collection",
 ]

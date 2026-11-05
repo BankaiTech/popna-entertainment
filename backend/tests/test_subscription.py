@@ -129,7 +129,7 @@ class LimitTests(TestCase):
                                      format="json").status_code, 201)
         res = self.c.post("/api/products", {"name": "BSNL", "product_type": "internet"}, format="json")
         self.assertEqual(res.status_code, 400)
-        self.assertIn("up to 1 providers", str(res.json()))
+        self.assertIn("up to 1 service connection types", str(res.json()))
 
     def test_plan_limit_and_usage_counts(self):
         Provider.objects.create(organization=self.org, name="GTPL", category="cable")

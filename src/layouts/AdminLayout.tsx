@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, FileText, ShoppingCart,
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
-  Calendar, Wrench, UserPlus, BarChart3, Activity
+  Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -32,6 +32,8 @@ interface SidebarItem {
   moduleKey: ModuleKey;
   color: string;
   terminologyKey?: string;
+  /** Only for field staff (agents / technicians) */
+  employeeOnly?: boolean;
 }
 
 const AdminLayout = () => {
@@ -70,6 +72,7 @@ const AdminLayout = () => {
       labelKey: 'nav.groupMain',
       items: [
         { path: '/admin/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, moduleKey: 'dashboard', color: 'text-blue-500' },
+        { path: '/admin/duty', labelKey: 'nav.myDuty', icon: MapPin, moduleKey: 'payments', color: 'text-green-500', employeeOnly: true },
       ],
     },
     {
@@ -112,6 +115,7 @@ const AdminLayout = () => {
       ...group,
       items: group.items.filter((item) => {
         const orgAllowed = isModuleAllowed(item.moduleKey);
+        if (item.employeeOnly && role !== 'employee') return false;
         if (role === 'employee') {
           return orgAllowed && allowedModules?.includes(item.moduleKey);
         }
