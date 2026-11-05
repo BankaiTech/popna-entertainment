@@ -1,10 +1,13 @@
 # LCO Desk — Backend (Django)
 
+> This folder is `backend/` inside the `lco-desk` repo. The React app is at the repo root.
+> For going live, follow **DEPLOY_CHECKLIST.md** at the repo root.
+
 Multi-level billing, collection and field-tracking backend for cable TV and broadband operators (LCOs).
 
 **Levels:** Platform admin → Distributor → Operator (owner) → Manager / Collection agent / Technician
 
-**What's built (Phase 1)**
+**What's built**
 
 | Feature | Status |
 |---|---|
@@ -18,15 +21,18 @@ Multi-level billing, collection and field-tracking backend for cable TV and broa
 | Agent check-in/out, live location, day route, GPS on every collection | ✅ |
 | SMS outbox with retries + SMS logs | ✅ |
 | Scheduler (no Redis/Celery needed) | ✅ |
-| 32 automated tests | ✅ |
-| Complaints, invoices PDF, reports, customer portal | Phase 2 |
+| Subscriptions, plan limits, modules per operator and per staff member | ✅ |
+| Cable cut-off day vs internet rolling validity, cut-off list, 2-stage reminders | ✅ |
+| Stock, suppliers, purchases, GST sales invoices, serial/barcode scanning | ✅ |
+| 74 automated tests | ✅ |
+| Complaints, new connections, reports, expenses, bulk import | Next |
 
 ---
 
 ## 1. Run on your laptop (10 minutes)
 
 ```bash
-cd lco-desk-backend
+cd lco-desk/backend
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -108,8 +114,8 @@ exit    # log out and back in so the group applies
 **4.4 Get the code and configure**
 
 ```bash
-git clone <your-private-repo-url> lco-desk-backend
-cd lco-desk-backend
+git clone <your-private-repo-url> lco-desk
+cd lco-desk/backend
 cp .env.example .env
 nano .env     # set DJANGO_SECRET_KEY, POSTGRES_PASSWORD, API_DOMAIN, hosts, CORS, SMS values
 ```
@@ -135,7 +141,7 @@ Open `https://api.lcodesk.in/api/health` — you should see `{"status":"ok"}`.
 ```bash
 crontab -e
 # add:
-30 2 * * * /home/ubuntu/lco-desk-backend/scripts/backup_db.sh >> /home/ubuntu/backup.log 2>&1
+30 2 * * * /home/ubuntu/lco-desk/backend/scripts/backup_db.sh >> /home/ubuntu/backup.log 2>&1
 ```
 
 Copy the `backups/` folder to cloud storage regularly. A backup on the same server is lost if the server is.

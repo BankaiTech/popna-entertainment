@@ -58,7 +58,7 @@ function SubscriptionBadge({ org }: { org: Organization }) {
     return <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap', tone)}>{text}</span>;
 }
 
-type ToggleItem = { key: string; label: string };
+type ToggleItem = { key: string; label: string; ready?: boolean };
 
 function ToggleGrid({ title, items, selected, onToggle }: {
     title: string; items: ToggleItem[]; selected: string[]; onToggle: (key: string) => void;
@@ -67,12 +67,14 @@ function ToggleGrid({ title, items, selected, onToggle }: {
         <div>
             <h3 className="text-sm font-semibold mb-2">{title}</h3>
             <div className="grid grid-cols-2 gap-2">
-                {items.map(({ key, label }) => {
-                    const on = selected.includes(key);
+                {items.map(({ key, label, ready = true }) => {
+                    const on = ready && selected.includes(key);
                     return (
                         <button
                             key={key}
                             type="button"
+                            disabled={!ready}
+                            title={ready ? undefined : 'Coming soon'}
                             onClick={() => onToggle(key)}
                             className={cn(
                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left',
@@ -82,7 +84,7 @@ function ToggleGrid({ title, items, selected, onToggle }: {
                             )}
                         >
                             {on ? <Check className="w-3 h-3" /> : <span className="w-3 h-3" />}
-                            {label}
+                            {label}{!ready && <span className="ml-auto text-[10px] uppercase opacity-70">soon</span>}
                         </button>
                     );
                 })}
@@ -191,7 +193,7 @@ const Organizations = () => {
 
     const openModules = (org: Organization) => {
         setModulesOrg(org);
-        setSelectedModules([...org.allowedModules]);
+        setSelectedModules(org.allowedModules.filter((m) => LCO_MODULES.some((x) => x.key === m && x.ready)));
         setSelectedTabs([...org.allowedSettingsTabs]);
     };
 

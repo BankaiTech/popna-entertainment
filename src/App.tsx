@@ -24,6 +24,10 @@ import AdminSettings from './pages/admin/Settings';
 import ConnectionRequests from './pages/admin/ConnectionRequests';
 import AdminContacts from './pages/admin/Contacts';
 import MyDuty from './pages/admin/MyDuty';
+import LcoStock from './pages/admin/lco/Stock';
+import LcoPurchases from './pages/admin/lco/Purchases';
+import LcoSales from './pages/admin/lco/Sales';
+import { isMockMode } from './lib/apiHelpers';
 import LiveMap from './pages/admin/LiveMap';
 import CutoffList from './pages/admin/CutoffList';
 import CollectRoute from './pages/admin/CollectRoute';
@@ -162,7 +166,7 @@ function App() {
             path="sales"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminSales />
+                {isMockMode() ? <AdminSales /> : <LcoSales />}
               </ProtectedRoute>
             }
           />
@@ -172,7 +176,7 @@ function App() {
             path="purchase"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminPurchase />
+                {isMockMode() ? <AdminPurchase /> : <LcoPurchases />}
               </ProtectedRoute>
             }
           />
@@ -299,7 +303,7 @@ function App() {
             path="inventory-products"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <InventoryProducts />
+                {isMockMode() ? <InventoryProducts /> : <LcoStock />}
               </ProtectedRoute>
             }
           />

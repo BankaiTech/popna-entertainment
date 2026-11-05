@@ -6,6 +6,7 @@ from accounts.views import LoginView, RefreshView, UserViewSet, logout_view, me_
 from billing.views import BillViewSet, PaymentViewSet
 from core.views import dashboard_stats, health
 from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet, cutoff_list
+from inventory.views import PurchaseViewSet, SaleViewSet, StockItemViewSet, StockUnitViewSet, SupplierViewSet
 from notifications.views import SmsLogViewSet
 from orgs.views import DistributorViewSet, OrganizationViewSet, distributor_summary
 from tracking import views as tracking
@@ -22,6 +23,11 @@ router.register("customers", CustomerViewSet, basename="customer")
 router.register("bills", BillViewSet, basename="bill")
 router.register("payments", PaymentViewSet, basename="payment")
 router.register("sms-logs", SmsLogViewSet, basename="sms-log")
+router.register("suppliers", SupplierViewSet, basename="supplier")
+router.register("stock-items", StockItemViewSet, basename="stock-item")
+router.register("stock-units", StockUnitViewSet, basename="stock-unit")
+router.register("purchases", PurchaseViewSet, basename="purchase")
+router.register("sales", SaleViewSet, basename="sale")
 
 api = [
     path("health", health),

@@ -1,3 +1,22 @@
+# Frontend hosting (Netlify). The Django API is hosted separately (see DEPLOY_CHECKLIST.md).
+[build]
+  command = "npm run build"
+  publish = "dist"
+  # Skip frontend builds when only the backend changed
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)backend'"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Location (My Duty) and camera (barcode scanning) only for this site
+    Permissions-Policy = "geolocation=(self), camera=(self), microphone=()"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

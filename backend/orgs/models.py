@@ -8,9 +8,10 @@ from core.models import TimeStampedModel
 from core.validators import normalize_mobile, validate_indian_mobile
 
 # Module keys understood by the React app (ALL_MODULES in src/models/types.ts).
+# Only modules the LCO Desk server fully supports. Complaints, new connections and reports come later.
 DEFAULT_MODULES = [
-    "dashboard", "contacts", "collect", "duty", "live-map", "cutoff", "connection-requests", "complaints",
-    "payments", "invoices", "purchase-invoices", "inventory-products", "products", "users", "settings", "reports",
+    "dashboard", "contacts", "collect", "duty", "live-map", "cutoff", "invoices", "purchase-invoices",
+    "inventory-products", "products", "users", "settings",
 ]
 DEFAULT_SETTINGS_TABS = ["company", "products", "billing", "sms-templates"]
 
