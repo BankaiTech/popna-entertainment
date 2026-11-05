@@ -1,9 +1,11 @@
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.mixins import require_org
+from core.modules import has_module
 from core.permissions import ReadWriteRoles, Roles, role_in
 
 from .models import Bill, Payment
@@ -60,6 +62,8 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
         return qs
 
     def create(self, request, *args, **kwargs):
+        if request.user.role in Roles.FIELD and not has_module(request.user, "collect"):
+            raise PermissionDenied("You don't have access to collections. Ask the owner.")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data

@@ -20,7 +20,7 @@ function mapUser(raw: Record<string, unknown>): User {
     password: '',
     role: (ADMIN_ROLES.includes(String(u.role)) ? 'admin' : 'employee') as User['role'],
     status: (u.status as User['status']) ?? (u.isActive === false ? 'inactive' : 'active'),
-    allowedModules: u.allowedModules as User['allowedModules'],
+    allowedModules: (u.modules ?? u.allowedModules) as User['allowedModules'],
     branchId: u.branchId != null ? Number(u.branchId) : undefined,
     createdAt: String(u.createdAt ?? new Date().toISOString()),
   };
@@ -34,6 +34,9 @@ function userPayload(user: Partial<User>): Record<string, unknown> {
   if (user.password) payload.password = user.password;
   if (user.role !== undefined) payload.role = user.role === 'admin' ? 'manager' : 'agent';
   if (user.status !== undefined) payload.is_active = user.status === 'active';
+  // Field staff module access chosen by the owner (admins/managers follow the operator's modules)
+  if (user.role === 'employee' && user.allowedModules !== undefined) payload.allowed_modules = user.allowedModules;
+  if (user.role === 'admin') payload.allowed_modules = null;
   return payload;
 }
 

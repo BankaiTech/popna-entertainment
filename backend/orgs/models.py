@@ -9,8 +9,8 @@ from core.validators import normalize_mobile, validate_indian_mobile
 
 # Module keys understood by the React app (ALL_MODULES in src/models/types.ts).
 DEFAULT_MODULES = [
-    "dashboard", "contacts", "connection-requests", "complaints", "payments", "invoices",
-    "purchase-invoices", "inventory-products", "products", "users", "settings", "reports",
+    "dashboard", "contacts", "collect", "duty", "live-map", "cutoff", "connection-requests", "complaints",
+    "payments", "invoices", "purchase-invoices", "inventory-products", "products", "users", "settings", "reports",
 ]
 DEFAULT_SETTINGS_TABS = ["company", "products", "billing", "sms-templates"]
 

@@ -12,35 +12,12 @@ import { formatDateIN, getSubscriptionState, todayInIndia } from '@/lib/subscrip
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
+import {
+    LCO_MODULES, LCO_SETTINGS_TABS, DEFAULT_OPERATOR_MODULES, DEFAULT_SETTINGS_TABS,
+} from '@/config/lcoModules';
 
-/** Modules that make sense for a cable / broadband operator, with plain names. */
-const LCO_MODULES: { key: ModuleKey; label: string }[] = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'contacts', label: 'Customers' },
-    { key: 'payments', label: 'Collections' },
-    { key: 'invoices', label: 'Sales' },
-    { key: 'purchase-invoices', label: 'Purchase' },
-    { key: 'inventory-products', label: 'Stock' },
-    { key: 'products', label: 'Providers & Plans' },
-    { key: 'connection-requests', label: 'New Connections' },
-    { key: 'complaints', label: 'Complaints' },
-    { key: 'expenses', label: 'Expenses' },
-    { key: 'reports', label: 'Reports' },
-    { key: 'users', label: 'Staff' },
-    { key: 'settings', label: 'Settings' },
-    { key: 'audit-trail', label: 'Audit Log' },
-];
-const DEFAULT_MODULES: ModuleKey[] = [
-    'dashboard', 'contacts', 'payments', 'invoices', 'purchase-invoices', 'inventory-products', 'products',
-    'connection-requests', 'complaints', 'reports', 'users', 'settings',
-];
-const LCO_SETTINGS_TABS: { key: SettingsTabKey; label: string }[] = [
-    { key: 'company', label: 'Business Profile' },
-    { key: 'products', label: 'Providers & Plans' },
-    { key: 'billing', label: 'Billing & UPI' },
-    { key: 'sms-templates', label: 'SMS' },
-];
-const DEFAULT_TABS: SettingsTabKey[] = ['company', 'products', 'billing', 'sms-templates'];
+const DEFAULT_MODULES = DEFAULT_OPERATOR_MODULES;
+const DEFAULT_TABS = DEFAULT_SETTINGS_TABS;
 
 function addDays(iso: string, days: number) {
     const d = new Date(`${iso}T00:00:00`);

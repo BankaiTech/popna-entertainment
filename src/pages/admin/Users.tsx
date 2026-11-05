@@ -10,7 +10,9 @@ import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/
 import { usersApi } from '@/api/users';
 import { useStore } from '@/store/useStore';
 import type { User, ModuleKey } from '@/models/types';
-import { MOCK_ORGANIZATION_ID, ALL_MODULES } from '@/models/types';
+import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import { LCO_MODULES, DEFAULT_AGENT_MODULES } from '@/config/lcoModules';
+import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { Plus, UserCog, Shield } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
 
@@ -32,6 +34,11 @@ const MODULE_I18N_KEYS: Record<string, string> = {
 
 const AdminUsers = () => {
   const { t } = useTranslation();
+  // Field staff can only get modules this operator has, and never office-only ones.
+  const orgModules = useOrganizationStore((s) => s.currentOrganization?.allowedModules);
+  const staffModules = LCO_MODULES.filter((m) => m.staff && (!orgModules || orgModules.includes(m.key))).map((m) => m.key);
+  const defaultAgentModules = DEFAULT_AGENT_MODULES.filter((m) => staffModules.includes(m));
+  const moduleName = (mod: string) => LCO_MODULES.find((m) => m.key === mod)?.label ?? t(MODULE_I18N_KEYS[mod] || mod, mod);
   const { customers, initialize, fetchCustomers } = useStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +55,7 @@ const AdminUsers = () => {
   const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<'admin' | 'employee'>('employee');
   const [addStatus, setAddStatus] = useState<'active' | 'inactive'>('active');
-  const [addAllowedModules, setAddAllowedModules] = useState<ModuleKey[]>(['contacts', 'complaints']);
+  const [addAllowedModules, setAddAllowedModules] = useState<ModuleKey[]>(DEFAULT_AGENT_MODULES);
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [editName, setEditName] = useState('');
@@ -96,7 +103,7 @@ const AdminUsers = () => {
     setAddPassword('');
     setAddRole('employee');
     setAddStatus('active');
-    setAddAllowedModules(['contacts', 'complaints']);
+    setAddAllowedModules(defaultAgentModules);
     setAddError('');
     setIsAddOpen(true);
   };
@@ -218,7 +225,7 @@ const AdminUsers = () => {
       </label>
       <p className="text-xs text-muted-foreground mb-3">{t('users.hints.moduleAccess', 'Select which modules this employee can access')}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {ALL_MODULES.filter((mod) => mod !== 'users' && mod !== 'settings').map((mod) => (
+        {staffModules.map((mod) => (
           <label
             key={mod}
             className={cn(
@@ -234,7 +241,7 @@ const AdminUsers = () => {
               onChange={() => toggleModule(modules, setModules, mod)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0"
             />
-            <span className="truncate">{t(MODULE_I18N_KEYS[mod] || mod, mod)}</span>
+            <span className="truncate">{moduleName(mod)}</span>
           </label>
         ))}
       </div>
@@ -385,7 +392,7 @@ const AdminUsers = () => {
                             <div className="flex flex-wrap gap-1">
                               {u.allowedModules.map((mod) => (
                                 <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
-                                  {t(MODULE_I18N_KEYS[mod] || mod, mod)}
+                                  {moduleName(mod)}
                                 </span>
                               ))}
                             </div>
@@ -434,7 +441,7 @@ const AdminUsers = () => {
                         <div className="flex flex-wrap gap-1">
                           {u.allowedModules.map((mod) => (
                             <span key={mod} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">
-                              {t(MODULE_I18N_KEYS[mod] || mod, mod)}
+                              {moduleName(mod)}
                             </span>
                           ))}
                         </div>

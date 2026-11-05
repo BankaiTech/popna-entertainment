@@ -13,6 +13,7 @@ from accounts.models import User
 from billing.models import Payment
 from core.audit import audit
 from core.mixins import require_org
+from core.modules import has_module
 from core.permissions import Roles, role_in
 
 from .models import DutySession, LocationPing
@@ -39,6 +40,8 @@ def _tracking_org(user):
     org = require_org(user)
     if not org.tracking_enabled:
         raise PermissionDenied("Location tracking is turned off for this operator.")
+    if user.role in Roles.FIELD and not has_module(user, "duty"):
+        raise PermissionDenied("You don't have access to My Duty. Ask the owner.")
     return org
 
 
