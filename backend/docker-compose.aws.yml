@@ -1,0 +1,36 @@
+# AWS setup: the database is AWS RDS (managed PostgreSQL), so there is no "db" container here.
+# Start with:  docker compose -f docker-compose.aws.yml up -d --build
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    # Creates / updates all tables on every start (safe to repeat), then serves the API.
+    command: sh -c "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 30 --access-logfile -"
+
+  scheduler:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    command: python manage.py run_scheduler
+    depends_on:
+      - web
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:
