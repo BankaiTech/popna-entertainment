@@ -103,6 +103,14 @@ if env("POSTGRES_DB"):
             "HOST": env("POSTGRES_HOST", "db"),
             "PORT": env("POSTGRES_PORT", "5432"),
             "CONN_MAX_AGE": 60,
+            # Encrypted connection to the database (e.g. AWS RDS). verify-full also checks the server certificate.
+            "OPTIONS": {
+                k: v for k, v in {
+                    "sslmode": env("POSTGRES_SSLMODE", "prefer"),
+                    "sslrootcert": env("POSTGRES_SSLROOTCERT", ""),
+                    "connect_timeout": 10,
+                }.items() if v
+            },
         }
     }
 else:

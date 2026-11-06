@@ -123,7 +123,7 @@ def create_sale(*, user, org, customer=None, customer_name="", customer_mobile="
                 raise ValidationError({"serials": f"{item.name}: already sold or not available: {', '.join(gone[:10])}"})
             p["units"] = units
         elif on_hand(item) < p["quantity"]:
-            raise ValidationError({"lines": f"{item.name}: only {on_hand(item):g} in stock."})
+            raise ValidationError({"lines": f"{item.name}: only {on_hand(item).normalize():f} in stock."})
     if customer is not None:
         customer_name = customer_name or customer.name
         customer_mobile = customer_mobile or customer.mobile
