@@ -60,7 +60,7 @@ const SuperAdminLayout = () => {
                         <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     </button>
                     <div className="logo-header-wrap shrink-0">
-                        <Logo className="logo-header" />
+                        <Logo />
                     </div>
                     <div className="hidden sm:flex items-center gap-2 min-w-0">
                         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800">

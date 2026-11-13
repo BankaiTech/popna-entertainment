@@ -25,6 +25,7 @@ import ConnectionRequests from './pages/admin/ConnectionRequests';
 import AdminContacts from './pages/admin/Contacts';
 import MyDuty from './pages/admin/MyDuty';
 import LcoStock from './pages/admin/lco/Stock';
+import LcoDashboard from './pages/admin/lco/Dashboard';
 import LcoPurchases from './pages/admin/lco/Purchases';
 import LcoSales from './pages/admin/lco/Sales';
 import { isMockMode } from './lib/apiHelpers';
@@ -70,7 +71,8 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
-          <Route index element={<HomePage />} />
+          {/* The old multi-business marketing page is demo-only; operators go straight to login */}
+          <Route index element={isMockMode() ? <HomePage /> : <Navigate to="/login" replace />} />
         </Route>
 
         {/* Single Login - admin/employee/customer determined by credentials */}
@@ -155,7 +157,7 @@ function App() {
             path="dashboard"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <AdminDashboard />
+                {isMockMode() ? <AdminDashboard /> : <LcoDashboard />}
               </ProtectedRoute>
             }
           />

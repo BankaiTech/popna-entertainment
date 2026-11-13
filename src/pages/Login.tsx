@@ -15,6 +15,7 @@ import { signupRequestsApi } from '@/api/signupRequests';
 import { showSuccess, showError } from '@/utils/toast';
 import { SELECTABLE_INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
 import { env } from '@/lib/env';
+import Logo from '@/components/Logo';
 import { SUBSCRIPTION_MSG_KEY } from '@/lib/subscription';
 
 const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -123,8 +124,16 @@ const Login = () => {
       } else if (userRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else {
-        navigate('/admin/customers', { replace: true });
+        navigate('/admin/dashboard', { replace: true });
       }
+      return;
+    }
+
+    // The customer portal still runs on demo data, so it only works in mock mode.
+    if (!env.USE_MOCK_API) {
+      setIsLoading(false);
+      setError(t('login.wrongCredentials', 'Username and password is wrong'));
+      triggerShake();
       return;
     }
 
@@ -201,26 +210,26 @@ const Login = () => {
         />
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 py-16">
           <div className="mb-10">
-            <img src="/Popna Dark.png" alt="LCO Desk" className="h-12 w-auto mb-8" />
+            <Logo size="lg" tone="light" className="mb-8" />
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
               {isSignup ? t('signup.welcomeTitle', 'Get Started') : t('login.welcomeBack', 'Welcome Back')}
             </h1>
             <p className="text-lg text-white/65 leading-relaxed">
               {isSignup
                 ? t('signup.welcomeSubtitle', 'Sign up to start managing your business with our powerful platform.')
-                : t('login.signInToContinue', 'Sign in to manage your business, invoices, contacts and more - all in one powerful platform.')}
+                : 'Billing, collection and field staff tracking for cable TV and broadband operators.'}
             </p>
           </div>
           <div className="space-y-3">
             {[
-              t('home.features.invoicing', 'GST Invoicing'),
-              t('home.features.contacts', 'Contact Management'),
-              t('home.features.pos', 'Point of Sale'),
-              t('home.benefits.multiLang', 'Multi-Language Support'),
-              t('home.features.inventory', 'Inventory Module'),
-              t('home.features.labels', 'Label Print'),
-              t('home.features.thermal', 'POS Thermal Bill'),
-              t('home.features.reports', 'Business Reports'),
+              'Cable & broadband customers',
+              'Collections with receipt SMS',
+              'Due-date reminder SMS',
+              'Collection agent live location',
+              'Cut-off list',
+              'Stock with barcode scanning',
+              'GST sales invoices',
+              'Tamil and 5 more languages',
             ].map((feat) => (
               <div key={feat} className="flex items-center gap-2.5">
                 <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -232,7 +241,7 @@ const Login = () => {
           </div>
           <div className="mt-12 flex items-center gap-2 text-white/40 text-xs">
             <Building2 className="w-4 h-4" />
-            <span>{t('footer.tagline', 'Complete Business Management Platform')}</span>
+            <span>LCO Desk · for cable TV and broadband operators</span>
           </div>
         </div>
       </div>
@@ -255,7 +264,7 @@ const Login = () => {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-8 lg:hidden">
-              <img src="/Popna.png" alt="LCO Desk" className="h-12 w-auto" />
+              <Logo size="lg" />
             </div>
 
             {!isSignup ? (
@@ -359,7 +368,8 @@ const Login = () => {
                   </button>
                 </form>
 
-                {/* Sign up link */}
+                {/* Sign up link (demo mode only — real operators are created by the app owner) */}
+                {env.USE_MOCK_API && (
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-500">
                     {t('login.noAccount', "Don't have an account?")}{' '}
@@ -372,6 +382,7 @@ const Login = () => {
                     </button>
                   </p>
                 </div>
+                )}
 
                 {/* Demo credentials — mock mode only, never shown with the real backend */}
                 {env.USE_MOCK_API && (

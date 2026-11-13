@@ -1,3 +1,4 @@
+import Logo from '@/components/Logo';
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -104,7 +105,7 @@ const PublicLayout = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0 logo-nav-wrap">
-              <img src="/Popna Dark.png" alt="LCO Desk" className="logo-nav h-8 w-auto" />
+              <Logo size="sm" tone="light" className="logo-nav" />
             </Link>
 
             {/* Desktop nav links */}
@@ -252,7 +253,7 @@ const PublicLayout = () => {
             {/* Brand column */}
             <div>
               <div className="mb-4">
-                <img src="/Popna Dark.png" alt="LCO Desk" className="h-8 w-auto" />
+                <Logo size="sm" tone="light" />
               </div>
               <h3 className="text-white font-semibold text-base mb-2">{companyName}</h3>
               <p className="text-sm text-gray-400 leading-relaxed">

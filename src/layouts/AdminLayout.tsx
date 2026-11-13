@@ -83,8 +83,8 @@ const AdminLayout = () => {
     {
       labelKey: 'nav.groupBusiness',
       items: [
-        { path: '/admin/contacts', labelKey: 'nav.contacts', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500', terminologyKey: 'contact' },
-        { path: '/admin/inventory-products', labelKey: 'nav.inventory', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500', terminologyKey: 'product' },
+        { path: '/admin/contacts', labelKey: 'nav.customers', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500' },
+        { path: '/admin/inventory-products', labelKey: 'nav.stock', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
         { path: '/admin/sales', labelKey: 'nav.sales', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
         { path: '/admin/purchase', labelKey: 'nav.purchase', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },
       ],
@@ -156,8 +156,8 @@ const AdminLayout = () => {
             <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
           <div className="logo-header-wrap shrink-0">
-            <Logo className="logo-header sm:hidden" variant="icon" />
-            <Logo className="logo-header hidden sm:block" />
+            <Logo className="sm:hidden" variant="icon" />
+            <Logo className="hidden sm:inline-flex" />
           </div>
         </div>
 
