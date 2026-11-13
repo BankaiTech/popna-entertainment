@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     react(),
     VitePWA({
       registerType: 'prompt', // so we can show "New version available. Reload?" via useRegisterSW
-      includeAssets: ['Popna.png', 'Popna Logo.png'],
+      includeAssets: ['lcodesk-icon.png', 'lcodesk-icon-192.png', 'lcodesk-icon-512.png', 'favicon-32.png', 'apple-touch-icon.png'],
       manifest: false, // Managed manually via public/manifest.json
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],

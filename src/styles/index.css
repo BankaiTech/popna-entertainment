@@ -89,7 +89,7 @@ body {
 
 /* Use .safe-area-inset-* on fixed/sticky elements (headers, footers, banners) as needed */
 
-/* Logo: Popna.png (with name) in nav/login/dashboards. */
+/* Logo: LCO Desk icon + name (src/components/Logo.tsx). */
 .logo-nav-wrap {
   height: 3.5rem;
   display: flex;

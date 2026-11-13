@@ -15,13 +15,13 @@
   ],
   "icons": [
     {
-      "src": "/Popna Logo.png",
+      "src": "/lcodesk-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Popna Logo.png",
+      "src": "/lcodesk-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
@@ -35,8 +35,8 @@
       "url": "/admin/contacts",
       "icons": [
         {
-          "src": "/Popna Logo.png",
-          "sizes": "96x96"
+          "src": "/lcodesk-icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
@@ -47,8 +47,8 @@
       "url": "/admin/inventory-products",
       "icons": [
         {
-          "src": "/Popna Logo.png",
-          "sizes": "96x96"
+          "src": "/lcodesk-icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
@@ -59,8 +59,8 @@
       "url": "/admin/invoices",
       "icons": [
         {
-          "src": "/Popna Logo.png",
-          "sizes": "96x96"
+          "src": "/lcodesk-icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
@@ -71,8 +71,8 @@
       "url": "/admin/pos",
       "icons": [
         {
-          "src": "/Popna Logo.png",
-          "sizes": "96x96"
+          "src": "/lcodesk-icon-192.png",
+          "sizes": "192x192"
         }
       ]
     }
