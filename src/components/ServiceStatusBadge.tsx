@@ -1,3 +1,4 @@
+import { tr } from '@/lib/lt';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/models/types';
 
@@ -16,7 +17,7 @@ const STYLES: Record<Status, { text: string; tone: string }> = {
 export function ServiceStatusBadge({ status, className }: { status?: Customer['serviceStatus']; className?: string }) {
   if (!status || status === 'active') return null;
   const s = STYLES[status];
-  return <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap', s.tone, className)}>{s.text}</span>;
+  return <span className={cn('px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap', s.tone, className)}>{tr(s.text)}</span>;
 }
 
 export default ServiceStatusBadge;

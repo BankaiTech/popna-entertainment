@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { tr } from '@/lib/lt';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -38,7 +39,7 @@ const AdminUsers = () => {
   const orgModules = useOrganizationStore((s) => s.currentOrganization?.allowedModules);
   const staffModules = LCO_MODULES.filter((m) => m.staff && m.ready && (!orgModules || orgModules.includes(m.key))).map((m) => m.key);
   const defaultAgentModules = DEFAULT_AGENT_MODULES.filter((m) => staffModules.includes(m));
-  const moduleName = (mod: string) => LCO_MODULES.find((m) => m.key === mod)?.label ?? t(MODULE_I18N_KEYS[mod] || mod, mod);
+  const moduleName = (mod: string) => tr(LCO_MODULES.find((m) => m.key === mod)?.label ?? '') || t(MODULE_I18N_KEYS[mod] || mod, mod);
   const { customers, initialize, fetchCustomers } = useStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,7 +252,7 @@ const AdminUsers = () => {
   return (
     <div className="space-y-4">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 [&>*]:min-w-0">
         <Card className="overflow-hidden group hover:-translate-y-0.5 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-3">
             <CardTitle className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

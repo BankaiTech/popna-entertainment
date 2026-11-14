@@ -6,6 +6,7 @@ import { dutyApi, paymentsApi, type DutyStatus, type PaymentReceipt } from '@/ap
 import { useDutyTracking } from '@/hooks/useDutyTracking';
 import { getPosition, GPS_HELP } from '@/lib/geo';
 import { showError, showSuccess } from '@/utils/toast';
+import { tr } from '@/lib/lt';
 
 const time = (iso?: string | Date | null) =>
   iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
@@ -23,7 +24,7 @@ const MyDuty = () => {
       setStatus(s);
       setToday(t);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load duty status');
+      showError(err instanceof Error ? err.message : tr('Could not load duty status'));
     }
   }, []);
 
@@ -36,19 +37,19 @@ const MyDuty = () => {
     try {
       const gps = await getPosition();
       if (!gps) {
-        showError(GPS_HELP);
+        showError(tr(GPS_HELP));
         return;
       }
       if (onDuty) {
         await dutyApi.checkOut(gps);
-        showSuccess('Duty ended. Location tracking stopped.');
+        showSuccess(tr('Duty ended. Location tracking stopped.'));
       } else {
         await dutyApi.checkIn(gps);
-        showSuccess('Duty started.');
+        showSuccess(tr('Duty started.'));
       }
       await load();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not update duty');
+      showError(err instanceof Error ? err.message : tr('Could not update duty'));
     } finally {
       setBusy(false);
     }
@@ -62,7 +63,7 @@ const MyDuty = () => {
       <div className="rounded-2xl border border-border bg-card p-5 text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full ${onDuty ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-          <span className="font-semibold">{onDuty ? 'On duty' : 'Off duty'}</span>
+          <span className="font-semibold">{onDuty ? tr('On duty') : tr('Off duty')}</span>
         </div>
         {onDuty && status?.session && (
           <p className="text-sm text-muted-foreground">Since {time(status.session.startedAt)}</p>
@@ -76,23 +77,23 @@ const MyDuty = () => {
           }`}
         >
           {onDuty ? <Square className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-          {busy ? 'Please wait…' : onDuty ? 'End duty' : 'Start duty'}
+          {busy ? tr('Please wait…') : onDuty ? tr('End duty') : tr('Start duty')}
         </button>
         <p className="text-xs text-muted-foreground">
-          Your location is shared with the owner only while you are on duty.
+          {tr('Your location is shared with the owner only while you are on duty.')}
         </p>
       </div>
 
       {onDuty && (
         <div className={`rounded-xl border p-3 text-sm flex items-start gap-2 ${gpsOff ? 'border-red-200 bg-red-50 text-red-700' : 'border-border'}`}>
           {gpsOff ? <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> : <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-green-600" />}
-          <span>{gpsOff ? GPS_HELP : `Location sent at ${time(lastSentAt)}. Keep this app open while collecting.`}</span>
+          <span>{gpsOff ? tr(GPS_HELP) : tr('Location sent at {{time}}. Keep this app open while collecting.', { time: time(lastSentAt) })}</span>
         </div>
       )}
 
       <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 font-semibold"><Wallet className="w-4 h-4" /> Today</div>
+          <div className="flex items-center gap-2 font-semibold"><Wallet className="w-4 h-4" /> {tr('Today')}</div>
           <div className="text-right">
             <div className="text-lg font-bold">₹{total.toLocaleString('en-IN')}</div>
             <div className="text-xs text-muted-foreground">{valid.length} collections</div>
@@ -108,10 +109,10 @@ const MyDuty = () => {
               <span className={p.status === 'cancelled' ? 'line-through text-muted-foreground' : 'font-medium'}>₹{Number(p.amount)}</span>
             </li>
           ))}
-          {today.length === 0 && <li className="py-4 text-center text-muted-foreground">No collections yet today.</li>}
+          {today.length === 0 && <li className="py-4 text-center text-muted-foreground">{tr('No collections yet today.')}</li>}
         </ul>
         <Link to="/admin/contacts" className="block text-center py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
-          Go to customers to collect
+          {tr('Go to customers to collect')}
         </Link>
       </div>
     </div>

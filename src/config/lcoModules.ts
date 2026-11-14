@@ -18,6 +18,7 @@ export const LCO_MODULES: { key: ModuleKey; label: string; staff: boolean; ready
   { key: 'products', label: 'Providers & Plans', staff: false, ready: true },
   { key: 'users', label: 'Staff', staff: false, ready: true },
   { key: 'settings', label: 'Settings', staff: false, ready: true },
+  { key: 'sms-log', label: 'SMS Log', staff: false, ready: true },
   // Not built on the LCO Desk server yet — shown as "coming soon" and can't be switched on.
   { key: 'connection-requests', label: 'New Connections', staff: true, ready: false },
   { key: 'complaints', label: 'Complaints', staff: true, ready: false },

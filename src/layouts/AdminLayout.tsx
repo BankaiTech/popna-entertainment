@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Package, FileText, ShoppingCart,
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
-  Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin, Map as MapIcon, Wallet, ScissorsLineDashed
+  Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin, Map as MapIcon, Wallet, ScissorsLineDashed,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -109,6 +110,7 @@ const AdminLayout = () => {
         { path: '/admin/branches', labelKey: 'nav.branches', icon: GitBranch, moduleKey: 'branches', color: 'text-teal-500' },
         { path: '/admin/users', labelKey: 'nav.users', icon: UserCog, moduleKey: 'users', color: 'text-indigo-500' },
         { path: '/admin/reports', labelKey: 'nav.reports', icon: BarChart3, moduleKey: 'reports', color: 'text-blue-500' },
+        { path: '/admin/sms-log', labelKey: 'nav.smsLog', icon: MessageSquare, moduleKey: 'sms-log', color: 'text-sky-500' },
         { path: '/admin/audit-trail', labelKey: 'nav.auditTrail', icon: Activity, moduleKey: 'audit-trail', color: 'text-slate-500' },
         { path: '/admin/settings', labelKey: 'nav.settings', icon: Settings, moduleKey: 'settings', color: 'text-gray-500' },
       ],
@@ -265,7 +267,7 @@ const AdminLayout = () => {
         </aside>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 flex flex-col w-full sm:ml-56">
+        <main className="flex-1 min-w-0 flex flex-col sm:ml-56">
           <div className="flex-1 overflow-auto p-3 sm:p-5 pb-20 sm:pb-5">
             <Outlet />
           </div>

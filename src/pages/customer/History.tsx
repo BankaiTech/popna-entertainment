@@ -148,7 +148,7 @@ const CustomerHistory = () => {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t('customerHistory.accountSummary', 'Account Summary')}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 [&>*]:min-w-0">
             {[
               { label: t('customerHistory.customerName', 'Name'), value: currentCustomer.name, icon: User, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
               { label: t('customerHistory.activePlan', 'Plan'), value: currentCustomer.package || '-', icon: Wifi, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },

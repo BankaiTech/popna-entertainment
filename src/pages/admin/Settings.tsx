@@ -1,4 +1,5 @@
 // Organization-based settings tab access
+import { tr } from '@/lib/lt';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -26,10 +27,10 @@ const Settings = () => {
 
   // LCO Desk settings: only what a cable / broadband operator needs.
   const allTabs: { id: SettingsTab; label: string; icon: typeof Building2; description: string }[] = useMemo(() => [
-    { id: 'company', label: 'Business Profile', icon: Building2, description: 'Your plan, business details and UPI' },
-    { id: 'products', label: 'Providers & Plans', icon: Package, description: 'Service connection types (GTPL, RailWire...) and their plans' },
-    { id: 'billing', label: 'Billing & Reminders', icon: CreditCard, description: 'Due dates, reminder SMS, payment SMS and field staff rules' },
-    { id: 'sms-templates', label: 'SMS', icon: MessageSquare, description: 'Sender name, the messages we send, and recent SMS' },
+    { id: 'company', label: tr('Business Profile'), icon: Building2, description: tr('Your plan, business details and UPI') },
+    { id: 'products', label: tr('Providers & Plans'), icon: Package, description: tr('Service connection types (GTPL, RailWire...) and their plans') },
+    { id: 'billing', label: tr('Billing & Reminders'), icon: CreditCard, description: tr('Due dates, reminder SMS, payment SMS and field staff rules') },
+    { id: 'sms-templates', label: tr('SMS'), icon: MessageSquare, description: tr('Business name in SMS, SMS language and the messages we send') },
   ], []);
 
   const tabs = useMemo(
@@ -91,7 +92,7 @@ const Settings = () => {
       <nav
         role="tablist"
         aria-label={t('settings.tabsLabel', 'Settings tabs')}
-        className="hidden sm:flex gap-1 p-1 rounded-xl bg-gray-100/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 w-full"
+        className="hidden sm:flex gap-1 p-1 rounded-xl bg-gray-100/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 w-full overflow-x-auto"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -105,7 +106,7 @@ const Settings = () => {
               id={`tab-${tab.id}`}
               onClick={() => setActiveTabAndUrl(tab.id)}
               className={cn(
-                'flex items-center gap-2 flex-1 justify-center px-5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-2 shrink-0 xl:flex-1 xl:shrink justify-center px-3 lg:px-5 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                 isActive
                   ? 'bg-white dark:bg-gray-900 text-primary shadow-sm border border-gray-200 dark:border-gray-700'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/60 dark:hover:bg-gray-700/60'

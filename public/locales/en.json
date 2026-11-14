@@ -2090,5 +2090,6 @@
   "nav.collect": "Collect",
   "nav.liveMap": "Live Map",
   "nav.cutoff": "Cut-off List",
-  "nav.stock": "Stock"
+  "nav.stock": "Stock",
+  "nav.smsLog": "SMS Log"
 }

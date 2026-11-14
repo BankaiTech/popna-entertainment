@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from billing.services import generate_bills, generate_internet_renewals, month_start
 from core.models import JobRun
-from notifications.services import process_outbox, queue_due_reminders, queue_owner_daily_summaries
+from notifications.services import process_outbox, queue_due_reminders
 
 log = logging.getLogger("scheduler")
 
@@ -34,8 +34,6 @@ def daily_jobs():
         ("internet_renewals", settings.SCHEDULE_GENERATE_BILLS_AT, None,
          lambda today: generate_internet_renewals(today)),
         ("due_reminders", settings.SCHEDULE_DUE_REMINDERS_AT, None, lambda today: queue_due_reminders(today)),
-        ("owner_summary", settings.SCHEDULE_OWNER_SUMMARY_AT, None,
-         lambda today: queue_owner_daily_summaries(today)),
         ("purge_locations", settings.SCHEDULE_PURGE_LOCATIONS_AT, None, lambda today: _purge_locations()),
     ]
 

@@ -13,6 +13,10 @@ class SmsMessage(OrgOwnedModel):
         DUE_REMINDER = "due_reminder", "Due reminder (customer)"
         OWNER_DAILY_SUMMARY = "owner_daily_summary", "Daily summary (owner)"
 
+    class Language(models.TextChoices):
+        ENGLISH = "en", "English"
+        TAMIL = "ta", "Tamil"
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         SENDING = "sending", "Sending"
@@ -21,6 +25,11 @@ class SmsMessage(OrgOwnedModel):
 
     kind = models.CharField(max_length=30, choices=Kind.choices)
     to_mobile = models.CharField(max_length=15)
+    customer = models.ForeignKey("customers.Customer", null=True, blank=True, on_delete=models.SET_NULL,
+                                 related_name="sms_messages")
+    recipient_name = models.CharField(max_length=150, blank=True)
+    language = models.CharField(max_length=2, choices=Language.choices, default=Language.ENGLISH)
+    template_id = models.CharField(max_length=40, blank=True)
     body = models.TextField()
     dedupe_key = models.CharField(max_length=150, unique=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

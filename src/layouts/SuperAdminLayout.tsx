@@ -154,7 +154,7 @@ const SuperAdminLayout = () => {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 flex flex-col w-full sm:ml-56">
+                <main className="flex-1 min-w-0 flex flex-col sm:ml-56">
                     <div className="flex-1 overflow-auto p-3 sm:p-6 pb-24 sm:pb-6">
                         <Outlet />
                     </div>

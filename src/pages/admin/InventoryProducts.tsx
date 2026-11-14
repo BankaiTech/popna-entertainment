@@ -215,7 +215,7 @@ const InventoryProducts = () => {
     return (
         <div className="space-y-3">
             {/* KPI Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 [&>*]:min-w-0">
                 <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200/80 dark:border-gray-700 p-3 shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
                         <Package className="w-4 h-4 text-blue-500 shrink-0" />

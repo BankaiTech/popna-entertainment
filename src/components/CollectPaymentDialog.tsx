@@ -9,6 +9,7 @@ import { getPosition, GPS_HELP } from '@/lib/geo';
 import { formatDateIN } from '@/lib/subscription';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Customer } from '@/models/types';
+import { tr } from '@/lib/lt';
 
 interface Props {
   customer: Customer;
@@ -40,7 +41,7 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
     e.preventDefault();
     setError('');
     if (amountNum + discountNum <= 0) return setError('Enter the amount collected.');
-    if (amountNum + discountNum > balance) return setError(`Amount is more than the balance (₹${balance}).`);
+    if (amountNum + discountNum > balance) return setError(tr('Amount is more than the balance (₹{{balance}}).', { balance }));
     setSaving(true);
     try {
       const gps = await getPosition();
@@ -54,7 +55,7 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
       setReceipt(r);
       onCollected?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save the payment.');
+      setError(err instanceof Error ? err.message : tr('Could not save the payment.'));
     } finally {
       setSaving(false);
     }
@@ -64,26 +65,26 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
     const at = new Date(receipt.collectedAt);
     return (
       <Dialog open onClose={onClose}>
-        <DialogHeader title="Payment saved" onClose={onClose} />
+        <DialogHeader title={tr('Payment saved')} onClose={onClose} />
         <DialogBody>
           <div className="p-5 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
             <p className="text-3xl font-bold">₹{Number(receipt.amount).toLocaleString('en-IN')}</p>
             <dl className="text-sm grid grid-cols-2 gap-y-1 text-left max-w-xs mx-auto">
-              <dt className="text-muted-foreground">Receipt</dt><dd className="font-mono">{receipt.receiptNo}</dd>
-              <dt className="text-muted-foreground">Customer</dt><dd>{receipt.customerName}</dd>
-              <dt className="text-muted-foreground">Date</dt><dd>{at.toLocaleDateString('en-IN')}</dd>
-              <dt className="text-muted-foreground">Time</dt><dd>{at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</dd>
-              <dt className="text-muted-foreground">Collected by</dt><dd>{receipt.collectedByName}</dd>
-              <dt className="text-muted-foreground">Mode</dt><dd>{receipt.method.toUpperCase()}</dd>
+              <dt className="text-muted-foreground">{tr('Receipt')}</dt><dd className="font-mono">{receipt.receiptNo}</dd>
+              <dt className="text-muted-foreground">{tr('Customer')}</dt><dd>{receipt.customerName}</dd>
+              <dt className="text-muted-foreground">{tr('Date')}</dt><dd>{at.toLocaleDateString('en-IN')}</dd>
+              <dt className="text-muted-foreground">{tr('Time')}</dt><dd>{at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</dd>
+              <dt className="text-muted-foreground">{tr('Collected by')}</dt><dd>{receipt.collectedByName}</dd>
+              <dt className="text-muted-foreground">{tr('Mode')}</dt><dd>{receipt.method.toUpperCase()}</dd>
             </dl>
             {customer.category !== 'internet' && (
-              <p className="text-xs text-muted-foreground">SMS receipt sent to the customer and owner.</p>
+              <p className="text-xs text-muted-foreground">{tr('SMS receipt sent to the customer.')}</p>
             )}
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button onClick={onClose} className="w-full">Done</Button>
+          <Button onClick={onClose} className="w-full">{tr('Done')}</Button>
         </DialogFooter>
       </Dialog>
     );
@@ -91,7 +92,7 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
 
   return (
     <Dialog open onClose={onClose}>
-      <DialogHeader title="Collect payment" onClose={onClose} />
+      <DialogHeader title={tr('Collect payment')} onClose={onClose} />
       <form onSubmit={submit} className="flex flex-col flex-1 min-h-0">
         <DialogBody>
           <div className="p-4 sm:p-5 space-y-4">
@@ -101,12 +102,12 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
                 {customer.mobile} · {customer.connectionType} · {customer.package}
               </p>
               <div className="flex justify-between mt-2">
-                <span>Balance</span><span className="font-bold">₹{balance.toLocaleString('en-IN')}</span>
+                <span>{tr('Balance')}</span><span className="font-bold">₹{balance.toLocaleString('en-IN')}</span>
               </div>
               {customer.dueDate && (
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{customer.category === 'internet' ? 'Expires on' : 'Cut-off date'}</span>
-                  <span>{formatDateIN(customer.dueDate)} · {STATUS_TEXT[customer.serviceStatus ?? 'active']}</span>
+                  <span>{customer.category === 'internet' ? tr('Expires on') : tr('Cut-off date')}</span>
+                  <span>{formatDateIN(customer.dueDate)} · {tr(STATUS_TEXT[customer.serviceStatus ?? 'active'])}</span>
                 </div>
               )}
             </div>
@@ -121,7 +122,7 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
               {(['cash', 'upi'] as const).map((m) => (
                 <button key={m} type="button" onClick={() => setMethod(m)}
                   className={`py-2.5 rounded-lg border text-sm font-medium ${method === m ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'border-border'}`}>
-                  {m === 'cash' ? 'Cash' : 'UPI'}
+                  {m === 'cash' ? tr('Cash') : tr('UPI')}
                 </button>
               ))}
             </div>
@@ -139,18 +140,18 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
             </label>
 
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Remaining after this</span>
+              <span className="text-muted-foreground">{tr('Remaining after this')}</span>
               <span className="font-semibold">₹{remaining.toLocaleString('en-IN')}</span>
             </div>
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="w-3 h-3" /> Your location is saved with this collection.
+              <MapPin className="w-3 h-3" /> {tr('Your location is saved with this collection.')}
             </p>
             {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save payment'}</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{tr('Cancel')}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tr('Saving…') : tr('Save payment')}</Button>
         </DialogFooter>
       </form>
     </Dialog>

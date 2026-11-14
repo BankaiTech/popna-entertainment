@@ -1,10 +1,7 @@
 import logging
 from datetime import timedelta
-from decimal import Decimal
-
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q, Sum
 from django.utils import timezone
 
 from customers.models import Customer, ServiceCategory
@@ -12,28 +9,37 @@ from orgs.models import Organization
 
 from .gateway import get_gateway
 from .models import SmsMessage
-from .templates import render
+from .templates import receipt_body, reminder_body, render, template_id
 
 log = logging.getLogger(__name__)
 STALE_CLAIM = timedelta(minutes=10)
 
 
-def _money(value):
-    value = Decimal(value)
-    return f"{value:.0f}" if value == value.to_integral() else f"{value:.2f}"
+def customer_language(customer, org=None):
+    org = org or customer.organization
+    return customer.sms_language or org.sms_language or "en"
 
 
-def enqueue(*, organization, kind, to, context, dedupe_key, payment=None, bill=None):
-    """Idempotent: the same dedupe_key never creates a second SMS. Returns the new message or None."""
-    if not to:
+def enqueue_customer_sms(*, customer, kind, body, dedupe_key, payment=None, bill=None):
+    """
+    The ONLY way to queue an SMS: it always goes to a customer, using the operator's approved
+    English or Tamil template. Idempotent: the same dedupe_key never creates a second SMS.
+    """
+    if not customer.mobile:
         return None
+    org = customer.organization
+    lang = customer_language(customer, org)
     msg, created = SmsMessage.objects.get_or_create(
         dedupe_key=dedupe_key,
         defaults={
-            "organization": organization,
+            "organization": org,
             "kind": kind,
-            "to_mobile": to,
-            "body": render(kind, context),
+            "customer": customer,
+            "recipient_name": customer.name,
+            "to_mobile": customer.mobile,
+            "language": lang,
+            "template_id": template_id(lang),
+            "body": render(lang, customer.name, body(lang), org.display_name),
             "payment": payment,
             "bill": bill,
         },
@@ -53,40 +59,17 @@ def queue_payment_sms(payment):
     org = payment.organization
     if not should_send_for(customer, org.internet_payment_sms_enabled):
         return []
-    local = timezone.localtime(payment.collected_at)
-    ctx = {
-        "name": customer.name,
-        "mobile": customer.mobile,
-        "amount": _money(payment.amount),
-        "service": customer.plan.get_category_display(),
-        "period": payment.bill.period.strftime("%b %Y"),
-        "date": local.strftime("%d-%m-%Y"),
-        "time": local.strftime("%I:%M %p"),
-        "agent": payment.collected_by.display_name,
-        "receipt": payment.receipt_no,
-        "balance": _money(payment.bill.balance),
-        "org": org.display_name,
-    }
-    sent = [
-        enqueue(
-            organization=org, kind=SmsMessage.Kind.PAYMENT_RECEIPT, to=customer.mobile, context=ctx,
-            dedupe_key=f"receipt:{payment.id}:customer", payment=payment,
-        )
-    ]
-    if org.owner_alert_mode == Organization.OwnerAlertMode.PER_PAYMENT:
-        for mobile in org.alert_mobiles():
-            sent.append(
-                enqueue(
-                    organization=org, kind=SmsMessage.Kind.OWNER_PAYMENT_ALERT, to=mobile, context=ctx,
-                    dedupe_key=f"receipt:{payment.id}:owner:{mobile}", payment=payment,
-                )
-            )
-    return [m for m in sent if m]
+    msg = enqueue_customer_sms(
+        customer=customer, kind=SmsMessage.Kind.PAYMENT_RECEIPT,
+        body=lambda lang: receipt_body(lang, payment.amount, payment.receipt_no, payment.bill.balance),
+        dedupe_key=f"receipt:{payment.id}:customer", payment=payment,
+    )
+    return [msg] if msg else []
 
 
 def queue_due_reminders(today=None):
     """
-    For each operator: unpaid bills due within the next N days get ONE reminder.
+    For each operator: unpaid bills due within the next N days get ONE reminder per stage.
     Using a window (not an exact date) means a missed day still sends the reminder.
     """
     from billing.models import Bill
@@ -105,64 +88,20 @@ def queue_due_reminders(today=None):
                 due_date__lte=window_end,
                 customer__status=Customer.Status.ACTIVE,
             )
-            .select_related("customer__plan")
+            .select_related("customer__plan", "customer__organization")
         )
         for bill in bills:
             customer = bill.customer
             if not should_send_for(customer, org.internet_reminders_enabled):
                 continue
-            ctx = {
-                "name": customer.name,
-                "service": customer.plan.get_category_display(),
-                "amount": _money(bill.balance),
-                "period": bill.period.strftime("%b %Y"),
-                "due_date": bill.due_date.strftime("%d-%m-%Y"),
-                "org": org.display_name,
-            }
             # One SMS per reminder stage: e.g. 3 days before, then 1 day before. The smallest stage that
             # applies wins, so a late run never sends two reminders on the same day.
             days_left = (bill.due_date - today).days
             stage = min(s for s in stages if days_left <= s)
-            if enqueue(
-                organization=org, kind=SmsMessage.Kind.DUE_REMINDER, to=customer.mobile, context=ctx,
+            if enqueue_customer_sms(
+                customer=customer, kind=SmsMessage.Kind.DUE_REMINDER,
+                body=lambda lang, b=bill: reminder_body(lang, b.balance, b.due_date),
                 dedupe_key=f"due:{bill.id}:{stage}", bill=bill,
-            ):
-                created += 1
-    return created
-
-
-def queue_owner_daily_summaries(day=None):
-    from billing.models import Payment
-
-    day = day or timezone.localdate()
-    created = 0
-    orgs = Organization.objects.filter(
-        status=Organization.Status.ACTIVE, owner_alert_mode=Organization.OwnerAlertMode.DAILY_SUMMARY
-    )
-    for org in orgs:
-        payments = Payment.objects.filter(
-            organization=org, status=Payment.Status.VALID, collected_at__date=day
-        )
-        agg = payments.aggregate(
-            total=Sum("amount"),
-            cash=Sum("amount", filter=Q(method=Payment.Method.CASH)),
-            upi=Sum("amount", filter=Q(method=Payment.Method.UPI)),
-        )
-        count = payments.count()
-        if not count:
-            continue
-        ctx = {
-            "org": org.display_name,
-            "date": day.strftime("%d-%m-%Y"),
-            "total": _money(agg["total"] or 0),
-            "count": count,
-            "cash": _money(agg["cash"] or 0),
-            "upi": _money(agg["upi"] or 0),
-        }
-        for mobile in org.alert_mobiles():
-            if enqueue(
-                organization=org, kind=SmsMessage.Kind.OWNER_DAILY_SUMMARY, to=mobile, context=ctx,
-                dedupe_key=f"summary:{org.id}:{day.isoformat()}:{mobile}",
             ):
                 created += 1
     return created
@@ -189,7 +128,7 @@ def process_outbox(limit=100, gateway=None):
     gateway = gateway or get_gateway()
     sent = failed = 0
     for msg in _claim_batch(limit):
-        result = gateway.send(msg.to_mobile, msg.body, msg.kind)
+        result = gateway.send(msg)
         msg.attempts += 1
         if result.ok:
             msg.status = SmsMessage.Status.SENT

@@ -2,6 +2,7 @@
 import { Trash2 } from 'lucide-react';
 import ScanBox from '@/components/ScanBox';
 import { rupees, type StockItem } from '@/api/stock';
+import { tr } from '@/lib/lt';
 
 export interface DraftLine { key: string; item: StockItem; quantity: number; unitPrice: number; gstRate: number; serials: string[] }
 
@@ -42,14 +43,14 @@ export function DocLines({ lines, onChange, validateSerial }: Props) {
           <div key={l.key} className="rounded-xl border border-border p-3 space-y-2">
             <div className="flex justify-between gap-2">
               <p className="font-medium text-sm">{l.item.name}</p>
-              <button type="button" aria-label="Remove line" onClick={() => onChange(lines.filter((x) => x.key !== l.key))}>
+              <button type="button" aria-label={tr('Remove line')} onClick={() => onChange(lines.filter((x) => x.key !== l.key))}>
                 <Trash2 className="w-4 h-4 text-red-500" />
               </button>
             </div>
             {l.item.trackSerials && (
               <ScanBox codes={l.serials} onChange={(serials) => update(l.key, { serials })}
-                placeholder="Scan serial numbers one after another"
-                validate={async (code) => (allSerials.includes(code) ? `${code} is already on another line` : validateSerial(l, code))} />
+                placeholder={tr('Scan serial numbers one after another')}
+                validate={async (code) => (allSerials.includes(code) ? tr('{{code}} is already on another line', { code }) : validateSerial(l, code))} />
             )}
             <div className="grid grid-cols-3 gap-2 text-xs">
               <label>Qty
@@ -75,9 +76,9 @@ export function TotalsBox({ lines }: { lines: DraftLine[] }) {
   const t = docTotals(lines);
   return (
     <dl className="rounded-xl bg-muted/40 p-3 text-sm grid grid-cols-2 gap-1">
-      <dt>Taxable</dt><dd className="text-right">{rupees(t.taxable)}</dd>
+      <dt>{tr('Taxable')}</dt><dd className="text-right">{rupees(t.taxable)}</dd>
       <dt>GST (CGST + SGST)</dt><dd className="text-right">{rupees(t.gst)}</dd>
-      <dt className="font-bold">Total</dt><dd className="text-right font-bold">{rupees(t.total)}</dd>
+      <dt className="font-bold">{tr('Total')}</dt><dd className="text-right font-bold">{rupees(t.total)}</dd>
     </dl>
   );
 }

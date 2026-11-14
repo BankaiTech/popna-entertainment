@@ -134,4 +134,4 @@ class TwoStageReminderTests(TestCase):
         sent = [queue_due_reminders(date(2026, 11, d)) for d in (6, 7, 8, 9, 10)]
         self.assertEqual(sent, [0, 1, 0, 1, 0])
         self.assertEqual(SmsMessage.objects.filter(kind="due_reminder").count(), 2)
-        self.assertIn("Please pay in advance", SmsMessage.objects.first().body)
+        self.assertIn("pay early", SmsMessage.objects.first().body)

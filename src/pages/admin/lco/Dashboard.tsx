@@ -9,6 +9,8 @@ import { unwrapApiData } from '@/lib/apiHelpers';
 import { connectionsApi, paymentsApi, type PaymentReceipt } from '@/api/collections';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatDateIN } from '@/lib/subscription';
+import { tr } from '@/lib/lt';
+import i18n from '@/i18n';
 
 interface Stats {
   period: string;
@@ -55,14 +57,14 @@ function StaffHome() {
   const total = valid.reduce((s, p) => s + Number(p.amount), 0);
   return (
     <div className="space-y-4 max-w-xl">
-      <h1 className="text-lg sm:text-xl font-bold">Today</h1>
+      <h1 className="text-lg sm:text-xl font-bold">{tr('Today')}</h1>
       <div className="grid grid-cols-2 gap-3">
-        <Card title="Collected today" value={rs(total)} sub={`${valid.length} payments`} icon={Wallet} tone="text-green-600" />
-        <Card title="Date" value={formatDateIN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()))} icon={FileText} />
+        <Card title={tr('Collected today')} value={rs(total)} sub={tr('{{n}} payments', { n: valid.length })} icon={Wallet} tone="text-green-600" />
+        <Card title={tr('Date')} value={formatDateIN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()))} icon={FileText} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Shortcut to="/admin/duty" icon={MapPin} label="My Duty" />
-        <Shortcut to="/admin/collect" icon={Wallet} label="Collect" />
+        <Shortcut to="/admin/duty" icon={MapPin} label={tr('My Duty')} />
+        <Shortcut to="/admin/collect" icon={Wallet} label={tr('Collect')} />
       </div>
     </div>
   );
@@ -78,50 +80,50 @@ const LcoDashboard = () => {
     if (role !== 'admin') return;
     apiClient.get('/dashboard/stats')
       .then((r) => setStats(unwrapApiData<Stats>(r)))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load the dashboard'));
+      .catch((e) => setError(e instanceof Error ? e.message : tr('Could not load the dashboard')));
     connectionsApi.cutoff().then((r) => setCutoff(r.count)).catch(() => undefined);
   }, [role]);
 
   if (role !== 'admin') return <StaffHome />;
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
-  if (!stats) return <p className="py-10 text-center text-muted-foreground">Loading…</p>;
+  if (!stats) return <p className="py-10 text-center text-muted-foreground">{tr('Loading…')}</p>;
 
   const m = stats.this_month;
   const pending = Math.max(Number(m.billed) - Number(m.collected), 0);
   const [y, mo] = stats.period.split('-');
-  const monthName = new Date(Number(y), Number(mo) - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  const monthName = new Date(Number(y), Number(mo) - 1, 1).toLocaleString(`${i18n.language || 'en'}-IN`, { month: 'long', year: 'numeric' });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold">Dashboard</h1>
+          <h1 className="text-lg sm:text-xl font-bold">{tr('Dashboard')}</h1>
           <p className="text-sm text-muted-foreground">{monthName}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card title="Active customers" value={String(stats.customers.active)}
-          sub={`${stats.customers.inactive} inactive · ${stats.customers.new_this_month} new this month`} icon={Users} to="/admin/contacts" />
-        <Card title="Collected this month" value={rs(m.collected)} sub={`${m.collection_percent}% of ${rs(m.billed)} billed`}
+        <Card title={tr('Active customers')} value={String(stats.customers.active)}
+          sub={`${tr('{{n}} inactive', { n: stats.customers.inactive })} · ${tr('{{n}} new this month', { n: stats.customers.new_this_month })}`} icon={Users} to="/admin/contacts" />
+        <Card title={tr('Collected this month')} value={rs(m.collected)} sub={tr('{{pct}}% of {{amount}} billed', { pct: m.collection_percent, amount: rs(m.billed) })}
           icon={IndianRupee} tone="text-green-600" />
-        <Card title="Still to collect" value={rs(pending)} sub={`${m.pending_bills} unpaid bills`} icon={AlertTriangle}
+        <Card title={tr('Still to collect')} value={rs(pending)} sub={tr('{{n}} unpaid bills', { n: m.pending_bills })} icon={AlertTriangle}
           tone="text-amber-600" to="/admin/collect" />
-        <Card title="To cut off today" value={cutoff == null ? '—' : String(cutoff)} sub="Unpaid after cut-off / expired"
+        <Card title={tr('To cut off today')} value={cutoff == null ? '—' : String(cutoff)} sub="Unpaid after cut-off / expired"
           icon={ScissorsLineDashed} tone="text-red-600" to="/admin/cutoff" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
         <section className="rounded-xl border border-border p-4">
-          <h2 className="font-semibold mb-3">Today</h2>
+          <h2 className="font-semibold mb-3">{tr('Today')}</h2>
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div><p className="text-xs text-muted-foreground">Total</p><p className="text-lg font-bold">{rs(stats.today.total)}</p></div>
-            <div><p className="text-xs text-muted-foreground">Cash</p><p className="text-lg font-bold">{rs(stats.today.cash)}</p></div>
-            <div><p className="text-xs text-muted-foreground">UPI</p><p className="text-lg font-bold">{rs(stats.today.upi)}</p></div>
+            <div><p className="text-xs text-muted-foreground">{tr('Total')}</p><p className="text-lg font-bold">{rs(stats.today.total)}</p></div>
+            <div><p className="text-xs text-muted-foreground">{tr('Cash')}</p><p className="text-lg font-bold">{rs(stats.today.cash)}</p></div>
+            <div><p className="text-xs text-muted-foreground">{tr('UPI')}</p><p className="text-lg font-bold">{rs(stats.today.upi)}</p></div>
           </div>
-          <h3 className="text-sm font-semibold mt-4 mb-2">By collector</h3>
+          <h3 className="text-sm font-semibold mt-4 mb-2">{tr('By collector')}</h3>
           {stats.today_by_agent.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No collections yet today.</p>
+            <p className="text-sm text-muted-foreground">{tr('No collections yet today.')}</p>
           ) : (
             <ul className="divide-y divide-border text-sm">
               {stats.today_by_agent.map((a) => (
@@ -135,15 +137,15 @@ const LcoDashboard = () => {
         </section>
 
         <section className="rounded-xl border border-border p-4">
-          <h2 className="font-semibold mb-3">Customers by provider</h2>
+          <h2 className="font-semibold mb-3">{tr('Customers by provider')}</h2>
           {stats.by_provider.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No customers yet. Add providers and plans in <Link to="/admin/settings" className="text-blue-600">Settings</Link>, then add customers.
+              No customers yet. Add providers and plans in <Link to="/admin/settings" className="text-blue-600">{tr('Settings')}</Link>, then add customers.
             </p>
           ) : (
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground text-left">
-                <tr><th className="pb-2">Provider</th><th className="pb-2">Type</th><th className="pb-2 text-right">Active</th><th className="pb-2 text-right">Inactive</th></tr>
+                <tr><th className="pb-2">{tr('Provider')}</th><th className="pb-2">{tr('Type')}</th><th className="pb-2 text-right">{tr('Active')}</th><th className="pb-2 text-right">{tr('Inactive')}</th></tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {stats.by_provider.map((p) => (
@@ -161,10 +163,10 @@ const LcoDashboard = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Shortcut to="/admin/contacts" icon={UserPlus} label="Add customer" />
-        <Shortcut to="/admin/collect" icon={Wallet} label="Collect" />
-        <Shortcut to="/admin/live-map" icon={MapIcon} label="Live map" />
-        <Shortcut to="/admin/sales" icon={FileText} label="New sale" />
+        <Shortcut to="/admin/contacts" icon={UserPlus} label={tr('Add customer')} />
+        <Shortcut to="/admin/collect" icon={Wallet} label={tr('Collect')} />
+        <Shortcut to="/admin/live-map" icon={MapIcon} label={tr('Live map')} />
+        <Shortcut to="/admin/sales" icon={FileText} label={tr('New sale')} />
       </div>
     </div>
   );

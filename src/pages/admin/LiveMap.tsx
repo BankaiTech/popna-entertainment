@@ -8,6 +8,7 @@ import { usersApi } from '@/api/users';
 import type { User } from '@/models/types';
 import { todayInIndia } from '@/lib/subscription';
 import { showError } from '@/utils/toast';
+import { tr } from '@/lib/lt';
 
 const DEFAULT_CENTER: L.LatLngTuple = [12.6921, 79.9762]; // Chengalpattu
 const STALE_MINUTES = 15;
@@ -15,7 +16,7 @@ const REFRESH_SECONDS = 60;
 
 const hhmm = (iso: string | null) =>
   iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
-const ago = (m: number | null) => (m == null ? 'no location yet' : m < 1 ? 'just now' : `${m} min ago`);
+const ago = (m: number | null) => (m == null ? tr('no location yet') : m < 1 ? tr('just now') : tr('{{m}} min ago', { m }));
 
 const LiveMap = () => {
   const mapEl = useRef<HTMLDivElement>(null);
@@ -52,7 +53,7 @@ const LiveMap = () => {
       setAgents(await trackingApi.live());
       setUpdatedAt(new Date());
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load live locations');
+      showError(err instanceof Error ? err.message : tr('Could not load live locations'));
     }
   }, []);
 
@@ -112,7 +113,7 @@ const LiveMap = () => {
     try {
       setRoute(await trackingApi.route(Number(routeUser), routeDate));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load the route');
+      showError(err instanceof Error ? err.message : tr('Could not load the route'));
     }
   };
 
@@ -123,38 +124,38 @@ const LiveMap = () => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold">Live Map</h1>
+          <h1 className="text-lg sm:text-xl font-bold">{tr('Live Map')}</h1>
           <p className="text-sm text-muted-foreground">
-            {onDuty} on duty · updated {updatedAt ? hhmm(updatedAt.toISOString()) : '—'} · refreshes every minute
+            {tr('{{n}} on duty', { n: onDuty })} · {tr('updated {{time}}', { time: updatedAt ? hhmm(updatedAt.toISOString()) : '—' })} · {tr('refreshes every minute')}
           </p>
         </div>
         <button type="button" onClick={loadLive} className="inline-flex items-center gap-1 text-sm px-3 py-2 rounded-lg border border-border">
-          <RefreshCw className="w-4 h-4" /> Refresh
+          <RefreshCw className="w-4 h-4" /> {tr('Refresh')}
         </button>
       </div>
 
       <div className="flex flex-wrap items-end gap-2 rounded-xl border border-border p-3">
         <label className="text-sm">
-          <span className="block text-xs text-muted-foreground mb-1">Staff</span>
+          <span className="block text-xs text-muted-foreground mb-1">{tr('Staff')}</span>
           <select value={routeUser} onChange={(e) => setRouteUser(e.target.value)}
             className="h-9 rounded-lg border border-border bg-background px-2 text-sm min-w-[160px]">
-            <option value="">Choose…</option>
+            <option value="">{tr('Choose…')}</option>
             {staff.map((u) => <option key={u.id} value={u.id}>{u.name || u.username}</option>)}
           </select>
         </label>
         <label className="text-sm">
-          <span className="block text-xs text-muted-foreground mb-1">Date</span>
+          <span className="block text-xs text-muted-foreground mb-1">{tr('Date')}</span>
           <input type="date" value={routeDate} max={todayInIndia()} onChange={(e) => setRouteDate(e.target.value)}
             className="h-9 rounded-lg border border-border bg-background px-2 text-sm" />
         </label>
         <button type="button" onClick={showRoute} disabled={!routeUser}
-          className="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm disabled:opacity-50">Show route</button>
+          className="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm disabled:opacity-50">{tr('Show route')}</button>
         {route && (
           <>
             <span className="text-sm text-muted-foreground">
-              {route.points.length} points · {route.collections.length} collections · ₹{total.toLocaleString('en-IN')}
+              {tr('{{n}} points', { n: route.points.length })} · {tr('{{n}} collections', { n: route.collections.length })} · ₹{total.toLocaleString('en-IN')}
             </span>
-            <button type="button" onClick={() => setRoute(null)} className="h-9 px-3 rounded-lg border border-border text-sm">Clear</button>
+            <button type="button" onClick={() => setRoute(null)} className="h-9 px-3 rounded-lg border border-border text-sm">{tr('Clear')}</button>
           </>
         )}
       </div>
@@ -164,7 +165,7 @@ const LiveMap = () => {
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-600" /> Location in last {STALE_MINUTES} min</span>
         <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-400" /> Older (app closed or GPS off)</span>
-        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500" /> Collection</span>
+        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500" /> {tr('Collection')}</span>
       </div>
 
       {agents.length > 0 && (

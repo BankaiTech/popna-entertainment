@@ -1,83 +1,63 @@
-import { useEffect, useState } from 'react';
-import apiClient from '@/lib/apiClient';
-import { toCamelCase, unwrapApiData } from '@/lib/apiHelpers';
+import { Link } from 'react-router-dom';
 import type { OperatorSettings } from '@/api/operatorSettings';
+import { useLt } from '@/lib/lt';
 import { Field, inputClass, SaveBar, Section, useOperatorSettings } from './SettingsUI';
 
-interface SmsLog { id: number; kind: string; mobile: string; message: string; status: string; sentAt: string | null; createdAt: string }
+const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName', 'smsLanguage'];
 
-const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
-const KIND: Record<string, string> = {
-  payment_receipt: 'Payment receipt', owner_payment_alert: 'Owner alert', due_reminder: 'Reminder', owner_daily_summary: 'Daily summary',
+// Must match the DLT-approved templates exactly (see backend/docs/DLT_SMS_TEMPLATES.md).
+const TEMPLATE = {
+  en: (name: string, body: string, org: string) =>
+    `Dear Customer ${name},\n${body}\nThank you for your continued support.\nRegards,\n${org}\nPING4SMS`,
+  ta: (name: string, body: string, org: string) =>
+    `அன்புள்ள வாடிக்கையாளர் ${name},\n${body}\nஉங்கள் தொடர்ந்து வழங்கும் ஆதரவிற்கு நன்றி.\nஅன்புடன்,\n${org}\nPING4SMS`,
 };
-const STATUS_TONE: Record<string, string> = {
-  sent: 'text-green-700', pending: 'text-amber-600', sending: 'text-amber-600', failed: 'text-red-600',
+const EXAMPLES = {
+  en: { receipt: 'Paid Rs.230, Receipt 000123', reminder: 'Rs.230 due 10-11-26, pay early' },
+  ta: { receipt: 'ரூ.230 பெறப்பட்டது, ரசீது 000123', reminder: 'ரூ.230 10-11-26க்குள் செலுத்தவும்' },
 };
-
-const MESSAGES = (org: string) => [
-  { title: 'Payment receipt → customer', text: `Dear Ravi, Rs.230 received for Cable TV Nov 2026 on 05-11-2026 10:30 AM by Murugan. Receipt ${'DEMO01-000123'}. Balance Rs.0. -${org}` },
-  { title: 'Payment alert → owner', text: 'Murugan collected Rs.230 from Ravi (98400xxxxx) on 05-11-2026 10:30 AM. Receipt DEMO01-000123. -LCO Desk' },
-  { title: 'Due reminder → customer', text: `Dear Ravi, your Cable TV payment of Rs.230 is due on 10-11-2026. Please pay in advance to avoid disconnection. -${org}` },
-  { title: 'Daily summary → owner', text: `${org}: 05-11-2026 collections Rs.12,450 from 54 payments. Cash Rs.9,200, UPI Rs.3,250. -LCO Desk` },
-];
 
 const SmsSettings = () => {
+  const tr = useLt();
   const { settings: s, set, save, saving, errors, dirty } = useOperatorSettings();
-  const [logs, setLogs] = useState<SmsLog[]>([]);
-
-  useEffect(() => {
-    apiClient.get('/sms-logs').then((r) => {
-      const list = unwrapApiData<unknown[]>(r);
-      setLogs((Array.isArray(list) ? list : []).slice(0, 50).map((x) => toCamelCase<SmsLog>(x)));
-    }).catch(() => undefined);
-  }, []);
-
-  if (!s) return <p className="py-8 text-center text-muted-foreground">Loading…</p>;
+  if (!s) return <p className="py-8 text-center text-muted-foreground">{tr('Loading…')}</p>;
   const org = (s.smsDisplayName || s.name).slice(0, 30);
+  const lang = s.smsLanguage ?? 'en';
 
   return (
     <div className="space-y-4">
-      <Section title="Sender name" hint="Shown at the end of customer SMS. Max 30 characters.">
-        <Field label="Name in SMS" error={errors.smsDisplayName}>
-          <input className={inputClass} maxLength={30} value={s.smsDisplayName} placeholder={s.name}
-            onChange={(e) => set('smsDisplayName', e.target.value)} />
-        </Field>
+      <Section title={tr('SMS to customers')} hint={tr('SMS are sent only to customers. You see every SMS in the SMS Log.')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label={tr('Business name in SMS')} hint={tr('Max 30 characters')} error={errors.smsDisplayName}>
+            <input className={inputClass} maxLength={30} value={s.smsDisplayName} placeholder={s.name}
+              onChange={(e) => set('smsDisplayName', e.target.value)} />
+          </Field>
+          <Field label={tr('Default SMS language')} hint={tr('Can be changed for each customer')} error={errors.smsLanguage}>
+            <select className={inputClass} value={lang} onChange={(e) => set('smsLanguage', e.target.value as 'en' | 'ta')}>
+              <option value="en">English</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+            </select>
+          </Field>
+        </div>
         <SaveBar disabled={!dirty(FIELDS)} saving={saving} onSave={() => save(FIELDS)} />
       </Section>
 
-      <Section title="Messages we send" hint="These texts are registered with telecom operators (DLT), so they can't be edited here.">
+      <Section title={tr('Messages we send')} hint={tr('Approved with the telecom operators (DLT), so the wording cannot be edited here.')}>
         <ul className="space-y-3">
-          {MESSAGES(org).map((m) => (
-            <li key={m.title} className="text-sm">
-              <p className="font-medium">{m.title}</p>
-              <p className="mt-1 rounded-lg bg-muted/40 border border-border p-2 text-xs leading-relaxed">{m.text}</p>
+          {([['Payment receipt', 'receipt'], ['Due reminder', 'reminder']] as const).map(([title, key]) => (
+            <li key={key} className="text-sm">
+              <p className="font-medium">{tr(title)}</p>
+              <pre className="mt-1 whitespace-pre-wrap break-words rounded-lg bg-muted/40 border border-border p-2 text-xs leading-relaxed font-sans">
+                {TEMPLATE[lang]('Ravi', EXAMPLES[lang][key], org)}
+              </pre>
             </li>
           ))}
         </ul>
       </Section>
 
-      <Section title="Recent SMS" hint="Last 50. Use this when a customer says they didn't get a message.">
-        {logs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No SMS yet.</p>
-        ) : (
-          <ul className="divide-y divide-border text-sm max-h-96 overflow-y-auto">
-            {logs.map((l) => (
-              <li key={l.id} className="py-2 flex justify-between gap-3">
-                <span className="min-w-0">
-                  <span className="block font-medium">{KIND[l.kind] ?? l.kind} · {l.mobile}</span>
-                  <span className="block text-xs text-muted-foreground truncate">{l.message}</span>
-                </span>
-                <span className="text-right shrink-0">
-                  <span className={`block text-xs font-semibold capitalize ${STATUS_TONE[l.status] ?? ''}`}>{l.status}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {new Date(l.sentAt ?? l.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+      <Link to="/admin/sms-log" className="block text-center rounded-xl border border-border py-3 text-sm font-medium text-blue-600 hover:bg-muted/30">
+        {tr('Open SMS Log')} →
+      </Link>
     </div>
   );
 };
