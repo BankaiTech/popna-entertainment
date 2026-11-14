@@ -87,7 +87,7 @@ function App() {
           path="/customer/dashboard"
           element={
             <ProtectedRoute customerOnly>
-              <CustomerDashboard />
+              {isMockMode() ? <CustomerDashboard /> : <Navigate to="/login" replace />}
             </ProtectedRoute>
           }
         />
@@ -95,7 +95,7 @@ function App() {
           path="/customer/history"
           element={
             <ProtectedRoute customerOnly>
-              <CustomerHistory />
+              {isMockMode() ? <CustomerHistory /> : <Navigate to="/login" replace />}
             </ProtectedRoute>
           }
         />
@@ -193,7 +193,7 @@ function App() {
             path="appointments"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <Appointments />
+                {isMockMode() ? <Appointments /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -201,7 +201,7 @@ function App() {
             path="service-requests"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <ServiceRequests />
+                {isMockMode() ? <ServiceRequests /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -209,7 +209,7 @@ function App() {
             path="leads"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <Leads />
+                {isMockMode() ? <Leads /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -219,7 +219,7 @@ function App() {
             path="reports"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <Reports />
+                {isMockMode() ? <Reports /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -227,7 +227,7 @@ function App() {
             path="audit-trail"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AuditTrail />
+                {isMockMode() ? <AuditTrail /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -237,7 +237,7 @@ function App() {
             path="complaints"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <AdminComplaints />
+                {isMockMode() ? <AdminComplaints /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -269,7 +269,7 @@ function App() {
             path="connection-requests"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <ConnectionRequests />
+                {isMockMode() ? <ConnectionRequests /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -325,7 +325,7 @@ function App() {
             path="branches"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminBranches />
+                {isMockMode() ? <AdminBranches /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />
@@ -333,7 +333,7 @@ function App() {
             path="pos"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <AdminPointOfSale />
+                {isMockMode() ? <AdminPointOfSale /> : <Navigate to="/admin/dashboard" replace />}
               </ProtectedRoute>
             }
           />

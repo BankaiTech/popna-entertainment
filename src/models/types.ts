@@ -114,6 +114,8 @@ export interface Plan {
   description: string;
   /** Permanent discount percentage (0–100) for this plan */
   permanentDiscount?: number;
+  /** Real backend: inactive plans stay on existing customers but are not offered for new ones */
+  isActive?: boolean;
 }
 
 export interface Address {

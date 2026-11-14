@@ -801,5 +801,12 @@ export function getTemplateById(id: IndustryType): IndustryTemplate | undefined 
 
 /** Get contact config for an industry (never undefined) */
 export function getContactConfig(template: IndustryTemplate | undefined): NonNullable<IndustryTemplate['contactConfig']> {
-  return template?.contactConfig ?? DEFAULT_CONTACT_CONFIG;
+  if (template?.contactConfig) return template.contactConfig;
+  // LCO Desk server is cable / broadband only. Field staff cannot read the operator record,
+  // so without a template fall back to the cable/ISP layout (not the retail demo one).
+  if (import.meta.env.VITE_USE_MOCK_API === 'false') {
+    const isp = INDUSTRY_TEMPLATES.find((t) => t.id === 'isp-cable')?.contactConfig;
+    if (isp) return isp;
+  }
+  return DEFAULT_CONTACT_CONFIG;
 }

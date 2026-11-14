@@ -80,6 +80,7 @@ function mapPlan(raw: Record<string, unknown>): Plan {
     installationAmount: Number(p.installationAmount ?? 0),
     description: String(p.description ?? ''),
     permanentDiscount: 0,
+    isActive: p.isActive !== false,
   };
 }
 
@@ -91,6 +92,7 @@ function planPayload(plan: Partial<Plan>): Record<string, unknown> {
   if (plan.gstRate !== undefined) payload.gst_rate = plan.gstRate;
   if (plan.installationAmount !== undefined) payload.installation_amount = plan.installationAmount;
   if (plan.description !== undefined) payload.description = plan.description;
+  if (plan.isActive !== undefined) payload.is_active = plan.isActive;
   return payload;
 }
 

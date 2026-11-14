@@ -1,5 +1,50 @@
 import type { Supplier } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
+import apiClient from '@/lib/apiClient';
+import { isMockMode, unwrapApiData } from '@/lib/apiHelpers';
+
+/** Server shape (inventory.Supplier): name, mobile, gstin, address (one text field). */
+interface ServerSupplier { id: number; name: string; mobile: string; gstin: string; address: string; created_at: string }
+
+const fromServer = (s: ServerSupplier): Supplier => ({
+    id: s.id, organizationId: '', name: s.name, mobile: s.mobile ?? '', taxNumber: s.gstin ?? '',
+    address: s.address ? { line1: s.address } : undefined, createdAt: s.created_at,
+});
+
+const toServer = (s: Partial<Supplier>): Partial<ServerSupplier> => {
+    const out: Partial<ServerSupplier> = {};
+    if (s.name !== undefined) out.name = s.name;
+    if (s.mobile !== undefined) out.mobile = s.mobile;
+    if (s.taxNumber !== undefined) out.gstin = s.taxNumber;
+    if (s.address !== undefined) {
+        const a = s.address ?? {};
+        out.address = [a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ');
+    }
+    return out;
+};
+
+const serverList = async (): Promise<Supplier[]> => {
+    const data = unwrapApiData<ServerSupplier[] | { results: ServerSupplier[] }>(await apiClient.get('/suppliers'));
+    const rows = Array.isArray(data) ? data : data?.results ?? [];
+    return rows.map(fromServer);
+};
+
+/** Real backend (used whenever mock mode is off). */
+const realSuppliersApi = {
+    getAll: serverList,
+    getById: async (id: number): Promise<Supplier> =>
+        fromServer(unwrapApiData<ServerSupplier>(await apiClient.get(`/suppliers/${id}`))),
+    create: async (supplier: Omit<Supplier, 'id' | 'createdAt'>): Promise<Supplier> =>
+        fromServer(unwrapApiData<ServerSupplier>(await apiClient.post('/suppliers', toServer(supplier)))),
+    update: async (id: number, supplier: Partial<Supplier>): Promise<Supplier> =>
+        fromServer(unwrapApiData<ServerSupplier>(await apiClient.patch(`/suppliers/${id}`, toServer(supplier)))),
+    delete: async (id: number): Promise<void> => { await apiClient.delete(`/suppliers/${id}`); },
+    importBulk: async (suppliers: Omit<Supplier, 'id' | 'createdAt'>[]): Promise<Supplier[]> => {
+        const created: Supplier[] = [];
+        for (const s of suppliers) created.push(await realSuppliersApi.create(s));
+        return created;
+    },
+};
 
 let suppliersData: Supplier[] = [
     {
@@ -16,7 +61,7 @@ let suppliersData: Supplier[] = [
     },
 ];
 
-export const suppliersApi = {
+const mockSuppliersApi = {
     getAll: async (): Promise<Supplier[]> => Promise.resolve([...suppliersData]),
 
     getById: async (id: number): Promise<Supplier> => {
@@ -61,3 +106,5 @@ export const suppliersApi = {
         return Promise.resolve(created);
     },
 };
+
+export const suppliersApi = isMockMode() ? mockSuppliersApi : realSuppliersApi;

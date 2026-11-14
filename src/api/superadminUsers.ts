@@ -1,6 +1,6 @@
 import type { SuperAdminUser } from '@/models/types';
 import apiClient from '@/lib/apiClient';
-import { isMockMode, toCamelCase, toSnakeCase, unwrapApiData } from '@/lib/apiHelpers';
+import { isMockMode, toCamelCase, unwrapApiData } from '@/lib/apiHelpers';
 import { endpoints } from './endpoints';
 
 let superadminUsersData: SuperAdminUser[] = [
@@ -23,9 +23,9 @@ function mapSuperAdminUser(raw: Record<string, unknown>): SuperAdminUser {
     id: Number(u.id),
     name: String(u.name ?? ''),
     username: String(u.username ?? ''),
-    password: String(u.password ?? ''),
-    role: (u.role as SuperAdminUser['role']) ?? 'super_admin',
-    status: (u.status as SuperAdminUser['status']) ?? 'active',
+    password: '',
+    role: u.role === 'manager' ? 'manager' : 'super_admin',
+    status: u.status === 'inactive' || u.isActive === false ? 'inactive' : 'active',
     allowedPermissions: u.allowedPermissions as SuperAdminUser['allowedPermissions'],
     createdAt: String(u.createdAt ?? new Date().toISOString()),
   };
@@ -36,9 +36,11 @@ export const superadminUsersApi = {
     if (isMockMode()) {
       return [...superadminUsersData];
     }
-    const response = await apiClient.get(endpoints.superadminUsers);
-    const list = unwrapApiData<Record<string, unknown>[]>(response);
-    return (Array.isArray(list) ? list : []).map(mapSuperAdminUser);
+    // LCO Desk server: platform admins are ordinary users with role platform_admin (full access).
+    const response = await apiClient.get(endpoints.users);
+    const data = unwrapApiData<Record<string, unknown>[] | { results: Record<string, unknown>[] }>(response);
+    const list = Array.isArray(data) ? data : data?.results ?? [];
+    return list.filter((u) => u.role === 'platform_admin').map(mapSuperAdminUser);
   },
 
   create: async (user: Omit<SuperAdminUser, 'id' | 'createdAt'>): Promise<SuperAdminUser> => {
@@ -55,7 +57,10 @@ export const superadminUsersApi = {
       superadminUsersData.push(newUser);
       return newUser;
     }
-    const response = await apiClient.post(endpoints.users, toSnakeCase(user as Record<string, unknown>));
+    const response = await apiClient.post(endpoints.users, {
+      username: user.username, name: user.name, password: user.password,
+      role: 'platform_admin', is_active: user.status !== 'inactive',
+    });
     return mapSuperAdminUser(unwrapApiData<Record<string, unknown>>(response));
   },
 
@@ -66,7 +71,12 @@ export const superadminUsersApi = {
       superadminUsersData[index] = { ...superadminUsersData[index], ...updates };
       return superadminUsersData[index];
     }
-    const response = await apiClient.patch(`${endpoints.users}/${id}`, toSnakeCase(updates as Record<string, unknown>));
+    const body: Record<string, unknown> = {};
+    if (updates.name !== undefined) body.name = updates.name;
+    if (updates.username !== undefined) body.username = updates.username;
+    if (updates.password) body.password = updates.password;
+    if (updates.status !== undefined) body.is_active = updates.status === 'active';
+    const response = await apiClient.patch(`${endpoints.users}/${id}`, body);
     return mapSuperAdminUser(unwrapApiData<Record<string, unknown>>(response));
   },
 };

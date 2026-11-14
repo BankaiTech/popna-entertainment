@@ -84,10 +84,11 @@ const Contacts = () => {
             await initialize();
             await fetchProducts();
             await fetchCustomers();
-            await fetchSuppliers();
+            // Suppliers and import are office work; field staff cannot open them on the server.
+            if (!isEmployee) await fetchSuppliers();
         };
         loadData();
-    }, [initialize, fetchProducts, fetchCustomers, fetchSuppliers]);
+    }, [initialize, fetchProducts, fetchCustomers, fetchSuppliers, isEmployee]);
 
     // ─── Customer Filtering ───
     const filteredCustomers = useMemo(() => {
@@ -313,7 +314,7 @@ const Contacts = () => {
         { id: 'customers' as const, label: customerLabel, icon: Users, count: customers.length },
         { id: 'suppliers' as const, label: t('contacts.suppliers', 'Suppliers'), icon: Truck, count: suppliers.length },
         { id: 'import' as const, label: t('contacts.import', 'Import'), icon: Upload, count: undefined },
-    ];
+    ].filter((tab) => !isEmployee || tab.id === 'customers');
 
     return (
         <div className="space-y-3">

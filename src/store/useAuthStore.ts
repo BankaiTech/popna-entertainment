@@ -35,7 +35,8 @@ const loadAuthFromStorage = () => {
     const customerId = localStorage.getItem('customer_id');
     const customerMobile = localStorage.getItem('customer_mobile');
 
-    if (customerAuth === 'true' && customerId && customerMobile) {
+    // The customer portal is demo-only; never restore an old demo customer session on the real server.
+    if (env.USE_MOCK_API && customerAuth === 'true' && customerId && customerMobile) {
       return {
         isAuthenticated: true,
         role: 'customer' as UserRole,
