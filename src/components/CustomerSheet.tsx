@@ -120,8 +120,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
 
   // Plans filtered by selected connectionType (category)
   const availablePlans = useMemo(
-    () => (Array.isArray(plans) ? plans.filter((p) => !formData.connectionType || p.provider === formData.connectionType) : []),
-    [plans, formData.connectionType]
+    () => (Array.isArray(plans)
+      ? plans.filter((p) => (!formData.connectionType || p.provider === formData.connectionType)
+        && (p.isActive !== false || p.planName === formData.package))
+      : []),
+    [plans, formData.connectionType, formData.package]
   );
 
   // Reset form when dialog opens/closes or customer changes - NOT on availableProviders change

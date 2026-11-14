@@ -12,6 +12,11 @@ import { superadminUsersApi } from '@/api/superadminUsers';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { SuperAdminUser, SAPermissionKey, SuperAdminRole } from '@/models/types';
 import { ALL_SA_PERMISSIONS } from '@/models/types';
+import { isMockMode } from '@/lib/apiHelpers';
+
+/** The LCO Desk server has one platform role with full access; limited managers exist only in the demo. */
+const ROLE_CHOICE = isMockMode();
+const DEFAULT_ROLE: SuperAdminRole = ROLE_CHOICE ? 'manager' : 'super_admin';
 import { Plus, UserCog, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +48,7 @@ const SuperAdminUsers = () => {
   const [addName, setAddName] = useState('');
   const [addUsername, setAddUsername] = useState('');
   const [addPassword, setAddPassword] = useState('');
-  const [addRole, setAddRole] = useState<SuperAdminRole>('manager');
+  const [addRole, setAddRole] = useState<SuperAdminRole>(DEFAULT_ROLE);
   const [addStatus, setAddStatus] = useState<'active' | 'inactive'>('active');
   const [addPermissions, setAddPermissions] = useState<SAPermissionKey[]>(['sa_dashboard']);
 
@@ -53,7 +58,7 @@ const SuperAdminUsers = () => {
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
   const [editPassword, setEditPassword] = useState('');
-  const [editRole, setEditRole] = useState<SuperAdminRole>('manager');
+  const [editRole, setEditRole] = useState<SuperAdminRole>(DEFAULT_ROLE);
   const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active');
   const [editPermissions, setEditPermissions] = useState<SAPermissionKey[]>([]);
 
@@ -77,7 +82,7 @@ const SuperAdminUsers = () => {
 
   const handleOpenAdd = () => {
     setAddName(''); setAddUsername(''); setAddPassword('');
-    setAddRole('manager'); setAddStatus('active');
+    setAddRole(DEFAULT_ROLE); setAddStatus('active');
     setAddPermissions(['sa_dashboard']); setAddError('');
     setIsAddOpen(true);
   };
@@ -411,13 +416,13 @@ const SuperAdminUsers = () => {
                   <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')} <span className="text-destructive">*</span></label>
                   <Input type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} placeholder="••••••••" required disabled={addSaving} />
                 </div>
-                <div>
+                {ROLE_CHOICE && <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select value={addRole} onChange={(e) => setAddRole(e.target.value as SuperAdminRole)} disabled={addSaving}>
                     <option value="super_admin">Super Admin</option>
                     <option value="manager">Manager</option>
                   </Select>
-                </div>
+                </div>}
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
                   <Select value={addStatus} onChange={(e) => setAddStatus(e.target.value as 'active' | 'inactive')} disabled={addSaving}>
@@ -463,13 +468,13 @@ const SuperAdminUsers = () => {
                   <Input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')} disabled={editSaving} />
                   <p className="text-xs text-muted-foreground mt-1">{t('users.hints.keepPassword', 'Leave blank to keep current password')}</p>
                 </div>
-                <div>
+                {ROLE_CHOICE && <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select value={editRole} onChange={(e) => setEditRole(e.target.value as SuperAdminRole)} disabled={editSaving}>
                     <option value="super_admin">Super Admin</option>
                     <option value="manager">Manager</option>
                   </Select>
-                </div>
+                </div>}
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
                   <Select value={editStatus} onChange={(e) => setEditStatus(e.target.value as 'active' | 'inactive')} disabled={editSaving}>

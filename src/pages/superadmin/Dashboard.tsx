@@ -19,6 +19,8 @@ import { organizationsApi } from '@/api/organizations';
 import type { Organization, OrganizationStatus } from '@/models/types';
 import { ALL_MODULES } from '@/models/types';
 import { cn } from '@/lib/utils';
+import { DEFAULT_OPERATOR_MODULES } from '@/config/lcoModules';
+import { isMockMode } from '@/lib/apiHelpers';
 
 const SuperAdminDashboard = () => {
   const { t } = useTranslation();
@@ -240,7 +242,7 @@ const SuperAdminDashboard = () => {
                           {org.subscriptionStart} - {org.subscriptionEnd}
                         </td>
                         <td className="px-3 py-2 text-sm text-muted-foreground">
-                          {org.allowedModules.length} / {ALL_MODULES.length}
+                          {isMockMode() ? `${org.allowedModules.length} / ${ALL_MODULES.length}` : `${org.allowedModules.filter((m) => DEFAULT_OPERATOR_MODULES.includes(m)).length} / ${DEFAULT_OPERATOR_MODULES.length}`}
                         </td>
                       </tr>
                     ))}

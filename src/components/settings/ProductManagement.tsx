@@ -31,6 +31,10 @@ import { PLATFORM_UPI, hasPlatformUpi } from '@/config/platformUpi';
 import { showError, showInfo } from '@/utils/toast';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById } from '@/config/industryTemplates';
+import { isMockMode } from '@/lib/apiHelpers';
+import { productsApi } from '@/api/products';
+import PlansManager from '@/components/settings/lco/PlansManager';
+import { tr } from '@/lib/lt';
 import type { IndustryType } from '@/models/types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -240,7 +244,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
               <Wifi className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
                 <p className="font-semibold">{t('productManagement.ispProductNote', 'Service Connection Type')}</p>
-                <p>{t('productManagement.ispProductNoteDesc', 'This defines one connection category (e.g., Cable TV or Fiber Internet). Pricing plans for this type are configured separately in Settings → Billing tab.')}</p>
+                <p>{t('productManagement.ispProductNoteDesc', 'This defines one provider (e.g. GTPL for cable or RailWire for internet). Add its plans and prices under "Plans and prices" on this page.')}</p>
               </div>
             </div>
           )}
@@ -421,6 +425,8 @@ const ProductManagement = () => {
   const { currentOrganization } = useOrganizationStore();
   const industryType = currentOrganization?.industryType ?? null;
   const isIsp = isIspIndustry(industryType);
+  /** Real LCO Desk server: limits come from the operator's plan (checked by the server), no demo pricing. */
+  const live = !isMockMode();
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -433,10 +439,10 @@ const ProductManagement = () => {
   );
 
   const suggestedCategories = useMemo(() => {
-    if (!template) return [];
+    if (!template || live) return [];
     const existingNames = new Set(products.map((p) => p.name.toLowerCase()));
     return template.defaultCategories.filter((cat) => !existingNames.has(cat.toLowerCase()));
-  }, [template, products]);
+  }, [template, products, live]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -464,7 +470,7 @@ const ProductManagement = () => {
 
   // ── CRUD handlers ──────────────────────────────────────────────────────────
   const openAdd = () => {
-    if (products.length >= FREE_PRODUCT_LIMIT) { setShowPaymentModal(true); return; }
+    if (!live && products.length >= FREE_PRODUCT_LIMIT) { setShowPaymentModal(true); return; }
     setEditingProduct(null);
     setShowModal(true);
   };
@@ -472,6 +478,14 @@ const ProductManagement = () => {
   const openEdit = (p: Product) => { setEditingProduct(p); setShowModal(true); };
 
   const handleSubmit = async (data: ProductFormData) => {
+    if (live) {
+      // Call the API directly so the server's message (e.g. provider limit reached) reaches the user.
+      // Errors are thrown on to the form, which shows the server's message.
+      if (editingProduct) await productsApi.update(editingProduct.id, data);
+      else await productsApi.create({ ...data, organizationId: '' });
+      await fetchProducts();
+      return;
+    }
     if (editingProduct) {
       await updateProduct(editingProduct.id, data);
     } else {
@@ -485,7 +499,11 @@ const ProductManagement = () => {
       ? t('productManagement.confirmDeleteIsp', 'Delete "{{name}}"? This affects all subscribers using this connection type and their plans.', { name: p.name })
       : t('productManagement.confirmDeleteGeneric', 'Delete "{{name}}"? This category will be removed from dropdowns.', { name: p.name });
     if (confirm(label)) {
-      await deleteProduct(p.id);
+      if (live) {
+        try { await productsApi.delete(p.id); } catch (e) { showError(e instanceof Error ? e.message : tr('Could not delete')); }
+      } else {
+        await deleteProduct(p.id);
+      }
       await fetchProducts();
     }
   };
@@ -528,14 +546,18 @@ const ProductManagement = () => {
             {getPageTitle(t, industryType)}
           </h2>
           <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-            {getPageDescription(t, industryType)}
+            {live
+              ? tr('Your providers (GTPL, RailWire...) with their cut-off rules. Add the plans and prices for each provider below.')
+              : getPageDescription(t, industryType)}
           </p>
+          {!live && (
           <p className="text-xs text-muted-foreground mt-1.5">
             {products.length}/{FREE_PRODUCT_LIMIT} {t('productManagement.freeUsed', 'free used')}
             {products.length < FREE_PRODUCT_LIMIT
               ? ` · ${FREE_PRODUCT_LIMIT - products.length} ${t('productManagement.remaining', 'remaining free')}`
               : ` · ${t('productManagement.additionalCost', '₹{{cost}} per additional', { cost: ADDITIONAL_PRODUCT_COST })}`}
           </p>
+          )}
         </div>
         <Button onClick={openAdd} className="shrink-0 w-full sm:w-auto min-h-[44px] sm:min-h-0">
           <Plus className="w-4 h-4 mr-2" />
@@ -683,6 +705,12 @@ const ProductManagement = () => {
       )}
 
       {/* ── Add/Edit modal ── */}
+      {live && (
+        <div className="pt-4 border-t border-border">
+          <PlansManager providers={products} />
+        </div>
+      )}
+
       <ProductFormModal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setEditingProduct(null); }}
