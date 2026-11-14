@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Camera, ScanLine, X } from 'lucide-react';
+import { tr } from '@/lib/lt';
 
 interface Props {
   codes: string[];
@@ -34,7 +35,7 @@ export function ScanBox({ codes, onChange, validate, placeholder = 'Scan or type
     const code = raw.trim();
     if (!code) return;
     if (codesRef.current.includes(code)) {
-      setMsg({ text: `${code} already scanned`, bad: true });
+      setMsg({ text: tr('{{code}} already scanned', { code }), bad: true });
       buzz();
       return;
     }
@@ -45,7 +46,7 @@ export function ScanBox({ codes, onChange, validate, placeholder = 'Scan or type
       return;
     }
     onChange([...codesRef.current, code]);
-    setMsg({ text: `Added ${code}`, bad: false });
+    setMsg({ text: tr('Added {{code}}', { code }), bad: false });
   };
 
   // Camera scanning loop
@@ -72,7 +73,7 @@ export function ScanBox({ codes, onChange, validate, placeholder = 'Scan or type
           await new Promise((r) => setTimeout(r, 400));
         }
       } catch {
-        setMsg({ text: 'Camera not available. Allow camera access or use a scanner.', bad: true });
+        setMsg({ text: tr('Camera not available. Allow camera access or use a scanner.'), bad: true });
         setCamera(false);
       }
     })();
@@ -104,7 +105,7 @@ export function ScanBox({ codes, onChange, validate, placeholder = 'Scan or type
           />
         </div>
         {hasDetector && (
-          <button type="button" onClick={() => setCamera((c) => !c)} title="Scan with camera"
+          <button type="button" onClick={() => setCamera((c) => !c)} title={tr('Scan with camera')}
             className={`h-10 px-3 rounded-lg border text-sm ${camera ? 'bg-blue-600 text-white border-blue-600' : 'border-border'}`}>
             <Camera className="w-4 h-4" />
           </button>
@@ -124,7 +125,7 @@ export function ScanBox({ codes, onChange, validate, placeholder = 'Scan or type
           ))}
         </div>
       )}
-      <p className="text-xs text-muted-foreground">{codes.length} scanned</p>
+      <p className="text-xs text-muted-foreground">{tr('{{n}} scanned', { n: codes.length })}</p>
     </div>
   );
 }

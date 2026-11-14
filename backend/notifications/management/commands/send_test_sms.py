@@ -2,24 +2,29 @@ from django.core.management.base import BaseCommand, CommandError
 
 from core.validators import normalize_mobile
 from notifications.gateway import get_gateway
-from notifications.templates import render
+from notifications.models import SmsMessage
+from notifications.templates import receipt_body, render, template_id
 
 
 class Command(BaseCommand):
-    help = "Send one test SMS using the payment_receipt template (checks ping4sms + DLT setup)."
+    help = "Send one test SMS with the customer template (checks ping4sms + DLT setup). Not saved in the SMS log."
 
     def add_arguments(self, parser):
         parser.add_argument("mobile")
+        parser.add_argument("--lang", choices=["en", "ta"], default="en")
+        parser.add_argument("--business", default="LCO Desk", help="Name for the last variable")
 
     def handle(self, *args, **opts):
         mobile = normalize_mobile(opts["mobile"])
         if len(mobile) != 10:
             raise CommandError("Give a 10-digit mobile number.")
-        text = render("payment_receipt", {
-            "name": "Test", "amount": "1", "service": "Cable TV", "period": "Nov 2026", "date": "01-11-2026",
-            "time": "10:00 AM", "agent": "Test", "receipt": "TEST-000001", "balance": "0", "org": "LCO Desk",
-        })
-        result = get_gateway().send(mobile, text, "payment_receipt")
+        lang = opts["lang"]
+        msg = SmsMessage(
+            to_mobile=mobile, language=lang, template_id=template_id(lang),
+            body=render(lang, "Test", receipt_body(lang, 1, "TEST-000001", 0), opts["business"]),
+        )
+        self.stdout.write(f"Template {msg.template_id or '(none set)'}:\n{msg.body}\n")
+        result = get_gateway().send(msg)
         if result.ok:
             self.stdout.write(self.style.SUCCESS(f"Sent. Provider response: {result.provider_ref}"))
         else:

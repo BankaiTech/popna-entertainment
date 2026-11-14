@@ -11,6 +11,7 @@ import type { Customer } from '@/models/types';
 import { showError, showSuccess } from '@/utils/toast';
 import { formatDateIN } from '@/lib/subscription';
 import { DocLines, TotalsBox, newLine, toLineInput, type DraftLine } from './DocLines';
+import { tr } from '@/lib/lt';
 
 const input = 'w-full h-10 rounded-lg border border-border bg-background px-3 text-sm';
 
@@ -18,8 +19,8 @@ function Invoice({ sale, org, onClose }: { sale: Sale; org: OperatorSettings | n
   return (
     <div className="max-w-2xl space-y-4">
       <div className="flex gap-2 print:hidden">
-        <Button onClick={() => window.print()}><Printer className="w-4 h-4 mr-1" /> Print</Button>
-        <Button variant="outline" onClick={onClose}>Back</Button>
+        <Button onClick={() => window.print()}><Printer className="w-4 h-4 mr-1" /> {tr('Print')}</Button>
+        <Button variant="outline" onClick={onClose}>{tr('Back')}</Button>
       </div>
       <div className="rounded-xl border border-border p-5 bg-white text-black text-sm space-y-3">
         <div className="flex justify-between gap-4">
@@ -30,14 +31,14 @@ function Invoice({ sale, org, onClose }: { sale: Sale; org: OperatorSettings | n
             {org?.contactPhone && <p className="text-xs">Ph: {org.contactPhone}</p>}
           </div>
           <div className="text-right">
-            <p className="font-bold">TAX INVOICE</p>
+            <p className="font-bold">{tr('TAX INVOICE')}</p>
             <p>{sale.invoiceNo}</p>
             <p>{formatDateIN(sale.saleDate)}</p>
           </div>
         </div>
-        <p>Bill to: <b>{sale.customerName || 'Walk-in customer'}</b> {sale.customerMobile && `· ${sale.customerMobile}`}</p>
+        <p>{tr('Bill to:')} <b>{sale.customerName || 'Walk-in customer'}</b> {sale.customerMobile && `· ${sale.customerMobile}`}</p>
         <table className="w-full text-xs border-t border-b">
-          <thead><tr className="text-left"><th className="py-1">Item</th><th>HSN</th><th className="text-right">Qty</th><th className="text-right">Rate</th><th className="text-right">GST%</th><th className="text-right">Amount</th></tr></thead>
+          <thead><tr className="text-left"><th className="py-1">{tr('Item')}</th><th>{tr('HSN')}</th><th className="text-right">{tr('Qty')}</th><th className="text-right">{tr('Rate')}</th><th className="text-right">{tr('GST%')}</th><th className="text-right">{tr('Amount')}</th></tr></thead>
           <tbody>
             {sale.lines.map((l) => (
               <tr key={l.id} className="border-t align-top">
@@ -49,12 +50,12 @@ function Invoice({ sale, org, onClose }: { sale: Sale; org: OperatorSettings | n
           </tbody>
         </table>
         <dl className="ml-auto w-56 grid grid-cols-2 gap-y-0.5 text-xs">
-          <dt>Taxable</dt><dd className="text-right">{Number(sale.taxableTotal).toFixed(2)}</dd>
-          <dt>CGST</dt><dd className="text-right">{Number(sale.cgst).toFixed(2)}</dd>
-          <dt>SGST</dt><dd className="text-right">{Number(sale.sgst).toFixed(2)}</dd>
-          <dt className="font-bold text-sm">Total</dt><dd className="text-right font-bold text-sm">{rupees(sale.grandTotal)}</dd>
+          <dt>{tr('Taxable')}</dt><dd className="text-right">{Number(sale.taxableTotal).toFixed(2)}</dd>
+          <dt>{tr('CGST')}</dt><dd className="text-right">{Number(sale.cgst).toFixed(2)}</dd>
+          <dt>{tr('SGST')}</dt><dd className="text-right">{Number(sale.sgst).toFixed(2)}</dd>
+          <dt className="font-bold text-sm">{tr('Total')}</dt><dd className="text-right font-bold text-sm">{rupees(sale.grandTotal)}</dd>
         </dl>
-        <p className="text-xs">Paid by: {sale.paymentMethod === 'credit' ? 'Credit (to be paid)' : sale.paymentMethod.toUpperCase()}</p>
+        <p className="text-xs">Paid by: {sale.paymentMethod === 'credit' ? tr('Credit (to be paid)') : sale.paymentMethod.toUpperCase()}</p>
       </div>
     </div>
   );
@@ -80,7 +81,7 @@ const Sales = () => {
     try {
       const [s, i] = await Promise.all([stockApi.sales(), stockApi.items({ is_active: true })]);
       setList(s); setItems(i);
-    } catch (e) { showError(e instanceof Error ? e.message : 'Could not load'); }
+    } catch (e) { showError(e instanceof Error ? e.message : tr('Could not load')); }
   }, []);
   useEffect(() => {
     load();
@@ -106,19 +107,19 @@ const Sales = () => {
 
   // One scan box for everything: a serial adds that box; a product barcode adds one piece.
   const scanAny = async (code: string) => {
-    if (lines.some((l) => l.serials.includes(code))) return `${code} is already on this bill`;
+    if (lines.some((l) => l.serials.includes(code))) return tr('{{code}} is already on this bill', { code });
     const units = await stockApi.units({ serial: code });
     if (units.length) {
       const u = units[0];
-      if (u.status !== 'in_stock') return `${code} is ${u.status.replace('_', ' ')}${u.customerName ? ` (${u.customerName})` : ''}`;
+      if (u.status !== 'in_stock') return `${code}: ${({ in_stock: tr('In stock'), sold: tr('Sold'), faulty: tr('Faulty'), returned: tr('Returned') })[u.status]}${u.customerName ? ` (${u.customerName})` : ''}`;
       const item = items.find((i) => i.id === u.item);
-      if (!item) return `${code}: item is inactive`;
+      if (!item) return tr('{{code}}: item is inactive', { code });
       addItem(item, code);
       return null;
     }
     const item = items.find((i) => i.barcode === code);
-    if (!item) return `${code} not found in stock`;
-    if (item.trackSerials) return `${item.name}: scan the serial number on the box, not the product barcode`;
+    if (!item) return tr('{{code}} not found in stock', { code });
+    if (item.trackSerials) return tr('{{item}}: scan the serial number on the box, not the product barcode', { item: item.name });
     addItem(item);
     return null;
   };
@@ -130,11 +131,11 @@ const Sales = () => {
         customerId: customer?.id ?? null, customerName: customer ? '' : walkIn.name, customerMobile: customer ? '' : walkIn.mobile,
         paymentMethod: method, lines: lines.map(toLineInput),
       });
-      showSuccess(`Invoice ${sale.invoiceNo} saved`);
+      showSuccess(tr('Invoice {{no}} saved', { no: sale.invoiceNo }));
       setCreating(false); setLines([]); setCustomer(null); setCustomerQ(''); setWalkIn({ name: '', mobile: '' });
       setViewing(sale);
       load();
-    } catch (e) { showError(e instanceof Error ? e.message : 'Could not save'); }
+    } catch (e) { showError(e instanceof Error ? e.message : tr('Could not save')); }
     finally { setSaving(false); }
   };
 
@@ -143,51 +144,51 @@ const Sales = () => {
   if (creating) {
     return (
       <div className="space-y-4 max-w-2xl">
-        <h1 className="text-lg font-bold">New sale</h1>
+        <h1 className="text-lg font-bold">{tr('New sale')}</h1>
         <div className="space-y-2 text-sm">
-          <span className="block font-medium">Customer</span>
+          <span className="block font-medium">{tr('Customer')}</span>
           {customer ? (
             <div className="flex justify-between rounded-lg border border-border p-2">
               <span>{customer.name} · {customer.mobile}</span>
-              <button type="button" className="text-blue-600 text-xs" onClick={() => setCustomer(null)}>Change</button>
+              <button type="button" className="text-blue-600 text-xs" onClick={() => setCustomer(null)}>{tr('Change')}</button>
             </div>
           ) : (
             <>
-              <input className={input} placeholder="Search customer by name or mobile" value={customerQ} onChange={(e) => setCustomerQ(e.target.value)} />
+              <input className={input} placeholder={tr('Search customer by name or mobile')} value={customerQ} onChange={(e) => setCustomerQ(e.target.value)} />
               {matches.map((c) => (
                 <button key={c.id} type="button" className="block w-full text-left px-3 py-2 rounded-lg hover:bg-muted" onClick={() => setCustomer(c)}>
                   {c.name} · {c.mobile}
                 </button>
               ))}
               <div className="grid grid-cols-2 gap-2">
-                <input className={input} placeholder="Or walk-in name" value={walkIn.name} onChange={(e) => setWalkIn({ ...walkIn, name: e.target.value })} />
-                <input className={input} placeholder="Mobile" value={walkIn.mobile} onChange={(e) => setWalkIn({ ...walkIn, mobile: e.target.value })} />
+                <input className={input} placeholder={tr('Or walk-in name')} value={walkIn.name} onChange={(e) => setWalkIn({ ...walkIn, name: e.target.value })} />
+                <input className={input} placeholder={tr('Mobile')} value={walkIn.mobile} onChange={(e) => setWalkIn({ ...walkIn, mobile: e.target.value })} />
               </div>
             </>
           )}
         </div>
-        <ScanBox codes={scanned} onChange={() => setScanned([])} validate={scanAny} placeholder="Scan box serial or product barcode" />
+        <ScanBox codes={scanned} onChange={() => setScanned([])} validate={scanAny} placeholder={tr('Scan box serial or product barcode')} />
         <select className={input} value="" onChange={(e) => { const it = items.find((i) => i.id === Number(e.target.value)); if (it) addItem(it); }}>
-          <option value="">Or add an item without scanning…</option>
+          <option value="">{tr('Or add an item without scanning…')}</option>
           {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({Number(i.onHand)} in stock)</option>)}
         </select>
         <DocLines lines={lines} onChange={setLines}
           validateSerial={async (l, code) => {
             const u = (await stockApi.units({ serial: code, item: l.item.id }))[0];
-            return !u ? `${code} is not a ${l.item.name} in your stock` : u.status !== 'in_stock' ? `${code} is ${u.status.replace('_', ' ')}` : null;
+            return !u ? tr('{{code}} is not a {{item}} in your stock', { code, item: l.item.name }) : u.status !== 'in_stock' ? `${code}: ${({ in_stock: tr('In stock'), sold: tr('Sold'), faulty: tr('Faulty'), returned: tr('Returned') })[u.status]}` : null;
           }} />
         {lines.length > 0 && <TotalsBox lines={lines} />}
         <div className="grid grid-cols-3 gap-2">
           {(['cash', 'upi', 'credit'] as const).map((m) => (
             <button key={m} type="button" onClick={() => setMethod(m)}
               className={`py-2 rounded-lg border text-sm ${method === m ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'border-border'}`}>
-              {m === 'cash' ? 'Cash' : m === 'upi' ? 'UPI' : 'Pay later'}
+              {m === 'cash' ? tr('Cash') : m === 'upi' ? tr('UPI') : tr('Pay later')}
             </button>
           ))}
         </div>
         <div className="flex gap-2 justify-end">
-          <Button variant="outline" onClick={() => setCreating(false)}>Cancel</Button>
-          <Button onClick={save} disabled={saving || lines.length === 0}>{saving ? 'Saving…' : 'Save & make invoice'}</Button>
+          <Button variant="outline" onClick={() => setCreating(false)}>{tr('Cancel')}</Button>
+          <Button onClick={save} disabled={saving || lines.length === 0}>{saving ? tr('Saving…') : tr('Save & make invoice')}</Button>
         </div>
       </div>
     );
@@ -196,8 +197,8 @@ const Sales = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-end gap-2">
-        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><FileText className="w-5 h-5" /> Sales</h1>
-        <Button onClick={() => setCreating(true)}><Plus className="w-4 h-4 mr-1" /> New sale</Button>
+        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><FileText className="w-5 h-5" /> {tr('Sales')}</h1>
+        <Button onClick={() => setCreating(true)}><Plus className="w-4 h-4 mr-1" /> {tr('New sale')}</Button>
       </div>
       <ul className="divide-y divide-border rounded-xl border border-border text-sm">
         {list.map((s) => (
@@ -209,7 +210,7 @@ const Sales = () => {
             <span className="font-semibold">{rupees(s.grandTotal)}</span>
           </li>
         ))}
-        {list.length === 0 && <li className="p-6 text-center text-muted-foreground">No sales yet.</li>}
+        {list.length === 0 && <li className="p-6 text-center text-muted-foreground">{tr('No sales yet.')}</li>}
       </ul>
     </div>
   );

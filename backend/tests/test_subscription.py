@@ -8,9 +8,9 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from core.permissions import Roles
 from customers.models import Provider
-from orgs.models import Distributor
+from orgs.models import Distributor, Organization
 
-from .helpers import PASSWORD, client_for, make_org, make_user
+from .helpers import PASSWORD, client_for, make_customer, make_org, make_plans, make_user
 
 
 class SubscriptionTests(TestCase):
@@ -167,3 +167,51 @@ class OwnerSettingsTests(TestCase):
         res = self.c.patch(f"/api/organizations/{self.org.id}", {"gstin": "123", "upi_id": "nope"}, format="json")
         self.assertEqual(res.status_code, 400)
         self.assertEqual(set(res.json()), {"gstin", "upi_id"})
+
+
+class OperatorAdminActionsTests(TestCase):
+    def setUp(self):
+        from billing.services import generate_bills
+        from datetime import date as d
+
+        self.platform = make_user("platform", Roles.PLATFORM_ADMIN)
+        self.org = make_org("DEL1")
+        self.owner = make_user("delowner", Roles.OWNER, self.org)
+        cable, _ = make_plans(self.org)
+        make_customer(self.org, cable)
+        generate_bills(d(2026, 11, 1), organization=self.org)
+        self.keep = make_org("KEEP")
+        make_user("keepowner", Roles.OWNER, self.keep)
+
+    def test_reset_owner_password_returns_it_once_and_login_works(self):
+        c = client_for(self.platform)
+        res = c.post(f"/api/organizations/{self.org.id}/reset-owner-password", {}, format="json")
+        self.assertEqual(res.status_code, 200, res.content)
+        body = res.json()
+        self.assertEqual(body["username"], "delowner")
+        login = self.client.post("/api/auth/login", {"username": "delowner", "password": body["password"]},
+                                 content_type="application/json")
+        self.assertEqual(login.status_code, 200)
+        self.assertEqual(c.get(f"/api/organizations/{self.org.id}").json()["owner_login"], "delowner")
+        self.assertEqual(client_for(self.owner).post(
+            f"/api/organizations/{self.org.id}/reset-owner-password", {}, format="json").status_code, 403)
+
+    def test_delete_only_when_inactive_and_confirmed(self):
+        from accounts.models import User
+        from billing.models import Bill
+        from customers.models import Customer
+
+        c = client_for(self.platform)
+        self.assertEqual(c.delete(f"/api/organizations/{self.org.id}?confirm=DEL1").status_code, 400)  # active
+        self.org.status = "suspended"
+        self.org.save()
+        self.assertEqual(c.delete(f"/api/organizations/{self.org.id}?confirm=WRONG").status_code, 400)
+        self.assertEqual(client_for(self.owner).delete(f"/api/organizations/{self.org.id}?confirm=DEL1").status_code, 403)
+        res = c.delete(f"/api/organizations/{self.org.id}?confirm=del1")
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertFalse(Organization.objects.filter(code="DEL1").exists())
+        self.assertFalse(Customer.objects.filter(organization_id=self.org.id).exists())
+        self.assertFalse(Bill.objects.filter(organization_id=self.org.id).exists())
+        self.assertFalse(User.objects.filter(username="delowner").exists())
+        self.assertTrue(Organization.objects.filter(code="KEEP").exists())
+        self.assertTrue(User.objects.filter(username="keepowner").exists())

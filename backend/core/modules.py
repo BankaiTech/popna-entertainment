@@ -10,7 +10,7 @@ STAFF_DEFAULT_MODULES = {
     Roles.TECHNICIAN: ["dashboard", "complaints", "duty"],
 }
 # Never given to field staff, even if ticked.
-OFFICE_ONLY_MODULES = {"users", "settings", "live-map", "cutoff", "audit-trail"}
+OFFICE_ONLY_MODULES = {"users", "settings", "live-map", "cutoff", "audit-trail", "sms-log"}
 
 
 def effective_modules(user):

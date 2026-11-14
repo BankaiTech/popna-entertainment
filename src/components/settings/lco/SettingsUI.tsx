@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { operatorSettingsApi, fieldErrors, type OperatorSettings } from '@/api/operatorSettings';
 import { showError, showSuccess } from '@/utils/toast';
+import { tr } from '@/lib/lt';
 
 export function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -60,7 +61,7 @@ export function useOperatorSettings() {
         setSaved(s);
         setDraft(s);
       })
-      .catch((err) => showError(err instanceof Error ? err.message : 'Could not load settings'));
+      .catch((err) => showError(err instanceof Error ? err.message : tr('Could not load settings')));
   }, [orgId]);
 
   const set = <K extends keyof OperatorSettings>(key: K, value: OperatorSettings[K]) =>
@@ -85,10 +86,10 @@ export function useOperatorSettings() {
       const updated = await operatorSettingsApi.update(orgId, subset);
       setSaved(updated);
       setDraft((d) => (d ? { ...d, ...Object.fromEntries(fields.map((f) => [f, updated[f]])) } : updated));
-      showSuccess('Saved');
+      showSuccess(tr('Saved'));
     } catch (err) {
       setErrors(fieldErrors(err));
-      showError(err instanceof Error ? err.message : 'Could not save');
+      showError(err instanceof Error ? err.message : tr('Could not save'));
     } finally {
       setSaving(false);
     }
@@ -103,7 +104,7 @@ export function SaveBar({ disabled, saving, onSave }: { disabled: boolean; savin
     <div className="flex justify-end">
       <button type="button" onClick={onSave} disabled={disabled || saving}
         className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50">
-        {saving ? 'Saving…' : 'Save changes'}
+        {saving ? tr('Saving…') : tr('Save changes')}
       </button>
     </div>
   );

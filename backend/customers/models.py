@@ -95,6 +95,8 @@ class Customer(OrgOwnedModel):
         max_digits=5, decimal_places=2, default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     sms_opt_in = models.BooleanField(default=True, help_text="Internet only. Cable SMS are always sent.")
+    # Blank = use the operator's default SMS language.
+    sms_language = models.CharField(max_length=2, blank=True, choices=[("en", "English"), ("ta", "Tamil")])
     valid_until = models.DateField(
         null=True, blank=True,
         help_text="Internet: plan expiry date (rolling validity). Cable uses the monthly cut-off day instead.",

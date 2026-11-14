@@ -15,6 +15,7 @@ export interface OperatorSettings {
   upiId: string;
   upiPayeeName: string;
   smsDisplayName: string;
+  smsLanguage: 'en' | 'ta';
   // Billing & reminders
   defaultDueDay: number;
   reminderDaysBefore: number;

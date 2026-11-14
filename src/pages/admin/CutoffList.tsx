@@ -4,6 +4,7 @@ import { Phone, ScissorsLineDashed } from 'lucide-react';
 import { connectionsApi, type CutoffRow } from '@/api/collections';
 import { formatDateIN } from '@/lib/subscription';
 import { showError } from '@/utils/toast';
+import { tr } from '@/lib/lt';
 
 type Tab = 'all' | 'cable' | 'internet';
 
@@ -17,7 +18,7 @@ const CutoffList = () => {
     connectionsApi
       .cutoff()
       .then((r) => setRows(r.customers))
-      .catch((err) => showError(err instanceof Error ? err.message : 'Could not load the cut-off list'))
+      .catch((err) => showError(err instanceof Error ? err.message : tr('Could not load the cut-off list')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -28,9 +29,9 @@ const CutoffList = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><ScissorsLineDashed className="w-5 h-5" /> Cut-off list</h1>
+        <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><ScissorsLineDashed className="w-5 h-5" /> {tr('Cut-off list')}</h1>
         <p className="text-sm text-muted-foreground">
-          Cable: unpaid after this month's cut-off date. Internet: plan expired. Deactivate these in the provider's portal.
+          {tr('Cable: unpaid after this month\'s cut-off date. Internet: plan expired. Deactivate these in the provider\'s portal.')}
         </p>
       </div>
 
@@ -38,21 +39,21 @@ const CutoffList = () => {
         {(['all', 'cable', 'internet'] as Tab[]).map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)}
             className={`px-3 py-1.5 rounded-full text-sm border ${tab === t ? 'bg-blue-600 text-white border-blue-600' : 'border-border'}`}>
-            {t === 'all' ? 'All' : t === 'cable' ? 'Cable' : 'Internet'} ({count(t)})
+            {t === 'all' ? tr('All') : t === 'cable' ? tr('Cable') : tr('Internet')} ({count(t)})
           </button>
         ))}
         {areas.length > 0 && (
           <select value={area} onChange={(e) => setArea(e.target.value)} className="h-9 rounded-lg border border-border bg-background px-2 text-sm">
-            <option value="">All areas</option>
+            <option value="">{tr('All areas')}</option>
             {areas.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         )}
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-muted-foreground">Loading…</p>
+        <p className="py-10 text-center text-muted-foreground">{tr('Loading…')}</p>
       ) : shown.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">Nobody to cut off. 🎉</p>
+        <p className="py-10 text-center text-muted-foreground">{tr('Nobody to cut off. 🎉')}</p>
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border">
           {shown.map((r) => (
@@ -60,16 +61,16 @@ const CutoffList = () => {
               <div className="min-w-0 text-sm">
                 <p className="font-semibold truncate">{r.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {r.provider} · {r.category === 'cable' ? 'Cable' : 'Internet'}{r.area ? ` · ${r.area}` : ''}
+                  {r.provider} · {r.category === 'cable' ? tr('Cable') : tr('Internet')}{r.area ? ` · ${r.area}` : ''}
                   {r.boxNumber ? ` · Box ${r.boxNumber}` : ''}
                 </p>
                 <p className="text-xs text-red-600 mt-0.5">
-                  {r.category === 'cable' ? 'Cut-off date' : 'Expired on'} {formatDateIN(r.since)}
+                  {r.category === 'cable' ? tr('Cut-off date') : tr('Expired on')} {formatDateIN(r.since)}
                   {r.balance ? ` · Due ₹${Number(r.balance).toLocaleString('en-IN')}` : ''}
                 </p>
               </div>
               <a href={`tel:${r.mobile}`} className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-border text-sm">
-                <Phone className="w-4 h-4" /> Call
+                <Phone className="w-4 h-4" /> {tr('Call')}
               </a>
             </li>
           ))}

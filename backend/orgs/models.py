@@ -11,7 +11,7 @@ from core.validators import normalize_mobile, validate_indian_mobile
 # Only modules the LCO Desk server fully supports. Complaints, new connections and reports come later.
 DEFAULT_MODULES = [
     "dashboard", "contacts", "collect", "duty", "live-map", "cutoff", "invoices", "purchase-invoices",
-    "inventory-products", "products", "users", "settings",
+    "inventory-products", "products", "users", "settings", "sms-log",
 ]
 DEFAULT_SETTINGS_TABS = ["company", "products", "billing", "sms-templates"]
 
@@ -76,6 +76,8 @@ class Organization(TimeStampedModel):
         max_length=200, blank=True, help_text="Comma-separated mobiles that also get owner alerts"
     )
     sms_display_name = models.CharField(max_length=30, blank=True, help_text="Name shown at the end of SMS")
+    sms_language = models.CharField(max_length=2, default="en", choices=[("en", "English"), ("ta", "Tamil")],
+                                    help_text="Default SMS language for customers")
 
     # Business profile (shown on receipts / invoices)
     business_address = models.TextField(blank=True)

@@ -215,7 +215,7 @@ const SuperAdminUsers = () => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 [&>*]:min-w-0">
         {[
           { label: t('users.stats.totalUsers', 'Total Users'), value: users.length, color: 'text-violet-600', bg: 'bg-violet-50' },
           { label: t('superadminUsers.superAdmins', 'Super Admins'), value: superAdminCount, color: 'text-purple-600', bg: 'bg-purple-50' },

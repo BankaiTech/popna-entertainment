@@ -1,34 +1,56 @@
-# DLT templates to register (for ping4sms)
+# SMS templates (DLT)
 
-Every SMS in India must match a DLT-registered template exactly. Register these 4 as **Service Implicit**
-(transactional) templates. In DLT, each `{variable}` below becomes `{#var#}`. Each variable can usually hold up
-to 30 characters — the backend cuts longer values to 30.
+LCO Desk sends SMS **only to customers**, using two approved DLT templates.
+Owners and staff never get SMS; they see everything in the app (Dashboard, SMS Log).
 
-If DLT asks you to change any wording, put your approved text in `.env` (`SMS_TEXT_PAYMENT_RECEIPT=...` etc.)
-using the same `{variable}` names. No code change needed.
+| Language | Template ID | Setting |
+|---|---|---|
+| English | 1607100000000376221 | `SMS_TPL_CUSTOMER_EN` |
+| Tamil | 1607100000000376222 | `SMS_TPL_CUSTOMER_TA` |
 
-## 1. Payment receipt → customer (`SMS_TPL_PAYMENT_RECEIPT`)
-```
-Dear {name}, Rs.{amount} received for {service} {period} on {date} {time} by {agent}. Receipt {receipt}. Balance Rs.{balance}. -{org}
-```
+## Template text (must match the DLT registration exactly)
 
-## 2. Payment alert → owner (`SMS_TPL_OWNER_PAYMENT_ALERT`)
+English:
 ```
-{agent} collected Rs.{amount} from {name} ({mobile}) on {date} {time}. Receipt {receipt}. -LCO Desk
-```
-
-## 3. Due reminder → customer (`SMS_TPL_DUE_REMINDER`)
-Sent N days before the due date (cable: monthly cut-off day; internet: plan expiry), and optionally a second time (e.g. 1 day before).
-```
-Dear {name}, your {service} payment of Rs.{amount} is due on {due_date}. Please pay in advance to avoid disconnection. -{org}
+Dear Customer {#var#},
+{#var#}
+Thank you for your continued support.
+Regards,
+{#var#}
+PING4SMS
 ```
 
-## 4. Daily summary → owner (`SMS_TPL_OWNER_DAILY_SUMMARY`)
+Tamil:
 ```
-{org}: {date} collections Rs.{total} from {count} payments. Cash Rs.{cash}, UPI Rs.{upi}. -LCO Desk
+அன்புள்ள வாடிக்கையாளர் {#var#},
+{#var#}
+உங்கள் தொடர்ந்து வழங்கும் ஆதரவிற்கு நன்றி.
+அன்புடன்,
+{#var#}
+PING4SMS
 ```
 
-## Cost notes
-- English SMS: 160 characters per credit. Template 1 is ~150 characters with typical values = 1 credit.
-- Tamil (Unicode) SMS: only 70 characters per credit, so 2–3× the cost. Start with English.
-- Owners choosing `daily_summary` instead of `per_payment` saves one SMS per collection.
+Variables: 1 = customer name, 2 = message line, 3 = business name (Settings → SMS → sender name).
+**DLT allows at most 30 characters per variable**, so LCO Desk fits each value to 30 characters.
+
+## Message lines (variable 2)
+
+| When | English | Tamil |
+|---|---|---|
+| Payment received | `Paid Rs.230, Receipt 000123` | `ரூ.230 பெறப்பட்டது, ரசீது 000123` |
+| Partial payment | `Paid Rs.200, balance Rs.30` | `ரூ.200 பெறப்பட்டது, மீதி ரூ.30` |
+| Due reminder | `Rs.230 due 10-11-26, pay early` | `ரூ.230 10-11-26க்குள் செலுத்தவும்` |
+
+Shorter forms are used automatically when an amount is large.
+
+## Language
+Operator default: Settings → SMS → SMS language. Per customer: customer form → SMS language.
+
+## If your approved wording differs
+Set `SMS_TEXT_CUSTOMER_EN` / `SMS_TEXT_CUSTOMER_TA` in `.env` using `{name}`, `{body}`, `{org}` and `\n`.
+
+## Test
+```bash
+docker compose -f docker-compose.aws.yml exec web python manage.py send_test_sms 98XXXXXXXX
+docker compose -f docker-compose.aws.yml exec web python manage.py send_test_sms 98XXXXXXXX --lang ta
+```

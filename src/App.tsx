@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 // SaaS Product Fully Completed
 // Client folder removed - SaaS multi-tenant architecture used
 // Multi-tenant SaaS Isolation
@@ -26,6 +27,7 @@ import AdminContacts from './pages/admin/Contacts';
 import MyDuty from './pages/admin/MyDuty';
 import LcoStock from './pages/admin/lco/Stock';
 import LcoDashboard from './pages/admin/lco/Dashboard';
+import SmsLog from './pages/admin/lco/SmsLog';
 import LcoPurchases from './pages/admin/lco/Purchases';
 import LcoSales from './pages/admin/lco/Sales';
 import { isMockMode } from './lib/apiHelpers';
@@ -48,6 +50,8 @@ import { PWAFeatures } from './components/PWAFeatures';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
+  // Re-draw every screen when the language changes or its translation file finishes loading.
+  const { i18n, ready } = useTranslation();
 
   // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames)
   useEffect(() => {
@@ -68,7 +72,7 @@ function App() {
     <>
       <ScrollToTop />
       <PWAFeatures />
-      <Routes>
+      <Routes key={`${i18n.language}:${ready}`}>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout />}>
           {/* The old multi-business marketing page is demo-only; operators go straight to login */}
@@ -242,6 +246,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="sms-log"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SmsLog />
               </ProtectedRoute>
             }
           />

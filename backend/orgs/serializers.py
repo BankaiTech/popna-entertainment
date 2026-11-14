@@ -12,7 +12,7 @@ from .models import Distributor, Organization
 
 OWNER_EDITABLE = [
     "business_address", "gstin", "contact_phone", "contact_email", "upi_id", "upi_payee_name",
-    "owner_mobile", "extra_alert_mobiles", "sms_display_name", "default_due_day", "reminder_days_before",
+    "owner_mobile", "extra_alert_mobiles", "sms_display_name", "sms_language", "default_due_day", "reminder_days_before",
     "second_reminder_days_before",
     "internet_reminders_enabled", "internet_payment_sms_enabled", "owner_alert_mode", "tracking_enabled",
     "require_gps_for_collection", "require_checkin_for_collection",
@@ -83,13 +83,21 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
     owner_username = serializers.CharField(write_only=True, required=False)
     owner_password = serializers.CharField(write_only=True, required=False, min_length=8)
     renew_months = serializers.IntegerField(write_only=True, required=False, min_value=1, max_value=36)
+    # The owner's login name, so the app owner knows which account a password reset applies to.
+    owner_login = serializers.SerializerMethodField()
 
     class Meta:
         model = Organization
         fields = [
             "id", "name", "code", *PLATFORM_CONTROLLED, *OWNER_EDITABLE, *COMPUTED, "created_at",
-            "owner_name", "owner_username", "owner_password", "renew_months",
+            "owner_name", "owner_username", "owner_password", "renew_months", "owner_login",
         ]
+
+    def get_owner_login(self, obj):
+        from accounts.models import User
+
+        return User.objects.filter(organization=obj, role=Roles.OWNER).order_by("id").values_list(
+            "username", flat=True).first()
 
     def validate(self, attrs):
         start = attrs.get("subscription_start", getattr(self.instance, "subscription_start", None))

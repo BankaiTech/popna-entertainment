@@ -21,6 +21,7 @@ import {
   type SubscriptionEventDetail,
 } from '@/lib/subscription';
 import type { SubscriptionState } from '@/models/types';
+import { tr } from '@/lib/lt';
 
 const REDIRECT_SECONDS = 6;
 
@@ -115,7 +116,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
         <div className="max-w-md w-full rounded-2xl border border-red-200 dark:border-red-900 bg-white dark:bg-gray-900 p-8 text-center space-y-4 shadow-sm">
           <CalendarX2 className="w-12 h-12 mx-auto text-red-500" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {blocked.state === 'expired' ? 'Subscription ended' : 'Subscription not started'}
+            {blocked.state === 'expired' ? tr('Subscription ended') : tr('Subscription not started')}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">{blocked.message}</p>
           <p className="text-xs text-gray-400">Going to the login page in {secondsLeft} seconds…</p>
@@ -124,7 +125,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             onClick={goToLogin}
             className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
           >
-            Go to login now
+            {tr('Go to login now')}
           </button>
         </div>
       </div>

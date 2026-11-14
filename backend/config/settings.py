@@ -187,23 +187,21 @@ SMS_DLT_ENTITY_ID = env("SMS_DLT_ENTITY_ID", "")
 SMS_MOBILE_PREFIX = env("SMS_MOBILE_PREFIX", "")  # e.g. "91" if the gateway needs country code
 SMS_SUCCESS_KEYWORD = env("SMS_SUCCESS_KEYWORD", "")  # optional text that must appear in a success response
 SMS_MAX_ATTEMPTS = int(env("SMS_MAX_ATTEMPTS", "5"))
+# Approved DLT templates for customer SMS (English and Tamil). Only customers ever get SMS.
 SMS_TEMPLATE_IDS = {
-    "payment_receipt": env("SMS_TPL_PAYMENT_RECEIPT", ""),
-    "owner_payment_alert": env("SMS_TPL_OWNER_PAYMENT_ALERT", ""),
-    "due_reminder": env("SMS_TPL_DUE_REMINDER", ""),
-    "owner_daily_summary": env("SMS_TPL_OWNER_DAILY_SUMMARY", ""),
+    "en": env("SMS_TPL_CUSTOMER_EN", "1607100000000376221"),
+    "ta": env("SMS_TPL_CUSTOMER_TA", "1607100000000376222"),
 }
-# Optional overrides so the text matches your DLT-registered template exactly.
+# Extra URL text added for Tamil (Unicode) SMS, as your gateway needs it, e.g. "&unicode=1".
+SMS_UNICODE_PARAMS = env("SMS_UNICODE_PARAMS", "")
+# Optional: exact template wording if yours differs. Use {name} {body} {org} and \n for new lines.
 SMS_TEXT_OVERRIDES = {
-    "payment_receipt": env("SMS_TEXT_PAYMENT_RECEIPT", ""),
-    "owner_payment_alert": env("SMS_TEXT_OWNER_PAYMENT_ALERT", ""),
-    "due_reminder": env("SMS_TEXT_DUE_REMINDER", ""),
-    "owner_daily_summary": env("SMS_TEXT_OWNER_DAILY_SUMMARY", ""),
+    "en": env("SMS_TEXT_CUSTOMER_EN", ""),
+    "ta": env("SMS_TEXT_CUSTOMER_TA", ""),
 }
 
 # ── Scheduler (python manage.py run_scheduler) ──────────────────────────────
 SCHEDULE_DUE_REMINDERS_AT = env("SCHEDULE_DUE_REMINDERS_AT", "09:00")
-SCHEDULE_OWNER_SUMMARY_AT = env("SCHEDULE_OWNER_SUMMARY_AT", "21:00")
 SCHEDULE_GENERATE_BILLS_AT = env("SCHEDULE_GENERATE_BILLS_AT", "06:00")
 SCHEDULE_PURGE_LOCATIONS_AT = env("SCHEDULE_PURGE_LOCATIONS_AT", "03:00")
 BILL_GENERATION_DAY = int(env("BILL_GENERATION_DAY", "1"))

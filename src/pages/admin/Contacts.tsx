@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 // Contacts Module - Unified: Customers + Suppliers + Import
 // Customers tab now has full features from the standalone Customers page
 import { useEffect, useState, useMemo } from 'react';
@@ -26,7 +27,7 @@ import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { getConnectionTypeLabel } from '@/lib/providerUtils';
 import { generateCustomerPassword } from '@/lib/utils';
 import { organizationsApi } from '@/api/organizations';
-import { showError, showSuccess, showInfo } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById, getContactConfig } from '@/config/industryTemplates';
 import { useTerminology } from '@/hooks/useTerminology';
@@ -35,6 +36,7 @@ type ContactTab = 'customers' | 'suppliers' | 'import';
 
 const Contacts = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { term } = useTerminology();
     const { currentOrganization } = useOrganizationStore();
     const template = useMemo(
@@ -316,7 +318,7 @@ const Contacts = () => {
     return (
         <div className="space-y-3">
             {/* Tabs + Action buttons in one row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-200">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2 border-b border-gray-200">
                 <div className="flex flex-wrap gap-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -346,15 +348,12 @@ const Contacts = () => {
                     })}
                 </div>
                 {/* Tab-level action buttons */}
-                <div className="flex gap-2 pb-2 sm:pb-0 px-1 sm:px-0">
+                <div className="flex flex-wrap gap-2 pb-2 xl:pb-0 px-1 xl:px-0">
                     {activeTab === 'customers' && !isEmployee && (
                         <>
-                            <Button onClick={() => {
-                                const pendingCustomers = customers.filter(c => c.paymentStatus === 'not_paid' && c.status === 'Active');
-                                showInfo(t('dashboard.smsMock', 'Mock SMS: would send renewal reminder to {{count}} cable customers.', { count: pendingCustomers.length }));
-                            }} variant="outline" size="xs">
+                            <Button onClick={() => navigate('/admin/sms-log')} variant="outline" size="xs">
                                 <MessageSquare className="w-3.5 h-3.5" />
-                                SMS
+                                {t('SMS Log', 'SMS Log')}
                             </Button>
                             <Button onClick={handleDownloadExcel} variant="outline" size="xs" disabled={filteredCustomers.length === 0}>
                                 <Download className="w-3.5 h-3.5" />
@@ -379,8 +378,8 @@ const Contacts = () => {
                 <div className="space-y-3">
                     {/* Data Grid */}
                     <Card>
-                        <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <CardHeading className="p-0 w-full md:w-auto md:min-w-0 shrink-0">
+                        <CardHeader className="py-2.5 px-3 sm:px-4 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+                            <CardHeading className="p-0 w-full xl:w-auto xl:min-w-[220px] min-w-0">
                                 <div className="relative w-full min-w-0">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none shrink-0" />
                                     <Input
@@ -391,12 +390,12 @@ const Contacts = () => {
                                     />
                                 </div>
                             </CardHeading>
-                            <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
+                            <CardToolbar className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 xl:w-auto xl:flex-nowrap">
                                 {!isEmployee && (
                                     <Select
                                         value={statusFilter}
                                         onChange={(e) => setStatusFilter(e.target.value as CustomerStatus | 'All')}
-                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[160px] sm:flex-1 xl:flex-initial"
                                     >
                                         <option value="All">{t('customers.allStatus', 'All Status')}</option>
                                         {statuses.map((status) => (
@@ -410,7 +409,7 @@ const Contacts = () => {
                                 <Select
                                     value={connectionFilter}
                                     onChange={(e) => setConnectionFilter(e.target.value as Provider | 'All')}
-                                    className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+                                    className="h-9 text-sm w-full min-w-0 sm:min-w-[160px] sm:flex-1 xl:flex-initial"
                                 >
                                     <option value="All">{t('customers.allConnections', 'All Categories')}</option>
                                     {Array.isArray(products) && products.length > 0 ? (
@@ -426,7 +425,7 @@ const Contacts = () => {
                                     <Select
                                         value={paymentStatusFilter}
                                         onChange={(e) => setPaymentStatusFilter(e.target.value as 'All' | 'paid' | 'not_paid')}
-                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[200px] sm:flex-initial"
+                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[160px] sm:flex-1 xl:flex-initial"
                                     >
                                         <option value="All">{t('customers.allPayment', 'All Payment')}</option>
                                         <option value="not_paid">{t('customers.unpaid', 'Unpaid')}</option>

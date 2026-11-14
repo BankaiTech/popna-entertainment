@@ -2,7 +2,9 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.exceptions import PermissionDenied
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from billing.models import Bill, Payment
@@ -12,6 +14,7 @@ from core.permissions import ReadWriteRoles, Roles, role_in
 from customers.models import Customer
 
 from .models import Distributor, Organization
+from .services import delete_organization, generate_password
 from .serializers import (
     DistributorOrganizationSerializer,
     DistributorSerializer,
@@ -68,8 +71,43 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         obj = serializer.save()
         audit(user, "organization_updated", obj, fields=",".join(sorted(serializer.validated_data)))
 
-    def perform_destroy(self, instance):
-        raise PermissionDenied("Operators are never deleted. Set status to 'suspended' instead.")
+    def destroy(self, request, *args, **kwargs):
+        """
+        DELETE /api/organizations/{id}?confirm=<CODE> — app owner only, and only for an operator that is
+        disabled or suspended. Removes the operator and ALL its data permanently.
+        """
+        if request.user.role != Roles.PLATFORM_ADMIN:
+            raise PermissionDenied("Only the app owner can delete an operator.")
+        org = self.get_object()
+        if org.status == Organization.Status.ACTIVE:
+            raise ValidationError({"detail": "Disable or suspend this operator before deleting it."})
+        if (request.query_params.get("confirm") or "").strip().lower() != org.code.lower():
+            raise ValidationError({"confirm": f"Type the operator code {org.code} to confirm."})
+        counts = delete_organization(org, by_user=request.user)
+        return Response({"deleted": True, "rows": counts})
+
+    @action(detail=True, methods=["post"], url_path="reset-owner-password",
+            permission_classes=[role_in(Roles.PLATFORM_ADMIN)])
+    def reset_owner_password(self, request, pk=None):
+        """
+        POST {"password": "<optional>"} — sets a new password for the operator's owner login and returns it ONCE.
+        Passwords are stored hashed, so the old one can never be shown.
+        """
+        org = self.get_object()
+        from accounts.models import User
+
+        owner = User.objects.filter(organization=org, role=Roles.OWNER).order_by("id").first()
+        if owner is None:
+            raise ValidationError({"detail": "This operator has no owner login."})
+        password = (request.data.get("password") or "").strip() or generate_password()
+        try:
+            validate_password(password, owner)
+        except DjangoValidationError as exc:
+            raise ValidationError({"password": list(exc.messages)})
+        owner.set_password(password)
+        owner.save(update_fields=["password"])
+        audit(request.user, "owner_password_reset", org, username=owner.username)
+        return Response({"username": owner.username, "password": password})
 
     @action(detail=True, methods=["patch"], url_path="status", permission_classes=[role_in(Roles.PLATFORM_ADMIN)])
     def set_status(self, request, pk=None):

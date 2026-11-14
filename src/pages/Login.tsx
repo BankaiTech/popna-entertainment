@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { tr } from '@/lib/lt';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -217,19 +218,19 @@ const Login = () => {
             <p className="text-lg text-white/65 leading-relaxed">
               {isSignup
                 ? t('signup.welcomeSubtitle', 'Sign up to start managing your business with our powerful platform.')
-                : 'Billing, collection and field staff tracking for cable TV and broadband operators.'}
+                : tr('Billing, collection and field staff tracking for cable TV and broadband operators.')}
             </p>
           </div>
           <div className="space-y-3">
             {[
-              'Cable & broadband customers',
-              'Collections with receipt SMS',
-              'Due-date reminder SMS',
-              'Collection agent live location',
-              'Cut-off list',
-              'Stock with barcode scanning',
-              'GST sales invoices',
-              'Tamil and 5 more languages',
+              tr('Cable & broadband customers'),
+              tr('Collections with receipt SMS'),
+              tr('Due-date reminder SMS'),
+              tr('Collection agent live location'),
+              tr('Cut-off list'),
+              tr('Stock with barcode scanning'),
+              tr('GST sales invoices'),
+              tr('Tamil and 5 more languages'),
             ].map((feat) => (
               <div key={feat} className="flex items-center gap-2.5">
                 <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -241,7 +242,7 @@ const Login = () => {
           </div>
           <div className="mt-12 flex items-center gap-2 text-white/40 text-xs">
             <Building2 className="w-4 h-4" />
-            <span>LCO Desk · for cable TV and broadband operators</span>
+            <span>{tr('LCO Desk · for cable TV and broadband operators')}</span>
           </div>
         </div>
       </div>

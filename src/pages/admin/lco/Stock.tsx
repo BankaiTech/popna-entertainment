@@ -7,6 +7,7 @@ import ScanBox from '@/components/ScanBox';
 import { stockApi, CATEGORY_LABEL, rupees, type StockItem, type StockUnit, type StockCategory } from '@/api/stock';
 import { fieldErrors } from '@/api/operatorSettings';
 import { showError, showSuccess } from '@/utils/toast';
+import { tr } from '@/lib/lt';
 
 const input = 'w-full h-10 rounded-lg border border-border bg-background px-3 text-sm';
 const blank: Partial<StockItem> = {
@@ -30,12 +31,12 @@ const Stock = () => {
     if (!editing) return;
     try {
       await stockApi.saveItem(editing);
-      showSuccess('Saved');
+      showSuccess(tr('Saved'));
       setEditing(null);
       load();
     } catch (err) {
       setErrors(fieldErrors(err));
-      showError(err instanceof Error ? err.message : 'Could not save');
+      showError(err instanceof Error ? err.message : tr('Could not save'));
     }
   };
 
@@ -47,9 +48,9 @@ const Stock = () => {
   // Scan any serial to see what it is and where it went
   const lookup = async (code: string) => {
     const found = await stockApi.units({ serial: code });
-    if (!found.length) return `${code} is not in your stock`;
+    if (!found.length) return tr('{{code}} is not in your stock', { code });
     const u = found[0];
-    showSuccess(`${u.serial}: ${u.itemName} · ${u.status.replace('_', ' ')}${u.customerName ? ` · ${u.customerName}` : ''}`);
+    showSuccess(`${u.serial}: ${u.itemName} · ${({ in_stock: tr('In stock'), sold: tr('Sold'), faulty: tr('Faulty'), returned: tr('Returned') })[u.status]}${u.customerName ? ` · ${u.customerName}` : ''}`);
     return null;
   };
 
@@ -60,25 +61,25 @@ const Stock = () => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><Package className="w-5 h-5" /> Stock</h1>
-          <p className="text-sm text-muted-foreground">Set-top boxes, ONUs, routers, cable and accessories</p>
+          <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><Package className="w-5 h-5" /> {tr('Stock')}</h1>
+          <p className="text-sm text-muted-foreground">{tr('Set-top boxes, ONUs, routers, cable and accessories')}</p>
         </div>
-        <Button onClick={() => { setErrors({}); setEditing({ ...blank }); }}><Plus className="w-4 h-4 mr-1" /> Add item</Button>
+        <Button onClick={() => { setErrors({}); setEditing({ ...blank }); }}><Plus className="w-4 h-4 mr-1" /> {tr('Add item')}</Button>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search items" className={`${input} pl-9`} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Search items')} className={`${input} pl-9`} />
         </label>
-        <ScanBox codes={findSerial} onChange={() => setFindSerial([])} validate={lookup} placeholder="Scan a serial to find it" />
+        <ScanBox codes={findSerial} onChange={() => setFindSerial([])} validate={lookup} placeholder={tr('Scan a serial to find it')} />
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-            <tr><th className="p-3">Item</th><th className="p-3">Type</th><th className="p-3 text-right">In stock</th>
-              <th className="p-3 text-right">Sale price</th><th className="p-3" /></tr>
+            <tr><th className="p-3">{tr('Item')}</th><th className="p-3">{tr('Type')}</th><th className="p-3 text-right">{tr('In stock')}</th>
+              <th className="p-3 text-right">{tr('Sale price')}</th><th className="p-3" /></tr>
           </thead>
           <tbody className="divide-y divide-border">
             {shown.map((i) => (
@@ -87,43 +88,43 @@ const Stock = () => {
                   <p className="font-medium">{i.name}</p>
                   <p className="text-xs text-muted-foreground">{[i.brand, i.barcode, i.trackSerials ? 'serials' : ''].filter(Boolean).join(' · ')}</p>
                 </td>
-                <td className="p-3">{CATEGORY_LABEL[i.category]}</td>
+                <td className="p-3">{tr(CATEGORY_LABEL[i.category])}</td>
                 <td className={`p-3 text-right font-semibold ${i.lowStock ? 'text-red-600' : ''}`}>
-                  {Number(i.onHand)} {i.unit}{i.lowStock && <span className="block text-xs font-normal">Low stock</span>}
+                  {Number(i.onHand)} {i.unit}{i.lowStock && <span className="block text-xs font-normal">{tr('Low stock')}</span>}
                 </td>
                 <td className="p-3 text-right">{rupees(i.salePrice)}</td>
                 <td className="p-3 text-right">
-                  <button type="button" className="text-blue-600 text-xs" onClick={(e) => { e.stopPropagation(); setErrors({}); setEditing(i); }}>Edit</button>
+                  <button type="button" className="text-blue-600 text-xs" onClick={(e) => { e.stopPropagation(); setErrors({}); setEditing(i); }}>{tr('Edit')}</button>
                 </td>
               </tr>
             ))}
-            {shown.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No items yet. Add your first item.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">{tr('No items yet. Add your first item.')}</td></tr>}
           </tbody>
         </table>
       </div>
 
       {editing && (
         <Dialog open onClose={() => setEditing(null)}>
-          <DialogHeader title={editing.id ? 'Edit item' : 'Add item'} onClose={() => setEditing(null)} />
+          <DialogHeader title={editing.id ? tr('Edit item') : tr('Add item')} onClose={() => setEditing(null)} />
           <DialogBody>
             <div className="p-4 sm:p-5 grid grid-cols-2 gap-3 text-sm">
-              <label className="col-span-2"><span className="block font-medium mb-1">Name</span>
-                <input className={input} value={editing.name} onChange={(e) => set('name', e.target.value)} placeholder="GTPL HD Set-top box" />
+              <label className="col-span-2"><span className="block font-medium mb-1">{tr('Name')}</span>
+                <input className={input} value={editing.name} onChange={(e) => set('name', e.target.value)} placeholder={tr('GTPL HD Set-top box')} />
                 {errors.name && <span className="text-xs text-red-600">{errors.name}</span>}</label>
-              <label><span className="block font-medium mb-1">Type</span>
+              <label><span className="block font-medium mb-1">{tr('Type')}</span>
                 <select className={input} value={editing.category} onChange={(e) => {
                   const c = e.target.value as StockCategory;
                   set('category', c);
                   if (!editing.id) set('trackSerials', ['stb', 'onu', 'router'].includes(c));
                   if (!editing.id) set('unit', c === 'cable' ? 'm' : 'pcs');
                 }}>
-                  {(Object.keys(CATEGORY_LABEL) as StockCategory[]).map((c) => <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>)}
+                  {(Object.keys(CATEGORY_LABEL) as StockCategory[]).map((c) => <option key={c} value={c}>{tr(CATEGORY_LABEL[c])}</option>)}
                 </select></label>
-              <label><span className="block font-medium mb-1">Brand</span>
+              <label><span className="block font-medium mb-1">{tr('Brand')}</span>
                 <input className={input} value={editing.brand} onChange={(e) => set('brand', e.target.value)} /></label>
               <label className="col-span-2"><span className="block font-medium mb-1">Product barcode (optional)</span>
                 <input className={`${input} font-mono`} value={editing.barcode} onChange={(e) => set('barcode', e.target.value)}
-                  placeholder="Scan the box barcode here" />
+                  placeholder={tr('Scan the box barcode here')} />
                 {errors.barcode && <span className="text-xs text-red-600">{errors.barcode}</span>}</label>
               <label className="col-span-2 flex items-center gap-2">
                 <input type="checkbox" checked={!!editing.trackSerials} disabled={!!editing.id}
@@ -134,23 +135,23 @@ const Stock = () => {
                 <input type="number" className={input} value={editing.purchasePrice} onChange={(e) => set('purchasePrice', e.target.value)} /></label>
               <label><span className="block font-medium mb-1">Sale price (₹)</span>
                 <input type="number" className={input} value={editing.salePrice} onChange={(e) => set('salePrice', e.target.value)} /></label>
-              <label><span className="block font-medium mb-1">GST %</span>
+              <label><span className="block font-medium mb-1">{tr('GST %')}</span>
                 <select className={input} value={Number(editing.gstRate)} onChange={(e) => set('gstRate', e.target.value)}>
                   {[0, 5, 12, 18, 28].map((g) => <option key={g} value={g}>{g}%</option>)}
                 </select></label>
-              <label><span className="block font-medium mb-1">HSN code</span>
+              <label><span className="block font-medium mb-1">{tr('HSN code')}</span>
                 <input className={input} value={editing.hsnCode} onChange={(e) => set('hsnCode', e.target.value)} /></label>
-              <label><span className="block font-medium mb-1">Unit</span>
+              <label><span className="block font-medium mb-1">{tr('Unit')}</span>
                 <select className={input} value={editing.unit} onChange={(e) => set('unit', e.target.value)}>
-                  <option value="pcs">Pieces</option><option value="m">Metres</option><option value="roll">Rolls</option>
+                  <option value="pcs">{tr('Pieces')}</option><option value="m">{tr('Metres')}</option><option value="roll">{tr('Rolls')}</option>
                 </select></label>
-              <label><span className="block font-medium mb-1">Low stock alert at</span>
+              <label><span className="block font-medium mb-1">{tr('Low stock alert at')}</span>
                 <input type="number" min={0} className={input} value={editing.lowStockLevel} onChange={(e) => set('lowStockLevel', Number(e.target.value))} /></label>
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={save} disabled={!editing.name}>Save</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{tr('Cancel')}</Button>
+            <Button onClick={save} disabled={!editing.name}>{tr('Save')}</Button>
           </DialogFooter>
         </Dialog>
       )}
@@ -160,7 +161,7 @@ const Stock = () => {
           <DialogHeader title={viewing.name} onClose={() => setViewing(null)} />
           <DialogBody>
             <div className="p-4 sm:p-5 space-y-3 text-sm">
-              <p>In stock: <b>{Number(viewing.onHand)} {viewing.unit}</b> · Sale {rupees(viewing.salePrice)} · GST {Number(viewing.gstRate)}%</p>
+              <p>{tr('In stock:')} <b>{Number(viewing.onHand)} {viewing.unit}</b> · Sale {rupees(viewing.salePrice)} · GST {Number(viewing.gstRate)}%</p>
               {viewing.trackSerials ? (
                 <ul className="divide-y divide-border max-h-80 overflow-y-auto">
                   {units.map((u) => (
@@ -173,14 +174,14 @@ const Stock = () => {
                           await stockApi.setUnitStatus(u.id, e.target.value as StockUnit['status']).catch((er) => showError(er.message));
                           open(viewing);
                         }}>
-                        <option value="in_stock">In stock</option><option value="sold">Sold</option>
-                        <option value="faulty">Faulty</option><option value="returned">Returned</option>
+                        <option value="in_stock">{tr('In stock')}</option><option value="sold">{tr('Sold')}</option>
+                        <option value="faulty">{tr('Faulty')}</option><option value="returned">{tr('Returned')}</option>
                       </select>
                     </li>
                   ))}
-                  {units.length === 0 && <li className="py-3 text-muted-foreground">No serials yet. Add them through a purchase.</li>}
+                  {units.length === 0 && <li className="py-3 text-muted-foreground">{tr('No serials yet. Add them through a purchase.')}</li>}
                 </ul>
-              ) : <p className="text-muted-foreground">Quantity item. Stock changes through purchases and sales.</p>}
+              ) : <p className="text-muted-foreground">{tr('Quantity item. Stock changes through purchases and sales.')}</p>}
             </div>
           </DialogBody>
         </Dialog>

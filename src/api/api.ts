@@ -55,6 +55,7 @@ function mapContactToCustomer(raw: Record<string, unknown>): Customer {
     serviceStatus: c.serviceStatus as Customer['serviceStatus'],
     dueDate: c.dueDate != null ? String(c.dueDate) : null,
     validUntil: c.validUntil != null ? String(c.validUntil) : null,
+    smsLanguage: (c.smsLanguage as Customer['smsLanguage']) ?? '',
     category: c.category as Customer['category'],
     area: c.area != null ? String(c.area) : undefined,
   };

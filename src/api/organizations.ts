@@ -86,6 +86,7 @@ function mapOrganization(raw: Record<string, unknown>): Organization {
         plansUsed: Number(o.plansUsed ?? 0),
         subscriptionState: o.subscriptionState as SubscriptionState | undefined,
         daysLeft: o.daysLeft == null ? null : Number(o.daysLeft),
+        ownerLogin: o.ownerLogin == null ? null : String(o.ownerLogin),
     };
 }
 
@@ -177,6 +178,17 @@ export const organizationsApi = {
         }
         await apiClient.delete(`${endpoints.organizations}/${id}`);
         return true;
+    },
+
+    /** Permanently delete an inactive operator and all its data. `confirmCode` must equal its code. */
+    deleteWithData: async (id: string, confirmCode: string): Promise<void> => {
+        await apiClient.delete(`${endpoints.organizations}/${id}`, { params: { confirm: confirmCode } });
+    },
+
+    /** Set a new owner password (generated if empty). The password is returned once and never stored readable. */
+    resetOwnerPassword: async (id: string, password = ''): Promise<{ username: string; password: string }> => {
+        const response = await apiClient.post(`${endpoints.organizations}/${id}/reset-owner-password`, { password });
+        return unwrapApiData<{ username: string; password: string }>(response);
     },
 
     renewSubscription: async (id: string, months = 1): Promise<Organization | null> => {

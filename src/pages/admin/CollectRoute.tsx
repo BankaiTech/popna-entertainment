@@ -7,6 +7,7 @@ import ServiceStatusBadge from '@/components/ServiceStatusBadge';
 import { formatDateIN } from '@/lib/subscription';
 import { showError } from '@/utils/toast';
 import type { Customer } from '@/models/types';
+import { tr } from '@/lib/lt';
 
 const CollectRoute = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -20,7 +21,7 @@ const CollectRoute = () => {
     try {
       setCustomers(await customersApi.getAll());
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load customers');
+      showError(err instanceof Error ? err.message : tr('Could not load customers'));
     } finally {
       setLoading(false);
     }
@@ -51,32 +52,32 @@ const CollectRoute = () => {
     <div className="space-y-4 max-w-2xl mx-auto">
       <div className="flex items-end justify-between gap-2">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><Wallet className="w-5 h-5" /> Collect</h1>
+          <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><Wallet className="w-5 h-5" /> {tr('Collect')}</h1>
           <p className="text-sm text-muted-foreground">{shown.length} customers · ₹{totalDue.toLocaleString('en-IN')} due</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <select value={area} onChange={(e) => setArea(e.target.value)} className="h-10 rounded-lg border border-border bg-background px-2 text-sm">
-          <option value="">All areas</option>
+          <option value="">{tr('All areas')}</option>
           {areas.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
         <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="h-10 rounded-lg border border-border bg-background px-2 text-sm">
-          <option value="">Cable + Internet</option>
-          <option value="cable">Cable</option>
-          <option value="internet">Internet</option>
+          <option value="">{tr('Cable + Internet')}</option>
+          <option value="cable">{tr('Cable')}</option>
+          <option value="internet">{tr('Internet')}</option>
         </select>
         <label className="col-span-2 relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, mobile or box number"
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Name, mobile or box number')}
             className="w-full h-10 rounded-lg border border-border bg-background pl-9 pr-3 text-sm" />
         </label>
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-muted-foreground">Loading…</p>
+        <p className="py-10 text-center text-muted-foreground">{tr('Loading…')}</p>
       ) : shown.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">Nothing due here.</p>
+        <p className="py-10 text-center text-muted-foreground">{tr('Nothing due here.')}</p>
       ) : (
         <ul className="space-y-2">
           {shown.map((c) => (
@@ -84,11 +85,11 @@ const CollectRoute = () => {
               <div className="min-w-0 text-sm">
                 <p className="font-semibold truncate flex items-center gap-2">{c.name} <ServiceStatusBadge status={c.serviceStatus} /></p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {c.area ?? 'No area'} · {c.connectionType}{c.boxNumber ? ` · Box ${c.boxNumber}` : ''}
+                  {c.area ?? tr('No area')} · {c.connectionType}{c.boxNumber ? ` · ${tr('Box')} ${c.boxNumber}` : ''}
                 </p>
                 {c.dueDate && (
                   <p className="text-xs text-muted-foreground">
-                    {c.category === 'internet' ? 'Expires' : 'Cut-off'} {formatDateIN(c.dueDate)}
+                    {c.category === 'internet' ? tr('Expires') : tr('Cut-off')} {formatDateIN(c.dueDate)}
                   </p>
                 )}
               </div>

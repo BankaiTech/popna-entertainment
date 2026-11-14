@@ -28,7 +28,7 @@ export type SubscriptionState = 'active' | 'expired' | 'not_started';
 export const ALL_MODULES = [
   'dashboard', 'contacts', 'complaints', 'payments',
   // LCO Desk collection modules
-  'collect', 'duty', 'live-map', 'cutoff',
+  'collect', 'duty', 'live-map', 'cutoff', 'sms-log',
   'invoices', 'purchase-invoices', 'users', 'settings', 'connection-requests',
   'inventory-products', 'products', 'branches', 'pos',
   // Universal business modules
@@ -94,6 +94,8 @@ export interface Organization {
   /** Computed by the server using the Indian date */
   subscriptionState?: SubscriptionState;
   daysLeft?: number | null;
+  /** Owner's login username (app owner only) */
+  ownerLogin?: string | null;
   /** Industry type selected during signup */
   industryType?: IndustryType;
   /** Terminology overrides for industry-specific labels */
@@ -167,6 +169,8 @@ export interface Customer {
   canCafId?: string;
   /** CIN - Customer Identification Number */
   cin?: string;
+  /** SMS language: 'en' | 'ta'; empty = operator default */
+  smsLanguage?: '' | 'en' | 'ta';
   /** Area - Customer's service area */
   area?: string;
   /** Permanent discount percentage (0–100) applied to plan amount */

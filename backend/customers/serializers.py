@@ -135,7 +135,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = [
             "id", "organization_id", "customer_code", "name", "mobile", "email", "plan_id", "connection_type",
             "package", "category", "area_id", "area", "area_name", "status", "due_day", "permanent_discount",
-            "monthly_amount", "sms_opt_in", "box_number", "stb_number", "can_caf_id", "address",
+            "monthly_amount", "sms_opt_in", "sms_language", "box_number", "stb_number", "can_caf_id", "address",
             "address_line1", "address_line2", "city", "state", "pincode", "notes", "created_at",
             "payment_status", "balance_amount", "collected_amount", "payment_method", "payment_updated_at",
             "collected_by_username", "service_status", "valid_until", "due_date",

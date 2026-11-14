@@ -28,17 +28,20 @@ Backend:
    from the client, including the `X-Organization-Id` header.
 3. **Payments:** never edit or delete. Create with `billing.services.record_payment`,
    cancel with `cancel_payment` (owner only, reason required).
-4. **SMS:** always go through `notifications.services.enqueue` (outbox). Cable payment SMS and cable
-   reminders are always on; internet is optional per operator and customer. SMS text must match the
-   DLT templates in `backend/docs/DLT_SMS_TEMPLATES.md`.
+4. **SMS:** only to customers, always through `notifications.services.enqueue_customer_sms` (outbox).
+   Cable payment SMS and cable reminders are always on; internet is optional per operator and customer.
+   Text must match the English/Tamil DLT templates in `backend/docs/DLT_SMS_TEMPLATES.md`
+   (max 30 characters per variable).
 5. **Location:** only recorded between check-in and check-out. Never track off duty.
 6. **Scope v1:** cable TV and ISP only. Do not build restaurant / gym / salon / healthcare features.
    Hide unused modules via `allowed_modules`; do not delete their code.
 7. **Frontend API:** use `src/lib/apiClient.ts` and the helpers in `src/lib/apiHelpers.ts`
    (snake_case ↔ camelCase). Keep mock mode (`VITE_USE_MOCK_API=true`) working.
-8. **Name:** user-visible name is "LCO Desk" (not "Popna"). Keep image file paths unchanged until new logos exist.
+8. **Name:** user-visible name is "LCO Desk" (not "Popna"). Logo: `src/components/Logo.tsx` + `public/lcodesk-icon*.png`.
 9. Keep each change focused on the task. Add backend tests for backend changes.
    Explain any new dependency, and pin it to a version that is at least two weeks old.
+10. **Languages:** every user-visible string goes through translation (`useLt()` from `src/lib/lt.ts`,
+    English text as the key). Add new strings to all 6 files in `public/locales/`.
 
 ## Finish every task with
 - What changed (short list)

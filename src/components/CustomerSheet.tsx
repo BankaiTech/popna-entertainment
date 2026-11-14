@@ -2,6 +2,7 @@
 // Connection type selection bug fixed
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLt } from '@/lib/lt';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
@@ -35,6 +36,7 @@ interface CustomerSheetProps {
 
 const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: CustomerSheetProps) => {
   const { t } = useTranslation();
+  const tr = useLt();
   const { term } = useTerminology();
   const { role } = useAuthStore();
   const { products, fetchActiveProducts, plans, fetchPlans } = useStore();
@@ -99,6 +101,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     canCafId: '',
     cin: '',
     area: '',
+    smsLanguage: '' as '' | 'en' | 'ta',
     permanentDiscount: undefined as number | undefined,
     address: {
       line1: '',
@@ -137,6 +140,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         boxNumber: customer.boxNumber || '',
         stbNumber: customer.stbNumber || '',
         canCafId: customer.canCafId || '',
+        smsLanguage: customer.smsLanguage || '',
         cin: customer.cin || '',
         area: customer.area || '',
         permanentDiscount: customer.permanentDiscount ?? undefined,
@@ -161,6 +165,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         boxNumber: '',
         stbNumber: '',
         canCafId: '',
+        smsLanguage: '',
         cin: '',
         area: '',
         permanentDiscount: undefined,
@@ -484,6 +489,21 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     disabled={isReadOnly}
                     title={t('customerSheet.canCafIdTooltip', 'Customer Application Form ID or Customer Account Number')}
                   />
+                </div>
+                )}
+                {showIspFields && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">{tr('SMS language')}</label>
+                  <select
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
+                    value={formData.smsLanguage}
+                    onChange={(e) => setFormData({ ...formData, smsLanguage: e.target.value as '' | 'en' | 'ta' })}
+                    disabled={isReadOnly}
+                  >
+                    <option value="">{tr('Same as business setting')}</option>
+                    <option value="en">English</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                  </select>
                 </div>
                 )}
                 {showIspFields && (
