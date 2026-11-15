@@ -1,5 +1,5 @@
 // SaaS Master Controller - Super Admin Layout - Premium Violet Theme
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import Logo from '@/components/Logo';
+import { signupRequestsApi } from '@/api/signupRequests';
 
 const SuperAdminLayout = () => {
     const { t } = useTranslation();
@@ -17,6 +18,13 @@ const SuperAdminLayout = () => {
     const navigate = useNavigate();
     const { logout, username, hasSAPermission, superAdminRole } = useAuthStore();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    // Badge on "Sign-ups": how many people nobody has called yet. Refreshed on every page change.
+    const [newSignups, setNewSignups] = useState(0);
+    const canSeeSignups = hasSAPermission('sa_signup_requests');
+    useEffect(() => {
+        if (!canSeeSignups) return;
+        signupRequestsApi.newCount().then(setNewSignups).catch(() => setNewSignups(0));
+    }, [canSeeSignups, location.pathname]);
 
     const handleLogout = () => {
         logout();
@@ -138,7 +146,12 @@ const SuperAdminLayout = () => {
                                         )}
                                     />
                                     <span>{t(item.labelKey, item.label)}</span>
-                                    {isActive && (
+                                    {item.path === '/superadmin/signup-requests' && newSignups > 0 && (
+                                        <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-semibold flex items-center justify-center">
+                                            {newSignups}
+                                        </span>
+                                    )}
+                                    {isActive && item.path !== '/superadmin/signup-requests' && (
                                         <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 dark:bg-violet-400 shrink-0" />
                                     )}
                                 </Link>
@@ -177,13 +190,18 @@ const SuperAdminLayout = () => {
                             >
                                 <div
                                     className={cn(
-                                        'w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200',
+                                        'relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200',
                                         isActive
                                             ? 'bg-violet-600 shadow-lg shadow-violet-500/30 scale-110'
                                             : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                                     )}
                                 >
                                     <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500')} />
+                                    {path === '/superadmin/signup-requests' && newSignups > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+                                            {newSignups}
+                                        </span>
+                                    )}
                                 </div>
                                 <span className={cn('text-[9px] font-medium', isActive ? 'text-violet-600 dark:text-violet-400' : 'text-gray-400 dark:text-gray-500')}>
                                     {t(labelKey, label)}

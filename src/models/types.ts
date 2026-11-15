@@ -374,27 +374,6 @@ export interface CompanyProfile {
   updatedAt: string;
 }
 
-/** Website Settings - Multi-tenant ready - backend will isolate by organization */
-export interface HighlightCard {
-  title: string;
-  description: string;
-  icon: string; // Icon name from lucide-react
-}
-
-export interface WebsiteSettings {
-  id: number;
-  organizationId: string;
-  heroTitle: string;
-  heroSubtitle: string;
-  heroDescription: string;
-  heroImage?: string;
-  highlightSectionTitle: string;
-  highlightCards: HighlightCard[];
-  ctaButtonText: string;
-  ctaButtonLink: string;
-  updatedAt: string;
-}
-
 /** Connection Request - Frontend plan request from customers */
 export interface ConnectionRequest {
   id: number;

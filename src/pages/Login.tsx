@@ -1,31 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { tr } from '@/lib/lt';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
-  Lock, User, ArrowRight, Building2, ArrowLeft, Eye, EyeOff, Mail, Phone,
-  Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
-  Shirt, Heart, Dumbbell, Building, GraduationCap, Car, Briefcase, LayoutGrid,
+  Lock, User, ArrowRight, Building2, Eye, EyeOff, Mail, Phone, MapPin, CheckCircle2,
 } from 'lucide-react';
-import FooterCredit from '@/components/FooterCredit';
 
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTheme } from '@/components/ThemeProvider';
-import { signupRequestsApi } from '@/api/signupRequests';
-import { showSuccess, showError } from '@/utils/toast';
-import { SELECTABLE_INDUSTRY_TEMPLATES } from '@/config/industryTemplates';
+import { signupRequestsApi, SIGNUP_SIZES, type SignupService, type SignupSize } from '@/api/signupRequests';
+import { showError } from '@/utils/toast';
 import { env } from '@/lib/env';
 import Logo from '@/components/Logo';
 import { SUBSCRIPTION_MSG_KEY } from '@/lib/subscription';
 
-const INDUSTRY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Wifi, Store, Warehouse, UtensilsCrossed, Scissors, ShoppingBasket, Cpu,
-  Shirt, Heart, Dumbbell, Building, GraduationCap, Car, Briefcase, LayoutGrid,
+const EMPTY_SIGNUP = {
+  name: '', mobile: '', email: '', businessName: '', city: '',
+  service: 'cable' as SignupService, customerCount: '' as SignupSize, message: '',
+  website: '', // hidden trap field: real people never see or fill it
 };
 
 const Login = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { login, customerLogin, isAuthenticated, role, initialize } = useAuthStore();
   const [username, setUsername] = useState('');
@@ -41,13 +38,8 @@ const Login = () => {
     sessionStorage.removeItem(SUBSCRIPTION_MSG_KEY); // show once
   }, []);
   const [signupLoading, setSignupLoading] = useState(false);
-  const [signupForm, setSignupForm] = useState({
-    name: '',
-    mobile: '',
-    email: '',
-    businessType: 'isp-cable',
-    businessName: '',
-  });
+  const [signupForm, setSignupForm] = useState(EMPTY_SIGNUP);
+  const [signupDone, setSignupDone] = useState(false);
 
   // Force light mode while on the login page and restore previous theme on unmount
   const { resolvedTheme } = useTheme();
@@ -156,33 +148,40 @@ const Login = () => {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { name, mobile, email, businessType, businessName } = signupForm;
-    if (!name.trim() || !mobile.trim() || !email.trim() || !businessType || !businessName.trim()) {
-      showError(t('signup.fillAllFields', 'Please fill all fields'));
+    const f = signupForm;
+    if (!f.name.trim() || !f.mobile.trim() || !f.businessName.trim() || !f.city.trim()) {
+      showError(tr('Please fill name, mobile, business name and town'));
       return;
     }
-    if (!/^\d{10}$/.test(mobile.trim())) {
-      showError(t('signup.invalidMobile', 'Please enter a valid 10-digit mobile number'));
+    if (!/^[6-9]\d{9}$/.test(f.mobile.trim())) {
+      showError(tr('Enter a valid 10-digit mobile number'));
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      showError(t('signup.invalidEmail', 'Please enter a valid email address'));
+    if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) {
+      showError(tr('Enter a valid email address'));
       return;
     }
     setSignupLoading(true);
     try {
-      await signupRequestsApi.create({
-        name: name.trim(),
-        mobile: mobile.trim(),
-        email: email.trim(),
-        businessType,
-        businessName: businessName.trim(),
+      await signupRequestsApi.submit({
+        ...f,
+        name: f.name.trim(),
+        mobile: f.mobile.trim(),
+        email: f.email.trim(),
+        businessName: f.businessName.trim(),
+        city: f.city.trim(),
+        message: f.message.trim(),
+        language: (i18n.language || 'en').slice(0, 2),
       });
-      showSuccess(t('signup.success', 'Sign up request submitted successfully! We will contact you soon.'));
-      setSignupForm({ name: '', mobile: '', email: '', businessType: 'isp-cable', businessName: '' });
-      setIsSignup(false);
-    } catch {
-      showError(t('signup.error', 'Failed to submit. Please try again.'));
+      setSignupForm(EMPTY_SIGNUP);
+      setSignupDone(true);
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      showError(status === 429
+        ? tr('Too many requests. Please try again after some time.')
+        : status === 400
+          ? tr('Please check the details and try again.')
+          : tr('Could not send. Please check your internet and try again.'));
     } finally {
       setSignupLoading(false);
     }
@@ -213,11 +212,11 @@ const Login = () => {
           <div className="mb-10">
             <Logo size="lg" tone="light" className="mb-8" />
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
-              {isSignup ? t('signup.welcomeTitle', 'Get Started') : t('login.welcomeBack', 'Welcome Back')}
+              {isSignup ? tr('Get started') : t('login.welcomeBack', 'Welcome Back')}
             </h1>
             <p className="text-lg text-white/65 leading-relaxed">
               {isSignup
-                ? t('signup.welcomeSubtitle', 'Sign up to start managing your business with our powerful platform.')
+                ? tr('Tell us about your business. We will call you and set up your account.')
                 : tr('Billing, collection and field staff tracking for cable TV and broadband operators.')}
             </p>
           </div>
@@ -250,16 +249,7 @@ const Login = () => {
       {/* Right panel (form) */}
       <div className="flex-1 flex flex-col bg-white">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          {/* The marketing home page exists only in demo mode; on the real site "/" is this login page. */}
-          {env.USE_MOCK_API ? (
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {t('login.backToHome', 'Back to Home')}
-            </Link>
-          ) : <span />}
+          <span />
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
           </div>
@@ -372,21 +362,19 @@ const Login = () => {
                   </button>
                 </form>
 
-                {/* Sign up link (demo mode only — real operators are created by the app owner) */}
-                {env.USE_MOCK_API && (
+                {/* Sign up: sends a request; the app owner calls back and creates the account */}
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-500">
                     {t('login.noAccount', "Don't have an account?")}{' '}
                     <button
                       type="button"
-                      onClick={() => setIsSignup(true)}
+                      onClick={() => { setIsSignup(true); setSignupDone(false); }}
                       className="text-blue-600 font-semibold hover:underline"
                     >
                       {t('login.signUp', 'Sign Up')}
                     </button>
                   </p>
                 </div>
-                )}
 
                 {/* Demo credentials — mock mode only, never shown with the real backend */}
                 {env.USE_MOCK_API && (
@@ -422,120 +410,121 @@ const Login = () => {
                     {t('signup.title', 'Sign Up')}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {t('signup.subtitle', 'Fill in your details. Our team will get in touch with you.')}
+                    {tr('Fill in your details. Our team will call you within one working day.')}
                   </p>
                 </div>
 
-                <form onSubmit={handleSignupSubmit} className="space-y-4">
-                  {/* Name */}
+                {signupDone ? (
+                  <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-3" />
+                    <p className="font-semibold text-gray-900">{tr('Thank you! We received your request.')}</p>
+                    <p className="text-sm text-gray-600 mt-1">{tr('We will call you soon on the mobile number you gave.')}</p>
+                  </div>
+                ) : (
+                <form onSubmit={handleSignupSubmit} className="space-y-4" noValidate>
+                  {/* Hidden trap field for bots. Not shown to people or screen readers. */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    value={signupForm.website}
+                    onChange={(e) => setSignupForm({ ...signupForm, website: e.target.value })}
+                    className="absolute -left-[9999px] w-px h-px opacity-0"
+                  />
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      {t('signup.name', 'Name')} *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Your name')} *</label>
                     <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        value={signupForm.name}
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" autoComplete="name" maxLength={100} value={signupForm.name}
                         onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-                        placeholder={t('signup.namePlaceholder', 'Enter your full name')}
-                        className={inputClass}
-                        disabled={signupLoading}
-                      />
+                        className={inputClass} disabled={signupLoading} />
                     </div>
                   </div>
 
-                  {/* Mobile */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      {t('signup.mobile', 'Mobile')} *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Mobile number')} *</label>
                     <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
-                        <Phone className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="tel"
-                        value={signupForm.mobile}
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="tel" inputMode="numeric" autoComplete="tel-national" value={signupForm.mobile}
                         onChange={(e) => setSignupForm({ ...signupForm, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                        placeholder={t('signup.mobilePlaceholder', '10-digit mobile number')}
-                        className={inputClass}
-                        disabled={signupLoading}
-                      />
+                        placeholder={tr('10-digit mobile number')}
+                        className={inputClass} disabled={signupLoading} />
                     </div>
                   </div>
 
-                  {/* Email */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      {t('signup.email', 'Email')} *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Business name')} *</label>
                     <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="email"
-                        value={signupForm.email}
-                        onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                        placeholder={t('signup.emailPlaceholder', 'you@example.com')}
-                        className={inputClass}
-                        disabled={signupLoading}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Business Type - Industry Card Grid */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      {t('signup.businessType', 'Business / Company Type')} *
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-1">
-                      {SELECTABLE_INDUSTRY_TEMPLATES.map((template) => {
-                        const IconComp = INDUSTRY_ICON_MAP[template.icon] || LayoutGrid;
-                        const isSelected = signupForm.businessType === template.id;
-                        return (
-                          <button
-                            key={template.id}
-                            type="button"
-                            disabled={signupLoading}
-                            onClick={() => setSignupForm({ ...signupForm, businessType: template.id })}
-                            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all text-center ${
-                              isSelected
-                                ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                                : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
-                            } disabled:opacity-50`}
-                          >
-                            <IconComp className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
-                            <span className={`text-xs font-medium leading-tight ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
-                              {t(template.labelKey, template.id)}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Business Name */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      {t('signup.businessName', 'Business / Company Name')} *
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400">
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        value={signupForm.businessName}
+                      <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" autoComplete="organization" maxLength={150} value={signupForm.businessName}
                         onChange={(e) => setSignupForm({ ...signupForm, businessName: e.target.value })}
-                        placeholder={t('signup.businessNamePlaceholder', 'Enter your business name')}
-                        className={inputClass}
-                        disabled={signupLoading}
-                      />
+                        placeholder={tr('e.g. Sri Murugan Cable Network')}
+                        className={inputClass} disabled={signupLoading} />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Town / City')} *</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" autoComplete="address-level2" maxLength={100} value={signupForm.city}
+                        onChange={(e) => setSignupForm({ ...signupForm, city: e.target.value })}
+                        className={inputClass} disabled={signupLoading} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('What do you provide?')} *</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([['cable', tr('Cable TV')], ['internet', tr('Internet')], ['both', tr('Both')]] as [SignupService, string][]).map(([value, label]) => (
+                        <button key={value} type="button" disabled={signupLoading}
+                          onClick={() => setSignupForm({ ...signupForm, service: value })}
+                          className={`py-2.5 px-2 rounded-xl border-2 text-sm font-medium transition-colors ${
+                            signupForm.service === value
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
+                          }`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('How many customers?')}</label>
+                    <select value={signupForm.customerCount} disabled={signupLoading}
+                      onChange={(e) => setSignupForm({ ...signupForm, customerCount: e.target.value as SignupSize })}
+                      className="w-full px-3 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">{tr('Choose (optional)')}</option>
+                      {SIGNUP_SIZES.map((v) => (
+                        <option key={v} value={v}>{({
+                          under_500: tr('Under 500 customers'), '500_2000': tr('500 - 2,000 customers'),
+                          '2000_5000': tr('2,000 - 5,000 customers'), over_5000: tr('Over 5,000 customers'),
+                        } as Record<string, string>)[v]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Email (optional)')}</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="email" autoComplete="email" maxLength={254} value={signupForm.email}
+                        onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                        className={inputClass} disabled={signupLoading} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">{tr('Message (optional)')}</label>
+                    <textarea rows={2} maxLength={1000} value={signupForm.message}
+                      onChange={(e) => setSignupForm({ ...signupForm, message: e.target.value })}
+                      placeholder={tr('Best time to call, questions...')}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={signupLoading} />
                   </div>
 
                   <button
@@ -543,22 +532,15 @@ const Login = () => {
                     disabled={signupLoading}
                     className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {signupLoading ? (
+                    {signupLoading ? tr('Sending...') : (
                       <>
-                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        {t('signup.submitting', 'Submitting...')}
-                      </>
-                    ) : (
-                      <>
-                        {t('signup.submit', 'Submit Request')}
+                        {tr('Send request')}
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                 </form>
+                )}
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -577,9 +559,6 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="shrink-0 py-4 px-6 border-t border-gray-100 flex justify-center">
-          <FooterCredit />
-        </div>
       </div>
 
       <style>{`

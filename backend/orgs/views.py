@@ -1,6 +1,10 @@
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
-from rest_framework import viewsets
+from datetime import timedelta
+
+from rest_framework import mixins, status, viewsets
+from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.decorators import action, api_view, permission_classes
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -13,9 +17,11 @@ from core.audit import audit
 from core.permissions import ReadWriteRoles, Roles, role_in
 from customers.models import Customer
 
-from .models import Distributor, Organization
+from .models import Distributor, Organization, SignupRequest
 from .services import delete_organization, generate_password
 from .serializers import (
+    PublicSignupSerializer,
+    SignupRequestSerializer,
     DistributorOrganizationSerializer,
     DistributorSerializer,
     OrganizationOwnerSerializer,
@@ -158,3 +164,78 @@ def distributor_summary(request):
             "collection_percent": round(float(collected) * 100 / float(billed), 1) if billed else 0,
         })
     return Response({"period": period.strftime("%Y-%m"), "operators": rows})
+
+
+
+class SignupRequestViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet,
+):
+    """
+    POST   /api/signup-requests        public sign-up form (no login, rate limited)
+    GET    /api/signup-requests        app owner only (?status=new)
+    PATCH  /api/signup-requests/<id>   app owner: status / notes
+    DELETE /api/signup-requests/<id>   app owner
+    GET    /api/signup-requests/summary  app owner: {"new": n}
+    """
+
+    queryset = SignupRequest.objects.all()
+    serializer_class = SignupRequestSerializer
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [AllowAny()]
+        return [role_in(Roles.PLATFORM_ADMIN)()]
+
+    def get_throttles(self):
+        if self.action == "create":
+            self.throttle_scope = "signup"
+            return [ScopedRateThrottle()]
+        return []
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        wanted = self.request.query_params.get("status")
+        if wanted:
+            qs = qs.filter(status=wanted)
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        form = PublicSignupSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        data = dict(form.validated_data)
+        if data.pop("website", ""):
+            # Bot filled the hidden field: pretend it worked, save nothing.
+            return Response({"ok": True}, status=status.HTTP_201_CREATED)
+        # Same mobile again within 30 days and not handled yet: refresh that row instead of a duplicate.
+        recent = (
+            SignupRequest.objects.filter(
+                mobile=data["mobile"],
+                status__in=[SignupRequest.Status.NEW, SignupRequest.Status.CONTACTED],
+                created_at__gte=timezone.now() - timedelta(days=30),
+            ).first()
+        )
+        if recent:
+            for field, value in data.items():
+                if value not in ("", None):
+                    setattr(recent, field, value)
+            recent.submit_count += 1
+            recent.save()
+        else:
+            SignupRequest.objects.create(**data)
+        # Never echo stored data back to an anonymous caller.
+        return Response({"ok": True}, status=status.HTTP_201_CREATED)
+
+    def perform_update(self, serializer):
+        before = serializer.instance.status
+        obj = serializer.save()
+        if obj.status != before:
+            audit(self.request.user, "signup_status", obj, before=before, after=obj.status)
+
+    def perform_destroy(self, instance):
+        audit(self.request.user, "signup_deleted", instance, business=instance.business_name, mobile=instance.mobile)
+        instance.delete()
+
+    @action(detail=False, methods=["get"])
+    def summary(self, request):
+        return Response({"new": SignupRequest.objects.filter(status=SignupRequest.Status.NEW).count()})

@@ -147,7 +147,9 @@ REST_FRAMEWORK = {
     ],
     # The existing React frontend expects plain JSON arrays, so pagination is off for now.
     "DEFAULT_PAGINATION_CLASS": None,
-    "DEFAULT_THROTTLE_RATES": {"login": "10/min", "ping": "60/min"},
+    "DEFAULT_THROTTLE_RATES": {"login": "10/min", "ping": "60/min", "signup": env("SIGNUP_RATE", "5/hour")},
+    # Caddy sits in front of Django and adds the real client IP as the last X-Forwarded-For entry.
+    "NUM_PROXIES": int(env("DRF_NUM_PROXIES", "1")),
 }
 
 SIMPLE_JWT = {

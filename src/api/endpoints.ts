@@ -26,7 +26,6 @@ export const endpoints = {
   documents: '/documents',
   subscriptions: '/subscriptions',
   settings: '/settings',
-  settingsWebsite: '/settings/website',
   auditLog: '/audit-log',
   smsLogs: '/sms-logs',
   smsSend: '/sms/send',

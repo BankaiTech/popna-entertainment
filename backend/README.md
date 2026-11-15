@@ -180,6 +180,8 @@ header is ignored.
 | GET | `bills?period=2026-11&status=unpaid` · POST `bills/generate` | office, agent (read) |
 | GET/POST | `payments` · POST `payments/{id}/cancel` | office, agent · cancel: owner |
 | GET | `sms-logs` | office |
+| POST | `signup-requests` (public sign-up form, 5/hour per IP, answers only `{ok: true}`) | anyone |
+| GET/PATCH/DELETE | `signup-requests`, GET `signup-requests/summary` | platform admin |
 | GET | `dashboard/stats` | office |
 | GET | `tracking/status` · POST `tracking/check-in`, `check-out`, `ping` | agent, technician |
 | GET | `tracking/live`, `tracking/route?user_id=&date=` | office |
