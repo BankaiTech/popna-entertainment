@@ -84,6 +84,7 @@ export function getPosition(): Promise<{ lat: number; lng: number; accuracy: num
 - Operator SMS & reminder options: `GET/PATCH /organizations/{organization_id}` with the fields listed in the
   backend README (section 8).
 - SMS history: `GET /sms-logs`.
+- Public sign-up: `POST /signup-requests` with no token (name, mobile, business_name, city, service, customer_count, email, message, language, `website` must stay empty). App owner lists them with `GET /signup-requests`.
 
 ### 2.6 Dashboard
 `GET /dashboard/stats` returns `customers`, `by_provider`, `this_month`, `today`, `today_by_agent`.

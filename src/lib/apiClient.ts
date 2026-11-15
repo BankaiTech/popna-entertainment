@@ -61,7 +61,7 @@ function clearAuthAndGoToLogin() {
  */
 const NOT_BUILT_YET = [
   '/superadmin/users', '/inventory', '/activities', '/invoices', '/pos', '/documents', '/subscriptions',
-  '/settings', '/audit-log', '/sms/send', '/signup-requests', '/customer/dashboard',
+  '/settings', '/audit-log', '/sms/send', '/customer/dashboard',
 ];
 
 function isNotBuiltYet(url?: string): boolean {
@@ -73,7 +73,9 @@ function isNotBuiltYet(url?: string): boolean {
 /** Attach the access token. The organization comes from the token on the server — never from the client. */
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) {
+  // The public sign-up form is sent without login; an old expired token would only get it rejected.
+  const publicSignup = (config.method ?? 'get').toLowerCase() === 'post' && /\/signup-requests\/?$/.test(config.url ?? '');
+  if (token && !publicSignup) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
   if (!env.USE_MOCK_API && isNotBuiltYet(config.url)) {

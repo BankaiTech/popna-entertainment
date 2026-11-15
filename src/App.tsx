@@ -5,10 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
-import HomePage from './pages/public/HomePage';
 import AdminDashboard from './pages/admin/Dashboard';
 // Catalog module removed - merged into Inventory
 // Customers module removed - merged into Contacts
@@ -74,10 +72,8 @@ function App() {
       <PWAFeatures />
       <Routes key={`${i18n.language}:${ready}`}>
         {/* Public Routes */}
-        <Route path="/" element={<PublicLayout />}>
-          {/* The old multi-business marketing page is demo-only; operators go straight to login */}
-          <Route index element={isMockMode() ? <HomePage /> : <Navigate to="/login" replace />} />
-        </Route>
+        {/* No public marketing site: the address opens the login page */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Single Login - admin/employee/customer determined by credentials */}
         <Route path="/login" element={<Login />} />

@@ -7,8 +7,9 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from core.permissions import Roles
+from core.validators import normalize_mobile
 
-from .models import Distributor, Organization
+from .models import Distributor, Organization, SignupRequest
 
 OWNER_EDITABLE = [
     "business_address", "gstin", "contact_phone", "contact_email", "upi_id", "upi_payee_name",
@@ -165,3 +166,50 @@ class OrganizationOwnerSerializer(OrgComputedMixin, serializers.ModelSerializer)
 
 class OrganizationStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Organization.Status.choices)
+
+
+class PublicSignupSerializer(serializers.ModelSerializer):
+    """What the public sign-up form may send. `website` is a hidden trap field: people leave it empty, bots fill it."""
+
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True)
+
+    class Meta:
+        model = SignupRequest
+        fields = ["name", "mobile", "email", "business_name", "city", "service", "customer_count", "message", "language", "website"]
+        extra_kwargs = {"language": {"required": False}}
+
+    def validate_name(self, value):
+        value = value.strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Enter your name.")
+        return value
+
+    def validate_mobile(self, value):
+        return normalize_mobile(value)
+
+    def validate_business_name(self, value):
+        value = value.strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Enter your business name.")
+        return value
+
+    def validate_city(self, value):
+        value = value.strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Enter your town or city.")
+        return value
+
+    def validate_language(self, value):
+        return (value or "")[:5]
+
+
+class SignupRequestSerializer(serializers.ModelSerializer):
+    """App owner's view of a sign-up. Only status and notes can be changed."""
+
+    class Meta:
+        model = SignupRequest
+        fields = [
+            "id", "name", "mobile", "email", "business_name", "city", "service", "customer_count", "message",
+            "language", "status", "notes", "submit_count", "created_at", "updated_at",
+        ]
+        read_only_fields = [f for f in fields if f not in ("status", "notes")]

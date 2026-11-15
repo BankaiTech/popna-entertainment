@@ -1,11 +1,10 @@
 import { create } from 'zustand';
-import type { Plan, Customer, DashboardStats, Complaint, Product, CompanyProfile, WebsiteSettings } from '@/models/types';
+import type { Plan, Customer, DashboardStats, Complaint, Product, CompanyProfile } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { plansApi, customersApi, dashboardApi } from '@/api/api';
 import { complaintsApi } from '@/api/complaints';
 import { productsApi } from '@/api/products';
 import { companyProfileApi } from '@/api/companyProfile';
-import { websiteSettingsApi } from '@/api/websiteSettings';
 import { mockPlans, mockCustomers, mockComplaints, mockPlansExtra, mockCustomersExtra } from '@/api/mockData';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -74,21 +73,6 @@ const mockCompanyProfile: CompanyProfile = {
   updatedAt: new Date().toISOString(),
 };
 
-// SaaS Ready - Admin Full Control: website settings loaded from API, no static defaults in production
-const mockWebsiteSettings: WebsiteSettings = {
-  id: 1,
-  organizationId: MOCK_ORGANIZATION_ID,
-  heroTitle: '',
-  heroSubtitle: '',
-  heroDescription: '',
-  heroImage: undefined,
-  highlightSectionTitle: '',
-  highlightCards: [],
-  ctaButtonText: '',
-  ctaButtonLink: '',
-  updatedAt: new Date().toISOString(),
-};
-
 interface AppState {
   plans: Plan[];
   customers: Customer[];
@@ -97,7 +81,6 @@ interface AppState {
   // Multi-tenant ready - backend will isolate by organization
   products: Product[];
   companyProfile: CompanyProfile | null;
-  websiteSettings: WebsiteSettings | null;
   loading: boolean;
   error: string | null;
   initialized: boolean;
@@ -134,8 +117,6 @@ interface AppState {
   updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
 
   // Website Settings - Multi-tenant ready
-  fetchWebsiteSettings: () => Promise<void>;
-  updateWebsiteSettings: (settings: Partial<WebsiteSettings>) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -145,7 +126,6 @@ export const useStore = create<AppState>((set, get) => ({
   dashboardStats: null,
   products: getOrgMockProducts(), // Initialize with org-specific mock data immediately
   companyProfile: mockCompanyProfile, // Initialize with mock data immediately
-  websiteSettings: mockWebsiteSettings, // Initialize with mock data immediately
   loading: false,
   error: null,
   initialized: false,
@@ -169,7 +149,6 @@ export const useStore = create<AppState>((set, get) => ({
         complaints: orgData.complaints,
         products: orgData.products,
         companyProfile: { ...mockCompanyProfile }, // Initialize with mock company profile
-        websiteSettings: { ...mockWebsiteSettings }, // Initialize with mock website settings
         initialized: true,
         loading: false
       });
@@ -182,13 +161,12 @@ export const useStore = create<AppState>((set, get) => ({
       // Sync with API (which has the same mock data initially, but will have updates)
       // Multi-tenant ready - backend will isolate by organization
       try {
-        const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile, apiWebsiteSettings] = await Promise.all([
+        const [apiPlans, apiCustomers, apiComplaints, apiProducts, apiCompanyProfile] = await Promise.all([
           plansApi.getAll(),
           customersApi.getAll(),
           complaintsApi.getAll(),
           productsApi.getAll().catch(() => getOrgMockProducts()),
           companyProfileApi.get().catch(() => mockCompanyProfile),
-          websiteSettingsApi.get().catch(() => mockWebsiteSettings),
         ]);
         set({
           plans: apiPlans,
@@ -196,7 +174,6 @@ export const useStore = create<AppState>((set, get) => ({
           complaints: apiComplaints,
           products: apiProducts || getOrgMockProducts(),
           companyProfile: apiCompanyProfile || mockCompanyProfile,
-          websiteSettings: apiWebsiteSettings || mockWebsiteSettings,
         });
       } catch (error) {
         console.error('Error loading data:', error);
@@ -204,7 +181,6 @@ export const useStore = create<AppState>((set, get) => ({
         set({
           products: getOrgMockProducts(),
           companyProfile: mockCompanyProfile,
-          websiteSettings: mockWebsiteSettings,
         });
       }
       // Sync updated customers to localStorage
@@ -515,28 +491,6 @@ export const useStore = create<AppState>((set, get) => ({
       set({ companyProfile: updatedProfile, loading: false });
     } catch (error) {
       set({ error: 'Failed to update company profile', loading: false });
-    }
-  },
-
-  // Website Settings - Multi-tenant ready - backend will isolate by organization
-  fetchWebsiteSettings: async () => {
-    set({ loading: true, error: null });
-    try {
-      const settings = await websiteSettingsApi.get();
-      set({ websiteSettings: settings || mockWebsiteSettings, loading: false });
-    } catch (error) {
-      console.error('Failed to fetch website settings:', error);
-      set({ error: 'Failed to fetch website settings', loading: false, websiteSettings: mockWebsiteSettings });
-    }
-  },
-
-  updateWebsiteSettings: async (settings) => {
-    set({ loading: true, error: null });
-    try {
-      const updatedSettings = await websiteSettingsApi.update(settings);
-      set({ websiteSettings: updatedSettings, loading: false });
-    } catch (error) {
-      set({ error: 'Failed to update website settings', loading: false });
     }
   },
 }));

@@ -150,3 +150,47 @@ class Organization(TimeStampedModel):
                 seen.add(n)
                 result.append(n)
         return result
+
+
+class SignupRequest(TimeStampedModel):
+    """Someone who filled the public sign-up form. The app owner calls them and creates the operator by hand."""
+
+    class Service(models.TextChoices):
+        CABLE = "cable", "Cable TV"
+        INTERNET = "internet", "Internet"
+        BOTH = "both", "Cable TV + Internet"
+
+    class Size(models.TextChoices):
+        UNDER_500 = "under_500", "Under 500"
+        UP_TO_2000 = "500_2000", "500 - 2,000"
+        UP_TO_5000 = "2000_5000", "2,000 - 5,000"
+        OVER_5000 = "over_5000", "Over 5,000"
+
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        CONTACTED = "contacted", "Contacted"
+        JOINED = "joined", "Joined"
+        NOT_INTERESTED = "not_interested", "Not interested"
+
+    name = models.CharField(max_length=100)
+    mobile = models.CharField(max_length=15, validators=[validate_indian_mobile])
+    email = models.EmailField(blank=True)
+    business_name = models.CharField(max_length=150)
+    city = models.CharField(max_length=100)
+    service = models.CharField(max_length=10, choices=Service.choices, default=Service.CABLE)
+    customer_count = models.CharField(max_length=10, choices=Size.choices, blank=True)
+    message = models.TextField(blank=True, max_length=1000)
+    language = models.CharField(max_length=5, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW, db_index=True)
+    notes = models.TextField(blank=True, max_length=2000)  # app owner's call notes
+    submit_count = models.PositiveIntegerField(default=1)  # same mobile sent the form again
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        self.mobile = normalize_mobile(self.mobile)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.business_name} ({self.mobile})"
