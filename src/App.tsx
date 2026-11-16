@@ -48,11 +48,14 @@ import { PWAFeatures } from './components/PWAFeatures';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
-  // Re-draw every screen when the language changes or its translation file finishes loading.
+  // Re-draw every screen when the user changes the language.
   const { i18n, ready } = useTranslation();
 
-  // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames)
+  // Remove the loading screen after the first paint so the skeleton flash is not visible (wait 2 frames).
+  // Wait for the translation file too: drawing screens before it arrives means drawing them twice
+  // (and every screen would load its data twice).
   useEffect(() => {
+    if (!ready) return;
     const el = document.getElementById('app-loading');
     let rafId: number;
     const remove = () => {
@@ -64,13 +67,15 @@ function App() {
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [ready]);
+
+  if (!ready) return null; // the static loading screen in index.html stays visible meanwhile
 
   return (
     <>
       <ScrollToTop />
       <PWAFeatures />
-      <Routes key={`${i18n.language}:${ready}`}>
+      <Routes key={i18n.language}>
         {/* Public Routes */}
         {/* No public marketing site: the address opens the login page */}
         <Route path="/" element={<Navigate to="/login" replace />} />

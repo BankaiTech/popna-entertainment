@@ -10,6 +10,7 @@ import { useStore } from './store/useStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeProvider, ThemeRouteSync } from './components/ThemeProvider';
 import { sendErrorToPage } from './utils/errorPage';
+import { env } from './lib/env';
 
 // Initialize auth synchronously (reads from localStorage only)
 useAuthStore.getState().initialize();
@@ -69,8 +70,13 @@ if (rootEl) {
       </ThemeProvider>
     </React.StrictMode>
   );
-  // Run store init after React has mounted (app already has mock data in initial state)
-  Promise.resolve()
-    .then(() => useStore.getState().initialize())
-    .catch((err) => console.error('Store init failed:', err));
+  if (env.USE_MOCK_API) {
+    // Demo only: preload sample data. On the live server each screen loads just what it shows.
+    Promise.resolve()
+      .then(() => useStore.getState().initialize())
+      .catch((err) => console.error('Store init failed:', err));
+  } else {
+    // Older versions kept a copy of the customer list in the browser; remove it.
+    try { localStorage.removeItem('customers-data'); } catch { /* ignore */ }
+  }
 }

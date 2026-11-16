@@ -58,7 +58,7 @@ const SmsLog = () => {
 
   // Search as you type (after a short pause)
   useEffect(() => {
-    const id = window.setTimeout(() => setFilters((f) => (f.search === search ? f : { ...f, search, page: 1 })), 400);
+    const id = window.setTimeout(() => setFilters((f) => ((f.search ?? '') === search ? f : { ...f, search, page: 1 })), 400);
     return () => window.clearTimeout(id);
   }, [search]);
 

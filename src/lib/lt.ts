@@ -4,18 +4,22 @@
  * Translations live in public/locales/<lang>.json under the same English key.
  * (Use variable names other than `count`, which i18next treats as plural.)
  */
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 export type Lt = (text: string, vars?: Record<string, string | number>) => string;
 
 export function useLt(): Lt {
+  // useTranslation still re-renders the screen when the language changes; the returned function
+  // keeps the same identity, so screens that list it in effect dependencies don't reload their data.
   const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   return useCallback(
     (text: string, vars?: Record<string, string | number>) =>
-      t(text, { defaultValue: text, nsSeparator: false, keySeparator: false, ...vars }) as string,
-    [t],
+      tRef.current(text, { defaultValue: text, nsSeparator: false, keySeparator: false, ...vars }) as string,
+    [],
   );
 }
 

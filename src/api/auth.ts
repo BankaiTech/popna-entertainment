@@ -54,8 +54,13 @@ function mapAuthUser(raw: Record<string, unknown>): AuthUser {
   };
 }
 
+/** "Who am I" answer shared for a short time: login, the subscription check and the layout all need it. */
+const ME_TTL_MS = 30_000;
+let meCache: { at: number; promise: Promise<AuthUser> } | null = null;
+
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthTokens> => {
+    meCache = null;
     const response = await apiClient.post(endpoints.auth.login, toSnakeCase(credentials as unknown as Record<string, unknown>));
     const raw = unwrapApiData<Record<string, string>>(response);
     return {
@@ -65,6 +70,7 @@ export const authApi = {
   },
 
   logout: async (refreshToken?: string | null): Promise<void> => {
+    meCache = null;
     await apiClient.post(endpoints.auth.logout, refreshToken ? { refresh: refreshToken } : {});
   },
 
@@ -77,9 +83,16 @@ export const authApi = {
     };
   },
 
-  me: async (): Promise<AuthUser> => {
-    const response = await apiClient.get(endpoints.auth.me);
-    const raw = unwrapApiData<Record<string, unknown>>(response);
-    return mapAuthUser(raw);
+  me: (): Promise<AuthUser> => {
+    if (meCache && Date.now() - meCache.at < ME_TTL_MS) return meCache.promise;
+    const promise = apiClient.get(endpoints.auth.me).then((response) =>
+      mapAuthUser(unwrapApiData<Record<string, unknown>>(response)),
+    );
+    meCache = { at: Date.now(), promise };
+    promise.catch(() => { if (meCache?.promise === promise) meCache = null; });
+    return promise;
   },
+
+  /** Forget the cached answer (after logout or when the session changes). */
+  clearMeCache: () => { meCache = null; },
 };

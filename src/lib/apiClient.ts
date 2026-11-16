@@ -185,4 +185,37 @@ apiClient.interceptors.response.use(
   }
 );
 
+/**
+ * Identical GET requests that are already running share one network call
+ * (e.g. two parts of a screen asking for /contacts at the same moment).
+ * Requests with an abort signal are left alone.
+ */
+const inflightGets = new Map<string, Promise<unknown>>();
+/** A finished answer is reused for 2 seconds (menu + screen opening together ask for the same thing). */
+const RECENT_MS = 2000;
+const recentGets = new Map<string, { at: number; response: unknown }>();
+const rawGet = apiClient.get.bind(apiClient);
+apiClient.get = ((url: string, config?: Parameters<typeof rawGet>[1]) => {
+  if (config?.signal) return rawGet(url, config);
+  const key = `${url}?${JSON.stringify(config?.params ?? {})}`;
+  const recent = recentGets.get(key);
+  if (recent && Date.now() - recent.at < RECENT_MS) return Promise.resolve(recent.response);
+  const running = inflightGets.get(key);
+  if (running) return running;
+  const request = rawGet(url, config)
+    .then((response) => {
+      recentGets.set(key, { at: Date.now(), response });
+      return response;
+    })
+    .finally(() => inflightGets.delete(key));
+  inflightGets.set(key, request);
+  return request;
+}) as typeof apiClient.get;
+
+/** Any change (save, delete...) or a new login makes stored answers out of date. */
+apiClient.interceptors.request.use((config) => {
+  if ((config.method ?? 'get').toLowerCase() !== 'get') recentGets.clear();
+  return config;
+});
+
 export default apiClient;
