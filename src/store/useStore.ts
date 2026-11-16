@@ -7,6 +7,17 @@ import { productsApi } from '@/api/products';
 import { companyProfileApi } from '@/api/companyProfile';
 import { mockPlans, mockCustomers, mockComplaints, mockPlansExtra, mockCustomersExtra } from '@/api/mockData';
 import { useAuthStore } from '@/store/useAuthStore';
+import { isMockMode } from '@/lib/apiHelpers';
+
+/** Live server: no demo data, no bulk start-up load; each list loads when a screen asks for it. */
+const LIVE = !isMockMode();
+
+/** One request per list at a time: callers that ask while it is loading get the same answer. */
+const running: Record<string, Promise<void> | undefined> = {};
+function single(key: string, run: () => Promise<void>): Promise<void> {
+  if (!running[key]) running[key] = run().finally(() => { running[key] = undefined; });
+  return running[key]!;
+}
 
 function resolveOrgId(): string {
   const { organizationId, customerId, role } = useAuthStore.getState();
@@ -124,17 +135,25 @@ export const useStore = create<AppState>((set, get) => ({
   customers: [],
   complaints: [],
   dashboardStats: null,
-  products: getOrgMockProducts(), // Initialize with org-specific mock data immediately
-  companyProfile: mockCompanyProfile, // Initialize with mock data immediately
+  products: LIVE ? [] : getOrgMockProducts(), // demo: show sample data immediately
+  companyProfile: mockCompanyProfile,
   loading: false,
   error: null,
   initialized: false,
 
   resetStore: () => {
-    set({ initialized: false, customers: [], plans: [], complaints: [], products: getOrgMockProducts() });
+    set({ initialized: false, customers: [], plans: [], complaints: [], products: LIVE ? [] : getOrgMockProducts() });
   },
 
   initialize: async () => {
+    if (LIVE) {
+      // Live: load the three lists screens share (customers, plans, providers) once, in parallel.
+      if (get().initialized) return;
+      return single('initialize', async () => {
+        await Promise.all([get().fetchCustomers(), get().fetchPlans(), get().fetchProducts()]);
+        set({ initialized: true });
+      });
+    }
     const targetOrgId = resolveOrgId();
     const state = get();
     // Return early only if already initialized AND data is for the correct org
@@ -154,7 +173,7 @@ export const useStore = create<AppState>((set, get) => ({
       });
       // Sync org customers to localStorage for customer login
       try {
-        localStorage.setItem('customers-data', JSON.stringify(orgData.customers));
+        if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(orgData.customers));
       } catch (e) {
         // Ignore localStorage errors
       }
@@ -186,18 +205,29 @@ export const useStore = create<AppState>((set, get) => ({
       // Sync updated customers to localStorage
       try {
         const currentCustomers = get().customers;
-        localStorage.setItem('customers-data', JSON.stringify(currentCustomers));
+        if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(currentCustomers));
       } catch (e) {
         // Ignore localStorage errors
       }
       // Calculate and set dashboard stats
-      await get().fetchDashboardStats();
+      if (!LIVE) await get().fetchDashboardStats();
     } catch (error) {
       set({ error: 'Failed to initialize', loading: false });
     }
   },
 
   fetchPlans: async () => {
+    if (LIVE) {
+      return single('fetchPlans', async () => {
+        set({ loading: true });
+        try {
+          const plans = await plansApi.getAll();
+          set({ plans, error: null, loading: false });
+        } catch {
+          set({ error: 'Failed to fetch plans', loading: false });
+        }
+      });
+    }
     if (!get().initialized) {
       await get().initialize();
       return;
@@ -260,6 +290,17 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   fetchCustomers: async () => {
+    if (LIVE) {
+      return single('fetchCustomers', async () => {
+        set({ loading: true });
+        try {
+          const customers = await customersApi.getAll();
+          set({ customers, error: null, loading: false });
+        } catch {
+          set({ error: 'Failed to fetch customers', loading: false });
+        }
+      });
+    }
     if (!get().initialized) {
       await get().initialize();
       return;
@@ -271,7 +312,7 @@ export const useStore = create<AppState>((set, get) => ({
       // Sync to localStorage for customer login lookup
       // TODO: In real implementation, this would be handled by backend
       try {
-        localStorage.setItem('customers-data', JSON.stringify(customers));
+        if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(customers));
       } catch (e) {
         // Ignore localStorage errors
       }
@@ -292,13 +333,13 @@ export const useStore = create<AppState>((set, get) => ({
         const updatedCustomers = [...state.customers, newCustomer];
         // Sync to localStorage for customer login
         try {
-          localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
+          if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
         } catch (e) {
           // Ignore localStorage errors
         }
         return { customers: updatedCustomers, loading: false };
       });
-      await get().fetchDashboardStats();
+      if (!LIVE) await get().fetchDashboardStats();
     } catch (error) {
       set({ error: 'Failed to add customer', loading: false });
     }
@@ -314,7 +355,7 @@ export const useStore = create<AppState>((set, get) => ({
         const updatedCustomers = state.customers.map((c) => (c.id === id ? updatedCustomer : c));
         // Sync to localStorage for customer login
         try {
-          localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
+          if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
         } catch (e) {
           // Ignore localStorage errors
         }
@@ -323,7 +364,7 @@ export const useStore = create<AppState>((set, get) => ({
           loading: false,
         };
       });
-      await get().fetchDashboardStats();
+      if (!LIVE) await get().fetchDashboardStats();
       return updatedCustomer;
     } catch (error) {
       set({ error: 'Failed to update customer', loading: false });
@@ -341,7 +382,7 @@ export const useStore = create<AppState>((set, get) => ({
         const updatedCustomers = state.customers.filter((c) => c.id !== id);
         // Sync to localStorage for customer login
         try {
-          localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
+          if (!LIVE) localStorage.setItem('customers-data', JSON.stringify(updatedCustomers));
         } catch (e) {
           // Ignore localStorage errors
         }
@@ -350,7 +391,7 @@ export const useStore = create<AppState>((set, get) => ({
           loading: false,
         };
       });
-      await get().fetchDashboardStats();
+      if (!LIVE) await get().fetchDashboardStats();
     } catch (error) {
       set({ error: 'Failed to delete customer', loading: false });
     }
@@ -412,6 +453,17 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Product Management - Multi-tenant ready - backend will isolate by organization
   fetchProducts: async () => {
+    if (LIVE) {
+      return single('fetchProducts', async () => {
+        set({ loading: true });
+        try {
+          const products = await productsApi.getAll();
+          set({ products, error: null, loading: false });
+        } catch {
+          set({ error: 'Failed to fetch products', loading: false });
+        }
+      });
+    }
     set({ loading: true, error: null });
     try {
       const apiProducts = await productsApi.getAll();

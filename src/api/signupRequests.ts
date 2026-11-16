@@ -9,6 +9,10 @@ export type SignupStatus = 'new' | 'contacted' | 'joined' | 'not_interested';
 export const SIGNUP_SIZES: Exclude<SignupSize, ''>[] = ['under_500', '500_2000', '2000_5000', 'over_5000'];
 export const SIGNUP_STATUSES: SignupStatus[] = ['new', 'contacted', 'joined', 'not_interested'];
 
+/** Fired after the app owner changes a sign-up, so the menu badge can refresh. */
+export const SIGNUPS_CHANGED_EVENT = 'lcodesk:signups-changed';
+const notifyChanged = () => window.dispatchEvent(new Event(SIGNUPS_CHANGED_EVENT));
+
 /** What the public sign-up form sends. `website` is a hidden trap field and must stay empty. */
 export interface SignupForm {
   name: string;
@@ -93,9 +97,11 @@ export const signupRequestsApi = {
       Object.assign(row, changes);
       return { ...row };
     }
-    return mapSignupRequest(
+    const row = mapSignupRequest(
       unwrapApiData<Record<string, unknown>>(await apiClient.patch(`${endpoints.signupRequests}/${id}`, changes)),
     );
+    if (changes.status) notifyChanged();
+    return row;
   },
 
   /** App owner only: number of sign-ups nobody has called yet. */
@@ -111,5 +117,6 @@ export const signupRequestsApi = {
       return;
     }
     await apiClient.delete(`${endpoints.signupRequests}/${id}`);
+    notifyChanged();
   },
 };

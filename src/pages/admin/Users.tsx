@@ -9,6 +9,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { usersApi } from '@/api/users';
+import { isMockMode } from '@/lib/apiHelpers';
 import { useStore } from '@/store/useStore';
 import type { User, ModuleKey } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
@@ -83,7 +84,8 @@ const AdminUsers = () => {
   }, []);
 
   useEffect(() => {
-    initialize();
+    // Live: only the customer list is needed here (for "collected by" totals).
+    if (isMockMode()) initialize();
     fetchCustomers();
   }, [initialize, fetchCustomers]);
 

@@ -10,7 +10,7 @@ import FooterCredit from '@/components/FooterCredit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import Logo from '@/components/Logo';
-import { signupRequestsApi } from '@/api/signupRequests';
+import { signupRequestsApi, SIGNUPS_CHANGED_EVENT } from '@/api/signupRequests';
 
 const SuperAdminLayout = () => {
     const { t } = useTranslation();
@@ -18,13 +18,17 @@ const SuperAdminLayout = () => {
     const navigate = useNavigate();
     const { logout, username, hasSAPermission, superAdminRole } = useAuthStore();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    // Badge on "Sign-ups": how many people nobody has called yet. Refreshed on every page change.
+    // Badge on "Sign-ups": how many people nobody has called yet. Loaded once, then refreshed only
+    // when the Sign-ups page changes something (it fires SIGNUPS_CHANGED_EVENT).
     const [newSignups, setNewSignups] = useState(0);
     const canSeeSignups = hasSAPermission('sa_signup_requests');
     useEffect(() => {
         if (!canSeeSignups) return;
-        signupRequestsApi.newCount().then(setNewSignups).catch(() => setNewSignups(0));
-    }, [canSeeSignups, location.pathname]);
+        const load = () => signupRequestsApi.newCount().then(setNewSignups).catch(() => setNewSignups(0));
+        load();
+        window.addEventListener(SIGNUPS_CHANGED_EVENT, load);
+        return () => window.removeEventListener(SIGNUPS_CHANGED_EVENT, load);
+    }, [canSeeSignups]);
 
     const handleLogout = () => {
         logout();

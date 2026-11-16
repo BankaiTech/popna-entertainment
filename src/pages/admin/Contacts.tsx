@@ -52,7 +52,7 @@ const Contacts = () => {
     const isEmployee = role === 'employee';
 
     // Customer state
-    const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, products, fetchProducts, initialize } = useStore();
+    const { customers, loading, fetchCustomers, addCustomer, updateCustomer, deleteCustomer, products, fetchProducts, fetchPlans, initialize } = useStore();
     const [showCustomerSheet, setShowCustomerSheet] = useState(false);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -81,14 +81,21 @@ const Contacts = () => {
 
     useEffect(() => {
         const loadData = async () => {
+            if (!isMockMode()) {
+                // Live: each list once, in parallel. Suppliers are office work (field staff can't open them).
+                await Promise.all([
+                    fetchCustomers(), fetchPlans(), fetchProducts(),
+                    isEmployee ? Promise.resolve() : fetchSuppliers(),
+                ]);
+                return;
+            }
             await initialize();
             await fetchProducts();
             await fetchCustomers();
-            // Suppliers and import are office work; field staff cannot open them on the server.
             if (!isEmployee) await fetchSuppliers();
         };
         loadData();
-    }, [initialize, fetchProducts, fetchCustomers, fetchSuppliers, isEmployee]);
+    }, [initialize, fetchProducts, fetchCustomers, fetchPlans, fetchSuppliers, isEmployee]);
 
     // ─── Customer Filtering ───
     const filteredCustomers = useMemo(() => {

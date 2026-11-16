@@ -26,19 +26,34 @@ interface OrganizationState {
     getTerminology: (key: string) => string | undefined;
 }
 
+const ORG_TTL_MS = 60_000;
+let orgLoadedAt = 0;
+let orgRequest: { id: string; promise: Promise<void> } | null = null;
+
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     currentOrganization: null,
     organizations: [],
     loading: false,
 
     fetchOrganization: async (id: string) => {
+        // Already loaded for this operator a moment ago, or loading right now: don't ask again.
+        const cur = get().currentOrganization;
+        if (cur && String(cur.id) === String(id) && Date.now() - orgLoadedAt < ORG_TTL_MS) return;
+        if (orgRequest && orgRequest.id === id) return orgRequest.promise;
         set({ loading: true });
-        try {
-            const org = await organizationsApi.getById(id);
-            set({ currentOrganization: org, loading: false });
-        } catch {
-            set({ loading: false });
-        }
+        const promise = (async () => {
+            try {
+                const org = await organizationsApi.getById(id);
+                orgLoadedAt = Date.now();
+                set({ currentOrganization: org, loading: false });
+            } catch {
+                set({ loading: false });
+            } finally {
+                orgRequest = null;
+            }
+        })();
+        orgRequest = { id, promise };
+        return promise;
     },
 
     fetchAllOrganizations: async () => {
