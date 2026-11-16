@@ -82,7 +82,8 @@ class Customer(OrgOwnedModel):
 
     customer_code = models.CharField(max_length=30, blank=True, help_text="Operator's own ID / CAN / CAF")
     name = models.CharField(max_length=150)
-    mobile = models.CharField(max_length=15, validators=[validate_indian_mobile])
+    # Optional: many cable customers have no mobile on record. No mobile = no SMS.
+    mobile = models.CharField(max_length=15, blank=True, validators=[validate_indian_mobile])
     email = models.EmailField(blank=True)
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="customers")
     area = models.ForeignKey(Area, null=True, blank=True, on_delete=models.SET_NULL, related_name="customers")

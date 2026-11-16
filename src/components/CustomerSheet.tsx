@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLt } from '@/lib/lt';
+import { isMockMode } from '@/lib/apiHelpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStore } from '@/store/useStore';
 import Button from './ui/Button';
@@ -335,12 +336,16 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.mobile', 'Mobile')} <span className="text-destructive">*</span>
+                    {t('customerSheet.mobile', 'Mobile')}
+                    {isMockMode() && <span className="text-destructive"> *</span>}
                   </label>
                   <Input
+                    type="tel"
+                    inputMode="numeric"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    required
+                    required={isMockMode()}
+                    placeholder={isMockMode() ? undefined : tr('Optional. Needed for SMS.')}
                     disabled={isReadOnly}
                   />
                 </div>

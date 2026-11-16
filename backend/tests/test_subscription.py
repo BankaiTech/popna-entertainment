@@ -53,6 +53,7 @@ class SubscriptionTests(TestCase):
 
     def test_uses_indian_date_not_utc(self):
         # 11:30 PM UTC on the end date is already the next day in India.
+        self.org.subscription_start = date(2026, 10, 1)  # fixed dates: the test must not depend on today
         self.org.subscription_end = date(2026, 11, 4)
         self.org.save()
         with mock.patch("django.utils.timezone.localdate", return_value=date(2026, 11, 5)):
