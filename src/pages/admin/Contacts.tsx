@@ -19,6 +19,8 @@ import ServiceStatusBadge from '@/components/ServiceStatusBadge';
 import { isMockMode } from '@/lib/apiHelpers';
 import SupplierModal from '@/components/SupplierModal';
 import ImportModal from '@/components/ImportModal';
+import CustomerImportDialog, { CUSTOMER_TEMPLATE_URL } from '@/components/CustomerImportDialog';
+import { useLt } from '@/lib/lt';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog';
 import { Plus, Edit, Trash2, Upload, Search, Users, Truck, Download, MessageSquare, History } from 'lucide-react';
 import type { Customer, Supplier, Provider, CustomerStatus, PaymentMethod } from '@/models/types';
@@ -36,6 +38,7 @@ type ContactTab = 'customers' | 'suppliers' | 'import';
 
 const Contacts = () => {
     const { t } = useTranslation();
+    const tr = useLt();
     const navigate = useNavigate();
     const { term } = useTerminology();
     const { currentOrganization } = useOrganizationStore();
@@ -731,12 +734,14 @@ const Contacts = () => {
                         <Upload className="w-12 h-12 mx-auto text-gray-400" />
                         <h3 className="text-lg font-semibold text-gray-900">{t('contacts.importTitle', 'Import Contacts')}</h3>
                         <p className="text-sm text-gray-500 max-w-md mx-auto">
-                            {t('contacts.importDesc', 'Import customers and suppliers from a CSV file. Download the sample template to get the correct format.')}
+                            {isMockMode()
+                                ? t('contacts.importDesc', 'Import customers and suppliers from a CSV file. Download the sample template to get the correct format.')
+                                : tr('Add many customers at once from a CSV file: name, mobile, STB number, plan or monthly amount, area.')}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <a
-                                href="/templates/contacts_template.csv"
-                                download="contacts_template.csv"
+                                href={isMockMode() ? '/templates/contacts_template.csv' : CUSTOMER_TEMPLATE_URL}
+                                download
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
                             >
                                 {t('contacts.downloadTemplate', 'Download Template')}
@@ -766,8 +771,15 @@ const Contacts = () => {
                 editingSupplier={editingSupplier}
             />
 
-            {/* Import Modal */}
-            <ImportModal
+            {/* Import: live server uses the cable/internet customer import; demo keeps the generic one */}
+            {!isMockMode() && (
+                <CustomerImportDialog
+                    open={showImportModal}
+                    onClose={() => setShowImportModal(false)}
+                    onImported={() => { fetchCustomers(); }}
+                />
+            )}
+            {isMockMode() && <ImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
                 title={t('contacts.importTitle', 'Import Contacts')}
@@ -775,7 +787,7 @@ const Contacts = () => {
                 templateFileName="contacts_template.csv"
                 onImport={handleImportContacts}
                 expectedHeaders={['Name', 'Email', 'Mobile', 'Type', 'Address Line 1', 'City', 'State', 'Country']}
-            />
+            />}
 
             {/* Customer Sheet: Add or Edit */}
             {(isAddCustomerOpen || showCustomerSheet) && (

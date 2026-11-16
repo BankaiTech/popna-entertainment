@@ -2,7 +2,10 @@ from datetime import timedelta
 
 from django.db.models import Prefetch
 from django.utils import timezone
-from rest_framework.decorators import api_view, permission_classes
+from decimal import Decimal, InvalidOperation
+
+from django.db import transaction
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
@@ -75,6 +78,90 @@ class CustomerViewSet(OrgScopedViewSet):
     def perform_create(self, serializer):
         super().perform_create(serializer)
         audit(self.request.user, "customer_created", serializer.instance)
+
+    IMPORT_MAX_ROWS = 3000
+    IMPORT_FIELDS = (
+        "customer_code", "name", "mobile", "stb_number", "box_number", "can_caf_id", "area_name",
+        "address_line1", "address_line2", "city", "pincode", "notes", "sms_language", "status",
+    )
+
+    @action(detail=False, methods=["post"], url_path="import")
+    def import_rows(self, request):
+        """
+        POST /api/contacts/import   {"rows": [...], "dry_run": true|false}
+        Each row: name, mobile (optional), stb_number, provider + plan, or monthly_amount
+        (finds the one active plan with that price), area_name, address_line1, notes, status, sms_language.
+        Rows with problems are reported and skipped; the others are created.
+        A customer whose STB / box number is already in the system is skipped, so re-uploading is safe.
+        """
+        org = require_org(request.user)
+        rows = request.data.get("rows")
+        dry_run = bool(request.data.get("dry_run"))
+        if not isinstance(rows, list) or not rows:
+            raise ValidationError({"rows": "Send a non-empty list of rows."})
+        if len(rows) > self.IMPORT_MAX_ROWS:
+            raise ValidationError({"rows": f"At most {self.IMPORT_MAX_ROWS} rows per upload."})
+
+        plans = list(Plan.objects.filter(organization=org, is_active=True))
+        existing_devices = {
+            v.strip().upper()
+            for v in Customer.objects.filter(organization=org).values_list("stb_number", flat=True)
+            if v and v.strip()
+        }
+        seen_devices: set[str] = set()
+        created, skipped, errors = 0, [], []
+
+        def find_plan(row):
+            provider = str(row.get("provider") or "").strip().lower()
+            name = str(row.get("plan") or "").strip().lower()
+            pool = [p for p in plans if not provider or p.provider.lower() == provider]
+            if name:
+                match = [p for p in pool if p.name.lower() == name]
+                return (match[0], None) if match else (None, f"No active plan named '{row.get('plan')}'.")
+            raw = str(row.get("monthly_amount") or "").replace("₹", "").replace(",", "").strip()
+            if not raw:
+                return None, "Give a plan or a monthly amount."
+            try:
+                amount = Decimal(raw)
+            except InvalidOperation:
+                return None, f"Monthly amount '{raw}' is not a number."
+            match = [p for p in pool if p.final_price.quantize(Decimal("0.01")) == amount or p.price == amount]
+            if len(match) == 1:
+                return match[0], None
+            if not match:
+                return None, f"No active plan costs Rs.{amount}. Add one in Settings > Providers & Plans."
+            return None, f"{len(match)} plans cost Rs.{amount}. Add the Plan column for this row."
+
+        for number, row in enumerate(rows, start=1):
+            if not isinstance(row, dict):
+                errors.append({"row": number, "name": "", "error": "Row is not an object."})
+                continue
+            name = str(row.get("name") or "").strip()
+            device = str(row.get("stb_number") or "").strip().upper()
+            if device and (device in existing_devices or device in seen_devices):
+                skipped.append({"row": number, "name": name, "reason": f"STB {device} is already added."})
+                continue
+            plan, problem = find_plan(row)
+            if problem:
+                errors.append({"row": number, "name": name, "error": problem})
+                continue
+            data = {k: row[k] for k in self.IMPORT_FIELDS if row.get(k) not in (None, "")}
+            data["plan_id"] = plan.id
+            serializer = CustomerSerializer(data=data, context={"request": request})
+            if not serializer.is_valid():
+                msg = "; ".join(f"{field}: {' '.join(map(str, errs))}" for field, errs in serializer.errors.items())
+                errors.append({"row": number, "name": name, "error": msg})
+                continue
+            if device:
+                seen_devices.add(device)
+            if not dry_run:
+                with transaction.atomic():
+                    serializer.save(organization=org)
+            created += 1
+
+        if not dry_run and created:
+            audit(request.user, "customers_imported", org, created=created, skipped=len(skipped), errors=len(errors))
+        return Response({"dry_run": dry_run, "created": created, "skipped": skipped, "errors": errors})
 
     def perform_destroy(self, instance):
         if self.request.user.role != Roles.OWNER:
