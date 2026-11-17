@@ -2254,5 +2254,21 @@
   "Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.": "Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.",
   "e.g. sricable@okaxis": "e.g. sricable@okaxis",
   "nav.payments": "Payments",
-  "App did not open? Pay ₹{{amount}} to this UPI ID": "App did not open? Pay ₹{{amount}} to this UPI ID"
+  "App did not open? Pay ₹{{amount}} to this UPI ID": "App did not open? Pay ₹{{amount}} to this UPI ID",
+  "Could not copy": "Could not copy",
+  "The UPI reference / UTR number should be 6-30 letters or digits.": "The UPI reference / UTR number should be 6-30 letters or digits.",
+  "Thank you. We will check your payment.": "Thank you. We will check your payment.",
+  "Pay ₹{{amount}} by UPI": "Pay ₹{{amount}} by UPI",
+  "Pay to": "Pay to",
+  "Scan with any UPI app. The amount and note fill in by themselves.": "Scan with any UPI app. The amount and note fill in by themselves.",
+  "On this phone? Download the QR, then in your UPI app tap Scan and pick it from the gallery. Or pay to the UPI ID below.": "On this phone? Download the QR, then in your UPI app tap Scan and pick it from the gallery. Or pay to the UPI ID below.",
+  "Note": "Note",
+  "Download QR": "Download QR",
+  "UTR / UPI reference number (optional)": "UTR / UPI reference number (optional)",
+  "Paid": "Paid",
+  "Operators who tapped Paid. Find the payment in your bank app (note \"Sms payment org_ID\" or \"Renewal Payment org_ID\"), then approve. SMS balance or the end date updates by itself.": "Operators who tapped Paid. Find the payment in your bank app (note \"Sms payment org_ID\" or \"Renewal Payment org_ID\"), then approve. SMS balance or the end date updates by itself.",
+  "Paid to": "Paid to",
+  "Not given": "Not given",
+  "Marked paid on": "Marked paid on",
+  "Checked on": "Checked on"
 }

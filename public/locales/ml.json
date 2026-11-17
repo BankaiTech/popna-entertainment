@@ -2619,5 +2619,21 @@
   "Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.": "LCO Desk സജ്ജമാക്കിയത്. ക്രമീകരണങ്ങൾ > പ്ലാൻ & SMS-ൽ പുതുക്കുകയും SMS വാങ്ങുകയും ചെയ്യുക. പരിധികൾ കൂട്ടാൻ ഞങ്ങളെ ബന്ധപ്പെടുക.",
   "e.g. sricable@okaxis": "ഉദാ. sricable@okaxis",
   "nav.payments": "പേയ്‌മെന്റുകൾ",
-  "App did not open? Pay ₹{{amount}} to this UPI ID": "ആപ്പ് തുറന്നില്ലേ? ഈ UPI ID-ലേക്ക് ₹{{amount}} അടയ്ക്കുക"
+  "App did not open? Pay ₹{{amount}} to this UPI ID": "ആപ്പ് തുറന്നില്ലേ? ഈ UPI ID-ലേക്ക് ₹{{amount}} അടയ്ക്കുക",
+  "Could not copy": "പകർത്താനായില്ല",
+  "The UPI reference / UTR number should be 6-30 letters or digits.": "UPI റഫറൻസ് / UTR നമ്പർ 6-30 അക്ഷരങ്ങളോ അക്കങ്ങളോ ആയിരിക്കണം.",
+  "Thank you. We will check your payment.": "നന്ദി. നിങ്ങളുടെ പേയ്‌മെന്റ് ഞങ്ങൾ പരിശോധിക്കും.",
+  "Pay ₹{{amount}} by UPI": "UPI വഴി ₹{{amount}} അടയ്ക്കുക",
+  "Pay to": "ആർക്ക് അടയ്ക്കണം",
+  "Scan with any UPI app. The amount and note fill in by themselves.": "ഏത് UPI ആപ്പിലും സ്കാൻ ചെയ്യുക. തുകയും കുറിപ്പും സ്വയം നിറയും.",
+  "On this phone? Download the QR, then in your UPI app tap Scan and pick it from the gallery. Or pay to the UPI ID below.": "ഇതേ ഫോണിലാണോ? QR ഡൗൺലോഡ് ചെയ്ത്, നിങ്ങളുടെ UPI ആപ്പിൽ Scan ടാപ്പ് ചെയ്ത് ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക. അല്ലെങ്കിൽ താഴെയുള്ള UPI ID-ലേക്ക് അടയ്ക്കുക.",
+  "Note": "കുറിപ്പ്",
+  "Download QR": "QR ഡൗൺലോഡ്",
+  "UTR / UPI reference number (optional)": "UTR / UPI റഫറൻസ് നമ്പർ (ഐച്ഛികം)",
+  "Paid": "പണമടച്ചു",
+  "Operators who tapped Paid. Find the payment in your bank app (note \"Sms payment org_ID\" or \"Renewal Payment org_ID\"), then approve. SMS balance or the end date updates by itself.": "\"പണമടച്ചു\" ടാപ്പ് ചെയ്ത ഓപ്പറേറ്റർമാർ. ബാങ്ക് ആപ്പിൽ പേയ്‌മെന്റ് കണ്ടെത്തുക (കുറിപ്പ് \"Sms payment org_ID\" അല്ലെങ്കിൽ \"Renewal Payment org_ID\"), തുടർന്ന് അംഗീകരിക്കുക. SMS ബാലൻസോ അവസാന തീയതിയോ സ്വയം പുതുക്കും.",
+  "Paid to": "ആർക്ക് അടച്ചു",
+  "Not given": "നൽകിയിട്ടില്ല",
+  "Marked paid on": "പണമടച്ചതായി രേഖപ്പെടുത്തിയ സമയം",
+  "Checked on": "പരിശോധിച്ച സമയം"
 }

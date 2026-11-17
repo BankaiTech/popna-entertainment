@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, MessageSquare, Calculator, Receipt, AlertTriangle } from 'lucide-react';
 import { platformBillingApi, type MyPlan, type PlatformPayment } from '@/api/platformBilling';
 import UpiPayPanel from '@/components/billing/UpiPayPanel';
-import { formatDateIN } from '@/lib/subscription';
+import { formatDateIN, formatDateTimeIN } from '@/lib/subscription';
 import { useLt } from '@/lib/lt';
 import { cn } from '@/lib/utils';
 
@@ -105,7 +105,7 @@ function PaymentHistory({ payments }: { payments: PlatformPayment[] }) {
                   {' · '}{rupees(p.amount)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDateIN(p.createdAt)} · UTR <span className="font-mono">{p.utr}</span>
+                  {formatDateTimeIN(p.createdAt)}{p.utr && <> · UTR <span className="font-mono">{p.utr}</span></>}
                 </p>
                 {p.status === 'rejected' && p.adminNote && <p className="text-xs text-red-600">{p.adminNote}</p>}
               </div>
