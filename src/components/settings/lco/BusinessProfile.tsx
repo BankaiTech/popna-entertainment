@@ -19,7 +19,7 @@ const BusinessProfile = () => {
 
   return (
     <div className="space-y-4">
-      <Section title={tr('Your LCO Desk plan')} hint={tr('Set by LCO Desk. Contact us to renew or increase limits.')}>
+      <Section title={tr('Your LCO Desk plan')} hint={tr('Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.')}>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
           <div className="flex justify-between"><dt className="text-muted-foreground">{tr('Business')}</dt><dd className="font-medium">{s.name} ({s.code})</dd></div>
           <div className="flex justify-between"><dt className="text-muted-foreground">{tr('Status')}</dt>

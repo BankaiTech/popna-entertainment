@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
@@ -106,6 +107,14 @@ class Organization(TimeStampedModel):
     )
 
     # Field staff rules
+    # Platform billing, set per operator by the app owner (superadmin).
+    monthly_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                      help_text="LCO Desk fee per month (Rs). Empty = not set")
+    sms_free_per_month = models.PositiveIntegerField(default=70, help_text="Free SMS every month")
+    sms_rate = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.30"),
+                                   help_text="Rs per SMS after the free ones")
+    sms_credits = models.PositiveIntegerField(default=0, help_text="Paid SMS left (bought, not yet used)")
+
     tracking_enabled = models.BooleanField(default=True)
     require_gps_for_collection = models.BooleanField(default=True)
     require_checkin_for_collection = models.BooleanField(default=True)
@@ -194,3 +203,39 @@ class SignupRequest(TimeStampedModel):
 
     def __str__(self):
         return f"{self.business_name} ({self.mobile})"
+
+
+class PlatformPayment(TimeStampedModel):
+    """
+    An operator says "I paid LCO Desk by UPI" (SMS pack or subscription renewal) and gives the UTR.
+    UPI to a personal ID has no automatic confirmation, so the app owner checks the bank app and approves.
+    Approving adds the SMS credits or extends the subscription.
+    """
+
+    class Kind(models.TextChoices):
+        SMS = "sms", "SMS pack"
+        RENEWAL = "renewal", "Subscription renewal"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Waiting for check"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="platform_payments")
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    quantity = models.PositiveIntegerField(help_text="SMS count, or months for a renewal")
+    rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Rs per SMS / per month at the time")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    upi_app = models.CharField(max_length=10, blank=True)
+    utr = models.CharField(max_length=30, help_text="UPI reference / UTR number from the payment app")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
+    admin_note = models.CharField(max_length=300, blank=True)
+    created_by = models.ForeignKey("accounts.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    decided_by = models.ForeignKey("accounts.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.organization.code} {self.kind} Rs.{self.amount} ({self.status})"

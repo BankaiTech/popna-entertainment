@@ -26,6 +26,16 @@ class SubscriptionInactive(APIException):
         })
 
 
+def require_org_member(user):
+    """Operator account that is switched on, even if its subscription has ended (used for renewing)."""
+    org = getattr(user, "organization", None)
+    if org is None or user.role not in Roles.TENANT:
+        raise PermissionDenied("This endpoint is only for operator accounts.")
+    if org.status != "active":
+        raise PermissionDenied("This operator account is not active. Contact LCO Desk support.")
+    return org
+
+
 def require_org(user):
     """Every operator endpoint goes through here: right role, active account, valid subscription."""
     org = getattr(user, "organization", None)

@@ -14,12 +14,16 @@ from rest_framework.response import Response
 from billing.models import Bill, Payment
 from billing.services import month_start
 from core.audit import audit
+from core.mixins import require_org_member
 from core.permissions import ReadWriteRoles, Roles, role_in
 from customers.models import Customer
 
-from .models import Distributor, Organization, SignupRequest
+from .models import Distributor, Organization, PlatformPayment, SignupRequest
+from . import billing as platform_billing
 from .services import delete_organization, generate_password
 from .serializers import (
+    PlatformPaymentClaimSerializer,
+    PlatformPaymentSerializer,
     PublicSignupSerializer,
     SignupRequestSerializer,
     DistributorOrganizationSerializer,
@@ -239,3 +243,102 @@ class SignupRequestViewSet(
     @action(detail=False, methods=["get"])
     def summary(self, request):
         return Response({"new": SignupRequest.objects.filter(status=SignupRequest.Status.NEW).count()})
+
+
+
+@api_view(["GET"])
+@permission_classes([role_in(Roles.OWNER, Roles.MANAGER)])
+def my_plan(request):
+    """
+    GET /api/my-plan  - everything the operator's "Plan & SMS" settings page shows, in one call:
+    subscription, monthly fee, SMS used this month, a live monthly SMS estimate, where to pay, recent payments.
+    Works even after the subscription has ended (so the owner can renew).
+    """
+    org = require_org_member(request.user)
+    payments = PlatformPayment.objects.filter(organization=org).select_related("created_by")[:20]
+    return Response({
+        "organization_id": org.id,
+        "organization_name": org.name,
+        "subscription": {
+            "start": org.subscription_start,
+            "end": org.subscription_end,
+            "state": org.subscription_state(),
+            "days_left": org.days_left(),
+            "monthly_fee": str(platform_billing.money(org.monthly_fee)) if org.monthly_fee is not None else None,
+        },
+        "sms": platform_billing.sms_usage(org),
+        "estimate": platform_billing.sms_estimate(org),
+        "pay": platform_billing.payment_info(org),
+        "payments": PlatformPaymentSerializer(payments, many=True).data,
+    })
+
+
+class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """
+    POST /api/platform-payments                 operator (owner/manager): "I paid" + UTR, amount worked out here
+    GET  /api/platform-payments                 operator: own; app owner: all (?status=pending)
+    POST /api/platform-payments/<id>/approve    app owner: adds SMS credits / extends the subscription
+    POST /api/platform-payments/<id>/reject     app owner: {"note": "..."}
+    GET  /api/platform-payments/summary         app owner: {"pending": n}
+    """
+
+    serializer_class = PlatformPaymentSerializer
+
+    def get_permissions(self):
+        if self.action in ("approve", "reject", "summary"):
+            return [role_in(Roles.PLATFORM_ADMIN)()]
+        return [role_in(Roles.PLATFORM_ADMIN, Roles.OWNER, Roles.MANAGER)()]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = PlatformPayment.objects.select_related("organization", "created_by")
+        if user.role != Roles.PLATFORM_ADMIN:
+            qs = qs.filter(organization=require_org_member(user))
+        wanted = self.request.query_params.get("status")
+        return qs.filter(status=wanted) if wanted else qs
+
+    def create(self, request):
+        org = require_org_member(request.user)
+        form = PlatformPaymentClaimSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        data = form.validated_data
+        if data["kind"] == PlatformPayment.Kind.SMS:
+            rate = org.sms_rate
+        else:
+            if not org.monthly_fee:
+                raise ValidationError({"kind": "Your monthly fee is not set yet. Contact LCO Desk."})
+            rate = org.monthly_fee
+        payment = PlatformPayment.objects.create(
+            organization=org, kind=data["kind"], quantity=data["quantity"], rate=rate,
+            amount=platform_billing.money(rate * data["quantity"]), upi_app=data.get("upi_app", ""),
+            utr=data["utr"], created_by=request.user,
+        )
+        audit(request.user, "platform_payment_claimed", payment, kind=payment.kind, amount=str(payment.amount))
+        return Response(PlatformPaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        payment = self.get_object()
+        if payment.status != PlatformPayment.Status.PENDING:
+            raise ValidationError({"status": "This payment was already checked."})
+        payment = platform_billing.approve_payment(payment, request.user)
+        audit(request.user, "platform_payment_approved", payment, kind=payment.kind, amount=str(payment.amount),
+              organization=payment.organization.code)
+        return Response(PlatformPaymentSerializer(payment).data)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        payment = self.get_object()
+        if payment.status != PlatformPayment.Status.PENDING:
+            raise ValidationError({"status": "This payment was already checked."})
+        payment.status = PlatformPayment.Status.REJECTED
+        payment.admin_note = str(request.data.get("note", ""))[:300]
+        payment.decided_by = request.user
+        payment.decided_at = timezone.now()
+        payment.save()
+        audit(request.user, "platform_payment_rejected", payment, note=payment.admin_note)
+        return Response(PlatformPaymentSerializer(payment).data)
+
+    @action(detail=False, methods=["get"])
+    def summary(self, request):
+        return Response({"pending": PlatformPayment.objects.filter(status=PlatformPayment.Status.PENDING).count()})

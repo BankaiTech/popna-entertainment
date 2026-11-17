@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Package, Building2, CreditCard, MessageSquare } from 'lucide-react';
+import { Package, Building2, CreditCard, MessageSquare, Wallet } from 'lucide-react';
 import ProductManagement from '@/components/settings/ProductManagement';
 import CompanyProfileSettings from '@/components/settings/CompanyProfileSettings';
 import BillingSettings from '@/components/settings/BillingSettings';
@@ -12,12 +12,14 @@ import SmsTemplates from '@/components/settings/SmsTemplates';
 import BusinessProfile from '@/components/settings/lco/BusinessProfile';
 import BillingReminders from '@/components/settings/lco/BillingReminders';
 import SmsSettings from '@/components/settings/lco/SmsSettings';
+import PlanAndSms from '@/components/settings/lco/PlanAndSms';
 import { isMockMode } from '@/lib/apiHelpers';
 import { cn } from '@/lib/utils';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import type { SettingsTabKey } from '@/models/types';
 
-type SettingsTab = SettingsTabKey;
+/** 'plan' (Plan & SMS) is LCO Desk billing: always shown on the live app, not switchable per operator. */
+type SettingsTab = SettingsTabKey | 'plan';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -31,13 +33,14 @@ const Settings = () => {
     { id: 'products', label: tr('Providers & Plans'), icon: Package, description: tr('Service connection types (GTPL, RailWire...) and their plans') },
     { id: 'billing', label: tr('Billing & Reminders'), icon: CreditCard, description: tr('Due dates, reminder SMS, payment SMS and field staff rules') },
     { id: 'sms-templates', label: tr('SMS'), icon: MessageSquare, description: tr('Business name in SMS, SMS language and the messages we send') },
+    { id: 'plan', label: tr('Plan & SMS'), icon: Wallet, description: tr('Subscription, SMS balance, buy SMS and renew') },
   ], []);
 
-  const tabs = useMemo(
-    () => allTabs.filter((tab) => isSettingsTabAllowed(tab.id)),
-    [isSettingsTabAllowed, allTabs]
-  );
   const realApi = !isMockMode();
+  const tabs = useMemo(
+    () => allTabs.filter((tab) => (tab.id === 'plan' ? realApi : isSettingsTabAllowed(tab.id as SettingsTabKey))),
+    [isSettingsTabAllowed, allTabs, realApi]
+  );
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(tabs.length > 0 ? tabs[0].id : 'company');
 
@@ -133,6 +136,7 @@ const Settings = () => {
             {activeTab === 'products' && <ProductManagement />}
             {activeTab === 'billing' && (realApi ? <BillingReminders /> : <BillingSettings />)}
             {activeTab === 'sms-templates' && (realApi ? <SmsSettings /> : <SmsTemplates />)}
+            {activeTab === 'plan' && realApi && <PlanAndSms />}
           </div>
         </CardContent>
       </Card>

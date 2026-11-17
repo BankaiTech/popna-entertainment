@@ -181,6 +181,9 @@ header is ignored.
 | GET/POST | `payments` · POST `payments/{id}/cancel` | office, agent · cancel: owner |
 | GET | `sms-logs` | office |
 | POST | `contacts/import` (bulk customers: `{rows, dry_run}`; plan by name or monthly amount; same STB skipped) | owner, manager |
+| GET | `my-plan` (subscription, SMS used, monthly SMS estimate, UPI IDs, payments; works after expiry) | owner, manager |
+| POST/GET | `platform-payments` ("I paid" + UTR; amount from server rates) | owner, manager |
+| POST | `platform-payments/<id>/approve`, `/reject`; GET `platform-payments/summary` | platform admin |
 | POST | `signup-requests` (public sign-up form, 5/hour per IP, answers only `{ok: true}`) | anyone |
 | GET/PATCH/DELETE | `signup-requests`, GET `signup-requests/summary` | platform admin |
 | GET | `dashboard/stats` | office |

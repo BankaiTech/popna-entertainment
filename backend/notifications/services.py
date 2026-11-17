@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from customers.models import Customer, ServiceCategory
+from orgs.billing import NO_BALANCE_ERROR, release_sms, reserve_sms
 from orgs.models import Organization
 
 from .gateway import get_gateway
@@ -128,6 +129,15 @@ def process_outbox(limit=100, gateway=None):
     gateway = gateway or get_gateway()
     sent = failed = 0
     for msg in _claim_batch(limit):
+        # LCO Desk billing: free SMS this month first, then a paid credit, else not sent.
+        charge = reserve_sms(msg.organization_id)
+        if charge is None:
+            msg.status = SmsMessage.Status.FAILED
+            msg.last_error = NO_BALANCE_ERROR
+            msg.claimed_at = None
+            msg.save(update_fields=["status", "last_error", "claimed_at", "updated_at"])
+            failed += 1
+            continue
         result = gateway.send(msg)
         msg.attempts += 1
         if result.ok:
@@ -135,8 +145,10 @@ def process_outbox(limit=100, gateway=None):
             msg.sent_at = timezone.now()
             msg.provider_ref = result.provider_ref[:100]
             msg.last_error = ""
+            msg.billed_as = charge
             sent += 1
         else:
+            release_sms(msg.organization_id, charge)
             msg.last_error = result.error[:1000]
             if msg.attempts >= settings.SMS_MAX_ATTEMPTS:
                 msg.status = SmsMessage.Status.FAILED

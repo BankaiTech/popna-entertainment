@@ -27,6 +27,7 @@ const SA_PERMISSION_LABELS: Record<SAPermissionKey, string> = {
   sa_organizations_edit: 'Edit Organizations',
   sa_organizations_inactive: 'Inactive Organizations',
   sa_signup_requests: 'Signup Requests',
+  sa_payments: 'Payments',
   sa_users: 'Users Management',
 };
 
