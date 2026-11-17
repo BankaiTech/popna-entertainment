@@ -105,7 +105,7 @@ def sms_estimate(org):
 
 
 def payment_info(org):
-    note_id = org.id
+    note_id = f"org_{org.id}"
     return {
         "payee_name": settings.PLATFORM_UPI_PAYEE_NAME,
         "upi_ids": dict(settings.PLATFORM_UPI_IDS),

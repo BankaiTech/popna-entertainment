@@ -2619,5 +2619,21 @@
   "Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.": "LCO Desk द्वारा सेट। सेटिंग्स > प्लान और SMS में नवीनीकरण करें और SMS खरीदें। सीमा बढ़ाने के लिए हमसे संपर्क करें।",
   "e.g. sricable@okaxis": "जैसे sricable@okaxis",
   "nav.payments": "भुगतान",
-  "App did not open? Pay ₹{{amount}} to this UPI ID": "ऐप नहीं खुला? इस UPI ID पर ₹{{amount}} भेजें"
+  "App did not open? Pay ₹{{amount}} to this UPI ID": "ऐप नहीं खुला? इस UPI ID पर ₹{{amount}} भेजें",
+  "Could not copy": "कॉपी नहीं हो सका",
+  "The UPI reference / UTR number should be 6-30 letters or digits.": "UPI रेफ़रेंस / UTR नंबर 6-30 अक्षर या अंक का होना चाहिए।",
+  "Thank you. We will check your payment.": "धन्यवाद। हम आपका भुगतान जाँचेंगे।",
+  "Pay ₹{{amount}} by UPI": "UPI से ₹{{amount}} भुगतान करें",
+  "Pay to": "किसे भुगतान करें",
+  "Scan with any UPI app. The amount and note fill in by themselves.": "किसी भी UPI ऐप से स्कैन करें। राशि और नोट अपने आप भर जाएँगे।",
+  "On this phone? Download the QR, then in your UPI app tap Scan and pick it from the gallery. Or pay to the UPI ID below.": "इसी फ़ोन पर? QR डाउनलोड करें, फिर अपने UPI ऐप में Scan दबाकर गैलरी से चुनें। या नीचे दी UPI ID पर भुगतान करें।",
+  "Note": "नोट",
+  "Download QR": "QR डाउनलोड करें",
+  "UTR / UPI reference number (optional)": "UTR / UPI रेफ़रेंस नंबर (वैकल्पिक)",
+  "Paid": "भुगतान किया",
+  "Operators who tapped Paid. Find the payment in your bank app (note \"Sms payment org_ID\" or \"Renewal Payment org_ID\"), then approve. SMS balance or the end date updates by itself.": "जिन ऑपरेटरों ने \"भुगतान किया\" दबाया। बैंक ऐप में भुगतान खोजें (नोट \"Sms payment org_ID\" या \"Renewal Payment org_ID\"), फिर स्वीकृत करें। SMS बैलेंस या अंतिम तिथि अपने आप अपडेट होगी।",
+  "Paid to": "किसे भुगतान",
+  "Not given": "नहीं दिया",
+  "Marked paid on": "भुगतान दर्ज करने का समय",
+  "Checked on": "जाँच का समय"
 }

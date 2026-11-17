@@ -13,7 +13,7 @@ import {
   platformBillingApi, PAYMENTS_CHANGED_EVENT, UPI_APPS, type PaymentStatus, type PlatformPayment,
 } from '@/api/platformBilling';
 import { useAuthStore } from '@/store/useAuthStore';
-import { formatDateIN } from '@/lib/subscription';
+import { formatDateTimeIN } from '@/lib/subscription';
 import { showError, showSuccess } from '@/utils/toast';
 import { useLt } from '@/lib/lt';
 import { cn } from '@/lib/utils';
@@ -81,7 +81,7 @@ export default function Payments() {
             <Wallet className="w-5 h-5 shrink-0" />{t('nav.payments', 'Payments')}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {tr('Operators who paid you by UPI. Check the UTR in your bank app, then approve. SMS balance or the end date updates by itself.')}
+            {tr('Operators who tapped Paid. Find the payment in your bank app (note "Sms payment org_ID" or "Renewal Payment org_ID"), then approve. SMS balance or the end date updates by itself.')}
           </p>
         </div>
         <Button variant="outline" onClick={load} disabled={loading} className="shrink-0 w-full sm:w-auto">
@@ -118,12 +118,16 @@ export default function Payments() {
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
                   <span className="text-muted-foreground">{tr('For')}</span>
                   <span>{p.kind === 'sms' ? tr('{{n}} SMS', { n: p.quantity }) : tr('Renewal {{n}} months', { n: p.quantity })}</span>
-                  <span className="text-muted-foreground">{tr('Paid with')}</span>
+                  <span className="text-muted-foreground">{tr('Paid to')}</span>
                   <span>{appLabel(p.upiApp) || '-'}</span>
                   <span className="text-muted-foreground">UTR</span>
-                  <span className="font-mono break-all">{p.utr}</span>
-                  <span className="text-muted-foreground">{tr('Sent on')}</span>
-                  <span>{formatDateIN(p.createdAt)}{p.createdByName ? ` · ${p.createdByName}` : ''}</span>
+                  <span className="font-mono break-all">{p.utr || tr('Not given')}</span>
+                  <span className="text-muted-foreground">{tr('Marked paid on')}</span>
+                  <span>{formatDateTimeIN(p.createdAt)}{p.createdByName ? ` · ${p.createdByName}` : ''}</span>
+                  {p.decidedAt && (<>
+                    <span className="text-muted-foreground">{tr('Checked on')}</span>
+                    <span>{formatDateTimeIN(p.decidedAt)}</span>
+                  </>)}
                   {p.status !== 'pending' && (<>
                     <span className="text-muted-foreground">{tr('Status')}</span>
                     <span>{statusLabel(p.status)}{p.adminNote ? ` · ${p.adminNote}` : ''}</span>

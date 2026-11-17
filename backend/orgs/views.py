@@ -275,7 +275,7 @@ def my_plan(request):
 
 class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """
-    POST /api/platform-payments                 operator (owner/manager): "I paid" + UTR, amount worked out here
+    POST /api/platform-payments                 operator (owner/manager): "I paid" (+ optional UTR), amount worked out here
     GET  /api/platform-payments                 operator: own; app owner: all (?status=pending)
     POST /api/platform-payments/<id>/approve    app owner: adds SMS credits / extends the subscription
     POST /api/platform-payments/<id>/reject     app owner: {"note": "..."}
@@ -308,9 +308,17 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             if not org.monthly_fee:
                 raise ValidationError({"kind": "Your monthly fee is not set yet. Contact LCO Desk."})
             rate = org.monthly_fee
+        amount = platform_billing.money(rate * data["quantity"])
+        # "Paid" tapped twice by mistake: keep the first one.
+        recent = PlatformPayment.objects.filter(
+            organization=org, kind=data["kind"], amount=amount, status=PlatformPayment.Status.PENDING,
+            created_at__gte=timezone.now() - timedelta(minutes=5),
+        ).first()
+        if recent:
+            return Response(PlatformPaymentSerializer(recent).data, status=status.HTTP_200_OK)
         payment = PlatformPayment.objects.create(
             organization=org, kind=data["kind"], quantity=data["quantity"], rate=rate,
-            amount=platform_billing.money(rate * data["quantity"]), upi_app=data.get("upi_app", ""),
+            amount=amount, upi_app=data.get("upi_app", ""),
             utr=data["utr"], created_by=request.user,
         )
         audit(request.user, "platform_payment_claimed", payment, kind=payment.kind, amount=str(payment.amount))

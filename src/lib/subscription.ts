@@ -36,6 +36,15 @@ export function formatDateIN(value?: string | null): string {
   return d && m && y ? `${d}-${m}-${y}` : value;
 }
 
+/** "17-11-2026, 06:15 PM" (India time) for a server date-time. */
+export function formatDateTimeIN(value?: string | null): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return formatDateIN(value);
+  const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+  return `${formatDateIN(d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }))}, ${time.toUpperCase()}`;
+}
+
 export function subscriptionMessage(state: SubscriptionState, start?: string | null, end?: string | null): string {
   if (state === 'not_started') {
     return `Your LCO Desk subscription starts on ${formatDateIN(start)}.`;

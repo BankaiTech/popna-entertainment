@@ -2619,5 +2619,21 @@
   "Set by LCO Desk. Renew and buy SMS in Settings > Plan & SMS. Contact us to increase limits.": "LCO Desk அமைத்தது. அமைப்புகள் > திட்டம் & SMS-ல் புதுப்பிக்கவும், SMS வாங்கவும். வரம்புகளை அதிகரிக்க எங்களைத் தொடர்பு கொள்ளவும்.",
   "e.g. sricable@okaxis": "எ.கா. sricable@okaxis",
   "nav.payments": "பணம் செலுத்தல்கள்",
-  "App did not open? Pay ₹{{amount}} to this UPI ID": "செயலி திறக்கவில்லையா? இந்த UPI ID-க்கு ₹{{amount}} செலுத்தவும்"
+  "App did not open? Pay ₹{{amount}} to this UPI ID": "செயலி திறக்கவில்லையா? இந்த UPI ID-க்கு ₹{{amount}} செலுத்தவும்",
+  "Could not copy": "நகலெடுக்க முடியவில்லை",
+  "The UPI reference / UTR number should be 6-30 letters or digits.": "UPI குறிப்பு / UTR எண் 6-30 எழுத்துகள் அல்லது இலக்கங்களாக இருக்க வேண்டும்.",
+  "Thank you. We will check your payment.": "நன்றி. உங்கள் பணத்தைச் சரிபார்க்கிறோம்.",
+  "Pay ₹{{amount}} by UPI": "UPI மூலம் ₹{{amount}} செலுத்தவும்",
+  "Pay to": "யாருக்குச் செலுத்துவது",
+  "Scan with any UPI app. The amount and note fill in by themselves.": "எந்த UPI செயலியிலும் ஸ்கேன் செய்யவும். தொகையும் குறிப்பும் தானாக நிரம்பும்.",
+  "On this phone? Download the QR, then in your UPI app tap Scan and pick it from the gallery. Or pay to the UPI ID below.": "இதே மொபைலிலா? QR-ஐப் பதிவிறக்கி, உங்கள் UPI செயலியில் Scan தட்டி கேலரியிலிருந்து தேர்ந்தெடுக்கவும். அல்லது கீழே உள்ள UPI ID-க்குச் செலுத்தவும்.",
+  "Note": "குறிப்பு",
+  "Download QR": "QR பதிவிறக்கு",
+  "UTR / UPI reference number (optional)": "UTR / UPI குறிப்பு எண் (விருப்பம்)",
+  "Paid": "செலுத்திவிட்டேன்",
+  "Operators who tapped Paid. Find the payment in your bank app (note \"Sms payment org_ID\" or \"Renewal Payment org_ID\"), then approve. SMS balance or the end date updates by itself.": "\"செலுத்திவிட்டேன்\" தட்டிய ஆபரேட்டர்கள். வங்கிச் செயலியில் பணத்தைக் கண்டறிந்து (குறிப்பு \"Sms payment org_ID\" அல்லது \"Renewal Payment org_ID\"), பின் ஒப்புதல் அளிக்கவும். SMS இருப்பு அல்லது முடிவு தேதி தானாகப் புதுப்பிக்கப்படும்.",
+  "Paid to": "செலுத்திய இடம்",
+  "Not given": "கொடுக்கப்படவில்லை",
+  "Marked paid on": "செலுத்தியதாகக் குறித்த நேரம்",
+  "Checked on": "சரிபார்த்த நேரம்"
 }

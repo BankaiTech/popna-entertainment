@@ -256,13 +256,15 @@ class PlatformPaymentClaimSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1, max_value=100000)
     upi_app = serializers.ChoiceField(choices=[(a, a) for a in ("gpay", "phonepe", "paytm", "bhim")], required=False,
                                       allow_blank=True)
-    utr = serializers.RegexField(r"^[A-Za-z0-9]{6,30}$", error_messages={
-        "invalid": "Enter the UPI reference / UTR number shown in your payment app (6-30 letters or digits)."})
+    # Optional: helps the app owner find the payment in the bank app.
+    utr = serializers.RegexField(r"^[A-Za-z0-9]{6,30}$", required=False, allow_blank=True, error_messages={
+        "invalid": "The UPI reference / UTR number should be 6-30 letters or digits."})
 
     def validate(self, attrs):
         if attrs["kind"] == PlatformPayment.Kind.RENEWAL and attrs["quantity"] > 24:
             raise serializers.ValidationError({"quantity": "Renew for at most 24 months at a time."})
-        attrs["utr"] = attrs["utr"].upper()
-        if PlatformPayment.objects.filter(utr=attrs["utr"]).exclude(status=PlatformPayment.Status.REJECTED).exists():
+        attrs["utr"] = (attrs.get("utr") or "").upper()
+        if attrs["utr"] and PlatformPayment.objects.filter(utr=attrs["utr"]).exclude(
+                status=PlatformPayment.Status.REJECTED).exists():
             raise serializers.ValidationError({"utr": "This UTR number was already submitted."})
         return attrs

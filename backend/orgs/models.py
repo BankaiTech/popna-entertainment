@@ -207,7 +207,7 @@ class SignupRequest(TimeStampedModel):
 
 class PlatformPayment(TimeStampedModel):
     """
-    An operator says "I paid LCO Desk by UPI" (SMS pack or subscription renewal) and gives the UTR.
+    An operator says "I paid LCO Desk by UPI" (SMS pack or subscription renewal), optionally with the UTR.
     UPI to a personal ID has no automatic confirmation, so the app owner checks the bank app and approves.
     Approving adds the SMS credits or extends the subscription.
     """
@@ -227,7 +227,7 @@ class PlatformPayment(TimeStampedModel):
     rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Rs per SMS / per month at the time")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     upi_app = models.CharField(max_length=10, blank=True)
-    utr = models.CharField(max_length=30, help_text="UPI reference / UTR number from the payment app")
+    utr = models.CharField(max_length=30, blank=True, help_text="UPI reference / UTR number (optional)")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
     admin_note = models.CharField(max_length=300, blank=True)
     created_by = models.ForeignKey("accounts.User", null=True, on_delete=models.SET_NULL, related_name="+")

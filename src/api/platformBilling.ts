@@ -87,10 +87,10 @@ export const platformBillingApi = {
     return plan;
   },
 
-  /** Operator: "I have paid" with the UTR from the payment app. */
-  claim: async (body: { kind: PaymentKind; quantity: number; upiApp: UpiApp; utr: string }): Promise<PlatformPayment> =>
+  /** Operator: "Paid" (UTR optional). */
+  claim: async (body: { kind: PaymentKind; quantity: number; upiApp: UpiApp; utr?: string }): Promise<PlatformPayment> =>
     toCamelCase<PlatformPayment>(unwrapApiData(await apiClient.post('/platform-payments', {
-      kind: body.kind, quantity: body.quantity, upi_app: body.upiApp, utr: body.utr,
+      kind: body.kind, quantity: body.quantity, upi_app: body.upiApp, utr: body.utr ?? '',
     }))),
 
   /** Operator: own payments. App owner: all payments (optionally by status). */
@@ -111,25 +111,10 @@ export const platformBillingApi = {
 /** Fired after the app owner approves/rejects, so the menu badge can refresh. */
 export const PAYMENTS_CHANGED_EVENT = 'lcodesk:payments-changed';
 
-const isIos = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
 export const isPhone = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-/** UPI query string. The '@' in the UPI ID is kept as is (some apps reject %40). */
+/** UPI payment string for the QR. The '@' in the UPI ID is kept as is (some apps reject %40). */
 export function upiQuery(pa: string, pn: string, amount: number, note: string): string {
   const enc = (v: string) => encodeURIComponent(v).replace(/%40/g, '@');
   return `pa=${enc(pa)}&pn=${enc(pn)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(note)}`;
-}
-
-/** Link that opens the chosen app directly with the payee, amount and note filled in. */
-export function upiAppLink(app: UpiApp, query: string): string {
-  switch (app) {
-    case 'gpay':
-      return isIos() ? `gpay://upi/pay?${query}` : `tez://upi/pay?${query}`;
-    case 'phonepe':
-      return `phonepe://pay?${query}`;
-    case 'paytm':
-      return `paytmmp://pay?${query}`;
-    default:
-      return `upi://pay?${query}`; // BHIM and any other UPI app
-  }
 }

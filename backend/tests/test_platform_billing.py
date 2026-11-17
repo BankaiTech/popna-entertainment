@@ -90,8 +90,8 @@ class PlatformPaymentTests(TestCase):
         r = client_for(self.owner).get("/api/my-plan")
         self.assertEqual(r.status_code, 200, r.content)
         body = r.json()
-        self.assertEqual(body["pay"]["sms_note"], f"Sms payment {self.org.id}")
-        self.assertEqual(body["pay"]["renewal_note"], f"Renewal Payment {self.org.id}")
+        self.assertEqual(body["pay"]["sms_note"], f"Sms payment org_{self.org.id}")
+        self.assertEqual(body["pay"]["renewal_note"], f"Renewal Payment org_{self.org.id}")
         self.assertEqual(body["pay"]["upi_ids"]["gpay"], "msv31bieber@oksbi")
         self.assertEqual(body["subscription"]["monthly_fee"], "499.00")
         self.assertIn("total", body["estimate"])
@@ -158,3 +158,18 @@ class PlatformPaymentTests(TestCase):
         self.assertEqual(r.status_code, 200, r.content)
         self.org.refresh_from_db()
         self.assertEqual((self.org.sms_rate, self.org.sms_free_per_month), (Decimal("0.40"), 100))
+
+
+    def test_paid_without_utr_and_double_tap(self):
+        c = client_for(self.owner)
+        r1 = c.post("/api/platform-payments", {"kind": "sms", "quantity": 200, "upi_app": "phonepe"}, format="json")
+        self.assertEqual(r1.status_code, 201, r1.content)
+        self.assertEqual((r1.json()["utr"], r1.json()["amount"]), ("", "50.00"))
+        r2 = c.post("/api/platform-payments", {"kind": "sms", "quantity": 200, "upi_app": "phonepe"}, format="json")
+        self.assertEqual((r2.status_code, r2.json()["id"]), (200, r1.json()["id"]))  # same claim, not a second one
+        self.assertEqual(PlatformPayment.objects.count(), 1)
+        rows = client_for(self.platform).get("/api/platform-payments?status=pending").json()
+        self.assertEqual(len(rows), 1)
+        self.assertIn("T", rows[0]["created_at"])  # date and time for the app owner
+        bad = c.post("/api/platform-payments", {"kind": "sms", "quantity": 300, "utr": "12"}, format="json")
+        self.assertEqual(bad.status_code, 400)
