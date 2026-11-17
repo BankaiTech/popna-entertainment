@@ -87,6 +87,11 @@ function mapOrganization(raw: Record<string, unknown>): Organization {
         subscriptionState: o.subscriptionState as SubscriptionState | undefined,
         daysLeft: o.daysLeft == null ? null : Number(o.daysLeft),
         ownerLogin: o.ownerLogin == null ? null : String(o.ownerLogin),
+        monthlyFee: o.monthlyFee == null ? null : Number(o.monthlyFee),
+        smsFreePerMonth: o.smsFreePerMonth == null ? undefined : Number(o.smsFreePerMonth),
+        smsRate: o.smsRate == null ? undefined : Number(o.smsRate),
+        smsCredits: o.smsCredits == null ? undefined : Number(o.smsCredits),
+        smsFreeUsed: o.smsFreeUsed == null ? undefined : Number(o.smsFreeUsed),
     };
 }
 

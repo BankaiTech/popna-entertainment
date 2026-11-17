@@ -38,6 +38,8 @@ class SmsMessage(OrgOwnedModel):
     claimed_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     provider_ref = models.CharField(max_length=100, blank=True)
+    # How a sent SMS was paid for: one of the operator's free SMS this month, or a bought credit.
+    billed_as = models.CharField(max_length=10, blank=True, choices=[("free", "Free"), ("credit", "Paid credit")])
     last_error = models.TextField(blank=True)
     payment = models.ForeignKey("billing.Payment", null=True, blank=True, on_delete=models.SET_NULL)
     bill = models.ForeignKey("billing.Bill", null=True, blank=True, on_delete=models.SET_NULL)

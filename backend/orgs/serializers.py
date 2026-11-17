@@ -9,7 +9,7 @@ from rest_framework import serializers
 from core.permissions import Roles
 from core.validators import normalize_mobile
 
-from .models import Distributor, Organization, SignupRequest
+from .models import Distributor, Organization, PlatformPayment, SignupRequest
 
 OWNER_EDITABLE = [
     "business_address", "gstin", "contact_phone", "contact_email", "upi_id", "upi_payee_name",
@@ -22,6 +22,7 @@ OWNER_EDITABLE = [
 PLATFORM_CONTROLLED = [
     "status", "distributor", "subscription_start", "subscription_end", "allowed_modules",
     "allowed_settings_tabs", "max_providers", "max_plans",
+    "monthly_fee", "sms_free_per_month", "sms_rate", "sms_credits",
 ]
 COMPUTED = ["industry_type", "subscription_state", "days_left", "providers_used", "plans_used"]
 
@@ -86,19 +87,35 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
     renew_months = serializers.IntegerField(write_only=True, required=False, min_value=1, max_value=36)
     # The owner's login name, so the app owner knows which account a password reset applies to.
     owner_login = serializers.SerializerMethodField()
+    sms_free_used = serializers.SerializerMethodField()
 
     class Meta:
         model = Organization
         fields = [
             "id", "name", "code", *PLATFORM_CONTROLLED, *OWNER_EDITABLE, *COMPUTED, "created_at",
-            "owner_name", "owner_username", "owner_password", "renew_months", "owner_login",
+            "owner_name", "owner_username", "owner_password", "renew_months", "owner_login", "sms_free_used",
         ]
+
+    def get_sms_free_used(self, obj):
+        from .billing import free_used_this_month
+
+        return free_used_this_month(obj.id)
 
     def get_owner_login(self, obj):
         from accounts.models import User
 
         return User.objects.filter(organization=obj, role=Roles.OWNER).order_by("id").values_list(
             "username", flat=True).first()
+
+    def validate_sms_rate(self, value):
+        if value < 0 or value > 10:
+            raise serializers.ValidationError("SMS rate must be between Rs.0 and Rs.10.")
+        return value
+
+    def validate_monthly_fee(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Monthly fee cannot be negative.")
+        return value
 
     def validate(self, attrs):
         start = attrs.get("subscription_start", getattr(self.instance, "subscription_start", None))
@@ -213,3 +230,39 @@ class SignupRequestSerializer(serializers.ModelSerializer):
             "language", "status", "notes", "submit_count", "created_at", "updated_at",
         ]
         read_only_fields = [f for f in fields if f not in ("status", "notes")]
+
+
+class PlatformPaymentSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    organization_code = serializers.CharField(source="organization.code", read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlatformPayment
+        fields = [
+            "id", "organization", "organization_name", "organization_code", "kind", "quantity", "rate", "amount",
+            "upi_app", "utr", "status", "admin_note", "created_by_name", "created_at", "decided_at",
+        ]
+        read_only_fields = fields
+
+    def get_created_by_name(self, obj):
+        return (obj.created_by.name or obj.created_by.username) if obj.created_by else ""
+
+
+class PlatformPaymentClaimSerializer(serializers.Serializer):
+    """What the operator sends after paying. The amount is always worked out on the server."""
+
+    kind = serializers.ChoiceField(choices=PlatformPayment.Kind.choices)
+    quantity = serializers.IntegerField(min_value=1, max_value=100000)
+    upi_app = serializers.ChoiceField(choices=[(a, a) for a in ("gpay", "phonepe", "paytm", "bhim")], required=False,
+                                      allow_blank=True)
+    utr = serializers.RegexField(r"^[A-Za-z0-9]{6,30}$", error_messages={
+        "invalid": "Enter the UPI reference / UTR number shown in your payment app (6-30 letters or digits)."})
+
+    def validate(self, attrs):
+        if attrs["kind"] == PlatformPayment.Kind.RENEWAL and attrs["quantity"] > 24:
+            raise serializers.ValidationError({"quantity": "Renew for at most 24 months at a time."})
+        attrs["utr"] = attrs["utr"].upper()
+        if PlatformPayment.objects.filter(utr=attrs["utr"]).exclude(status=PlatformPayment.Status.REJECTED).exists():
+            raise serializers.ValidationError({"utr": "This UTR number was already submitted."})
+        return attrs

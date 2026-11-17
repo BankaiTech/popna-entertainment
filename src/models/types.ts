@@ -52,6 +52,7 @@ export const ALL_SA_PERMISSIONS = [
   'sa_organizations_edit',
   'sa_organizations_inactive',
   'sa_signup_requests',
+  'sa_payments',
   'sa_users',
 ] as const;
 
@@ -96,6 +97,13 @@ export interface Organization {
   daysLeft?: number | null;
   /** Owner's login username (app owner only) */
   ownerLogin?: string | null;
+  /** LCO Desk billing, set per operator by the app owner */
+  monthlyFee?: number | null;
+  smsFreePerMonth?: number;
+  smsRate?: number;
+  smsCredits?: number;
+  /** Free SMS sent this month (app owner only) */
+  smsFreeUsed?: number;
   /** Industry type selected during signup */
   industryType?: IndustryType;
   /** Terminology overrides for industry-specific labels */

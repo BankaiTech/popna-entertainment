@@ -31,7 +31,8 @@ export function getSubscriptionState(start?: string | null, end?: string | null)
 /** '2026-11-30' → '30-11-2026' */
 export function formatDateIN(value?: string | null): string {
   if (!value) return '—';
-  const [y, m, d] = value.split('-');
+  // Accepts a date (2026-11-17) or a date-time from the server (2026-11-17T10:48:05+05:30).
+  const [y, m, d] = value.slice(0, 10).split('-');
   return d && m && y ? `${d}-${m}-${y}` : value;
 }
 

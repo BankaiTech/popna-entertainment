@@ -32,6 +32,7 @@ const emptyForm = () => {
     return {
         name: '', code: '', ownerName: '', ownerUsername: '', ownerPassword: '', ownerMobile: '',
         subscriptionStart: today, subscriptionEnd: addDays(today, 364), maxProviders: '', maxPlans: '',
+        monthlyFee: '', smsFreePerMonth: '70', smsRate: '0.30', smsCredits: '0',
     };
 };
 type FormState = ReturnType<typeof emptyForm>;
@@ -182,6 +183,10 @@ const Organizations = () => {
             subscriptionEnd: org.subscriptionEnd || '',
             maxProviders: org.maxProviders == null ? '' : String(org.maxProviders),
             maxPlans: org.maxPlans == null ? '' : String(org.maxPlans),
+            monthlyFee: org.monthlyFee == null ? '' : String(org.monthlyFee),
+            smsFreePerMonth: String(org.smsFreePerMonth ?? 70),
+            smsRate: String(org.smsRate ?? 0.3),
+            smsCredits: String(org.smsCredits ?? 0),
         });
         setFormOpen(true);
     };
@@ -197,6 +202,10 @@ const Organizations = () => {
             subscriptionEnd: form.subscriptionEnd,
             maxProviders: limitValue(form.maxProviders),
             maxPlans: limitValue(form.maxPlans),
+            monthlyFee: form.monthlyFee.trim() === '' ? null : Math.max(0, Number(form.monthlyFee)),
+            smsFreePerMonth: Math.max(0, Math.floor(Number(form.smsFreePerMonth) || 0)),
+            smsRate: Math.max(0, Number(form.smsRate) || 0),
+            smsCredits: Math.max(0, Math.floor(Number(form.smsCredits) || 0)),
         };
         const ok = editing
             ? await run(() => organizationsApi.update(editing.id, common), tr('Operator updated'))
@@ -287,6 +296,14 @@ const Organizations = () => {
                                     <dd>{usage(org.providersUsed, org.maxProviders)}</dd>
                                     <dt className="text-muted-foreground">{tr('Connection products')}</dt>
                                     <dd>{usage(org.plansUsed, org.maxPlans)}</dd>
+                                    <dt className="text-muted-foreground">{tr('Monthly fee')}</dt>
+                                    <dd>{org.monthlyFee == null ? tr('Not set') : `₹${org.monthlyFee}`}</dd>
+                                    <dt className="text-muted-foreground">{tr('Free SMS this month')}</dt>
+                                    <dd>{org.smsFreeUsed ?? 0} / {org.smsFreePerMonth ?? 70}</dd>
+                                    <dt className="text-muted-foreground">{tr('Paid SMS balance')}</dt>
+                                    <dd>{org.smsCredits ?? 0} <span className="text-muted-foreground">(₹{(org.smsRate ?? 0.3).toFixed(2)}/SMS)</span></dd>
+                                    <dt className="text-muted-foreground">{tr('ID for payments')}</dt>
+                                    <dd className="font-mono">{org.id}</dd>
                                     <dt className="text-muted-foreground">{tr('Status')}</dt>
                                     <dd>{tr(org.status === 'active' ? 'Active' : org.status === 'disabled' ? 'Disabled' : 'Suspended')}</dd>
                                 </dl>
@@ -429,6 +446,35 @@ const Organizations = () => {
                                             onChange={(e) => setForm({ ...form, maxPlans: e.target.value })} placeholder={tr('e.g. {{n}}', { n: 20 })} />
                                     </label>
                                 </div>
+                            </section>
+
+                            <section className="space-y-3">
+                                <h3 className="text-sm font-semibold">{tr('Fees and SMS')}</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="block text-sm">
+                                        <span className="block font-medium mb-1">{tr('Monthly fee (₹)')}</span>
+                                        <Input type="number" min={0} step="1" inputMode="decimal" value={form.monthlyFee}
+                                            onChange={(e) => setForm({ ...form, monthlyFee: e.target.value })} placeholder={tr('e.g. {{n}}', { n: 499 })} />
+                                    </label>
+                                    <label className="block text-sm">
+                                        <span className="block font-medium mb-1">{tr('Free SMS per month')}</span>
+                                        <Input type="number" min={0} inputMode="numeric" value={form.smsFreePerMonth}
+                                            onChange={(e) => setForm({ ...form, smsFreePerMonth: e.target.value })} />
+                                    </label>
+                                    <label className="block text-sm">
+                                        <span className="block font-medium mb-1">{tr('Rate per SMS (₹)')}</span>
+                                        <Input type="number" min={0} max={10} step="0.01" inputMode="decimal" value={form.smsRate}
+                                            onChange={(e) => setForm({ ...form, smsRate: e.target.value })} />
+                                    </label>
+                                    <label className="block text-sm">
+                                        <span className="block font-medium mb-1">{tr('Paid SMS balance')}</span>
+                                        <Input type="number" min={0} inputMode="numeric" value={form.smsCredits}
+                                            onChange={(e) => setForm({ ...form, smsCredits: e.target.value })} />
+                                    </label>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {tr('The operator pays you by UPI in Settings > Plan & SMS. Approve their payments in Payments; the balance and end date update by themselves.')}
+                                </p>
                             </section>
                         </div>
                     </DialogBody>

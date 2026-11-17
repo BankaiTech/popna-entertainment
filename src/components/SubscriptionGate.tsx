@@ -22,6 +22,8 @@ import {
 } from '@/lib/subscription';
 import type { SubscriptionState } from '@/models/types';
 import { tr } from '@/lib/lt';
+import { platformBillingApi, type MyPlan } from '@/api/platformBilling';
+import { RenewSection } from '@/components/settings/lco/PlanAndSms';
 
 const REDIRECT_SECONDS = 6;
 
@@ -35,6 +37,14 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(!isOperatorUser);
   const [blocked, setBlocked] = useState<{ state: SubscriptionState; message: string } | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+  // Owner whose subscription ended: show renewal (pay by UPI) here instead of logging out.
+  const [renewPlan, setRenewPlan] = useState<MyPlan | null>(null);
+  const canRenew = !isMockMode() && role === 'admin' && blocked?.state === 'expired';
+  useEffect(() => {
+    if (!canRenew) return;
+    platformBillingApi.myPlan().then(setRenewPlan).catch(() => setRenewPlan(null));
+  }, [canRenew]);
+  const reloadPlan = () => { platformBillingApi.myPlan().then(setRenewPlan).catch(() => undefined); };
 
   // Any API call refused for subscription reasons (e.g. it ended while the app was open).
   useEffect(() => {
@@ -93,19 +103,42 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!blocked) return;
+    if (!blocked || canRenew) return; // owners stay on the renewal screen
     if (secondsLeft <= 0) {
       goToLogin();
       return;
     }
     const id = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => window.clearTimeout(id);
-  }, [blocked, secondsLeft]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blocked, secondsLeft, canRenew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!checked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (blocked && canRenew && renewPlan) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-6">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="rounded-2xl border border-red-200 dark:border-red-900 bg-white dark:bg-gray-900 p-5 text-center space-y-2">
+            <CalendarX2 className="w-10 h-10 mx-auto text-red-500" />
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{tr('Subscription ended')}</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {tr('Renew below. After LCO Desk approves your payment, log in again to continue.')}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white dark:bg-gray-900 p-1">
+            <RenewSection plan={renewPlan} onChanged={reloadPlan} />
+          </div>
+          <button type="button" onClick={goToLogin}
+            className="w-full py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium bg-white dark:bg-gray-900">
+            {tr('Log out')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -119,7 +152,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             {blocked.state === 'expired' ? tr('Subscription ended') : tr('Subscription not started')}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">{blocked.message}</p>
-          <p className="text-xs text-gray-400">Going to the login page in {secondsLeft} seconds…</p>
+          <p className="text-xs text-gray-400">{tr('Going to the login page in {{n}} seconds…', { n: secondsLeft })}</p>
           <button
             type="button"
             onClick={goToLogin}

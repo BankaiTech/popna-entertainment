@@ -32,6 +32,8 @@ Backend:
    Cable payment SMS and cable reminders are always on; internet is optional per operator and customer.
    Text must match the English/Tamil DLT templates in `backend/docs/DLT_SMS_TEMPLATES.md`
    (max 30 characters per variable).
+   Each operator has free SMS per month, then paid credits (`orgs/billing.py`); with no balance the SMS is
+   marked failed (NO_BALANCE_ERROR), never sent free. Rates are set per operator by the platform admin only.
 5. **Location:** only recorded between check-in and check-out. Never track off duty.
 6. **Scope v1:** cable TV and ISP only. Do not build restaurant / gym / salon / healthcare features.
    Hide unused modules via `allowed_modules`; do not delete their code.

@@ -190,6 +190,15 @@ SMS_MOBILE_PREFIX = env("SMS_MOBILE_PREFIX", "")  # e.g. "91" if the gateway nee
 SMS_SUCCESS_KEYWORD = env("SMS_SUCCESS_KEYWORD", "")  # optional text that must appear in a success response
 SMS_MAX_ATTEMPTS = int(env("SMS_MAX_ATTEMPTS", "5"))
 # Approved DLT templates for customer SMS (English and Tamil). Only customers ever get SMS.
+# Where operators pay LCO Desk (SMS packs, renewals). The app opens the chosen UPI app with this ID.
+PLATFORM_UPI_PAYEE_NAME = env("PLATFORM_UPI_PAYEE_NAME", "LCO Desk")
+PLATFORM_UPI_IDS = {
+    "gpay": env("PLATFORM_UPI_GPAY", "msv31bieber@oksbi"),
+    "phonepe": env("PLATFORM_UPI_PHONEPE", "8072787387@ybl"),
+    "paytm": env("PLATFORM_UPI_PAYTM", "8072787387@ptyes"),
+    "bhim": env("PLATFORM_UPI_BHIM", "vicky2135@upi"),
+}
+
 SMS_TEMPLATE_IDS = {
     "en": env("SMS_TPL_CUSTOMER_EN", "1607100000000376221"),
     "ta": env("SMS_TPL_CUSTOMER_TA", "1607100000000376222"),

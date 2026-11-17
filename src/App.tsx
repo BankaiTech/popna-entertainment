@@ -38,6 +38,7 @@ import AdminPointOfSale from './pages/admin/PointOfSale';
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
 import Organizations from './pages/superadmin/Organizations';
 import SignupRequests from './pages/superadmin/SignupRequests';
+import SuperAdminPayments from './pages/superadmin/Payments';
 import SuperAdminUsers from './pages/superadmin/Users';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
@@ -135,6 +136,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['superadmin']}>
                 <SignupRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperAdminPayments />
               </ProtectedRoute>
             }
           />

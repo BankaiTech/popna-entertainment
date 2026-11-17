@@ -8,7 +8,9 @@ from core.views import dashboard_stats, health
 from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet, cutoff_list
 from inventory.views import PurchaseViewSet, SaleViewSet, StockItemViewSet, StockUnitViewSet, SupplierViewSet
 from notifications.views import SmsLogViewSet
-from orgs.views import DistributorViewSet, OrganizationViewSet, SignupRequestViewSet, distributor_summary
+from orgs.views import (
+    DistributorViewSet, OrganizationViewSet, PlatformPaymentViewSet, SignupRequestViewSet, distributor_summary, my_plan,
+)
 from tracking import views as tracking
 
 router = DefaultRouter(trailing_slash=False)
@@ -16,6 +18,7 @@ router.register("users", UserViewSet, basename="user")
 router.register("organizations", OrganizationViewSet, basename="organization")
 router.register("distributors", DistributorViewSet, basename="distributor")
 router.register("signup-requests", SignupRequestViewSet, basename="signup-request")
+router.register("platform-payments", PlatformPaymentViewSet, basename="platform-payment")
 router.register("areas", AreaViewSet, basename="area")
 router.register("plans", PlanViewSet, basename="plan")
 router.register("products", ProviderViewSet, basename="product")  # providers; name used by the React app
@@ -39,6 +42,7 @@ api = [
     path("dashboard/stats", dashboard_stats),
     path("connections/cutoff", cutoff_list),
     path("distributor/summary", distributor_summary),
+    path("my-plan", my_plan),
     path("tracking/status", tracking.duty_status),
     path("tracking/check-in", tracking.check_in),
     path("tracking/check-out", tracking.check_out),

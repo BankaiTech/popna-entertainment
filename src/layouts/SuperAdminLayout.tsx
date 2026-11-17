@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Building2, LogOut, Menu, X, Shield, UserPlus, Users } from 'lucide-react';
+import { LayoutDashboard, Building2, LogOut, Menu, X, Shield, UserPlus, Users, Wallet } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { SAPermissionKey } from '@/models/types';
 import FooterCredit from '@/components/FooterCredit';
@@ -11,6 +11,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import Logo from '@/components/Logo';
 import { signupRequestsApi, SIGNUPS_CHANGED_EVENT } from '@/api/signupRequests';
+import { platformBillingApi, PAYMENTS_CHANGED_EVENT } from '@/api/platformBilling';
 
 const SuperAdminLayout = () => {
     const { t } = useTranslation();
@@ -30,6 +31,19 @@ const SuperAdminLayout = () => {
         return () => window.removeEventListener(SIGNUPS_CHANGED_EVENT, load);
     }, [canSeeSignups]);
 
+    // Badge on "Payments": operator UPI payments waiting for your check.
+    const [pendingPayments, setPendingPayments] = useState(0);
+    const canSeePayments = hasSAPermission('sa_payments');
+    useEffect(() => {
+        if (!canSeePayments) return;
+        const load = () => platformBillingApi.pendingCount().then(setPendingPayments).catch(() => setPendingPayments(0));
+        load();
+        window.addEventListener(PAYMENTS_CHANGED_EVENT, load);
+        return () => window.removeEventListener(PAYMENTS_CHANGED_EVENT, load);
+    }, [canSeePayments]);
+    const badgeFor = (path: string) =>
+        path === '/superadmin/signup-requests' ? newSignups : path === '/superadmin/payments' ? pendingPayments : 0;
+
     const handleLogout = () => {
         logout();
         navigate('/login', { replace: true });
@@ -39,6 +53,7 @@ const SuperAdminLayout = () => {
         { path: '/superadmin/dashboard', labelKey: 'nav.dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'text-violet-400', permission: 'sa_dashboard' },
         { path: '/superadmin/organizations', labelKey: 'nav.organizations', label: 'Organizations', icon: Building2, color: 'text-indigo-400', permission: 'sa_organizations_view' },
         { path: '/superadmin/signup-requests', labelKey: 'nav.signupRequests', label: 'Signup Requests', icon: UserPlus, color: 'text-purple-400', permission: 'sa_signup_requests' },
+        { path: '/superadmin/payments', labelKey: 'nav.payments', label: 'Payments', icon: Wallet, color: 'text-emerald-400', permission: 'sa_payments' },
         { path: '/superadmin/users', labelKey: 'nav.users', label: 'Users', icon: Users, color: 'text-fuchsia-400', permission: 'sa_users' },
     ];
 
@@ -150,12 +165,12 @@ const SuperAdminLayout = () => {
                                         )}
                                     />
                                     <span>{t(item.labelKey, item.label)}</span>
-                                    {item.path === '/superadmin/signup-requests' && newSignups > 0 && (
+                                    {badgeFor(item.path) > 0 && (
                                         <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-semibold flex items-center justify-center">
-                                            {newSignups}
+                                            {badgeFor(item.path)}
                                         </span>
                                     )}
-                                    {isActive && item.path !== '/superadmin/signup-requests' && (
+                                    {isActive && badgeFor(item.path) === 0 && (
                                         <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 dark:bg-violet-400 shrink-0" />
                                     )}
                                 </Link>
@@ -201,9 +216,9 @@ const SuperAdminLayout = () => {
                                     )}
                                 >
                                     <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500')} />
-                                    {path === '/superadmin/signup-requests' && newSignups > 0 && (
+                                    {badgeFor(path) > 0 && (
                                         <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
-                                            {newSignups}
+                                            {badgeFor(path)}
                                         </span>
                                     )}
                                 </div>
