@@ -24,6 +24,31 @@ class ConsoleGateway:
         return SmsResult(ok=True, provider_ref="console")
 
 
+# ping4sms always answers HTTP 200. The body is a message id (success) or one of these codes.
+PING4SMS_ERRORS = {
+    "101": "Invalid user (check SMS_API_KEY)",
+    "102": "Invalid sender ID (check SMS_SENDER_ID)",
+    "103": "Invalid mobile number",
+    "104": "Invalid route (check SMS_ROUTE)",
+    "105": "Invalid message",
+    "106": "Spam blocked",
+    "107": "Promotional block",
+    "108": "Low credits in your ping4sms account",
+    "109": "Promotional route works only 9am to 8:45pm",
+    "110": "Invalid DLT template ID (text or template ID does not match DLT)",
+}
+
+
+def read_ping4sms_reply(text):
+    """'4587123' -> ok with that message id; '108' -> failed with the reason; anything else -> failed."""
+    reply = text.strip()
+    if reply in PING4SMS_ERRORS:
+        return SmsResult(ok=False, error=f"ping4sms {reply}: {PING4SMS_ERRORS[reply]}")
+    if reply.isdigit():
+        return SmsResult(ok=True, provider_ref=reply[:100])
+    return SmsResult(ok=False, error=f"ping4sms unexpected reply: {reply[:200]}")
+
+
 class HttpGateway:
     """
     Works with ping4sms (and most Indian HTTP SMS APIs). Copy the API URL from your
@@ -57,6 +82,10 @@ class HttpGateway:
         except requests.RequestException as exc:
             return SmsResult(ok=False, error=f"network error: {exc.__class__.__name__}")
         body = resp.text[:500]
+        if "ping4sms" in settings.SMS_HTTP_URL.lower():
+            if resp.status_code != 200:
+                return SmsResult(ok=False, error=f"HTTP {resp.status_code}: {body}")
+            return read_ping4sms_reply(body)
         keyword = settings.SMS_SUCCESS_KEYWORD.lower()
         ok = resp.status_code == 200 and (not keyword or keyword in body.lower())
         if not ok:
