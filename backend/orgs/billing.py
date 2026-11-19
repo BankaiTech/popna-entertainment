@@ -83,7 +83,9 @@ def sms_estimate(org):
 
     base = Customer.objects.filter(organization=org, status=Customer.Status.ACTIVE).exclude(mobile="")
     cable = base.filter(plan__category=ServiceCategory.CABLE).count()
-    internet = base.exclude(plan__category=ServiceCategory.CABLE).filter(sms_opt_in=True).count()
+    # Internet SMS are switched off for now (settings.SMS_INTERNET_ENABLED): they don't count.
+    internet_on = settings.SMS_INTERNET_ENABLED
+    internet = base.exclude(plan__category=ServiceCategory.CABLE).filter(sms_opt_in=True).count() if internet_on else 0
     stages = 1 + (1 if org.second_reminder_days_before is not None else 0)
 
     receipts = cable + (internet if org.internet_payment_sms_enabled else 0)
@@ -93,8 +95,9 @@ def sms_estimate(org):
     return {
         "cable_customers": cable,
         "internet_customers": internet,
-        "internet_receipts_on": org.internet_payment_sms_enabled,
-        "internet_reminders_on": org.internet_reminders_enabled,
+        "internet_sms_available": internet_on,
+        "internet_receipts_on": internet_on and org.internet_payment_sms_enabled,
+        "internet_reminders_on": internet_on and org.internet_reminders_enabled,
         "reminder_stages": stages,
         "receipts": receipts,
         "reminders": reminders,

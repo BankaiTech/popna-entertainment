@@ -14,6 +14,8 @@ from .templates import receipt_body, reminder_body, render, template_id
 
 log = logging.getLogger(__name__)
 STALE_CLAIM = timedelta(minutes=10)
+# Which DLT template each customer SMS uses (see templates.py).
+TEMPLATE_KIND = {SmsMessage.Kind.PAYMENT_RECEIPT: "receipt", SmsMessage.Kind.DUE_REMINDER: "reminder"}
 
 
 def customer_language(customer, org=None):
@@ -30,6 +32,7 @@ def enqueue_customer_sms(*, customer, kind, body, dedupe_key, payment=None, bill
         return None
     org = customer.organization
     lang = customer_language(customer, org)
+    tpl = TEMPLATE_KIND.get(kind, "receipt")
     msg, created = SmsMessage.objects.get_or_create(
         dedupe_key=dedupe_key,
         defaults={
@@ -39,8 +42,8 @@ def enqueue_customer_sms(*, customer, kind, body, dedupe_key, payment=None, bill
             "recipient_name": customer.name,
             "to_mobile": customer.mobile,
             "language": lang,
-            "template_id": template_id(lang),
-            "body": render(lang, customer.name, body(lang), org.display_name),
+            "template_id": template_id(tpl, lang),
+            "body": render(tpl, lang, customer.name, body(lang), org.display_name),
             "payment": payment,
             "bill": bill,
         },
@@ -49,10 +52,11 @@ def enqueue_customer_sms(*, customer, kind, body, dedupe_key, payment=None, bill
 
 
 def should_send_for(customer, internet_flag):
-    """Cable: always (operator requirement). Internet: only if the operator AND customer allow it."""
+    """Cable: always (operator requirement). Internet: switched off for now (SMS_INTERNET_ENABLED);
+    when on, only if the operator AND the customer allow it."""
     if customer.plan.category == ServiceCategory.CABLE:
         return True
-    return bool(internet_flag and customer.sms_opt_in)
+    return bool(settings.SMS_INTERNET_ENABLED and internet_flag and customer.sms_opt_in)
 
 
 def queue_payment_sms(payment):
@@ -62,7 +66,8 @@ def queue_payment_sms(payment):
         return []
     msg = enqueue_customer_sms(
         customer=customer, kind=SmsMessage.Kind.PAYMENT_RECEIPT,
-        body=lambda lang: receipt_body(lang, payment.amount, payment.receipt_no, payment.bill.balance),
+        body=lambda lang: receipt_body(lang, payment.amount, payment.receipt_no, payment.bill.balance,
+                                       timezone.localdate(payment.collected_at)),
         dedupe_key=f"receipt:{payment.id}:customer", payment=payment,
     )
     return [msg] if msg else []

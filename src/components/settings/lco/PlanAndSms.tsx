@@ -192,7 +192,9 @@ export default function PlanAndSms() {
         <Section icon={Calculator} title={tr('SMS you need per month')}>
           <div className="space-y-2">
             <Row label={tr('Cable customers with mobile')} value={estimate.cableCustomers} />
-            <Row label={tr('Internet customers with SMS allowed')} value={estimate.internetCustomers} />
+            {estimate.internetSmsAvailable && (
+              <Row label={tr('Internet customers with SMS allowed')} value={estimate.internetCustomers} />
+            )}
             <Row label={tr('Payment receipts')} value={estimate.receipts} />
             <Row label={estimate.reminderStages > 1 ? tr('Due reminders (2 per customer)') : tr('Due reminders (1 per customer)')} value={estimate.reminders} />
             <Row label={tr('Total per month')} value={estimate.total} strong />
@@ -201,7 +203,9 @@ export default function PlanAndSms() {
             <Row label={tr('Cost per month')} value={rupees(estimate.extraCost)} strong />
           </div>
           <p className="text-xs text-muted-foreground">
-            {tr('Worked out from your active customers and your reminder settings. It changes when you add customers or turn internet SMS on or off.')}
+            {estimate.internetSmsAvailable
+              ? tr('Worked out from your active customers and your reminder settings. It changes when you add customers or turn internet SMS on or off.')
+              : tr('Worked out from your active cable customers and your reminder settings. It changes when you add customers.')}
           </p>
         </Section>
       </div>

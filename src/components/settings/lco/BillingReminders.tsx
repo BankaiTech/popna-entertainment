@@ -41,15 +41,19 @@ const BillingReminders = () => {
         </div>
         <div className="divide-y divide-border">
           <Toggle label={tr('Cable reminders')} hint={tr('Always on for cable customers.')} checked disabled onChange={() => undefined} />
-          <Toggle label={tr('Internet reminders')} hint={tr('Before the plan expires. Customers who opted out are skipped.')}
-            checked={s.internetRemindersEnabled} onChange={(v) => set('internetRemindersEnabled', v)} />
+          {s.internetSmsAvailable && (
+            <Toggle label={tr('Internet reminders')} hint={tr('Before the plan expires. Customers who opted out are skipped.')}
+              checked={s.internetRemindersEnabled} onChange={(v) => set('internetRemindersEnabled', v)} />
+          )}
         </div>
       </Section>
 
       <Section title={tr('Payment SMS')} hint={tr('Sent to the customer when a payment is saved.')}>
         <div className="divide-y divide-border">
           <Toggle label={tr('Cable payment SMS')} hint={tr('Always on.')} checked disabled onChange={() => undefined} />
-          <Toggle label={tr('Internet payment SMS')} checked={s.internetPaymentSmsEnabled} onChange={(v) => set('internetPaymentSmsEnabled', v)} />
+          {s.internetSmsAvailable && (
+            <Toggle label={tr('Internet payment SMS')} checked={s.internetPaymentSmsEnabled} onChange={(v) => set('internetPaymentSmsEnabled', v)} />
+          )}
         </div>
       </Section>
 

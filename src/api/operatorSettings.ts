@@ -22,6 +22,8 @@ export interface OperatorSettings {
   secondReminderDaysBefore: number | null;
   internetRemindersEnabled: boolean;
   internetPaymentSmsEnabled: boolean;
+  /** Read-only: internet customers' SMS are switched off platform-wide for now. */
+  internetSmsAvailable: boolean;
   ownerAlertMode: 'per_payment' | 'daily_summary';
   ownerMobile: string;
   extraAlertMobiles: string;

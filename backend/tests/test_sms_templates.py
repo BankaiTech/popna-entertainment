@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from core.permissions import Roles
 from notifications.gateway import HttpGateway
 from notifications.models import SmsMessage
-from notifications.templates import MAX_VAR_LEN, receipt_body, reminder_body, render
+from notifications.templates import MAX_VAR_LEN, receipt_body, reminder_body, render, template_id
 
 from .helpers import client_for, make_customer, make_org, make_plans, make_user
 
@@ -15,20 +15,35 @@ class TemplateTests(TestCase):
     def test_every_variable_fits_dlt_limit(self):
         for lang in ("en", "ta"):
             for amount in (5, 230, 1180, 99999.5, 1234567):
-                self.assertLessEqual(len(receipt_body(lang, amount, "LONGCODE01-000123", 0)), MAX_VAR_LEN)
-                self.assertLessEqual(len(receipt_body(lang, amount, "A-1", 1500)), MAX_VAR_LEN)
+                d = date(2026, 11, 19)
+                self.assertLessEqual(len(receipt_body(lang, amount, "LONGCODE01-000123", 0, d)), MAX_VAR_LEN)
+                self.assertLessEqual(len(receipt_body(lang, amount, "A-1", 1500, d)), MAX_VAR_LEN)
                 self.assertLessEqual(len(reminder_body(lang, amount, date(2026, 11, 10))), MAX_VAR_LEN)
 
     def test_render_matches_approved_lines(self):
-        en = render("en", "Ravi Kumar", "Paid Rs.230", "Sri Cable")
+        en = render("receipt", "en", "Ravi Kumar", "Paid Rs.230", "Sri Cable")
         self.assertEqual(en.split("\n"), ["Dear Customer Ravi Kumar,", "Paid Rs.230",
                                           "Thank you for your continued support.", "Regards,", "Sri Cable", "PING4SMS"])
-        long = render("en", "N" * 50, "x", "B" * 50)
+        long = render("receipt", "en", "N" * 50, "x", "B" * 50)
         self.assertEqual(long.split("\n")[0], "Dear Customer " + "N" * 30 + ",")
 
-    @override_settings(SMS_TEXT_OVERRIDES={"en": "Hi {name}\\n{body}\\n-{org}", "ta": ""})
+    def test_new_tamil_receipt_template_exact_text(self):
+        body = receipt_body("ta", 250, "CGP01-000001", 0, date(2026, 11, 19))
+        self.assertEqual(body, "₹250, 19-11-2026")
+        self.assertEqual(
+            render("receipt", "ta", "ரவி", body, "Sri Cable"),
+            "அன்புள்ள வாடிக்கையாளர் ரவி, உங்கள் கேபிள் கட்டணம் ₹250, 19-11-2026 அன்று பெறப்பட்டது. "
+            "இப்படிக்கு Sri Cable\nPING4SMS",
+        )
+        self.assertEqual(template_id("receipt", "ta"), "1677100000000399325")
+        # Tamil reminders stay on the old Tamil template until a new one is approved.
+        self.assertEqual(template_id("reminder", "ta"), "1607100000000376222")
+        self.assertIn("ஆதரவிற்கு நன்றி", render("reminder", "ta", "ரவி", "x", "Sri Cable"))
+
+    @override_settings(SMS_TEXT_OVERRIDES={("receipt", "en"): "Hi {name}\\n{body}\\n-{org}"})
     def test_override_text_from_env(self):
-        self.assertEqual(render("en", "A", "B", "C"), "Hi A\nB\n-C")
+        self.assertEqual(render("receipt", "en", "A", "B", "C"), "Hi A\nB\n-C")
+        self.assertTrue(render("reminder", "en", "A", "B", "C").startswith("Dear Customer A,"))
 
     @override_settings(SMS_HTTP_URL="https://x.test/api?key={api_key}&number={mobile}&sms={message}&templateid={template_id}",
                        SMS_API_KEY="k", SMS_UNICODE_PARAMS="&unicode=1")

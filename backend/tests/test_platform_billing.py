@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from core.models import AuditLog
@@ -71,7 +71,9 @@ class EstimateTests(TestCase):
         org.internet_payment_sms_enabled = True
         org.internet_reminders_enabled = True
         org.save()
-        self.assertEqual(sms_estimate(org)["total"], 12)  # + 1 receipt + 2 reminders for the internet customer
+        self.assertEqual(sms_estimate(org)["total"], 9)  # internet SMS switched off for now: not counted
+        with override_settings(SMS_INTERNET_ENABLED=True):
+            self.assertEqual(sms_estimate(org)["total"], 12)  # + 1 receipt + 2 reminders for the internet customer
 
 
 class PlatformPaymentTests(TestCase):

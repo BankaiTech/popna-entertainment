@@ -58,6 +58,7 @@ export interface MyPlan {
   estimate: {
     cableCustomers: number;
     internetCustomers: number;
+    internetSmsAvailable: boolean;
     internetReceiptsOn: boolean;
     internetRemindersOn: boolean;
     reminderStages: number;
