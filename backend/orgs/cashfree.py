@@ -50,10 +50,10 @@ def _headers():
 
 def create_order(*, order_id, amount, org, user, note):
     """Returns Cashfree's order (dict) with payment_session_id. Raises CashfreeError."""
-    digits = "".join(ch for ch in (user.mobile or org.owner_mobile or "") if ch.isdigit())
+    digits = "".join(ch for ch in (user.mobile or org.contact_phone or org.owner_mobile or "") if ch.isdigit())
     phone = digits[-10:]
     if len(phone) != 10:
-        raise CashfreeError("Add your mobile number in your profile first.")
+        raise CashfreeError("Add a phone number in Settings > Business Profile first.")
     back = settings.CASHFREE_RETURN_URL
     back += ("&" if "?" in back else "?") + f"order_id={order_id}"
     body = {

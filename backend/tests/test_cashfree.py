@@ -75,6 +75,14 @@ class CashfreeTests(TestCase):
         _, post = self.checkout()
         self.assertEqual(post.call_args.kwargs["json"]["customer_details"]["customer_phone"], "9876500000")
 
+    def test_uses_business_profile_phone(self):
+        self.owner.mobile = ""
+        self.owner.save()
+        self.org.contact_phone = "9123456789"
+        self.org.save()
+        _, post = self.checkout()
+        self.assertEqual(post.call_args.kwargs["json"]["customer_details"]["customer_phone"], "9123456789")
+
     def test_not_shown_as_waiting_for_check(self):
         self.checkout()
         admin = client_for(make_user("cf_admin", Roles.PLATFORM_ADMIN))

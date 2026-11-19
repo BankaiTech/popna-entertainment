@@ -1,6 +1,7 @@
 import calendar
 from datetime import date
 
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from django.utils import timezone
@@ -24,7 +25,9 @@ PLATFORM_CONTROLLED = [
     "allowed_settings_tabs", "max_providers", "max_plans",
     "monthly_fee", "sms_free_per_month", "sms_rate", "sms_credits",
 ]
-COMPUTED = ["industry_type", "subscription_state", "days_left", "providers_used", "plans_used"]
+COMPUTED = [
+    "industry_type", "subscription_state", "days_left", "providers_used", "plans_used", "internet_sms_available",
+]
 
 
 def add_months(d, months):
@@ -47,6 +50,11 @@ class OrgComputedMixin(serializers.Serializer):
     days_left = serializers.SerializerMethodField()
     providers_used = serializers.SerializerMethodField()
     plans_used = serializers.SerializerMethodField()
+    # Internet customers' SMS switched off platform-wide for now: the settings page hides those options.
+    internet_sms_available = serializers.SerializerMethodField()
+
+    def get_internet_sms_available(self, obj):
+        return settings.SMS_INTERNET_ENABLED
 
     def to_internal_value(self, data):
         # Accept lowercase / spaced input from phones before the format checks run.

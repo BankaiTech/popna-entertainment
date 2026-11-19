@@ -210,17 +210,27 @@ PLATFORM_UPI_IDS = {
     "bhim": env("PLATFORM_UPI_BHIM", "vicky2135@upi"),
 }
 
+# DLT template id for each (message type, language). Change in .env when the vendor approves a new one.
+# (SMS_TPL_CUSTOMER_EN / _TA are the older names, still read as a fallback.)
 SMS_TEMPLATE_IDS = {
-    "en": env("SMS_TPL_CUSTOMER_EN", "1607100000000376221"),
-    "ta": env("SMS_TPL_CUSTOMER_TA", "1607100000000376222"),
+    ("receipt", "en"): env("SMS_TPL_RECEIPT_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
+    ("reminder", "en"): env("SMS_TPL_REMINDER_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
+    ("receipt", "ta"): env("SMS_TPL_RECEIPT_TA", "1677100000000399325"),
+    ("reminder", "ta"): env("SMS_TPL_REMINDER_TA", env("SMS_TPL_CUSTOMER_TA", "1607100000000376222")),
 }
 # Extra URL text added for Tamil (Unicode) SMS, as your gateway needs it, e.g. "&unicode=1".
 SMS_UNICODE_PARAMS = env("SMS_UNICODE_PARAMS", "")
-# Optional: exact template wording if yours differs. Use {name} {body} {org} and \n for new lines.
+# Optional: exact template wording if a new template keeps the same 3 variables.
+# Use {name} {body} {org} and \n for new lines. Empty = the text in notifications/templates.py.
 SMS_TEXT_OVERRIDES = {
-    "en": env("SMS_TEXT_CUSTOMER_EN", ""),
-    "ta": env("SMS_TEXT_CUSTOMER_TA", ""),
+    ("receipt", "en"): env("SMS_TEXT_RECEIPT_EN", env("SMS_TEXT_CUSTOMER_EN", "")),
+    ("reminder", "en"): env("SMS_TEXT_REMINDER_EN", env("SMS_TEXT_CUSTOMER_EN", "")),
+    ("receipt", "ta"): env("SMS_TEXT_RECEIPT_TA", ""),
+    ("reminder", "ta"): env("SMS_TEXT_REMINDER_TA", env("SMS_TEXT_CUSTOMER_TA", "")),
 }
+# Internet customers' SMS (receipts and reminders) are switched off for everyone until there is an
+# approved template for them. Cable SMS are not affected.
+SMS_INTERNET_ENABLED = env_bool("SMS_INTERNET_ENABLED", False)
 
 # ── Scheduler (python manage.py run_scheduler) ──────────────────────────────
 SCHEDULE_DUE_REMINDERS_AT = env("SCHEDULE_DUE_REMINDERS_AT", "09:00")

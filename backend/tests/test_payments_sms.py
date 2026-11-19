@@ -63,6 +63,19 @@ class PaymentTests(TestCase):
         self.assertIn("Thank you for your continued support.", receipt.body)
         self.assertTrue(LocationPing.objects.filter(source="payment").exists())
 
+    def test_internet_sms_switched_off_for_now(self):
+        self.org.internet_payment_sms_enabled = True
+        self.org.save()
+        self._check_in()
+        client_for(self.agent).post("/api/payments", {"customer_id": self.net_cust.id, "amount": "100", **GPS},
+                                    format="json")
+        self.assertEqual(SmsMessage.objects.count(), 0)
+
+    def test_settings_page_told_internet_sms_is_off(self):
+        data = client_for(self.owner).get(f"/api/organizations/{self.org.id}").json()
+        self.assertIs(data.get("data", data)["internet_sms_available"], False)
+
+    @override_settings(SMS_INTERNET_ENABLED=True)
     def test_internet_payment_sms_is_optional(self):
         self._check_in()
         c = client_for(self.agent)
@@ -88,9 +101,10 @@ class PaymentTests(TestCase):
         client_for(self.agent).post("/api/payments", {"customer_id": self.cable_cust.id, "amount": "230", **GPS},
                                     format="json")
         msg = SmsMessage.objects.get()
-        self.assertEqual((msg.language, msg.template_id), ("ta", "1607100000000376222"))
+        self.assertEqual((msg.language, msg.template_id), ("ta", "1677100000000399325"))
         self.assertTrue(msg.body.startswith("அன்புள்ள வாடிக்கையாளர்"))
-        self.assertIn("ரூ.230", msg.body)
+        self.assertIn("கேபிள் கட்டணம் ₹230, ", msg.body)
+        self.assertTrue(msg.body.endswith("\nPING4SMS"))
 
     def test_overpayment_rejected_and_partial_allowed(self):
         self._check_in()
@@ -129,6 +143,7 @@ class ReminderTests(TestCase):
         self.net_cust = make_customer(self.org, self.net, mobile="9876543212", due_day=5)
         generate_bills(date(2026, 11, 1), organization=self.org)
 
+    @override_settings(SMS_INTERNET_ENABLED=True)
     def test_cable_reminder_sent_once_internet_only_when_enabled(self):
         self.assertEqual(queue_due_reminders(self.today), 1)
         self.assertEqual(queue_due_reminders(self.today), 0)  # never twice
@@ -142,6 +157,7 @@ class ReminderTests(TestCase):
         self.assertEqual(generate_internet_renewals(self.today), 1)
         self.assertEqual(queue_due_reminders(self.today), 1)
 
+    @override_settings(SMS_INTERNET_ENABLED=True)
     def test_internet_customer_opt_out_respected_cable_cannot_opt_out(self):
         self.org.internet_reminders_enabled = True
         self.org.save()
