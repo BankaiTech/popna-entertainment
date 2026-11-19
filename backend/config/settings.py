@@ -190,6 +190,17 @@ SMS_MOBILE_PREFIX = env("SMS_MOBILE_PREFIX", "")  # e.g. "91" if the gateway nee
 SMS_SUCCESS_KEYWORD = env("SMS_SUCCESS_KEYWORD", "")  # optional text that must appear in a success response
 SMS_MAX_ATTEMPTS = int(env("SMS_MAX_ATTEMPTS", "5"))
 # Approved DLT templates for customer SMS (English and Tamil). Only customers ever get SMS.
+# Cashfree Payment Gateway (operators pay LCO Desk online). Empty App ID = online payment button hidden.
+CASHFREE_APP_ID = env("CASHFREE_APP_ID", "")
+CASHFREE_SECRET_KEY = env("CASHFREE_SECRET_KEY", "")
+CASHFREE_ENV = env("CASHFREE_ENV", "sandbox")  # sandbox | production
+CASHFREE_API_VERSION = env("CASHFREE_API_VERSION", "2025-01-01")
+CASHFREE_RETURN_URL = env("CASHFREE_RETURN_URL", "https://lcodesk.in/admin/settings?tab=plan")
+CASHFREE_NOTIFY_URL = env("CASHFREE_NOTIFY_URL", "https://api.lcodesk.in/api/payments/cashfree/webhook")
+# Sandbox = fake money. Only these organization ids see "Pay online" in sandbox (test operators), so real
+# operators can never get SMS for a test payment. Ignored in production.
+CASHFREE_SANDBOX_ORG_IDS = {int(x) for x in env_list("CASHFREE_SANDBOX_ORG_IDS", "") if x.strip().isdigit()}
+
 # Where operators pay LCO Desk (SMS packs, renewals). The app opens the chosen UPI app with this ID.
 PLATFORM_UPI_PAYEE_NAME = env("PLATFORM_UPI_PAYEE_NAME", "LCO Desk")
 PLATFORM_UPI_IDS = {

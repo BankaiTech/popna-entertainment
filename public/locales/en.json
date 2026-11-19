@@ -2270,5 +2270,21 @@
   "Paid to": "Paid to",
   "Not given": "Not given",
   "Marked paid on": "Marked paid on",
-  "Checked on": "Checked on"
+  "Checked on": "Checked on",
+  "Payment received. {{n}} SMS added.": "Payment received. {{n}} SMS added.",
+  "Payment received. Subscription renewed.": "Payment received. Subscription renewed.",
+  "Payment was not completed.": "Payment was not completed.",
+  "Payment is being confirmed. Check again in a few minutes.": "Payment is being confirmed. Check again in a few minutes.",
+  "Could not check the payment now.": "Could not check the payment now.",
+  "Not completed": "Not completed",
+  "Paid online": "Paid online",
+  "Cashfree (automatic)": "Cashfree (automatic)",
+  "Order ID": "Order ID",
+  "Online (Cashfree) payments are approved automatically and appear under Approved.": "Online (Cashfree) payments are approved automatically and appear under Approved.",
+  "Could not open the payment page.": "Could not open the payment page.",
+  "Opening...": "Opening...",
+  "Pay ₹{{amount}} online": "Pay ₹{{amount}} online",
+  "Pay by UPI QR": "Pay by UPI QR",
+  "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.",
+  "Could not open the payment page. Check your internet and try again.": "Could not open the payment page. Check your internet and try again."
 }

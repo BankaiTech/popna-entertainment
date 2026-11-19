@@ -2635,5 +2635,21 @@
   "Paid to": "किसे भुगतान",
   "Not given": "नहीं दिया",
   "Marked paid on": "भुगतान दर्ज करने का समय",
-  "Checked on": "जाँच का समय"
+  "Checked on": "जाँच का समय",
+  "Payment received. {{n}} SMS added.": "भुगतान मिल गया। {{n}} SMS जोड़े गए।",
+  "Payment received. Subscription renewed.": "भुगतान मिल गया। सदस्यता नवीनीकृत हो गई।",
+  "Payment was not completed.": "भुगतान पूरा नहीं हुआ।",
+  "Payment is being confirmed. Check again in a few minutes.": "भुगतान की पुष्टि हो रही है। कुछ मिनट बाद फिर देखें।",
+  "Could not check the payment now.": "अभी भुगतान जांच नहीं सके।",
+  "Not completed": "पूरा नहीं हुआ",
+  "Paid online": "ऑनलाइन भुगतान",
+  "Cashfree (automatic)": "Cashfree (स्वचालित)",
+  "Order ID": "ऑर्डर ID",
+  "Online (Cashfree) payments are approved automatically and appear under Approved.": "ऑनलाइन (Cashfree) भुगतान अपने आप स्वीकृत होते हैं और Approved में दिखते हैं।",
+  "Could not open the payment page.": "भुगतान पेज नहीं खुल सका।",
+  "Opening...": "खुल रहा है...",
+  "Pay ₹{{amount}} online": "₹{{amount}} ऑनलाइन भुगतान करें",
+  "Pay by UPI QR": "UPI QR से भुगतान",
+  "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ऑनलाइन: UPI, कार्ड या नेट बैंकिंग। तुरंत जुड़ता है। UPI QR: LCO Desk की जांच के बाद जुड़ता है।",
+  "Could not open the payment page. Check your internet and try again.": "भुगतान पेज नहीं खुल सका। इंटरनेट जांचें और फिर कोशिश करें।"
 }

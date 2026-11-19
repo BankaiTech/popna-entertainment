@@ -13,6 +13,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+from . import cashfree
 from .models import Organization, PlatformPayment
 
 NO_BALANCE_ERROR = "No SMS balance: this month's free SMS are used up. Buy SMS in Settings > Plan & SMS, then retry."
@@ -111,6 +112,9 @@ def payment_info(org):
         "upi_ids": dict(settings.PLATFORM_UPI_IDS),
         "sms_note": f"Sms payment {note_id}",
         "renewal_note": f"Renewal Payment {note_id}",
+        # Cashfree "Pay online" button: shown only when the keys are set on the server.
+        "online": cashfree.enabled(org),
+        "online_mode": "production" if settings.CASHFREE_ENV == "production" else "sandbox",
     }
 
 
@@ -119,7 +123,7 @@ def approve_payment(payment, by):
     from .serializers import add_months
 
     payment = PlatformPayment.objects.select_for_update().get(pk=payment.pk)
-    if payment.status != PlatformPayment.Status.PENDING:
+    if payment.status not in (PlatformPayment.Status.PENDING, PlatformPayment.Status.CREATED):
         return payment
     org = Organization.objects.select_for_update().get(pk=payment.organization_id)
     if payment.kind == PlatformPayment.Kind.SMS:

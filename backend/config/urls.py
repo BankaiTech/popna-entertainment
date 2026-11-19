@@ -10,6 +10,7 @@ from inventory.views import PurchaseViewSet, SaleViewSet, StockItemViewSet, Stoc
 from notifications.views import SmsLogViewSet
 from orgs.views import (
     DistributorViewSet, OrganizationViewSet, PlatformPaymentViewSet, SignupRequestViewSet, distributor_summary, my_plan,
+    cashfree_webhook,
 )
 from tracking import views as tracking
 
@@ -43,6 +44,7 @@ api = [
     path("connections/cutoff", cutoff_list),
     path("distributor/summary", distributor_summary),
     path("my-plan", my_plan),
+    path("payments/cashfree/webhook", cashfree_webhook),
     path("tracking/status", tracking.duty_status),
     path("tracking/check-in", tracking.check_in),
     path("tracking/check-out", tracking.check_out),

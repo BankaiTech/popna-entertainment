@@ -2,12 +2,15 @@
  * Pay LCO Desk by UPI with a QR code (works with personal UPI IDs; app links get blocked by banks).
  * The QR carries our UPI ID, the amount and the note ("Sms payment org_12"), so scanning fills them in.
  * After paying, the operator taps Paid (UTR optional). The app owner checks the bank app and approves.
+ * When Cashfree is set up on the server, "Pay online" comes first: paid and added at once, no manual check.
  */
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { CheckCircle2, Copy, Download, QrCode } from 'lucide-react';
+import { CheckCircle2, Copy, CreditCard, Download, QrCode } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { UPI_APPS, isPhone, platformBillingApi, upiQuery, type PaymentKind, type UpiApp } from '@/api/platformBilling';
+import {
+  UPI_APPS, isPhone, payOnline, platformBillingApi, upiQuery, type PaymentKind, type UpiApp,
+} from '@/api/platformBilling';
 import { showError, showSuccess } from '@/utils/toast';
 import { useLt } from '@/lib/lt';
 import { cn } from '@/lib/utils';
@@ -20,9 +23,14 @@ interface Props {
   payeeName: string;
   upiIds: Record<UpiApp, string>;
   onClaimed: () => void;
+  /** Cashfree is set up on the server. */
+  online?: boolean;
+  onlineMode?: 'sandbox' | 'production';
 }
 
-export default function UpiPayPanel({ kind, quantity, amount, note, payeeName, upiIds, onClaimed }: Props) {
+export default function UpiPayPanel({
+  kind, quantity, amount, note, payeeName, upiIds, onClaimed, online = false, onlineMode = 'sandbox',
+}: Props) {
   const tr = useLt();
   const [open, setOpen] = useState(false);
   const [app, setApp] = useState<UpiApp>('gpay');
@@ -46,6 +54,16 @@ export default function UpiPayPanel({ kind, quantity, amount, note, payeeName, u
       showSuccess(tr('Copied'));
     } catch {
       showError(tr('Could not copy'));
+    }
+  };
+
+  const startOnline = async () => {
+    setBusy(true);
+    try {
+      await payOnline(kind, quantity, onlineMode); // leaves this page for Cashfree
+    } catch (e) {
+      showError(e instanceof Error ? e.message : tr('Could not open the payment page.'));
+      setBusy(false);
     }
   };
 
@@ -84,11 +102,29 @@ export default function UpiPayPanel({ kind, quantity, amount, note, payeeName, u
   }
 
   if (!open) {
+    if (!online) {
+      return (
+        <Button onClick={() => setOpen(true)} disabled={!valid} className="w-full sm:w-auto">
+          <QrCode className="w-4 h-4 mr-2" />
+          {tr('Pay ₹{{amount}} by UPI', { amount: amount.toFixed(2) })}
+        </Button>
+      );
+    }
     return (
-      <Button onClick={() => setOpen(true)} disabled={!valid} className="w-full sm:w-auto">
-        <QrCode className="w-4 h-4 mr-2" />
-        {tr('Pay ₹{{amount}} by UPI', { amount: amount.toFixed(2) })}
-      </Button>
+      <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={startOnline} disabled={!valid || busy} className="w-full sm:w-auto">
+            <CreditCard className="w-4 h-4 mr-2" />
+            {busy ? tr('Opening...') : tr('Pay ₹{{amount}} online', { amount: amount.toFixed(2) })}
+          </Button>
+          <Button variant="outline" onClick={() => setOpen(true)} disabled={!valid || busy} className="w-full sm:w-auto">
+            <QrCode className="w-4 h-4 mr-2" />{tr('Pay by UPI QR')}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {tr('Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.')}
+        </p>
+      </div>
     );
   }
 

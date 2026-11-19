@@ -1,11 +1,12 @@
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
+import uuid
 
 from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -20,6 +21,7 @@ from customers.models import Customer
 
 from .models import Distributor, Organization, PlatformPayment, SignupRequest
 from . import billing as platform_billing
+from . import cashfree
 from .services import delete_organization, generate_password
 from .serializers import (
     PlatformPaymentClaimSerializer,
@@ -255,7 +257,8 @@ def my_plan(request):
     Works even after the subscription has ended (so the owner can renew).
     """
     org = require_org_member(request.user)
-    payments = PlatformPayment.objects.filter(organization=org).select_related("created_by")[:20]
+    payments = (PlatformPayment.objects.filter(organization=org).exclude(status=PlatformPayment.Status.CREATED)
+                .select_related("created_by")[:20])
     return Response({
         "organization_id": org.id,
         "organization_name": org.name,
@@ -273,6 +276,17 @@ def my_plan(request):
     })
 
 
+def _price(org, kind, quantity):
+    """(rate, amount) from the operator's own rates. Never from the browser."""
+    if kind == PlatformPayment.Kind.SMS:
+        rate = org.sms_rate
+    else:
+        if not org.monthly_fee:
+            raise ValidationError({"kind": "Your monthly fee is not set yet. Contact LCO Desk."})
+        rate = org.monthly_fee
+    return rate, platform_billing.money(rate * quantity)
+
+
 class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     POST /api/platform-payments                 operator (owner/manager): "I paid" (+ optional UTR), amount worked out here
@@ -280,6 +294,8 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     POST /api/platform-payments/<id>/approve    app owner: adds SMS credits / extends the subscription
     POST /api/platform-payments/<id>/reject     app owner: {"note": "..."}
     GET  /api/platform-payments/summary         app owner: {"pending": n}
+    POST /api/platform-payments/checkout        operator: {"kind","quantity"} -> Cashfree payment_session_id
+    POST /api/platform-payments/verify          operator: {"order_id"} after Cashfree sends them back
     """
 
     serializer_class = PlatformPaymentSerializer
@@ -302,13 +318,7 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         form = PlatformPaymentClaimSerializer(data=request.data)
         form.is_valid(raise_exception=True)
         data = form.validated_data
-        if data["kind"] == PlatformPayment.Kind.SMS:
-            rate = org.sms_rate
-        else:
-            if not org.monthly_fee:
-                raise ValidationError({"kind": "Your monthly fee is not set yet. Contact LCO Desk."})
-            rate = org.monthly_fee
-        amount = platform_billing.money(rate * data["quantity"])
+        rate, amount = _price(org, data["kind"], data["quantity"])
         # "Paid" tapped twice by mistake: keep the first one.
         recent = PlatformPayment.objects.filter(
             organization=org, kind=data["kind"], amount=amount, status=PlatformPayment.Status.PENDING,
@@ -347,6 +357,67 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         audit(request.user, "platform_payment_rejected", payment, note=payment.admin_note)
         return Response(PlatformPaymentSerializer(payment).data)
 
+    @action(detail=False, methods=["post"])
+    def checkout(self, request):
+        org = require_org_member(request.user)
+        if not cashfree.enabled(org):
+            raise ValidationError({"detail": "Online payment is not available. Pay by UPI QR."})
+        form = PlatformPaymentClaimSerializer(data={"kind": request.data.get("kind"),
+                                                    "quantity": request.data.get("quantity")})
+        form.is_valid(raise_exception=True)
+        kind, quantity = form.validated_data["kind"], form.validated_data["quantity"]
+        rate, amount = _price(org, kind, quantity)
+        order_id = f"lcod_{org.id}_{uuid.uuid4().hex[:12]}"
+        payment = PlatformPayment.objects.create(
+            organization=org, kind=kind, quantity=quantity, rate=rate, amount=amount,
+            status=PlatformPayment.Status.CREATED, gateway=PlatformPayment.Gateway.CASHFREE,
+            gateway_order_id=order_id, created_by=request.user,
+        )
+        note = (f"Sms payment org_{org.id}" if kind == PlatformPayment.Kind.SMS else f"Renewal Payment org_{org.id}")
+        try:
+            order = cashfree.create_order(order_id=order_id, amount=amount, org=org, user=request.user, note=note)
+        except cashfree.CashfreeError as exc:
+            payment.delete()  # never reached Cashfree: nothing to keep
+            raise ValidationError({"detail": f"Could not start online payment. {exc}"})
+        audit(request.user, "platform_payment_checkout", payment, kind=kind, amount=str(amount))
+        return Response({"order_id": order_id, "payment_session_id": order["payment_session_id"],
+                         "amount": str(amount)}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"])
+    def verify(self, request):
+        org = require_org_member(request.user)
+        payment = PlatformPayment.objects.filter(
+            organization=org, gateway_order_id=str(request.data.get("order_id", ""))[:45]).first()
+        if not payment:
+            raise ValidationError({"order_id": "Payment not found."})
+        try:
+            payment = cashfree.confirm(payment)
+        except cashfree.CashfreeError as exc:
+            raise ValidationError({"detail": f"Could not check the payment now. {exc}"})
+        return Response(PlatformPaymentSerializer(payment).data)
+
     @action(detail=False, methods=["get"])
     def summary(self, request):
         return Response({"pending": PlatformPayment.objects.filter(status=PlatformPayment.Status.PENDING).count()})
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def cashfree_webhook(request):
+    """
+    POST /api/payments/cashfree/webhook  - Cashfree calls this when a payment succeeds / fails.
+    Signature checked with the secret key; then we still ask Cashfree for the order before approving.
+    """
+    raw = request.body
+    if not cashfree.verify_webhook(raw, request.headers.get("x-webhook-timestamp", ""),
+                                   request.headers.get("x-webhook-signature", "")):
+        return Response({"detail": "bad signature"}, status=status.HTTP_400_BAD_REQUEST)
+    order_id = str(((request.data.get("data") or {}).get("order") or {}).get("order_id", ""))[:45]
+    payment = PlatformPayment.objects.filter(gateway_order_id=order_id).first() if order_id else None
+    if payment:
+        try:
+            cashfree.confirm(payment)
+        except cashfree.CashfreeError:
+            return Response({"detail": "retry"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)  # Cashfree retries
+    return Response({"ok": True})
