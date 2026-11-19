@@ -2653,5 +2653,10 @@
   "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ஆன்லைன்: UPI, கார்டு அல்லது நெட் பேங்கிங். உடனே சேர்க்கப்படும். UPI QR: LCO Desk சரிபார்த்த பிறகு சேர்க்கப்படும்.",
   "Could not open the payment page. Check your internet and try again.": "பணம் செலுத்தும் பக்கத்தைத் திறக்க முடியவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயலவும்.",
   "Worked out from your active cable customers and your reminder settings. It changes when you add customers.": "உங்கள் செயலில் உள்ள கேபிள் வாடிக்கையாளர்கள் மற்றும் நினைவூட்டல் அமைப்புகளிலிருந்து கணக்கிடப்பட்டது. வாடிக்கையாளர்களைச் சேர்க்கும்போது மாறும்.",
-  "Payment not finished. If you paid, it will show here in a few minutes.": "பணம் செலுத்துதல் முடியவில்லை. நீங்கள் செலுத்தியிருந்தால், சில நிமிடங்களில் இங்கே தெரியும்."
+  "Payment not finished. If you paid, it will show here in a few minutes.": "பணம் செலுத்துதல் முடியவில்லை. நீங்கள் செலுத்தியிருந்தால், சில நிமிடங்களில் இங்கே தெரியும்.",
+  "Best value": "சிறந்த மதிப்பு",
+  "₹{{amount}} / month": "₹{{amount}} / மாதம்",
+  "Save ₹{{amount}}": "₹{{amount}} சேமிப்பு",
+  "Offer prices": "சலுகை விலைகள்",
+  "Empty = offer prices (₹375 / 1,085 / 2,075 / 4,050). Fill only for a special price.": "காலியாக = சலுகை விலைகள் (₹375 / 1,085 / 2,075 / 4,050). சிறப்பு விலைக்கு மட்டும் நிரப்பவும்."
 }

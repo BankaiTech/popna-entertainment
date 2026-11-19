@@ -1,6 +1,7 @@
 """LCO Desk backend settings. All secrets come from environment variables (.env)."""
 import os
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -202,6 +203,13 @@ CASHFREE_NOTIFY_URL = env("CASHFREE_NOTIFY_URL", "https://api.lcodesk.in/api/pay
 CASHFREE_SANDBOX_ORG_IDS = {int(x) for x in env_list("CASHFREE_SANDBOX_ORG_IDS", "") if x.strip().isdigit()}
 
 # Where operators pay LCO Desk (SMS packs, renewals). The app opens the chosen UPI app with this ID.
+# Renewal offer prices (months: total Rs) for every operator with no special monthly fee.
+# .env format: RENEWAL_OFFER_PRICES=1:375,3:1085,6:2075,12:4050
+RENEWAL_OFFER_PRICES = {
+    int(m): Decimal(p) for m, p in
+    (pair.split(":") for pair in env_list("RENEWAL_OFFER_PRICES", "1:375,3:1085,6:2075,12:4050") if ":" in pair)
+}
+
 PLATFORM_UPI_PAYEE_NAME = env("PLATFORM_UPI_PAYEE_NAME", "LCO Desk")
 PLATFORM_UPI_IDS = {
     "gpay": env("PLATFORM_UPI_GPAY", "msv31bieber@oksbi"),

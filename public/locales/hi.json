@@ -2653,5 +2653,10 @@
   "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ऑनलाइन: UPI, कार्ड या नेट बैंकिंग। तुरंत जुड़ता है। UPI QR: LCO Desk की जांच के बाद जुड़ता है।",
   "Could not open the payment page. Check your internet and try again.": "भुगतान पेज नहीं खुल सका। इंटरनेट जांचें और फिर कोशिश करें।",
   "Worked out from your active cable customers and your reminder settings. It changes when you add customers.": "आपके सक्रिय केबल ग्राहकों और रिमाइंडर सेटिंग्स से गिना गया। ग्राहक जोड़ने पर यह बदलता है।",
-  "Payment not finished. If you paid, it will show here in a few minutes.": "भुगतान पूरा नहीं हुआ। अगर आपने भुगतान किया है, तो कुछ मिनट में यहाँ दिखेगा।"
+  "Payment not finished. If you paid, it will show here in a few minutes.": "भुगतान पूरा नहीं हुआ। अगर आपने भुगतान किया है, तो कुछ मिनट में यहाँ दिखेगा।",
+  "Best value": "सबसे फायदेमंद",
+  "₹{{amount}} / month": "₹{{amount}} / महीना",
+  "Save ₹{{amount}}": "₹{{amount}} बचाएं",
+  "Offer prices": "ऑफ़र कीमतें",
+  "Empty = offer prices (₹375 / 1,085 / 2,075 / 4,050). Fill only for a special price.": "खाली = ऑफ़र कीमतें (₹375 / 1,085 / 2,075 / 4,050)। केवल विशेष कीमत के लिए भरें।"
 }

@@ -145,12 +145,40 @@ class PlatformPaymentTests(TestCase):
         self.assertEqual(c.post("/api/platform-payments", {"kind": "sms", "quantity": 100, "utr": "DUP123456"},
                                 format="json").status_code, 201)
 
-    def test_no_monthly_fee_means_no_renewal_claim_and_owner_cannot_set_rates(self):
+    def test_no_special_fee_means_offer_prices(self):
         self.org.monthly_fee = None
         self.org.save()
         c = client_for(self.owner)
-        self.assertEqual(c.post("/api/platform-payments", {"kind": "renewal", "quantity": 1, "utr": "ABC123456"},
-                                format="json").status_code, 400)
+        options = c.get("/api/my-plan").json()["subscription"]["renewal_options"]
+        self.assertEqual(
+            [(o["months"], o["amount"], o["save"]) for o in options],
+            [(1, "375.00", "0.00"), (3, "1085.00", "40.00"), (6, "2075.00", "175.00"), (12, "4050.00", "450.00")],
+        )
+        for months, amount in ((1, "375.00"), (3, "1085.00"), (6, "2075.00"), (12, "4050.00")):
+            r = c.post("/api/platform-payments", {"kind": "renewal", "quantity": months, "upi_app": "gpay"},
+                       format="json")
+            self.assertEqual((r.status_code, r.json()["amount"]), (201, amount), r.content)
+            PlatformPayment.objects.all().delete()  # skip the double-tap guard
+        # Only the offer choices; the browser cannot pick 2 months to get a cheaper price.
+        r = c.post("/api/platform-payments", {"kind": "renewal", "quantity": 2, "upi_app": "gpay"}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+    def test_special_fee_replaces_offer(self):
+        r = client_for(self.owner).get("/api/my-plan").json()["subscription"]
+        self.assertTrue(r["special_fee"])
+        self.assertEqual([(o["months"], o["amount"]) for o in r["renewal_options"]],
+                         [(1, "499.00"), (3, "1497.00"), (6, "2994.00"), (12, "5988.00")])
+
+    def test_zero_fee_cannot_be_paid(self):
+        self.org.monthly_fee = Decimal("0")
+        self.org.save()
+        c = client_for(self.owner)
+        self.assertEqual(c.get("/api/my-plan").json()["subscription"]["renewal_options"], [])
+        r = c.post("/api/platform-payments", {"kind": "renewal", "quantity": 1, "upi_app": "gpay"}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+    def test_owner_cannot_set_rates(self):
+        c = client_for(self.owner)
         c.patch(f"/api/organizations/{self.org.id}", {"sms_rate": "0.01", "sms_credits": 9999}, format="json")
         self.org.refresh_from_db()
         self.assertEqual((self.org.sms_rate, self.org.sms_credits), (Decimal("0.25"), 0))
