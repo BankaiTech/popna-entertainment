@@ -297,7 +297,7 @@ const Organizations = () => {
                                     <dt className="text-muted-foreground">{tr('Connection products')}</dt>
                                     <dd>{usage(org.plansUsed, org.maxPlans)}</dd>
                                     <dt className="text-muted-foreground">{tr('Monthly fee')}</dt>
-                                    <dd>{org.monthlyFee == null ? tr('Not set') : `₹${org.monthlyFee}`}</dd>
+                                    <dd>{org.monthlyFee == null ? tr('Offer prices') : `₹${org.monthlyFee}`}</dd>
                                     <dt className="text-muted-foreground">{tr('Free SMS this month')}</dt>
                                     <dd>{org.smsFreeUsed ?? 0} / {org.smsFreePerMonth ?? 70}</dd>
                                     <dt className="text-muted-foreground">{tr('Paid SMS balance')}</dt>
@@ -454,7 +454,10 @@ const Organizations = () => {
                                     <label className="block text-sm">
                                         <span className="block font-medium mb-1">{tr('Monthly fee (₹)')}</span>
                                         <Input type="number" min={0} step="1" inputMode="decimal" value={form.monthlyFee}
-                                            onChange={(e) => setForm({ ...form, monthlyFee: e.target.value })} placeholder={tr('e.g. {{n}}', { n: 499 })} />
+                                            onChange={(e) => setForm({ ...form, monthlyFee: e.target.value })} placeholder={tr('Offer prices')} />
+                                        <span className="block text-xs text-muted-foreground mt-1">
+                                            {tr('Empty = offer prices (₹375 / 1,085 / 2,075 / 4,050). Fill only for a special price.')}
+                                        </span>
                                     </label>
                                     <label className="block text-sm">
                                         <span className="block font-medium mb-1">{tr('Free SMS per month')}</span>

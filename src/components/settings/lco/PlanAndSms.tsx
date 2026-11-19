@@ -35,8 +35,11 @@ function Row({ label, value, strong }: { label: string; value: React.ReactNode; 
 
 export function RenewSection({ plan, onChanged }: { plan: MyPlan; onChanged: () => void }) {
   const tr = useLt();
-  const [months, setMonths] = useState(1);
-  const fee = plan.subscription.monthlyFee ? Number(plan.subscription.monthlyFee) : null;
+  const options = plan.subscription.renewalOptions ?? [];
+  const best = options.reduce((a, o) => (Number(o.save) > Number(a?.save ?? 0) ? o : a), options[0]);
+  const [months, setMonths] = useState(best?.months ?? 1);
+  const chosen = options.find((o) => o.months === months) ?? options[0];
+  const oneMonth = options.find((o) => o.months === 1);
   const state = plan.subscription.state;
   const stateLabel = state === 'expired' ? tr('Expired') : state === 'not_started' ? tr('Not started') : tr('Active');
 
@@ -52,30 +55,49 @@ export function RenewSection({ plan, onChanged }: { plan: MyPlan; onChanged: () 
         {plan.subscription.daysLeft != null && plan.subscription.daysLeft >= 0 && (
           <Row label={tr('Days left')} value={plan.subscription.daysLeft} />
         )}
-        <Row label={tr('Monthly fee')} value={fee != null ? rupees(fee) : tr('Not set')} />
+        <Row label={tr('Monthly fee')} value={oneMonth ? rupees(oneMonth.amount) : tr('Not set')} />
         <Row label={tr('Your ID')} value={<span className="font-mono">{plan.organizationId}</span>} />
       </div>
 
-      {fee == null ? (
+      {!chosen ? (
         <p className="text-sm text-muted-foreground">{tr('Your monthly fee is not set yet. Contact LCO Desk to renew.')}</p>
       ) : (
         <div className="space-y-3">
           <div>
             <span className="block text-sm font-medium mb-1.5">{tr('Renew for')}</span>
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 3, 6, 12].map((m) => (
-                <button key={m} type="button" onClick={() => setMonths(m)}
-                  className={cn('h-10 rounded-lg border text-sm font-medium',
-                    months === m ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card')}>
-                  {m === 1 ? tr('1 month') : tr('{{n}} months', { n: m })}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {options.map((o) => {
+                const save = Number(o.save);
+                return (
+                  <button key={o.months} type="button" onClick={() => setMonths(o.months)}
+                    className={cn('relative rounded-lg border p-2.5 text-left',
+                      months === o.months ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-border bg-card')}>
+                    {o.months === best?.months && save > 0 && (
+                      <span className="absolute -top-2 right-2 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {tr('Best value')}
+                      </span>
+                    )}
+                    <span className="block text-sm font-medium">
+                      {o.months === 1 ? tr('1 month') : tr('{{n}} months', { n: o.months })}
+                    </span>
+                    <span className="block text-base font-bold">{rupees(o.amount)}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {tr('₹{{amount}} / month', { amount: Number(o.perMonth).toLocaleString('en-IN', { minimumFractionDigits: Number.isInteger(Number(o.perMonth)) ? 0 : 2, maximumFractionDigits: 2 }) })}
+                    </span>
+                    {save > 0 && (
+                      <span className="block text-xs font-medium text-green-700 dark:text-green-400">
+                        {tr('Save ₹{{amount}}', { amount: save.toLocaleString('en-IN', { maximumFractionDigits: 2 }) })}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <Row label={tr('Amount to pay')} value={rupees(fee * months)} strong />
+          <Row label={tr('Amount to pay')} value={rupees(chosen.amount)} strong />
           <UpiPayPanel
-            key={`renew-${months}`}
-            kind="renewal" quantity={months} amount={fee * months} note={plan.pay.renewalNote}
+            key={`renew-${chosen.months}`}
+            kind="renewal" quantity={chosen.months} amount={Number(chosen.amount)} note={plan.pay.renewalNote}
             payeeName={plan.pay.payeeName} upiIds={plan.pay.upiIds} onClaimed={onChanged}
             online={plan.pay.online} onlineMode={plan.pay.onlineMode}
           />

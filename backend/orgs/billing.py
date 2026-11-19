@@ -54,6 +54,40 @@ def money(value):
     return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
+RENEWAL_CHOICES = (1, 3, 6, 12)
+
+
+def renewal_price(org, months):
+    """
+    Total Rs for renewing `months` months. Never from the browser.
+    - Operator with a special monthly fee (set by the platform admin): fee x months.
+    - Everyone else: the offer price (settings.RENEWAL_OFFER_PRICES), only for those month choices.
+    Returns None when that choice is not on offer.
+    """
+    if org.monthly_fee is not None:
+        return money(org.monthly_fee * months)
+    price = settings.RENEWAL_OFFER_PRICES.get(months)
+    return money(price) if price is not None else None
+
+
+def renewal_options(org):
+    """The 1 / 3 / 6 / 12 month choices with total, per month and saving against paying monthly."""
+    one = renewal_price(org, 1)
+    options = []
+    for months in RENEWAL_CHOICES:
+        total = renewal_price(org, months)
+        if total is None or total <= 0:
+            continue
+        save = money(one * months - total) if one is not None else money(0)
+        options.append({
+            "months": months,
+            "amount": str(total),
+            "per_month": str(money(total / months)),
+            "save": str(max(save, money(0))),
+        })
+    return options
+
+
 def sms_usage(org):
     from notifications.models import SmsMessage
 

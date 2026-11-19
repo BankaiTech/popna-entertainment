@@ -46,6 +46,10 @@ export interface MyPlan {
     state: 'active' | 'expired' | 'not_started';
     daysLeft: number | null;
     monthlyFee: string | null;
+    /** True = the platform admin set a special monthly fee for this operator (no offer prices). */
+    specialFee: boolean;
+    /** Renewal choices worked out by the server (offer prices, or special fee x months). */
+    renewalOptions: { months: number; amount: string; perMonth: string; save: string }[];
   };
   sms: {
     freeLimit: number;
