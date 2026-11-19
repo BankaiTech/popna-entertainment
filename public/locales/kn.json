@@ -2652,5 +2652,6 @@
   "Pay by UPI QR": "UPI QR ಮೂಲಕ ಪಾವತಿಸಿ",
   "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ಆನ್‌ಲೈನ್: UPI, ಕಾರ್ಡ್ ಅಥವಾ ನೆಟ್ ಬ್ಯಾಂಕಿಂಗ್. ತಕ್ಷಣ ಸೇರುತ್ತದೆ. UPI QR: LCO Desk ಪರಿಶೀಲಿಸಿದ ನಂತರ ಸೇರುತ್ತದೆ.",
   "Could not open the payment page. Check your internet and try again.": "ಪಾವತಿ ಪುಟ ತೆರೆಯಲು ಆಗಲಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-  "Worked out from your active cable customers and your reminder settings. It changes when you add customers.": "ನಿಮ್ಮ ಸಕ್ರಿಯ ಕೇಬಲ್ ಗ್ರಾಹಕರು ಮತ್ತು ಜ್ಞಾಪನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಂದ ಲೆಕ್ಕ ಹಾಕಲಾಗಿದೆ. ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿದಾಗ ಬದಲಾಗುತ್ತದೆ."
+  "Worked out from your active cable customers and your reminder settings. It changes when you add customers.": "ನಿಮ್ಮ ಸಕ್ರಿಯ ಕೇಬಲ್ ಗ್ರಾಹಕರು ಮತ್ತು ಜ್ಞಾಪನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಂದ ಲೆಕ್ಕ ಹಾಕಲಾಗಿದೆ. ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿದಾಗ ಬದಲಾಗುತ್ತದೆ.",
+  "Payment not finished. If you paid, it will show here in a few minutes.": "ಪಾವತಿ ಮುಗಿದಿಲ್ಲ. ನೀವು ಪಾವತಿಸಿದ್ದರೆ, ಕೆಲವು ನಿಮಿಷಗಳಲ್ಲಿ ಇಲ್ಲಿ ಕಾಣುತ್ತದೆ."
 }

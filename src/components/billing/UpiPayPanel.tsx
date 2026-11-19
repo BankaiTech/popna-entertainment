@@ -12,6 +12,7 @@ import {
   UPI_APPS, isPhone, payOnline, platformBillingApi, upiQuery, type PaymentKind, type UpiApp,
 } from '@/api/platformBilling';
 import { showError, showSuccess } from '@/utils/toast';
+import { checkOnlinePayment } from '@/lib/cashfreeReturn';
 import { useLt } from '@/lib/lt';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +61,13 @@ export default function UpiPayPanel({
   const startOnline = async () => {
     setBusy(true);
     try {
-      await payOnline(kind, quantity, onlineMode); // leaves this page for Cashfree
+      // Browser tab: leaves this page for Cashfree. Installed app: popup, resolves when it closes.
+      const { orderId, inApp, finished } = await payOnline(kind, quantity, onlineMode);
+      if (inApp) {
+        await checkOnlinePayment(orderId, finished);
+        setBusy(false);
+        onClaimed();
+      }
     } catch (e) {
       showError(e instanceof Error ? e.message : tr('Could not open the payment page.'));
       setBusy(false);
