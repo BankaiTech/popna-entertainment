@@ -134,12 +134,31 @@ export function upiQuery(pa: string, pn: string, amount: number, note: string): 
   return `pa=${enc(pa)}&pn=${enc(pn)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(note)}`;
 }
 
-/** Open Cashfree checkout (UPI, cards, net banking) in this tab. Comes back to Settings > Plan & SMS. */
-export async function payOnline(kind: PaymentKind, quantity: number, mode: 'sandbox' | 'production'): Promise<void> {
-  const { paymentSessionId } = await platformBillingApi.checkout(kind, quantity);
+/** Running as the installed app (PWA), not in a browser tab. */
+export function isInstalledApp(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Open Cashfree checkout (UPI, cards, net banking).
+ * - Browser tab: the page goes to Cashfree and comes back to Settings > Plan & SMS (?order_id=...).
+ * - Installed app: a popup over our own screen, so the operator stays in the app and gets the
+ *   phone layout with UPI app buttons. Resolves when the popup closes; the caller then checks the order.
+ */
+export async function payOnline(
+  kind: PaymentKind, quantity: number, mode: 'sandbox' | 'production',
+): Promise<{ orderId: string; inApp: boolean; finished: boolean }> {
+  const { orderId, paymentSessionId } = await platformBillingApi.checkout(kind, quantity);
   const { load } = await import('@cashfreepayments/cashfree-js');
   const cashfree = await load({ mode });
   if (!cashfree) throw new Error('Could not open the payment page. Check your internet and try again.');
-  const result = await cashfree.checkout({ paymentSessionId, redirectTarget: '_self' });
-  if (result?.error) throw new Error(result.error.message || 'Payment could not start.');
+  const inApp = isInstalledApp();
+  const result = await cashfree.checkout({ paymentSessionId, redirectTarget: inApp ? '_modal' : '_self' });
+  if (!inApp && result?.error) throw new Error(result.error.message || 'Payment could not start.');
+  return { orderId, inApp, finished: Boolean(result?.paymentDetails) };
 }
