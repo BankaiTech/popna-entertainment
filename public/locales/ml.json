@@ -2635,5 +2635,21 @@
   "Paid to": "ആർക്ക് അടച്ചു",
   "Not given": "നൽകിയിട്ടില്ല",
   "Marked paid on": "പണമടച്ചതായി രേഖപ്പെടുത്തിയ സമയം",
-  "Checked on": "പരിശോധിച്ച സമയം"
+  "Checked on": "പരിശോധിച്ച സമയം",
+  "Payment received. {{n}} SMS added.": "പണം ലഭിച്ചു. {{n}} SMS ചേർത്തു.",
+  "Payment received. Subscription renewed.": "പണം ലഭിച്ചു. സബ്സ്ക്രിപ്ഷൻ പുതുക്കി.",
+  "Payment was not completed.": "പണമടയ്ക്കൽ പൂർത്തിയായില്ല.",
+  "Payment is being confirmed. Check again in a few minutes.": "പണമടയ്ക്കൽ സ്ഥിരീകരിക്കുന്നു. കുറച്ച് മിനിറ്റിന് ശേഷം വീണ്ടും നോക്കുക.",
+  "Could not check the payment now.": "ഇപ്പോൾ പണമടയ്ക്കൽ പരിശോധിക്കാനായില്ല.",
+  "Not completed": "പൂർത്തിയായില്ല",
+  "Paid online": "ഓൺലൈനായി അടച്ചു",
+  "Cashfree (automatic)": "Cashfree (ഓട്ടോമാറ്റിക്)",
+  "Order ID": "ഓർഡർ ID",
+  "Online (Cashfree) payments are approved automatically and appear under Approved.": "ഓൺലൈൻ (Cashfree) പേയ്‌മെന്റുകൾ സ്വയം അംഗീകരിക്കപ്പെട്ട് Approved-ൽ കാണും.",
+  "Could not open the payment page.": "പേയ്‌മെന്റ് പേജ് തുറക്കാനായില്ല.",
+  "Opening...": "തുറക്കുന്നു...",
+  "Pay ₹{{amount}} online": "₹{{amount}} ഓൺലൈനായി അടയ്ക്കുക",
+  "Pay by UPI QR": "UPI QR വഴി അടയ്ക്കുക",
+  "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ഓൺലൈൻ: UPI, കാർഡ് അല്ലെങ്കിൽ നെറ്റ് ബാങ്കിംഗ്. ഉടൻ ചേർക്കും. UPI QR: LCO Desk പരിശോധിച്ച ശേഷം ചേർക്കും.",
+  "Could not open the payment page. Check your internet and try again.": "പേയ്‌മെന്റ് പേജ് തുറക്കാനായില്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
 }

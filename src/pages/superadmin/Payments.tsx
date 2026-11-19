@@ -70,7 +70,9 @@ export default function Payments() {
     }
   };
 
-  const statusLabel = (s: PaymentStatus) => ({ pending: tr('Waiting for check'), approved: tr('Approved'), rejected: tr('Rejected') })[s];
+  const statusLabel = (s: PaymentStatus) => ({
+    created: tr('Not completed'), pending: tr('Waiting for check'), approved: tr('Approved'), rejected: tr('Rejected'),
+  })[s];
   const appLabel = (a: string) => UPI_APPS.find((x) => x.id === a)?.label ?? a;
 
   return (
@@ -82,6 +84,7 @@ export default function Payments() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {tr('Operators who tapped Paid. Find the payment in your bank app (note "Sms payment org_ID" or "Renewal Payment org_ID"), then approve. SMS balance or the end date updates by itself.')}
+            {' '}{tr('Online (Cashfree) payments are approved automatically and appear under Approved.')}
           </p>
         </div>
         <Button variant="outline" onClick={load} disabled={loading} className="shrink-0 w-full sm:w-auto">
@@ -119,9 +122,14 @@ export default function Payments() {
                   <span className="text-muted-foreground">{tr('For')}</span>
                   <span>{p.kind === 'sms' ? tr('{{n}} SMS', { n: p.quantity }) : tr('Renewal {{n}} months', { n: p.quantity })}</span>
                   <span className="text-muted-foreground">{tr('Paid to')}</span>
-                  <span>{appLabel(p.upiApp) || '-'}</span>
-                  <span className="text-muted-foreground">UTR</span>
-                  <span className="font-mono break-all">{p.utr || tr('Not given')}</span>
+                  <span>{p.gateway === 'cashfree' ? tr('Cashfree (automatic)') : (appLabel(p.upiApp) || '-')}</span>
+                  {p.gateway === 'cashfree' ? (<>
+                    <span className="text-muted-foreground">{tr('Order ID')}</span>
+                    <span className="font-mono break-all">{p.gatewayOrderId}</span>
+                  </>) : (<>
+                    <span className="text-muted-foreground">UTR</span>
+                    <span className="font-mono break-all">{p.utr || tr('Not given')}</span>
+                  </>)}
                   <span className="text-muted-foreground">{tr('Marked paid on')}</span>
                   <span>{formatDateTimeIN(p.createdAt)}{p.createdByName ? ` · ${p.createdByName}` : ''}</span>
                   {p.decidedAt && (<>

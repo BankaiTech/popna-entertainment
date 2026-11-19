@@ -14,7 +14,8 @@ export const UPI_APPS: { id: UpiApp; label: string }[] = [
 ];
 
 export type PaymentKind = 'sms' | 'renewal';
-export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+/** created = online (Cashfree) payment started but not paid yet. */
+export type PaymentStatus = 'created' | 'pending' | 'approved' | 'rejected';
 
 export interface PlatformPayment {
   id: number;
@@ -32,6 +33,8 @@ export interface PlatformPayment {
   createdByName: string;
   createdAt: string;
   decidedAt: string | null;
+  gateway: 'upi_qr' | 'cashfree';
+  gatewayOrderId: string;
 }
 
 export interface MyPlan {
@@ -70,6 +73,9 @@ export interface MyPlan {
     upiIds: Record<UpiApp, string>;
     smsNote: string;
     renewalNote: string;
+    /** Cashfree keys set on the server: show "Pay online". */
+    online: boolean;
+    onlineMode: 'sandbox' | 'production';
   };
   payments: PlatformPayment[];
 }
@@ -104,6 +110,14 @@ export const platformBillingApi = {
   reject: async (id: number, note: string): Promise<PlatformPayment> =>
     toCamelCase<PlatformPayment>(unwrapApiData(await apiClient.post(`/platform-payments/${id}/reject`, { note }))),
 
+  /** Operator: start a Cashfree payment. The server works out the amount. */
+  checkout: async (kind: PaymentKind, quantity: number): Promise<{ orderId: string; paymentSessionId: string }> =>
+    toCamelCase(unwrapApiData(await apiClient.post('/platform-payments/checkout', { kind, quantity }))),
+
+  /** Operator: after Cashfree sends them back. The server asks Cashfree; approved only if really paid. */
+  verify: async (orderId: string): Promise<PlatformPayment> =>
+    toCamelCase<PlatformPayment>(unwrapApiData(await apiClient.post('/platform-payments/verify', { order_id: orderId }))),
+
   pendingCount: async (): Promise<number> =>
     Number(unwrapApiData<{ pending: number }>(await apiClient.get('/platform-payments/summary'))?.pending ?? 0),
 };
@@ -117,4 +131,14 @@ export const isPhone = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgen
 export function upiQuery(pa: string, pn: string, amount: number, note: string): string {
   const enc = (v: string) => encodeURIComponent(v).replace(/%40/g, '@');
   return `pa=${enc(pa)}&pn=${enc(pn)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(note)}`;
+}
+
+/** Open Cashfree checkout (UPI, cards, net banking) in this tab. Comes back to Settings > Plan & SMS. */
+export async function payOnline(kind: PaymentKind, quantity: number, mode: 'sandbox' | 'production'): Promise<void> {
+  const { paymentSessionId } = await platformBillingApi.checkout(kind, quantity);
+  const { load } = await import('@cashfreepayments/cashfree-js');
+  const cashfree = await load({ mode });
+  if (!cashfree) throw new Error('Could not open the payment page. Check your internet and try again.');
+  const result = await cashfree.checkout({ paymentSessionId, redirectTarget: '_self' });
+  if (result?.error) throw new Error(result.error.message || 'Payment could not start.');
 }

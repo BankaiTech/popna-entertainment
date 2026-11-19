@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarClock, MessageSquare, Calculator, Receipt, AlertTriangle } from 'lucide-react';
-import { platformBillingApi, type MyPlan, type PlatformPayment } from '@/api/platformBilling';
+import { PAYMENTS_CHANGED_EVENT, platformBillingApi, type MyPlan, type PlatformPayment } from '@/api/platformBilling';
 import UpiPayPanel from '@/components/billing/UpiPayPanel';
 import { formatDateIN, formatDateTimeIN } from '@/lib/subscription';
 import { useLt } from '@/lib/lt';
@@ -77,6 +77,7 @@ export function RenewSection({ plan, onChanged }: { plan: MyPlan; onChanged: () 
             key={`renew-${months}`}
             kind="renewal" quantity={months} amount={fee * months} note={plan.pay.renewalNote}
             payeeName={plan.pay.payeeName} upiIds={plan.pay.upiIds} onClaimed={onChanged}
+            online={plan.pay.online} onlineMode={plan.pay.onlineMode}
           />
         </div>
       )}
@@ -88,6 +89,7 @@ function PaymentHistory({ payments }: { payments: PlatformPayment[] }) {
   const tr = useLt();
   if (payments.length === 0) return null;
   const status = (s: PlatformPayment['status']) => ({
+    created: [tr('Not completed'), 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'],
     pending: [tr('Waiting for check'), 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'],
     approved: [tr('Approved'), 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'],
     rejected: [tr('Rejected'), 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'],
@@ -105,7 +107,8 @@ function PaymentHistory({ payments }: { payments: PlatformPayment[] }) {
                   {' · '}{rupees(p.amount)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDateTimeIN(p.createdAt)}{p.utr && <> · UTR <span className="font-mono">{p.utr}</span></>}
+                  {formatDateTimeIN(p.createdAt)}
+                  {p.gateway === 'cashfree' ? <> · {tr('Paid online')}</> : p.utr && <> · UTR <span className="font-mono">{p.utr}</span></>}
                 </p>
                 {p.status === 'rejected' && p.adminNote && <p className="text-xs text-red-600">{p.adminNote}</p>}
               </div>
@@ -134,6 +137,11 @@ export default function PlanAndSms() {
     }
   }, [tr]);
   useEffect(() => { load(); }, [load]);
+  // Reload after an online payment is checked (see useCashfreeReturn).
+  useEffect(() => {
+    window.addEventListener(PAYMENTS_CHANGED_EVENT, load);
+    return () => window.removeEventListener(PAYMENTS_CHANGED_EVENT, load);
+  }, [load]);
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!plan) return <p className="text-sm text-muted-foreground py-8 text-center">{tr('Loading...')}</p>;
@@ -221,6 +229,7 @@ export default function PlanAndSms() {
             key={`sms-${qty}`}
             kind="sms" quantity={qty} amount={Math.round(qty * rate * 100) / 100} note={plan.pay.smsNote}
             payeeName={plan.pay.payeeName} upiIds={plan.pay.upiIds} onClaimed={load}
+            online={plan.pay.online} onlineMode={plan.pay.onlineMode}
           />
         )}
       </Section>

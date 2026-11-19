@@ -241,7 +241,8 @@ class PlatformPaymentSerializer(serializers.ModelSerializer):
         model = PlatformPayment
         fields = [
             "id", "organization", "organization_name", "organization_code", "kind", "quantity", "rate", "amount",
-            "upi_app", "utr", "status", "admin_note", "created_by_name", "created_at", "decided_at",
+            "upi_app", "utr", "status", "admin_note", "created_by_name", "created_at", "decided_at", "gateway",
+            "gateway_order_id",
         ]
         read_only_fields = fields
 

@@ -24,6 +24,7 @@ import type { SubscriptionState } from '@/models/types';
 import { tr } from '@/lib/lt';
 import { platformBillingApi, type MyPlan } from '@/api/platformBilling';
 import { RenewSection } from '@/components/settings/lco/PlanAndSms';
+import { useCashfreeReturn } from '@/lib/cashfreeReturn';
 
 const REDIRECT_SECONDS = 6;
 
@@ -33,6 +34,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const org = useOrganizationStore((s) => s.currentOrganization);
   const navigate = useNavigate();
   const isOperatorUser = role === 'admin' || role === 'employee';
+  // Back from Cashfree (?order_id=...): check the payment. Works on the renewal screen too.
+  useCashfreeReturn(isOperatorUser && !isMockMode());
 
   const [checked, setChecked] = useState(!isOperatorUser);
   const [blocked, setBlocked] = useState<{ state: SubscriptionState; message: string } | null>(null);

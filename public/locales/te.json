@@ -2635,5 +2635,21 @@
   "Paid to": "ఎవరికి చెల్లించారు",
   "Not given": "ఇవ్వలేదు",
   "Marked paid on": "చెల్లించినట్లు గుర్తించిన సమయం",
-  "Checked on": "తనిఖీ చేసిన సమయం"
+  "Checked on": "తనిఖీ చేసిన సమయం",
+  "Payment received. {{n}} SMS added.": "చెల్లింపు అందింది. {{n}} SMS జోడించబడ్డాయి.",
+  "Payment received. Subscription renewed.": "చెల్లింపు అందింది. సబ్‌స్క్రిప్షన్ పునరుద్ధరించబడింది.",
+  "Payment was not completed.": "చెల్లింపు పూర్తి కాలేదు.",
+  "Payment is being confirmed. Check again in a few minutes.": "చెల్లింపు నిర్ధారించబడుతోంది. కొన్ని నిమిషాల తర్వాత మళ్ళీ చూడండి.",
+  "Could not check the payment now.": "ఇప్పుడు చెల్లింపును తనిఖీ చేయలేకపోయాం.",
+  "Not completed": "పూర్తి కాలేదు",
+  "Paid online": "ఆన్‌లైన్‌లో చెల్లించారు",
+  "Cashfree (automatic)": "Cashfree (ఆటోమేటిక్)",
+  "Order ID": "ఆర్డర్ ID",
+  "Online (Cashfree) payments are approved automatically and appear under Approved.": "ఆన్‌లైన్ (Cashfree) చెల్లింపులు ఆటోమేటిక్‌గా ఆమోదించబడి Approved లో కనిపిస్తాయి.",
+  "Could not open the payment page.": "చెల్లింపు పేజీ తెరవలేకపోయాం.",
+  "Opening...": "తెరుస్తోంది...",
+  "Pay ₹{{amount}} online": "₹{{amount}} ఆన్‌లైన్‌లో చెల్లించండి",
+  "Pay by UPI QR": "UPI QR ద్వారా చెల్లించండి",
+  "Online: UPI, card or net banking. Added at once. UPI QR: added after LCO Desk checks it.": "ఆన్‌లైన్: UPI, కార్డ్ లేదా నెట్ బ్యాంకింగ్. వెంటనే జోడించబడుతుంది. UPI QR: LCO Desk తనిఖీ చేసిన తర్వాత జోడించబడుతుంది.",
+  "Could not open the payment page. Check your internet and try again.": "చెల్లింపు పేజీ తెరవలేకపోయాం. ఇంటర్నెట్ చూసి మళ్ళీ ప్రయత్నించండి."
 }

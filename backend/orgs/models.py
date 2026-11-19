@@ -217,9 +217,14 @@ class PlatformPayment(TimeStampedModel):
         RENEWAL = "renewal", "Subscription renewal"
 
     class Status(models.TextChoices):
+        CREATED = "created", "Online payment started"   # Cashfree order made, not paid yet
         PENDING = "pending", "Waiting for check"
         APPROVED = "approved", "Approved"
         REJECTED = "rejected", "Rejected"
+
+    class Gateway(models.TextChoices):
+        UPI_QR = "upi_qr", "UPI QR (manual check)"
+        CASHFREE = "cashfree", "Cashfree (automatic)"
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="platform_payments")
     kind = models.CharField(max_length=10, choices=Kind.choices)
@@ -230,6 +235,8 @@ class PlatformPayment(TimeStampedModel):
     utr = models.CharField(max_length=30, blank=True, help_text="UPI reference / UTR number (optional)")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
     admin_note = models.CharField(max_length=300, blank=True)
+    gateway = models.CharField(max_length=10, choices=Gateway.choices, default=Gateway.UPI_QR)
+    gateway_order_id = models.CharField(max_length=45, blank=True, db_index=True)  # our order_id at Cashfree
     created_by = models.ForeignKey("accounts.User", null=True, on_delete=models.SET_NULL, related_name="+")
     decided_by = models.ForeignKey("accounts.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     decided_at = models.DateTimeField(null=True, blank=True)
