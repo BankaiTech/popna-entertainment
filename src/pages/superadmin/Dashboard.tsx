@@ -1,4 +1,5 @@
 // Super Admin Dashboard - LCO Desk: Organizations, subscriptions, tenant overview
+import { tr } from '@/lib/lt';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -235,7 +236,7 @@ const SuperAdminDashboard = () => {
                               getStatusColor(org.status)
                             )}
                           >
-                            {org.status}
+                            {({ active: tr('Active'), inactive: tr('Inactive'), suspended: tr('Suspended') } as Record<string, string>)[org.status] ?? org.status}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-sm text-muted-foreground">

@@ -190,6 +190,7 @@ const Organizations = () => {
             smsRate: String(org.smsRate ?? 0.3),
             smsCredits: String(org.smsCredits ?? 0),
             appLanguage: org.appLanguage ?? '',
+            ownerMobile: org.ownerMobile ?? '',
         });
         setFormOpen(true);
     };
@@ -210,6 +211,7 @@ const Organizations = () => {
             smsRate: Math.max(0, Number(form.smsRate) || 0),
             smsCredits: Math.max(0, Math.floor(Number(form.smsCredits) || 0)),
             appLanguage: form.appLanguage,
+            ownerMobile: form.ownerMobile.trim(),
         };
         const ok = editing
             ? await run(() => organizationsApi.update(editing.id, common), tr('Operator updated'))
@@ -225,7 +227,6 @@ const Organizations = () => {
                         ownerName: form.ownerName.trim(),
                         ownerUsername: form.ownerUsername.trim(),
                         ownerPassword: form.ownerPassword,
-                        ownerMobile: form.ownerMobile.trim(),
                     }),
                 tr('Operator created'),
             );
@@ -389,6 +390,12 @@ const Organizations = () => {
                                         />
                                         <span className="block text-xs text-muted-foreground mt-1">{tr("Used in receipt numbers. Can't be changed later.")}</span>
                                     </label>
+                                        <label className="block text-sm">
+                                            <span className="block font-medium mb-1">{tr('Mobile')}</span>
+                                            <Input inputMode="numeric" maxLength={10} value={form.ownerMobile}
+                                                onChange={(e) => setForm({ ...form, ownerMobile: e.target.value.replace(/\D/g, '') })} />
+                                            <span className="block text-xs text-muted-foreground mt-1">{tr('Also used as their business phone if they have not set one.')}</span>
+                                        </label>
                                     <label className="block text-sm">
                                         <span className="block font-medium mb-1">{tr('App language')}</span>
                                         <select className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
@@ -408,11 +415,6 @@ const Organizations = () => {
                                         <label className="block text-sm">
                                             <span className="block font-medium mb-1">{tr('Owner name')}</span>
                                             <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} />
-                                        </label>
-                                        <label className="block text-sm">
-                                            <span className="block font-medium mb-1">{tr('Owner mobile')}</span>
-                                            <Input inputMode="numeric" maxLength={10} value={form.ownerMobile}
-                                                onChange={(e) => setForm({ ...form, ownerMobile: e.target.value.replace(/\D/g, '') })} />
                                         </label>
                                         <label className="block text-sm">
                                             <span className="block font-medium mb-1">{tr('Username')}</span>

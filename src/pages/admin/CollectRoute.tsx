@@ -53,7 +53,7 @@ const CollectRoute = () => {
       <div className="flex items-end justify-between gap-2">
         <div>
           <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2"><Wallet className="w-5 h-5" /> {tr('Collect')}</h1>
-          <p className="text-sm text-muted-foreground">{shown.length} customers · ₹{totalDue.toLocaleString('en-IN')} due</p>
+          <p className="text-sm text-muted-foreground">{tr('{{n}} customers · ₹{{amount}} due', { n: shown.length, amount: totalDue.toLocaleString('en-IN') })}</p>
         </div>
       </div>
 

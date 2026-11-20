@@ -148,6 +148,9 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
         owner_username = validated_data.pop("owner_username", None)
         owner_password = validated_data.pop("owner_password", None)
         validated_data.pop("renew_months", None)
+        # The mobile the app owner types is the operator's phone too (Business Profile > Phone).
+        if validated_data.get("owner_mobile") and not validated_data.get("contact_phone"):
+            validated_data["contact_phone"] = validated_data["owner_mobile"]
         org = super().create(validated_data)
         if owner_username:
             user = User(username=owner_username, name=owner_name, role=Roles.OWNER, organization=org,
@@ -159,6 +162,8 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
     def update(self, instance, validated_data):
         for key in ("owner_name", "owner_username", "owner_password"):
             validated_data.pop(key, None)
+        if validated_data.get("owner_mobile") and not (validated_data.get("contact_phone") or instance.contact_phone):
+            validated_data["contact_phone"] = validated_data["owner_mobile"]
         months = validated_data.pop("renew_months", None)
         if months:
             # Renew from the current end date, or from today if it has already ended.

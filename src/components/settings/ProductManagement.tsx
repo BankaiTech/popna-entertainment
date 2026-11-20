@@ -214,6 +214,11 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { setError(t('productManagement.nameRequired', 'Name is required')); return; }
+    // Cable: bills, reminder SMS and the cut-off list all use this provider's cut-off date.
+    if (isIsp && form.productType === 'cable' && !form.cutoffDate) {
+      setError(tr('Choose the cut-off date. Reminders and the cut-off list use it.'));
+      return;
+    }
     setSaving(true);
     try {
       await onSubmit(form);
@@ -232,7 +237,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
       <DialogHeader
         title={editing
           ? t('productManagement.editItem', 'Edit {{name}}', { name: editing.name })
-          : t('productManagement.addNew', 'Add New Category')}
+          : isIsp ? tr('Add provider') : t('productManagement.addNew', 'Add New Category')}
         onClose={onClose}
       />
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
@@ -309,7 +314,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
           {isIsp && form.productType === 'cable' && (
             <div>
               <label className="block text-sm font-medium mb-1.5 text-foreground">
-                {t('productManagement.cutoffDate', 'Monthly Cutoff Day')}
+                {t('productManagement.cutoffDate', 'Monthly Cutoff Day')} <span className="text-destructive">*</span>
               </label>
               <Select
                 value={form.cutoffDate?.toString() ?? ''}
@@ -327,7 +332,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
                 ))}
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                {t('productManagement.cutoffDateHint', 'Subscriber\'s cable service renews on this day each month')}
+                {tr('Bills of this provider are due on this day. Reminder SMS go before it, and unpaid customers show in the cut-off list after it.')}
               </p>
             </div>
           )}
@@ -336,19 +341,19 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
           {isIsp && form.productType === 'internet' && (
             <div>
               <label className="block text-sm font-medium mb-1.5 text-foreground">
-                {t('productManagement.cutoffDays', 'Grace Period After Due Date (days)')}
+                {tr('Days per recharge')}
               </label>
               <Input
                 type="number"
                 min="1"
-                max="30"
+                max="90"
                 value={form.cutoffDays ?? ''}
                 onChange={(e) => setForm({ ...form, cutoffDays: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="e.g., 5"
+                placeholder={tr('e.g. {{n}}', { n: 30 })}
                 disabled={saving}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {t('productManagement.cutoffDaysHint', 'Internet service is suspended N days after the due date if unpaid')}
+                {tr('Internet stays on for this many days after each payment. Usually 30.')}
               </p>
             </div>
           )}
@@ -410,7 +415,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, editing, industryType }: 
               ? t('common.saving', 'Saving...')
               : editing
                 ? t('common.saveChanges', 'Save Changes')
-                : t('productManagement.addCategory', 'Add Category')}
+                : isIsp ? tr('Add provider') : t('productManagement.addCategory', 'Add Category')}
           </Button>
         </DialogFooter>
       </form>
@@ -463,7 +468,7 @@ const ProductManagement = () => {
       return t('productManagement.cutoffDayLabel', 'Cutoff: {{day}}{{suffix}} each month', { day: d, suffix });
     }
     if (product.productType === 'internet' && product.cutoffDays) {
-      return t('productManagement.cutoffGraceLabel', 'Grace: {{days}} days after due', { days: product.cutoffDays });
+      return tr('{{n}} days per recharge', { n: product.cutoffDays });
     }
     return null;
   };

@@ -106,6 +106,8 @@ export interface Organization {
   smsFreeUsed?: number;
   /** App language for the operator's staff ('' = English) */
   appLanguage?: string;
+  /** Owner's mobile (also the business phone unless the operator changes it) */
+  ownerMobile?: string;
   /** Industry type selected during signup */
   industryType?: IndustryType;
   /** Terminology overrides for industry-specific labels */

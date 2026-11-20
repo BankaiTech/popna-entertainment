@@ -53,13 +53,13 @@ export function DocLines({ lines, onChange, validateSerial }: Props) {
                 validate={async (code) => (allSerials.includes(code) ? tr('{{code}} is already on another line', { code }) : validateSerial(l, code))} />
             )}
             <div className="grid grid-cols-3 gap-2 text-xs">
-              <label>Qty
+              <label>{tr('Qty')}
                 <input type="number" min={0} className={`${cell} w-full`} value={lineQty(l)} disabled={l.item.trackSerials}
                   onChange={(e) => update(l.key, { quantity: Number(e.target.value) })} /></label>
-              <label>Price ₹
+              <label>{tr('Price ₹')}
                 <input type="number" min={0} className={`${cell} w-full`} value={l.unitPrice}
                   onChange={(e) => update(l.key, { unitPrice: Number(e.target.value) })} /></label>
-              <label>GST %
+              <label>{tr('GST %')}
                 <select className={`${cell} w-full`} value={l.gstRate} onChange={(e) => update(l.key, { gstRate: Number(e.target.value) })}>
                   {[0, 5, 12, 18, 28].map((g) => <option key={g} value={g}>{g}</option>)}
                 </select></label>
@@ -77,7 +77,7 @@ export function TotalsBox({ lines }: { lines: DraftLine[] }) {
   return (
     <dl className="rounded-xl bg-muted/40 p-3 text-sm grid grid-cols-2 gap-1">
       <dt>{tr('Taxable')}</dt><dd className="text-right">{rupees(t.taxable)}</dd>
-      <dt>GST (CGST + SGST)</dt><dd className="text-right">{rupees(t.gst)}</dd>
+      <dt>{tr('GST (CGST + SGST)')}</dt><dd className="text-right">{rupees(t.gst)}</dd>
       <dt className="font-bold">{tr('Total')}</dt><dd className="text-right font-bold">{rupees(t.total)}</dd>
     </dl>
   );

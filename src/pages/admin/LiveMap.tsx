@@ -163,8 +163,8 @@ const LiveMap = () => {
       <div ref={mapEl} className="h-[60vh] min-h-[360px] w-full rounded-xl border border-border overflow-hidden z-0" />
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-600" /> Location in last {STALE_MINUTES} min</span>
-        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-400" /> Older (app closed or GPS off)</span>
+        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-600" /> {tr('Location in last {{n}} min', { n: STALE_MINUTES })}</span>
+        <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-400" /> {tr('Older (app closed or GPS off)')}</span>
         <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500" /> {tr('Collection')}</span>
       </div>
 

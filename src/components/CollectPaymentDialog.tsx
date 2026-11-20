@@ -113,7 +113,7 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
             </div>
 
             <label className="block text-sm">
-              <span className="block font-medium mb-1">Amount collected (₹)</span>
+              <span className="block font-medium mb-1">{tr('Amount collected (₹)')}</span>
               <Input type="number" inputMode="decimal" min={0} step="0.01" value={amount}
                 onChange={(e) => setAmount(e.target.value)} autoFocus />
             </label>
@@ -129,13 +129,13 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
 
             {isOffice && (
               <label className="block text-sm">
-                <span className="block font-medium mb-1">Discount (₹) — owner / manager only</span>
+                <span className="block font-medium mb-1">{tr('Discount (₹) — owner / manager only')}</span>
                 <Input type="number" min={0} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0" />
               </label>
             )}
 
             <label className="block text-sm">
-              <span className="block font-medium mb-1">Note (optional)</span>
+              <span className="block font-medium mb-1">{tr('Note (optional)')}</span>
               <Input value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />
             </label>
 

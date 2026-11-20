@@ -122,18 +122,18 @@ const Stock = () => {
                 </select></label>
               <label><span className="block font-medium mb-1">{tr('Brand')}</span>
                 <input className={input} value={editing.brand} onChange={(e) => set('brand', e.target.value)} /></label>
-              <label className="col-span-2"><span className="block font-medium mb-1">Product barcode (optional)</span>
+              <label className="col-span-2"><span className="block font-medium mb-1">{tr('Product barcode (optional)')}</span>
                 <input className={`${input} font-mono`} value={editing.barcode} onChange={(e) => set('barcode', e.target.value)}
                   placeholder={tr('Scan the box barcode here')} />
                 {errors.barcode && <span className="text-xs text-red-600">{errors.barcode}</span>}</label>
               <label className="col-span-2 flex items-center gap-2">
                 <input type="checkbox" checked={!!editing.trackSerials} disabled={!!editing.id}
                   onChange={(e) => set('trackSerials', e.target.checked)} />
-                <span>Scan a serial number for every piece (STB, ONU, router)</span></label>
+                <span>{tr('Scan a serial number for every piece (STB, ONU, router)')}</span></label>
               {errors.trackSerials && <span className="col-span-2 text-xs text-red-600">{errors.trackSerials}</span>}
-              <label><span className="block font-medium mb-1">Purchase price (₹)</span>
+              <label><span className="block font-medium mb-1">{tr('Purchase price (₹)')}</span>
                 <input type="number" className={input} value={editing.purchasePrice} onChange={(e) => set('purchasePrice', e.target.value)} /></label>
-              <label><span className="block font-medium mb-1">Sale price (₹)</span>
+              <label><span className="block font-medium mb-1">{tr('Sale price (₹)')}</span>
                 <input type="number" className={input} value={editing.salePrice} onChange={(e) => set('salePrice', e.target.value)} /></label>
               <label><span className="block font-medium mb-1">{tr('GST %')}</span>
                 <select className={input} value={Number(editing.gstRate)} onChange={(e) => set('gstRate', e.target.value)}>

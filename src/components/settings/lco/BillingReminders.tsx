@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import type { OperatorSettings } from '@/api/operatorSettings';
+import { useStore } from '@/store/useStore';
 import { Field, inputClass, SaveBar, Section, Toggle, useOperatorSettings } from './SettingsUI';
 import { tr } from '@/lib/lt';
 
 const FIELDS: (keyof OperatorSettings)[] = [
-  'defaultDueDay', 'reminderDaysBefore', 'secondReminderDaysBefore', 'internetRemindersEnabled',
+  'reminderDaysBefore', 'secondReminderDaysBefore', 'internetRemindersEnabled',
   'internetPaymentSmsEnabled',
   'trackingEnabled', 'requireGpsForCollection', 'requireCheckinForCollection',
 ];
@@ -11,17 +15,36 @@ const days = (n: number) => (n === 0 ? tr('On the due date') : n === 1 ? tr('1 d
 
 const BillingReminders = () => {
   const { settings: s, set, save, saving, errors, dirty } = useOperatorSettings();
+  const { products, fetchProducts } = useStore();
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const cable = (Array.isArray(products) ? products : []).filter((p) => p.productType === 'cable' && p.isActive !== false);
   if (!s) return <p className="py-8 text-center text-muted-foreground">{tr('Loading…')}</p>;
 
   return (
     <div className="space-y-4">
-      <Section title={tr('Due dates')}
-        hint={tr('Cable is due on a fixed day every month (the provider\'s cut-off day). Internet is due when the plan expires.')}>
-        <Field label={tr('Default cable due day')} hint={tr('Used when a provider or customer has no due day of its own.')} error={errors.defaultDueDay}>
-          <select className={inputClass} value={s.defaultDueDay} onChange={(e) => set('defaultDueDay', Number(e.target.value))}>
-            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{tr('{{d}} of every month', { d })}</option>)}
-          </select>
-        </Field>
+      <Section title={tr('Cut-off dates')}
+        hint={tr('Each cable provider has its own cut-off date. Reminder SMS are sent before it. Internet is due when the plan expires.')}>
+        {cable.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{tr('No cable providers yet.')}</p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {cable.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+                <span className="font-medium truncate">{p.name}</span>
+                {p.cutoffDate ? (
+                  <span className="shrink-0">{tr('{{d}} of every month', { d: p.cutoffDate })}</span>
+                ) : (
+                  <span className="shrink-0 inline-flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                    <AlertTriangle className="w-4 h-4" />{tr('Not set')}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link to="/admin/settings?tab=products" className="inline-block text-sm font-medium text-primary">
+          {tr('Change in Providers & Plans')} →
+        </Link>
       </Section>
 
       <Section title={tr('Reminder SMS')} hint={tr('Sent at 9 AM. Cable reminders are always on.')}>

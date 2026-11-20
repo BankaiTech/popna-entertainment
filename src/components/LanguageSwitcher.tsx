@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, Check } from 'lucide-react';
 import { supportedLanguages, setLanguage } from '@/i18n';
 import { authApi } from '@/api/auth';
+import { tr } from '@/lib/lt';
 import { isMockMode } from '@/lib/apiHelpers';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
@@ -39,7 +40,7 @@ export default function LanguageSwitcher({ triggerClassName }: { triggerClassNam
           'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
           triggerClassName || 'border border-border bg-card hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
         )}
-        aria-label="Select language"
+        aria-label={tr('Select language')}
       >
         <span className="min-w-[4rem] text-left">{labels[current.code] ?? current.label}</span>
         <ChevronDown className="w-4 h-4 shrink-0" />

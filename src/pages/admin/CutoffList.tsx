@@ -66,7 +66,7 @@ const CutoffList = () => {
                 </p>
                 <p className="text-xs text-red-600 mt-0.5">
                   {r.category === 'cable' ? tr('Cut-off date') : tr('Expired on')} {formatDateIN(r.since)}
-                  {r.balance ? ` · Due ₹${Number(r.balance).toLocaleString('en-IN')}` : ''}
+                  {r.balance ? ` · ${tr('Due ₹{{amount}}', { amount: Number(r.balance).toLocaleString('en-IN') })}` : ''}
                 </p>
               </div>
               <a href={`tel:${r.mobile}`} className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-border text-sm">

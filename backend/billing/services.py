@@ -32,6 +32,28 @@ def due_date_for(customer, period):
     return date(period.year, period.month, min(customer.effective_due_day(), last_day))
 
 
+def refresh_due_dates(provider, today=None):
+    """
+    A cable provider's cut-off date changed: move the due date of this and later months' open bills
+    of its customers (those without their own due day), so reminders and the cut-off list follow it.
+    Returns how many bills changed.
+    """
+    today = today or timezone.localdate()
+    bills = Bill.objects.filter(
+        organization_id=provider.organization_id, period__gte=month_start(today),
+        status__in=[Bill.Status.UNPAID, Bill.Status.PARTIAL], customer__due_day__isnull=True,
+        customer__plan__category="cable", customer__plan__provider__iexact=provider.name,
+    ).select_related("customer__plan", "customer__organization")
+    changed = 0
+    for bill in bills:
+        new_due = due_date_for(bill.customer, bill.period)
+        if bill.due_date != new_due:
+            bill.due_date = new_due
+            bill.save(update_fields=["due_date"])
+            changed += 1
+    return changed
+
+
 def get_or_create_bill(customer, period):
     bill, _ = Bill.objects.get_or_create(
         customer=customer,

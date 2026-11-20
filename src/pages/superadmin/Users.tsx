@@ -420,8 +420,8 @@ const SuperAdminUsers = () => {
                 {ROLE_CHOICE && <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select value={addRole} onChange={(e) => setAddRole(e.target.value as SuperAdminRole)} disabled={addSaving}>
-                    <option value="super_admin">Super Admin</option>
-                    <option value="manager">Manager</option>
+                    <option value="super_admin">{t('superAdmin.roleName', 'Super Admin')}</option>
+                    <option value="manager">{t('superAdmin.managerRole', 'Manager')}</option>
                   </Select>
                 </div>}
                 <div>
@@ -472,8 +472,8 @@ const SuperAdminUsers = () => {
                 {ROLE_CHOICE && <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
                   <Select value={editRole} onChange={(e) => setEditRole(e.target.value as SuperAdminRole)} disabled={editSaving}>
-                    <option value="super_admin">Super Admin</option>
-                    <option value="manager">Manager</option>
+                    <option value="super_admin">{t('superAdmin.roleName', 'Super Admin')}</option>
+                    <option value="manager">{t('superAdmin.managerRole', 'Manager')}</option>
                   </Select>
                 </div>}
                 <div>

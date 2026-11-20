@@ -166,3 +166,57 @@ class AppLanguageTests(TestCase):
         c = client_for(owner)
         self.assertEqual(c.patch("/api/auth/me", {"language": "en"}, format="json").json()["language"], "en")
         self.assertEqual(c.patch("/api/auth/me", {"language": "xx"}, format="json").status_code, 400)
+
+
+class ProviderCutoffTests(TestCase):
+    def setUp(self):
+        from customers.models import Plan, Provider
+
+        self.org = make_org("CUT")
+        self.owner = make_user("cut_owner", Roles.OWNER, self.org)
+        self.c = client_for(self.owner)
+        self.gtpl = Provider.objects.create(organization=self.org, name="GTPL", category="cable", cutoff_day=10)
+        self.plan = Plan.objects.create(organization=self.org, provider="GTPL", name="Basic", category="cable",
+                                        price="230")
+
+    def test_cable_provider_needs_cutoff_date(self):
+        r = self.c.post("/api/products", {"name": "TCCL", "product_type": "cable"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("cutoff_date", r.json())
+        r = self.c.post("/api/products", {"name": "RailWire", "product_type": "internet"}, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+
+    def test_changing_cutoff_moves_open_bills_and_rename_keeps_plans(self):
+        from datetime import date
+
+        from billing.models import Bill
+        from billing.services import due_date_for, month_start
+        from customers.models import Plan
+        from django.utils import timezone
+
+        cust = make_customer(self.org, self.plan)
+        period = month_start(timezone.localdate())
+        bill = Bill.objects.create(organization=self.org, customer=cust, period=period, amount_due="230",
+                                   due_date=due_date_for(cust, period))
+        self.assertEqual(bill.due_date.day, 10)
+        r = self.c.patch(f"/api/products/{self.gtpl.id}", {"cutoff_date": 15, "name": "GTPL Digital"}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+        bill.refresh_from_db()
+        self.assertEqual(bill.due_date, date(period.year, period.month, 15))
+        self.assertEqual(Plan.objects.get(pk=self.plan.pk).provider, "GTPL Digital")
+
+
+class OperatorPhoneTests(TestCase):
+    def test_owner_mobile_from_app_owner_shows_as_business_phone(self):
+        admin = make_user("phone_admin", Roles.PLATFORM_ADMIN)
+        r = client_for(admin).post("/api/organizations", {
+            "name": "Phone Cable", "code": "PHONE1", "owner_mobile": "9876501234",
+            "owner_username": "phone_owner", "owner_password": "Strong#Pass123",
+        }, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.json()["contact_phone"], "9876501234")
+        org_id = r.json()["id"]
+        from accounts.models import User
+
+        owner = User.objects.get(username="phone_owner")
+        self.assertEqual(client_for(owner).get(f"/api/organizations/{org_id}").json()["contact_phone"], "9876501234")

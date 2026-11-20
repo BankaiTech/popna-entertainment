@@ -51,6 +51,11 @@ class ProviderSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance is None:
             check_limit(require_org(self.context["request"].user), "providers")
+        category = attrs.get("category", getattr(self.instance, "category", None))
+        cutoff = attrs["cutoff_day"] if "cutoff_day" in attrs else getattr(self.instance, "cutoff_day", None)
+        # Each cable provider has its own cut-off date: bills, reminders and the cut-off list use it.
+        if category == "cable" and not cutoff:
+            raise serializers.ValidationError({"cutoff_date": "Set the cut-off date (1-28) for this cable provider."})
         return attrs
 
     def validate_name(self, value):

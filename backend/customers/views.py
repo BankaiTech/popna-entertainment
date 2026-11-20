@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from billing.models import Bill, Payment
-from billing.services import month_start
+from billing.services import month_start, refresh_due_dates
 from core.audit import audit
 from core.mixins import OrgScopedViewSet, require_org
 from core.permissions import Roles, role_in
@@ -32,6 +32,17 @@ class ProviderViewSet(OrgScopedViewSet):
     serializer_class = ProviderSerializer
     filterset_fields = ["category", "is_active"]
     search_fields = ["name"]
+
+    def perform_update(self, serializer):
+        old_name, old_cutoff = serializer.instance.name, serializer.instance.cutoff_day
+        with transaction.atomic():
+            provider = serializer.save()
+            # Plans point to their provider by name: keep them linked after a rename.
+            if provider.name != old_name:
+                Plan.objects.filter(organization=provider.organization, provider__iexact=old_name).update(
+                    provider=provider.name)
+            if provider.category == "cable" and provider.cutoff_day != old_cutoff:
+                refresh_due_dates(provider)
 
     def perform_destroy(self, instance):
         if Plan.objects.filter(organization=instance.organization, provider__iexact=instance.name).exists():

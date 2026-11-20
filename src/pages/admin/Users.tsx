@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supportedLanguages } from '@/i18n';
 import { tr } from '@/lib/lt';
+import { formatDateIN } from '@/lib/subscription';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -205,8 +206,10 @@ const AdminUsers = () => {
     setModules(modules.includes(mod) ? modules.filter((m) => m !== mod) : [...modules, mod]);
   };
 
-  const formatDate = (s: string) =>
-    new Date(s).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+  const formatDate = (s: string) => formatDateIN(s.slice(0, 10));
+  const roleLabel = (u: User) => ({
+    owner: tr('Owner'), manager: tr('Manager'), agent: tr('Collection agent'), technician: tr('Technician'),
+  } as Record<string, string>)[u.lcoRole ?? ''] ?? (u.role === 'admin' ? tr('Admin') : tr('Staff'));
 
   // Filter users by status
   const filteredUsers = useMemo(() => {
@@ -392,7 +395,7 @@ const AdminUsers = () => {
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.id}</td>
                         <td className="px-3 py-2 text-sm font-medium text-foreground">{u.name}</td>
                         <td className="px-3 py-2 text-sm font-normal text-gray-600">{u.username}</td>
-                        <td className="px-3 py-2 text-sm font-normal text-gray-600 capitalize">{u.role}</td>
+                        <td className="px-3 py-2 text-sm font-normal text-gray-600">{roleLabel(u)}</td>
                         <td className="px-3 py-2">
                           <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium", u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                             {u.status === 'active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
@@ -444,7 +447,7 @@ const AdminUsers = () => {
                     </div>
                     <div className="text-sm">
                       <span className="text-muted-foreground">{t('users.colRole', 'Role')}: </span>
-                      <span className="capitalize">{u.role}</span>
+                      <span>{roleLabel(u)}</span>
                     </div>
                     {u.role === 'employee' && u.allowedModules && u.allowedModules.length > 0 && (
                       <div className="text-sm">

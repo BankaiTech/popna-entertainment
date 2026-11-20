@@ -109,7 +109,7 @@ const LcoDashboard = () => {
           icon={IndianRupee} tone="text-green-600" />
         <Card title={tr('Still to collect')} value={rs(pending)} sub={tr('{{n}} unpaid bills', { n: m.pending_bills })} icon={AlertTriangle}
           tone="text-amber-600" to="/admin/collect" />
-        <Card title={tr('To cut off today')} value={cutoff == null ? '—' : String(cutoff)} sub="Unpaid after cut-off / expired"
+        <Card title={tr('To cut off today')} value={cutoff == null ? '—' : String(cutoff)} sub={tr('Unpaid after cut-off / expired')}
           icon={ScissorsLineDashed} tone="text-red-600" to="/admin/cutoff" />
       </div>
 
@@ -140,7 +140,8 @@ const LcoDashboard = () => {
           <h2 className="font-semibold mb-3">{tr('Customers by provider')}</h2>
           {stats.by_provider.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No customers yet. Add providers and plans in <Link to="/admin/settings" className="text-blue-600">{tr('Settings')}</Link>, then add customers.
+              {tr('No customers yet.')}{' '}
+              <Link to="/admin/settings?tab=products" className="text-blue-600">{tr('Add providers and plans in Settings, then add customers.')}</Link>
             </p>
           ) : (
             <table className="w-full text-sm">
@@ -151,7 +152,7 @@ const LcoDashboard = () => {
                 {stats.by_provider.map((p) => (
                   <tr key={`${p.provider}-${p.category}`}>
                     <td className="py-2">{p.provider}</td>
-                    <td className="py-2 capitalize">{p.category}</td>
+                    <td className="py-2">{p.category === 'cable' ? tr('Cable') : tr('Internet')}</td>
                     <td className="py-2 text-right font-medium">{p.active}</td>
                     <td className="py-2 text-right text-muted-foreground">{p.inactive}</td>
                   </tr>

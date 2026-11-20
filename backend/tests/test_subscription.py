@@ -126,7 +126,7 @@ class LimitTests(TestCase):
         self.c = client_for(make_user("owner", Roles.OWNER, self.org))
 
     def test_provider_limit(self):
-        self.assertEqual(self.c.post("/api/products", {"name": "GTPL", "product_type": "cable"},
+        self.assertEqual(self.c.post("/api/products", {"name": "GTPL", "product_type": "cable", "cutoff_date": 10},
                                      format="json").status_code, 201)
         res = self.c.post("/api/products", {"name": "BSNL", "product_type": "internet"}, format="json")
         self.assertEqual(res.status_code, 400)
@@ -145,7 +145,7 @@ class LimitTests(TestCase):
         self.org.max_providers = None
         self.org.save()
         for name in ("A", "B", "C"):
-            self.assertEqual(self.c.post("/api/products", {"name": name, "product_type": "cable"},
+            self.assertEqual(self.c.post("/api/products", {"name": name, "product_type": "cable", "cutoff_date": 10},
                                          format="json").status_code, 201)
 
 
