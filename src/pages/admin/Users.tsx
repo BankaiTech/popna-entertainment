@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { supportedLanguages } from '@/i18n';
 import { tr } from '@/lib/lt';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -57,6 +58,8 @@ const AdminUsers = () => {
   const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<'admin' | 'employee'>('employee');
   const [addStatus, setAddStatus] = useState<'active' | 'inactive'>('active');
+  const [addLanguage, setAddLanguage] = useState('');
+  const [editLanguage, setEditLanguage] = useState('');
   const [addAllowedModules, setAddAllowedModules] = useState<ModuleKey[]>(DEFAULT_AGENT_MODULES);
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
@@ -106,6 +109,7 @@ const AdminUsers = () => {
     setAddPassword('');
     setAddRole('employee');
     setAddStatus('active');
+    setAddLanguage('');
     setAddAllowedModules(defaultAgentModules);
     setAddError('');
     setIsAddOpen(true);
@@ -134,6 +138,7 @@ const AdminUsers = () => {
         name, username, password,
         role: addRole,
         status: addStatus,
+        language: addLanguage,
         allowedModules: addRole === 'employee' ? addAllowedModules : undefined,
       });
       await loadUsers();
@@ -152,6 +157,7 @@ const AdminUsers = () => {
     setEditPassword('');
     setEditRole(user.role);
     setEditStatus(user.status);
+    setEditLanguage(user.language ?? '');
     setEditAllowedModules(user.allowedModules || []);
     setEditError('');
     setIsEditOpen(true);
@@ -179,7 +185,9 @@ const AdminUsers = () => {
       const updates: Partial<Omit<User, 'id' | 'createdAt'>> = {
         name, username,
         role: editRole,
+        lcoRole: editingUser.lcoRole,
         status: editStatus,
+        language: editLanguage,
         allowedModules: editRole === 'employee' ? editAllowedModules : undefined,
       };
       if (editPassword) updates.password = editPassword;
@@ -505,6 +513,14 @@ const AdminUsers = () => {
                       <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                     </Select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{tr('App language')}</label>
+                    <Select value={addLanguage} onChange={(e) => setAddLanguage(e.target.value)} disabled={addSaving}>
+                      <option value="">{tr('Same as the business')}</option>
+                      {supportedLanguages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">{tr('The app opens in this language when they log in.')}</p>
+                  </div>
 
                   {/* Module access - only for employees */}
                   {addRole === 'employee' && (
@@ -564,6 +580,14 @@ const AdminUsers = () => {
                       <option value="inactive">{t('common.inactive', 'Inactive')}</option>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">{t('users.hints.inactiveLogin', 'Inactive users cannot login')}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{tr('App language')}</label>
+                    <Select value={editLanguage} onChange={(e) => setEditLanguage(e.target.value)} disabled={editSaving}>
+                      <option value="">{tr('Same as the business')}</option>
+                      {supportedLanguages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">{tr('The app opens in this language when they log in.')}</p>
                   </div>
 
                   {/* Module access - only for employees */}

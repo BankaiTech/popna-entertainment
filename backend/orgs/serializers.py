@@ -23,7 +23,7 @@ OWNER_EDITABLE = [
 PLATFORM_CONTROLLED = [
     "status", "distributor", "subscription_start", "subscription_end", "allowed_modules",
     "allowed_settings_tabs", "max_providers", "max_plans",
-    "monthly_fee", "sms_free_per_month", "sms_rate", "sms_credits",
+    "monthly_fee", "sms_free_per_month", "sms_rate", "sms_credits", "app_language",
 ]
 COMPUTED = [
     "industry_type", "subscription_state", "days_left", "providers_used", "plans_used", "internet_sms_available",
@@ -151,7 +151,7 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
         org = super().create(validated_data)
         if owner_username:
             user = User(username=owner_username, name=owner_name, role=Roles.OWNER, organization=org,
-                        mobile=org.owner_mobile)
+                        mobile=org.owner_mobile, language=org.app_language)
             user.set_password(owner_password)
             user.save()
         return org

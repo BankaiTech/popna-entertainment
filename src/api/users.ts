@@ -23,6 +23,8 @@ function mapUser(raw: Record<string, unknown>): User {
     allowedModules: (u.modules ?? u.allowedModules) as User['allowedModules'],
     branchId: u.branchId != null ? Number(u.branchId) : undefined,
     createdAt: String(u.createdAt ?? new Date().toISOString()),
+    language: String(u.language ?? ''),
+    lcoRole: String(u.role ?? ''),
   };
 }
 
@@ -32,7 +34,12 @@ function userPayload(user: Partial<User>): Record<string, unknown> {
   if (user.username !== undefined) payload.username = user.username;
   if (user.name !== undefined) payload.name = user.name;
   if (user.password) payload.password = user.password;
-  if (user.role !== undefined) payload.role = user.role === 'admin' ? 'manager' : 'agent';
+  if (user.role !== undefined) {
+    // Keep a technician a technician (and a manager a manager) when only other details change.
+    const keep = user.role === 'admin' ? ['owner', 'manager'] : ['agent', 'technician'];
+    payload.role = user.lcoRole && keep.includes(user.lcoRole) ? user.lcoRole : (user.role === 'admin' ? 'manager' : 'agent');
+  }
+  if (user.language !== undefined) payload.language = user.language;
   if (user.status !== undefined) payload.is_active = user.status === 'active';
   // Field staff module access chosen by the owner (admins/managers follow the operator's modules)
   if (user.role === 'employee' && user.allowedModules !== undefined) payload.allowed_modules = user.allowedModules;

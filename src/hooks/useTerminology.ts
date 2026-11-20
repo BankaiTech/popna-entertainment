@@ -13,7 +13,10 @@ export function useTerminology() {
   const term = useCallback(
     (key: string, fallback?: string): string => {
       const terminology = currentOrganization?.terminology;
-      if (terminology?.[key]) return terminology[key];
+      // Industry words are English text: translate them like any other label (English text = key).
+      if (terminology?.[key]) {
+        return t(terminology[key], { defaultValue: terminology[key], nsSeparator: false, keySeparator: false }) as string;
+      }
       return t(`terminology.${key}`, fallback ?? key);
     },
     [currentOrganization, t]

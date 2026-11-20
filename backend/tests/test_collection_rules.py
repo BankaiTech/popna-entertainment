@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from billing.models import Bill
@@ -125,6 +125,7 @@ class DiscountTests(TestCase):
         self.assertEqual((bill.status, bill.balance), ("paid", 0))
 
 
+@override_settings(SMS_ONLY_LANGUAGE="")
 class TwoStageReminderTests(TestCase):
     def test_reminder_3_days_before_and_on_1_day_before(self):
         org = make_org("TWO", reminder_days_before=3, second_reminder_days_before=1)

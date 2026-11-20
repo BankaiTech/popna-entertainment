@@ -19,6 +19,8 @@ TEMPLATE_KIND = {SmsMessage.Kind.PAYMENT_RECEIPT: "receipt", SmsMessage.Kind.DUE
 
 
 def customer_language(customer, org=None):
+    if settings.SMS_ONLY_LANGUAGE:
+        return settings.SMS_ONLY_LANGUAGE  # Tamil only for now (settings.SMS_ONLY_LANGUAGE)
     org = org or customer.organization
     return customer.sms_language or org.sms_language or "en"
 

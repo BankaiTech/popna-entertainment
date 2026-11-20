@@ -3,7 +3,7 @@ import type { OperatorSettings } from '@/api/operatorSettings';
 import { useLt } from '@/lib/lt';
 import { Field, inputClass, SaveBar, Section, useOperatorSettings } from './SettingsUI';
 
-const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName', 'smsLanguage'];
+const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
 
 // Preview only. Must match the DLT-approved templates in backend/notifications/templates.py
 // (see backend/docs/DLT_SMS_TEMPLATES.md).
@@ -28,7 +28,7 @@ const SmsSettings = () => {
   const { settings: s, set, save, saving, errors, dirty } = useOperatorSettings();
   if (!s) return <p className="py-8 text-center text-muted-foreground">{tr('Loading…')}</p>;
   const org = (s.smsDisplayName || s.name).slice(0, 30);
-  const lang = s.smsLanguage ?? 'en';
+  const lang = 'ta' as const; // all customer SMS go in Tamil for now (server setting SMS_ONLY_LANGUAGE)
 
   return (
     <div className="space-y-4">
@@ -38,13 +38,8 @@ const SmsSettings = () => {
             <input className={inputClass} maxLength={30} value={s.smsDisplayName} placeholder={s.name}
               onChange={(e) => set('smsDisplayName', e.target.value)} />
           </Field>
-          <Field label={tr('Default SMS language')} hint={tr('Can be changed for each customer')} error={errors.smsLanguage}>
-            <select className={inputClass} value={lang} onChange={(e) => set('smsLanguage', e.target.value as 'en' | 'ta')}>
-              <option value="en">English</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-            </select>
-          </Field>
         </div>
+        <p className="text-xs text-muted-foreground">{tr('All SMS to customers are sent in Tamil.')}</p>
         <SaveBar disabled={!dirty(FIELDS)} saving={saving} onSave={() => save(FIELDS)} />
       </Section>
 

@@ -42,7 +42,8 @@ class TenantIsolationTests(TestCase):
     def test_frontend_style_payload_creates_customer(self):
         res = client_for(self.owner_a).post("/api/contacts", {
             "name": "New Person", "mobile": "+91 98765 11111", "connection_type": "GTPL", "package": "Basic",
-            "status": "Active", "address": {"line1": "1 Main St", "city": "Chengalpattu"}, "area_name": "Bazaar",
+            "status": "Active", "address": {"line1": "1 Main St", "city": "Chengalpattu"}, "area": "Bazaar",
+            "stb_number": "STB-NEW-1", "notes": "Near temple", "customer_code": "C-77",
         }, format="json")
         self.assertEqual(res.status_code, 201, res.content)
         body = res.json()
@@ -51,6 +52,24 @@ class TenantIsolationTests(TestCase):
         self.assertEqual(body["connection_type"], "GTPL")
         self.assertEqual(body["area"], "Bazaar")
         self.assertEqual(body["address"]["city"], "Chengalpattu")
+        self.assertEqual((body["stb_number"], body["notes"], body["customer_code"]), ("STB-NEW-1", "Near temple", "C-77"))
+
+    def test_area_and_cable_device_id_required_from_the_form(self):
+        c = client_for(self.owner_a)
+        base = {"name": "P", "connection_type": "GTPL", "package": "Basic", "status": "Active"}
+        r = c.post("/api/contacts", {**base, "stb_number": "X1"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("area", r.json())
+        r = c.post("/api/contacts", {**base, "area": "Bazaar"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("stb_number", r.json())
+        r = c.post("/api/contacts", {**base, "area": "Bazaar", "stb_number": "X1"}, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        # Editing other fields keeps the area and device ID; blanking the device ID is refused.
+        cid = r.json()["id"]
+        self.assertEqual(c.patch(f"/api/contacts/{cid}", {"name": "P2"}, format="json").status_code, 200)
+        self.assertEqual(c.patch(f"/api/contacts/{cid}", {"stb_number": ""}, format="json").status_code, 400)
+        self.assertEqual(c.get("/api/contacts", {"area": r.json()["area_id"]}).json()[0]["name"], "P2")
 
 
 class RoleTests(TestCase):
@@ -121,3 +140,29 @@ class DistributorTests(TestCase):
         self.assertEqual(res.status_code, 201, res.content)
         self.assertEqual(res.json()["distributor"], d1.id)
         self.assertEqual(res.json()["code"], "NEW01")
+
+
+class AppLanguageTests(TestCase):
+    def test_operator_language_flows_to_owner_and_staff_and_user_can_change_own(self):
+        admin = make_user("lang_admin", Roles.PLATFORM_ADMIN)
+        r = client_for(admin).post("/api/organizations", {
+            "name": "Tamil Cable", "code": "TAMIL01", "app_language": "ta",
+            "owner_username": "tamil_owner", "owner_password": "Strong#Pass123",
+        }, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        from accounts.models import User
+
+        owner = User.objects.get(username="tamil_owner")
+        me = client_for(owner).get("/api/auth/me").json()
+        self.assertEqual(me["language"], "ta")
+        # New staff start in the operator's language unless one is picked.
+        r = client_for(owner).post("/api/users", {"username": "tamil_agent", "password": "Strong#Pass123",
+                                                  "role": Roles.AGENT}, format="json")
+        self.assertEqual((r.status_code, r.json()["language"]), (201, "ta"), r.content)
+        r = client_for(owner).post("/api/users", {"username": "hindi_agent", "password": "Strong#Pass123",
+                                                  "role": Roles.AGENT, "language": "hi"}, format="json")
+        self.assertEqual(r.json()["language"], "hi")
+        # Anyone can change their own app language; it is used at the next login.
+        c = client_for(owner)
+        self.assertEqual(c.patch("/api/auth/me", {"language": "en"}, format="json").json()["language"], "en")
+        self.assertEqual(c.patch("/api/auth/me", {"language": "xx"}, format="json").status_code, 400)

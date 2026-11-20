@@ -12,6 +12,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from core.audit import audit
 from core.permissions import ReadWriteRoles, Roles
 
+from core.validators import APP_LANGUAGES
+
 from .models import User
 from .serializers import MeSerializer, UserSerializer
 
@@ -38,9 +40,16 @@ def logout_view(request):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def me_view(request):
+    """GET: who am I. PATCH {"language": "ta"}: remember the app language this person picked."""
+    if request.method == "PATCH":
+        lang = str(request.data.get("language", ""))
+        if lang not in dict(APP_LANGUAGES):
+            return Response({"language": "Unknown language."}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.language = lang
+        request.user.save(update_fields=["language"])
     return Response(MeSerializer(request.user).data)
 
 

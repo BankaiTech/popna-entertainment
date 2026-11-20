@@ -1,4 +1,5 @@
 // App owner (platform admin) — manage operators: subscription, limits, modules, status.
+import { supportedLanguages } from '@/i18n';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -33,6 +34,7 @@ const emptyForm = () => {
         name: '', code: '', ownerName: '', ownerUsername: '', ownerPassword: '', ownerMobile: '',
         subscriptionStart: today, subscriptionEnd: addDays(today, 364), maxProviders: '', maxPlans: '',
         monthlyFee: '', smsFreePerMonth: '70', smsRate: '0.30', smsCredits: '0',
+        appLanguage: 'ta',
     };
 };
 type FormState = ReturnType<typeof emptyForm>;
@@ -187,6 +189,7 @@ const Organizations = () => {
             smsFreePerMonth: String(org.smsFreePerMonth ?? 70),
             smsRate: String(org.smsRate ?? 0.3),
             smsCredits: String(org.smsCredits ?? 0),
+            appLanguage: org.appLanguage ?? '',
         });
         setFormOpen(true);
     };
@@ -206,6 +209,7 @@ const Organizations = () => {
             smsFreePerMonth: Math.max(0, Math.floor(Number(form.smsFreePerMonth) || 0)),
             smsRate: Math.max(0, Number(form.smsRate) || 0),
             smsCredits: Math.max(0, Math.floor(Number(form.smsCredits) || 0)),
+            appLanguage: form.appLanguage,
         };
         const ok = editing
             ? await run(() => organizationsApi.update(editing.id, common), tr('Operator updated'))
@@ -384,6 +388,15 @@ const Organizations = () => {
                                             placeholder="SMC01"
                                         />
                                         <span className="block text-xs text-muted-foreground mt-1">{tr("Used in receipt numbers. Can't be changed later.")}</span>
+                                    </label>
+                                    <label className="block text-sm">
+                                        <span className="block font-medium mb-1">{tr('App language')}</span>
+                                        <select className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
+                                            value={form.appLanguage} onChange={(e) => setForm({ ...form, appLanguage: e.target.value })}>
+                                            {!form.appLanguage && <option value="">English</option>}
+                                            {supportedLanguages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                                        </select>
+                                        <span className="block text-xs text-muted-foreground mt-1">{tr('The owner and new staff open the app in this language.')}</span>
                                     </label>
                                 </div>
                             </section>

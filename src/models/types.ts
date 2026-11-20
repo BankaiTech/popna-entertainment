@@ -104,6 +104,8 @@ export interface Organization {
   smsCredits?: number;
   /** Free SMS sent this month (app owner only) */
   smsFreeUsed?: number;
+  /** App language for the operator's staff ('' = English) */
+  appLanguage?: string;
   /** Industry type selected during signup */
   industryType?: IndustryType;
   /** Terminology overrides for industry-specific labels */
@@ -270,6 +272,10 @@ export interface User {
   /** Branch assignment */
   branchId?: number;
   createdAt: string;
+  /** App language after login ('' = the business's language) */
+  language?: string;
+  /** Exact server role (owner / manager / agent / technician), kept when editing */
+  lcoRole?: string;
 }
 
 /** Sales invoice (mock structure - PDF ready). GST-compliant fields supported. */

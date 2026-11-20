@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.permissions import Roles
-from core.validators import normalize_mobile, validate_indian_mobile
+from core.validators import APP_LANGUAGES, normalize_mobile, validate_indian_mobile
 
 
 class User(AbstractUser):
@@ -26,6 +26,8 @@ class User(AbstractUser):
     )
     # Field staff only: menu modules the owner gave this person. Empty (null) = role defaults.
     allowed_modules = models.JSONField(null=True, blank=True)
+    # App language this person sees after login. Empty = the operator's language.
+    language = models.CharField(max_length=5, blank=True, choices=APP_LANGUAGES)
 
     def clean(self):
         super().clean()

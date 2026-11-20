@@ -147,7 +147,7 @@ class CustomerViewSet(OrgScopedViewSet):
                 continue
             data = {k: row[k] for k in self.IMPORT_FIELDS if row.get(k) not in (None, "")}
             data["plan_id"] = plan.id
-            serializer = CustomerSerializer(data=data, context={"request": request})
+            serializer = CustomerSerializer(data=data, context={"request": request, "bulk_import": True})
             if not serializer.is_valid():
                 msg = "; ".join(f"{field}: {' '.join(map(str, errs))}" for field, errs in serializer.errors.items())
                 errors.append({"row": number, "name": name, "error": msg})

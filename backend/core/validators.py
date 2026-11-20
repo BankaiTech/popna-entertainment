@@ -4,6 +4,11 @@ from django.core.exceptions import ValidationError
 
 INDIAN_MOBILE_RE = re.compile(r"^[6-9]\d{9}$")
 
+# Languages the app screens are translated into (frontend public/locales/<code>.json).
+APP_LANGUAGES = [
+    ("en", "English"), ("ta", "Tamil"), ("hi", "Hindi"), ("te", "Telugu"), ("kn", "Kannada"), ("ml", "Malayalam"),
+]
+
 
 def normalize_mobile(value):
     """Keep the last 10 digits of an Indian mobile number ('+91 98400 12345' -> '9840012345')."""

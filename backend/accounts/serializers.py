@@ -33,14 +33,20 @@ class MeSerializer(serializers.ModelSerializer):
     sa_permissions = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     subscription = serializers.SerializerMethodField()
+    language = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "name", "username", "mobile", "role", "lco_role", "status", "organization_id",
             "organization_name", "distributor_id", "allowed_modules", "super_admin_role", "sa_permissions",
-            "subscription",
+            "subscription", "language",
         ]
+
+    def get_language(self, obj):
+        """The app opens in this language after login: the person's own, else the operator's."""
+        org = obj.organization
+        return obj.language or (org.app_language if org else "") or ""
 
     def get_subscription(self, obj):
         """The app checks this when the dashboard opens. The server also blocks every API call."""
@@ -89,6 +95,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             "id", "username", "name", "mobile", "email", "role", "is_active", "status",
             "organization", "distributor", "password", "date_joined", "last_login", "allowed_modules", "modules",
+            "language",
         ]
         read_only_fields = ["date_joined", "last_login"]
 
@@ -133,6 +140,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
+        org = validated_data.get("organization")
+        if not validated_data.get("language") and org is not None:
+            validated_data["language"] = org.app_language  # new staff start in the operator's language
         user = User(**validated_data)
         user.set_password(password)
         user.save()

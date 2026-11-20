@@ -92,6 +92,7 @@ function mapOrganization(raw: Record<string, unknown>): Organization {
         smsRate: o.smsRate == null ? undefined : Number(o.smsRate),
         smsCredits: o.smsCredits == null ? undefined : Number(o.smsCredits),
         smsFreeUsed: o.smsFreeUsed == null ? undefined : Number(o.smsFreeUsed),
+        appLanguage: o.appLanguage == null ? '' : String(o.appLanguage),
     };
 }
 

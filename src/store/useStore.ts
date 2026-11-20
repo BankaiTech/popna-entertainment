@@ -8,6 +8,7 @@ import { companyProfileApi } from '@/api/companyProfile';
 import { mockPlans, mockCustomers, mockComplaints, mockPlansExtra, mockCustomersExtra } from '@/api/mockData';
 import { useAuthStore } from '@/store/useAuthStore';
 import { isMockMode } from '@/lib/apiHelpers';
+import { showError } from '@/utils/toast';
 
 /** Live server: no demo data, no bulk start-up load; each list loads when a screen asks for it. */
 const LIVE = !isMockMode();
@@ -106,7 +107,9 @@ interface AppState {
   deletePlan: (id: number) => Promise<void>;
 
   fetchCustomers: () => Promise<void>;
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<void>;
+  /** Returns the saved customer, or null after showing the server's error. */
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'organizationId'> & { organizationId?: string }) => Promise<Customer | null>;
+  /** Returns the saved customer, or undefined after showing the server's error. */
   updateCustomer: (id: number, customer: Partial<Customer>) => Promise<Customer | void>;
   deleteCustomer: (id: number) => Promise<void>;
 
@@ -340,8 +343,12 @@ export const useStore = create<AppState>((set, get) => ({
         return { customers: updatedCustomers, loading: false };
       });
       if (!LIVE) await get().fetchDashboardStats();
+      return newCustomer;
     } catch (error) {
+      // Show why (e.g. "Area is required") instead of failing silently.
       set({ error: 'Failed to add customer', loading: false });
+      showError(error instanceof Error && error.message ? error.message : 'Could not save the customer.');
+      return null;
     }
   },
 
@@ -368,6 +375,7 @@ export const useStore = create<AppState>((set, get) => ({
       return updatedCustomer;
     } catch (error) {
       set({ error: 'Failed to update customer', loading: false });
+      showError(error instanceof Error && error.message ? error.message : 'Could not save the customer.');
     }
   },
 

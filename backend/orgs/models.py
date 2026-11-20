@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import TimeStampedModel
-from core.validators import normalize_mobile, validate_indian_mobile
+from core.validators import APP_LANGUAGES, normalize_mobile, validate_indian_mobile
 
 # Module keys understood by the React app (ALL_MODULES in src/models/types.ts).
 # Only modules the LCO Desk server fully supports. Complaints, new connections and reports come later.
@@ -77,6 +77,8 @@ class Organization(TimeStampedModel):
         max_length=200, blank=True, help_text="Comma-separated mobiles that also get owner alerts"
     )
     sms_display_name = models.CharField(max_length=30, blank=True, help_text="Name shown at the end of SMS")
+    # App language for this operator's staff (each user can still have their own). Empty = English.
+    app_language = models.CharField(max_length=5, blank=True, choices=APP_LANGUAGES)
     sms_language = models.CharField(max_length=2, default="en", choices=[("en", "English"), ("ta", "Tamil")],
                                     help_text="Default SMS language for customers")
 
