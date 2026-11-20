@@ -15,7 +15,9 @@ from core.audit import audit
 from core.mixins import OrgScopedViewSet, require_org
 from core.permissions import Roles, role_in
 
-from .models import Area, Customer, Plan, Provider
+from accounts.models import User
+
+from .models import Area, Customer, Plan, Provider, visible_customer_ids
 from .serializers import AreaSerializer, CustomerSerializer, PlanSerializer, ProviderSerializer
 
 
@@ -74,7 +76,18 @@ class CustomerViewSet(OrgScopedViewSet):
     def get_queryset(self):
         # Latest bill per customer = its current bill (cable: this month; internet: current renewal).
         since = timezone.localdate() - timedelta(days=70)
-        return super().get_queryset().prefetch_related(
+        qs = super().get_queryset()
+        visible = visible_customer_ids(self.request.user, self.request.user.organization)
+        if visible is not None:
+            qs = qs.filter(id__in=visible)
+        # ?collector=<user id> or ?collector=none (customers shared by all field staff)
+        collector = self.request.query_params.get("collector")
+        if collector == "none":
+            qs = qs.filter(collectors__isnull=True)
+        elif collector and collector.isdigit():
+            qs = qs.filter(collectors__id=int(collector))
+        return qs.prefetch_related(
+            "collectors",
             Prefetch("bills", queryset=Bill.objects.filter(period__gte=since).exclude(status="cancelled")
                      .order_by("-period"), to_attr="current_bills"),
             Prefetch(
@@ -95,6 +108,27 @@ class CustomerViewSet(OrgScopedViewSet):
         "customer_code", "name", "mobile", "stb_number", "box_number", "can_caf_id", "area_name",
         "address_line1", "address_line2", "city", "pincode", "notes", "sms_language", "status",
     )
+
+    @staticmethod
+    def _collector_ids(raw, staff_ids):
+        """'7' / '7, 8' / 7 / [7, 8] -> ([7, 8], None). Empty = nobody assigned (all field staff see it)."""
+        if raw in (None, ""):
+            return [], None
+        parts = raw if isinstance(raw, list) else str(raw).replace(";", ",").replace("/", ",").split(",")
+        ids = []
+        for part in parts:
+            text = str(part).strip()
+            if text.endswith(".0"):  # Excel stores 7 as 7.0
+                text = text[:-2]
+            if not text:
+                continue
+            if not text.isdigit():
+                return None, f"Collector ID '{text}' is not a number."
+            if int(text) not in staff_ids:
+                return None, f"Collector ID {text} is not an active agent or technician of your business."
+            if int(text) not in ids:
+                ids.append(int(text))
+        return ids, None
 
     @action(detail=False, methods=["post"], url_path="import")
     def import_rows(self, request):
@@ -121,6 +155,8 @@ class CustomerViewSet(OrgScopedViewSet):
         }
         seen_devices: set[str] = set()
         created, skipped, errors = 0, [], []
+        staff_ids = set(User.objects.filter(organization=org, role__in=Roles.FIELD, is_active=True)
+                        .values_list("id", flat=True))
 
         def find_plan(row):
             provider = str(row.get("provider") or "").strip().lower()
@@ -156,8 +192,13 @@ class CustomerViewSet(OrgScopedViewSet):
             if problem:
                 errors.append({"row": number, "name": name, "error": problem})
                 continue
+            collector_ids, problem = self._collector_ids(row.get("collector_ids"), staff_ids)
+            if problem:
+                errors.append({"row": number, "name": name, "error": problem})
+                continue
             data = {k: row[k] for k in self.IMPORT_FIELDS if row.get(k) not in (None, "")}
             data["plan_id"] = plan.id
+            data["collector_ids"] = collector_ids
             serializer = CustomerSerializer(data=data, context={"request": request, "bulk_import": True})
             if not serializer.is_valid():
                 msg = "; ".join(f"{field}: {' '.join(map(str, errs))}" for field, errs in serializer.errors.items())

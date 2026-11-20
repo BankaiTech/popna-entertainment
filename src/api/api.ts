@@ -64,6 +64,8 @@ function mapContactToCustomer(raw: Record<string, unknown>): Customer {
     smsLanguage: (c.smsLanguage as Customer['smsLanguage']) ?? '',
     category: c.category as Customer['category'],
     area: c.area != null ? String(c.area) : undefined,
+    collectorIds: Array.isArray(c.collectorIds) ? (c.collectorIds as unknown[]).map(Number) : [],
+    collectorNames: Array.isArray(c.collectorNames) ? (c.collectorNames as unknown[]).map(String) : [],
   };
 }
 
@@ -76,7 +78,7 @@ function contactPayload(customer: Partial<Customer>): Record<string, unknown> {
     area, description, cin,
     // not stored on the server for cable / internet customers
     gstin: _gstin, tags: _tags, customFields: _cf, additionalAddresses: _aa, creditLimit: _cl,
-    loyaltyPoints: _lp, password: _pw, smsLanguage: _sl,
+    loyaltyPoints: _lp, password: _pw, smsLanguage: _sl, collectorNames: _cn,
     ...rest
   } = customer;
   const payload: Record<string, unknown> = { ...rest };

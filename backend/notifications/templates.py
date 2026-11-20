@@ -8,7 +8,8 @@ Each message type (payment receipt, due reminder) has its own template per langu
   reminder / en  1607100000000376221   (same English template)
   receipt / ta   1677100000000399325   அன்புள்ள வாடிக்கையாளர் {name}, உங்கள் கேபிள் கட்டணம் {body} அன்று
                                        பெறப்பட்டது. இப்படிக்கு {org}\\nPING4SMS        ({body} = "₹250, 19-11-2026")
-  reminder / ta  1607100000000376222   (old Tamil template, until a new Tamil reminder template is approved)
+  reminder / ta  1677100000000399495   {name}, கேபிள் கட்டணம் {body}க்குள் செலுத்தவும். {org}\nPING4SMS
+                                       ({body} = "₹230, 20-11-26 ", the provider's cut-off date)
 
 {name}, {body}, {org} are the three {#var#} places. DLT rejects any value longer than 30 characters,
 so every value is fitted to 30 here.
@@ -26,17 +27,14 @@ LANGUAGES = ("en", "ta")
 KINDS = ("receipt", "reminder")
 
 _EN = "Dear Customer {name},\n{body}\nThank you for your continued support.\nRegards,\n{org}\nPING4SMS"
-_TA_OLD = (
-    "அன்புள்ள வாடிக்கையாளர் {name},\n{body}\nஉங்கள் தொடர்ந்து வழங்கும் ஆதரவிற்கு நன்றி.\n"
-    "அன்புடன்,\n{org}\nPING4SMS"
-)
+_TA_REMINDER = "{name}, கேபிள் கட்டணம் {body}க்குள் செலுத்தவும். {org}\nPING4SMS"
 _TA_RECEIPT = "அன்புள்ள வாடிக்கையாளர் {name}, உங்கள் கேபிள் கட்டணம் {body} அன்று பெறப்பட்டது. இப்படிக்கு {org}\nPING4SMS"
 
 DEFAULT_TEXTS = {
     ("receipt", "en"): _EN,
     ("reminder", "en"): _EN,
     ("receipt", "ta"): _TA_RECEIPT,
-    ("reminder", "ta"): _TA_OLD,
+    ("reminder", "ta"): _TA_REMINDER,
 }
 
 
@@ -73,7 +71,8 @@ def receipt_body(lang, amount, receipt_no, balance, paid_on):
 def reminder_body(lang, amount, due_date):
     a, d = money(amount), short_date(due_date)
     if lang == "ta":
-        return fit(f"ரூ.{a} {d}க்குள் செலுத்தவும்", f"ரூ.{a} கடைசி நாள் {d}", f"ரூ.{a} {d}")
+        # "Raj, கேபிள் கட்டணம் ₹230, 20-11-26 க்குள் செலுத்தவும்." (space before க்குள் as in the DLT sample)
+        return fit(f"₹{a}, {d} ", f"₹{a}, {d}")
     return fit(f"Rs.{a} due {d}, pay in advance", f"Rs.{a} due {d}, pay early", f"Pay Rs.{a} by {d}",
                f"Rs.{a} due {d}")
 

@@ -224,7 +224,7 @@ SMS_TEMPLATE_IDS = {
     ("receipt", "en"): env("SMS_TPL_RECEIPT_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
     ("reminder", "en"): env("SMS_TPL_REMINDER_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
     ("receipt", "ta"): env("SMS_TPL_RECEIPT_TA", "1677100000000399325"),
-    ("reminder", "ta"): env("SMS_TPL_REMINDER_TA", env("SMS_TPL_CUSTOMER_TA", "1607100000000376222")),
+    ("reminder", "ta"): env("SMS_TPL_REMINDER_TA", "1677100000000399495"),
 }
 # Extra URL text added for Tamil (Unicode) SMS, as your gateway needs it, e.g. "&unicode=1".
 SMS_UNICODE_PARAMS = env("SMS_UNICODE_PARAMS", "")
@@ -234,7 +234,7 @@ SMS_TEXT_OVERRIDES = {
     ("receipt", "en"): env("SMS_TEXT_RECEIPT_EN", env("SMS_TEXT_CUSTOMER_EN", "")),
     ("reminder", "en"): env("SMS_TEXT_REMINDER_EN", env("SMS_TEXT_CUSTOMER_EN", "")),
     ("receipt", "ta"): env("SMS_TEXT_RECEIPT_TA", ""),
-    ("reminder", "ta"): env("SMS_TEXT_REMINDER_TA", env("SMS_TEXT_CUSTOMER_TA", "")),
+    ("reminder", "ta"): env("SMS_TEXT_REMINDER_TA", ""),
 }
 # Internet customers' SMS (receipts and reminders) are switched off for everyone until there is an
 # approved template for them. Cable SMS are not affected.

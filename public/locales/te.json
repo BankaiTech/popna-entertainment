@@ -2127,7 +2127,7 @@
   "Code": "కోడ్",
   "Collect": "వసూలు",
   "Collect payment": "చెల్లింపు వసూలు",
-  "Collected by": "వసూలు చేసినవారు",
+  "Collected by": "వసూలు చేసేవారు",
   "Collected this month": "ఈ నెల వసూలు",
   "Collected today": "ఈరోజు వసూలు",
   "Collection": "వసూలు",
@@ -2746,5 +2746,16 @@
   "Technician": "టెక్నీషియన్",
   "Unpaid after cut-off / expired": "కట్-ఆఫ్ తర్వాత చెల్లించనివి / గడువు ముగిసినవి",
   "{{n}} customers · ₹{{amount}} due": "{{n}} కస్టమర్లు · ₹{{amount}} బకాయి",
-  "{{n}} days per recharge": "ఒక్కో రీఛార్జ్‌కు {{n}} రోజులు"
+  "{{n}} days per recharge": "ఒక్కో రీఛార్జ్‌కు {{n}} రోజులు",
+  "No collection agents yet. Add them in Users.": "ఇంకా వసూలు ఏజెంట్లు లేరు. వారిని యూజర్లలో జోడించండి.",
+  "Nobody chosen: all staff see this customer.": "ఎవరినీ ఎంచుకోలేదు: సిబ్బంది అందరూ ఈ కస్టమర్‌ను చూస్తారు.",
+  "Only the chosen staff (and owner / manager) see this customer.": "ఎంచుకున్న సిబ్బంది (మరియు యజమాని / మేనేజర్) మాత్రమే ఈ కస్టమర్‌ను చూస్తారు.",
+  "All collectors": "అందరు వసూలు చేసేవారు",
+  "All staff (nobody chosen)": "సిబ్బంది అందరూ (ఎవరినీ ఎంచుకోలేదు)",
+  "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.": "Collector IDs: వసూలు చేసే సిబ్బంది యూజర్ ID (యూజర్లలో చూడండి), ఉదా. 7 లేదా 7, 8. సిబ్బంది అందరికీ చూపించడానికి ఖాళీగా వదలండి.",
+  "Choose Excel or CSV file": "Excel లేదా CSV ఫైల్ ఎంచుకోండి",
+  "Excel (.xlsx) or CSV UTF-8": "Excel (.xlsx) లేదా CSV UTF-8",
+  "Could not read this file. Save it again as .xlsx or CSV UTF-8.": "ఈ ఫైల్‌ను చదవలేకపోయాం. దాన్ని మళ్లీ .xlsx లేదా CSV UTF-8గా సేవ్ చేయండి.",
+  "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.": "Excel లేదా CSV ఫైల్ నుండి ఒకేసారి చాలా మంది కస్టమర్లను జోడించండి: పేరు, మొబైల్, STB నంబర్, ప్లాన్ లేదా నెలవారీ మొత్తం, ప్రాంతం, వసూలు చేసేవారు.",
+  "Import Excel / CSV": "Excel / CSV దిగుమతి"
 }

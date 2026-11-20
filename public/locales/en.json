@@ -2384,5 +2384,17 @@
   "Technician": "Technician",
   "Unpaid after cut-off / expired": "Unpaid after cut-off / expired",
   "{{n}} customers · ₹{{amount}} due": "{{n}} customers · ₹{{amount}} due",
-  "{{n}} days per recharge": "{{n}} days per recharge"
+  "{{n}} days per recharge": "{{n}} days per recharge",
+  "Collected by": "Collected by",
+  "No collection agents yet. Add them in Users.": "No collection agents yet. Add them in Users.",
+  "Nobody chosen: all staff see this customer.": "Nobody chosen: all staff see this customer.",
+  "Only the chosen staff (and owner / manager) see this customer.": "Only the chosen staff (and owner / manager) see this customer.",
+  "All collectors": "All collectors",
+  "All staff (nobody chosen)": "All staff (nobody chosen)",
+  "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.": "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.",
+  "Choose Excel or CSV file": "Choose Excel or CSV file",
+  "Excel (.xlsx) or CSV UTF-8": "Excel (.xlsx) or CSV UTF-8",
+  "Could not read this file. Save it again as .xlsx or CSV UTF-8.": "Could not read this file. Save it again as .xlsx or CSV UTF-8.",
+  "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.": "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.",
+  "Import Excel / CSV": "Import Excel / CSV"
 }

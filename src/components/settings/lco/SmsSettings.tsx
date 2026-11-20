@@ -10,17 +10,17 @@ const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
 type Tpl = (name: string, body: string, org: string) => string;
 const EN: Tpl = (name, body, org) =>
   `Dear Customer ${name},\n${body}\nThank you for your continued support.\nRegards,\n${org}\nPING4SMS`;
-const TA_OLD: Tpl = (name, body, org) =>
-  `அன்புள்ள வாடிக்கையாளர் ${name},\n${body}\nஉங்கள் தொடர்ந்து வழங்கும் ஆதரவிற்கு நன்றி.\nஅன்புடன்,\n${org}\nPING4SMS`;
+const TA_REMINDER: Tpl = (name, body, org) =>
+  `${name}, கேபிள் கட்டணம் ${body}க்குள் செலுத்தவும். ${org}\nPING4SMS`;
 const TA_RECEIPT: Tpl = (name, body, org) =>
   `அன்புள்ள வாடிக்கையாளர் ${name}, உங்கள் கேபிள் கட்டணம் ${body} அன்று பெறப்பட்டது. இப்படிக்கு ${org}\nPING4SMS`;
 const TEMPLATE: Record<'en' | 'ta', Record<'receipt' | 'reminder', Tpl>> = {
   en: { receipt: EN, reminder: EN },
-  ta: { receipt: TA_RECEIPT, reminder: TA_OLD },
+  ta: { receipt: TA_RECEIPT, reminder: TA_REMINDER },
 };
 const EXAMPLES = {
   en: { receipt: 'Paid Rs.230, Receipt 000123', reminder: 'Rs.230 due 10-11-26, pay early' },
-  ta: { receipt: '₹230, 19-11-2026', reminder: 'ரூ.230 10-11-26க்குள் செலுத்தவும்' },
+  ta: { receipt: '₹230, 19-11-2026', reminder: '₹230, 20-11-26 ' },
 };
 
 const SmsSettings = () => {

@@ -191,6 +191,10 @@ export interface Customer {
   permanentDiscount?: number;
   /** Username of the user who last collected payment (for employee collection stats) */
   collectedByUsername?: string;
+  /** Field staff (user IDs) who collect from this customer. Empty = all field staff see the customer. */
+  collectorIds?: number[];
+  /** Their names (read only, from the server) */
+  collectorNames?: string[];
   // Universal business fields
   /** Credit limit for B2B/wholesale customers */
   creditLimit?: number;

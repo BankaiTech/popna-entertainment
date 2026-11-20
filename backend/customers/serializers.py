@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
+from accounts.models import User
 from core.mixins import OrgScopedPKField, require_org
+from core.permissions import Roles
 from core.validators import normalize_mobile
 
 from .models import Area, Customer, Plan, Provider
@@ -134,6 +136,12 @@ class CustomerSerializer(serializers.ModelSerializer):
     collected_by_username = serializers.SerializerMethodField()
     service_status = serializers.SerializerMethodField()
     due_date = serializers.SerializerMethodField()
+    # Field staff who collect from this customer. Empty list = every agent / technician sees it.
+    collector_ids = OrgScopedPKField(
+        source="collectors", many=True, required=False,
+        queryset=User.objects.filter(role__in=Roles.FIELD, is_active=True),
+    )
+    collector_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -144,6 +152,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             "address_line1", "address_line2", "city", "state", "pincode", "notes", "created_at",
             "payment_status", "balance_amount", "collected_amount", "payment_method", "payment_updated_at",
             "collected_by_username", "service_status", "valid_until", "due_date",
+            "collector_ids", "collector_names",
         ]
         read_only_fields = ["valid_until"]
         extra_kwargs = {
@@ -204,6 +213,9 @@ class CustomerSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data["status"] = "Active" if instance.status == Customer.Status.ACTIVE else "Inactive"
         return data
+
+    def get_collector_names(self, obj):
+        return [u.display_name for u in obj.collectors.all()]
 
     def get_monthly_amount(self, obj):
         return str(obj.monthly_amount())

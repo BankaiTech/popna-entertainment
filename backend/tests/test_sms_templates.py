@@ -36,9 +36,15 @@ class TemplateTests(TestCase):
             "இப்படிக்கு Sri Cable\nPING4SMS",
         )
         self.assertEqual(template_id("receipt", "ta"), "1677100000000399325")
-        # Tamil reminders stay on the old Tamil template until a new one is approved.
-        self.assertEqual(template_id("reminder", "ta"), "1607100000000376222")
-        self.assertIn("ஆதரவிற்கு நன்றி", render("reminder", "ta", "ரவி", "x", "Sri Cable"))
+
+    def test_new_tamil_reminder_template_exact_text(self):
+        body = reminder_body("ta", 230, date(2026, 11, 20))
+        self.assertEqual(body, "₹230, 20-11-26 ")
+        self.assertEqual(
+            render("reminder", "ta", "Raj", body, "Popna"),
+            "Raj, கேபிள் கட்டணம் ₹230, 20-11-26 க்குள் செலுத்தவும். Popna\nPING4SMS",
+        )
+        self.assertEqual(template_id("reminder", "ta"), "1677100000000399495")
 
     @override_settings(SMS_TEXT_OVERRIDES={("receipt", "en"): "Hi {name}\\n{body}\\n-{org}"})
     def test_override_text_from_env(self):

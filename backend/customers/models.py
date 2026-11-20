@@ -111,6 +111,8 @@ class Customer(OrgOwnedModel):
     state = models.CharField(max_length=100, blank=True, default="Tamil Nadu")
     pincode = models.CharField(max_length=10, blank=True)
     notes = models.TextField(blank=True)
+    # Field staff who collect from this customer. Empty = every agent / technician sees the customer.
+    collectors = models.ManyToManyField("accounts.User", blank=True, related_name="assigned_customers")
 
     class Meta:
         ordering = ["name"]
@@ -177,3 +179,21 @@ class Customer(OrgOwnedModel):
     def monthly_amount(self):
         amount = self.plan.final_price * (Decimal(100) - self.permanent_discount) / Decimal(100)
         return amount.quantize(TWO_PLACES, ROUND_HALF_UP)
+
+
+def visible_customer_ids(user, organization):
+    """
+    Customers this user may see. Owner / manager: all. Agent / technician: customers assigned to them,
+    plus customers with nobody assigned (those are shared by all field staff).
+    Returns None when there is no restriction.
+    """
+    from core.permissions import Roles
+
+    if user.role not in Roles.FIELD:
+        return None
+    return (
+        Customer.objects.filter(organization=organization)
+        .filter(models.Q(collectors=user) | models.Q(collectors__isnull=True))
+        .values("id")
+    )
+

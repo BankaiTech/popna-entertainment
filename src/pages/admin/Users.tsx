@@ -442,7 +442,9 @@ const AdminUsers = () => {
                       </span>
                     </div>
                     <div className="text-sm">
-                      <span className="text-muted-foreground">{t('users.colUsername', 'Username')}: </span>
+                      <span className="text-muted-foreground">{t('users.colId', 'ID')}: </span>
+                      <span className="font-medium">{u.id}</span>
+                      <span className="text-muted-foreground"> · {t('users.colUsername', 'Username')}: </span>
                       <span className="font-medium">{u.username}</span>
                     </div>
                     <div className="text-sm">

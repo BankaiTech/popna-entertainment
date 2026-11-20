@@ -12,7 +12,7 @@ import Input from './ui/Input';
 import Select from './ui/Select';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './ui/Dialog';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
-import type { Customer, Provider, CustomerStatus, Address, Subscription, SubscriptionStatus, BillingCycle } from '@/models/types';
+import type { Customer, Provider, CustomerStatus, Address, Subscription, SubscriptionStatus, BillingCycle, User } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
 import { useSubscriptionsStore } from '@/store/useSubscriptionsStore';
 import { formatCurrencyINR } from '@/lib/utils';
@@ -21,6 +21,7 @@ import { showError } from '@/utils/toast';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById, getContactConfig } from '@/config/industryTemplates';
 import { useTerminology } from '@/hooks/useTerminology';
+import { usersApi } from '@/api/users';
 
 interface CustomerSheetProps {
   isOpen: boolean;
@@ -63,6 +64,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
   }, [isOpen, fetchActiveProducts, fetchPlans, showSubscriptionTab, fetchSubscriptions]);
 
   const isReadOnly = role === 'employee';
+  // Field staff (collection agents / technicians) who can be put in charge of this customer.
+  const [fieldStaff, setFieldStaff] = useState<User[]>([]);
+  useEffect(() => {
+    if (!isOpen || isMockMode() || isReadOnly) return;
+    usersApi.getAll()
+      .then((all) => setFieldStaff(all.filter((u) => ['agent', 'technician'].includes(u.lcoRole ?? '') && u.status === 'active')))
+      .catch(() => setFieldStaff([]));
+  }, [isOpen, isReadOnly]);
   const [activeTab, setActiveTab] = useState<'info' | 'plan' | 'address' | 'more' | 'subscriptions'>('info');
 
   // Subscription form state for inline add/edit
@@ -104,6 +113,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     canCafId: '',
     cin: '',
     area: '',
+    collectorIds: [] as number[],
     permanentDiscount: undefined as number | undefined,
     address: {
       line1: '',
@@ -161,6 +171,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         canCafId: customer.canCafId || '',
         cin: customer.cin || '',
         area: customer.area || '',
+        collectorIds: customer.collectorIds ?? [],
         permanentDiscount: customer.permanentDiscount ?? undefined,
         address: customer.address,
         additionalAddresses: customer.additionalAddresses || [],
@@ -185,6 +196,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         canCafId: '',
         cin: '',
         area: '',
+        collectorIds: [],
         permanentDiscount: undefined,
         address: {
           line1: '',
@@ -242,6 +254,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     }
 
     const payload = { ...formData };
+    // A collector who left (inactive) cannot be chosen again; drop them instead of failing the save.
+    if (fieldStaff.length > 0) {
+      payload.collectorIds = payload.collectorIds.filter((id) => fieldStaff.some((u) => u.id === id));
+    }
     const cf = { ...(payload.customFields ?? {}) };
     Object.keys(cf).forEach((k) => { if (k.trim() === '') delete cf[k]; });
     payload.customFields = Object.keys(cf).length ? cf : {};
@@ -381,6 +397,42 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   <datalist id="customer-area-list">
                     {knownAreas.map((a) => <option key={a} value={a} />)}
                   </datalist>
+                </div>
+                )}
+                {live && showIspFields && !isReadOnly && (
+                <div className="col-span-full">
+                  <span className="block text-sm font-medium mb-2">{tr('Collected by')}</span>
+                  {fieldStaff.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">{tr('No collection agents yet. Add them in Users.')}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {fieldStaff.map((u) => {
+                        const on = formData.collectorIds.includes(u.id);
+                        return (
+                          <label
+                            key={u.id}
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer select-none ${on ? 'border-primary bg-primary/10 text-primary' : 'border-border'}`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-primary"
+                              checked={on}
+                              onChange={() => setFormData({
+                                ...formData,
+                                collectorIds: on ? formData.collectorIds.filter((id) => id !== u.id) : [...formData.collectorIds, u.id],
+                              })}
+                            />
+                            {u.name || u.username}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    {formData.collectorIds.length === 0
+                      ? tr('Nobody chosen: all staff see this customer.')
+                      : tr('Only the chosen staff (and owner / manager) see this customer.')}
+                  </p>
                 </div>
                 )}
                 <div>

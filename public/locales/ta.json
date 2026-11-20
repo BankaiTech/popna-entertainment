@@ -2127,7 +2127,7 @@
   "Code": "குறியீடு",
   "Collect": "வசூல்",
   "Collect payment": "கட்டணம் வசூலி",
-  "Collected by": "வசூலித்தவர்",
+  "Collected by": "வசூலிப்பவர்",
   "Collected this month": "இந்த மாத வசூல்",
   "Collected today": "இன்றைய வசூல்",
   "Collection": "வசூல்",
@@ -2746,5 +2746,16 @@
   "Technician": "தொழில்நுட்பர்",
   "Unpaid after cut-off / expired": "துண்டிப்பு தேதிக்குப் பின் செலுத்தாதவர் / காலாவதி",
   "{{n}} customers · ₹{{amount}} due": "{{n}} வாடிக்கையாளர்கள் · ₹{{amount}} நிலுவை",
-  "{{n}} days per recharge": "ஒரு ரீசார்ஜுக்கு {{n}} நாட்கள்"
+  "{{n}} days per recharge": "ஒரு ரீசார்ஜுக்கு {{n}} நாட்கள்",
+  "No collection agents yet. Add them in Users.": "இன்னும் வசூல் முகவர்கள் இல்லை. பயனர்கள் பக்கத்தில் சேர்க்கவும்.",
+  "Nobody chosen: all staff see this customer.": "யாரும் தேர்ந்தெடுக்கப்படவில்லை: எல்லா பணியாளர்களும் இந்த வாடிக்கையாளரைப் பார்ப்பார்கள்.",
+  "Only the chosen staff (and owner / manager) see this customer.": "தேர்ந்தெடுத்த பணியாளர்கள் (மற்றும் உரிமையாளர் / மேலாளர்) மட்டுமே இந்த வாடிக்கையாளரைப் பார்ப்பார்கள்.",
+  "All collectors": "அனைத்து வசூலிப்பவர்கள்",
+  "All staff (nobody chosen)": "அனைத்து பணியாளர்கள் (யாரும் தேர்ந்தெடுக்கவில்லை)",
+  "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.": "Collector IDs: வசூலிக்கும் பணியாளரின் பயனர் ID (பயனர்கள் பக்கத்தில் பார்க்கவும்), எ.கா. 7 அல்லது 7, 8. எல்லா பணியாளர்களுக்கும் காட்ட காலியாக விடவும்.",
+  "Choose Excel or CSV file": "Excel அல்லது CSV கோப்பைத் தேர்ந்தெடுக்கவும்",
+  "Excel (.xlsx) or CSV UTF-8": "Excel (.xlsx) அல்லது CSV UTF-8",
+  "Could not read this file. Save it again as .xlsx or CSV UTF-8.": "இந்தக் கோப்பைப் படிக்க முடியவில்லை. மீண்டும் .xlsx அல்லது CSV UTF-8 ஆக சேமிக்கவும்.",
+  "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.": "Excel அல்லது CSV கோப்பிலிருந்து பல வாடிக்கையாளர்களை ஒரே நேரத்தில் சேர்க்கவும்: பெயர், மொபைல், STB எண், திட்டம் அல்லது மாதத் தொகை, பகுதி, வசூலிப்பவர்.",
+  "Import Excel / CSV": "Excel / CSV இறக்குமதி"
 }

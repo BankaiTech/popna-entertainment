@@ -2127,7 +2127,7 @@
   "Code": "ಕೋಡ್",
   "Collect": "ವಸೂಲಿ",
   "Collect payment": "ಪಾವತಿ ವಸೂಲಿ",
-  "Collected by": "ವಸೂಲಿ ಮಾಡಿದವರು",
+  "Collected by": "ಸಂಗ್ರಹಿಸುವವರು",
   "Collected this month": "ಈ ತಿಂಗಳ ವಸೂಲಿ",
   "Collected today": "ಇಂದಿನ ವಸೂಲಿ",
   "Collection": "ವಸೂಲಿ",
@@ -2746,5 +2746,16 @@
   "Technician": "ತಂತ್ರಜ್ಞ",
   "Unpaid after cut-off / expired": "ಕಟ್-ಆಫ್ ನಂತರ ಪಾವತಿಸದವರು / ಅವಧಿ ಮುಗಿದವರು",
   "{{n}} customers · ₹{{amount}} due": "{{n}} ಗ್ರಾಹಕರು · ₹{{amount}} ಬಾಕಿ",
-  "{{n}} days per recharge": "ಪ್ರತಿ ರೀಚಾರ್ಜ್‌ಗೆ {{n}} ದಿನಗಳು"
+  "{{n}} days per recharge": "ಪ್ರತಿ ರೀಚಾರ್ಜ್‌ಗೆ {{n}} ದಿನಗಳು",
+  "No collection agents yet. Add them in Users.": "ಇನ್ನೂ ಸಂಗ್ರಹ ಏಜೆಂಟ್‌ಗಳಿಲ್ಲ. ಅವರನ್ನು ಬಳಕೆದಾರರಲ್ಲಿ ಸೇರಿಸಿ.",
+  "Nobody chosen: all staff see this customer.": "ಯಾರನ್ನೂ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ: ಎಲ್ಲಾ ಸಿಬ್ಬಂದಿ ಈ ಗ್ರಾಹಕರನ್ನು ನೋಡುತ್ತಾರೆ.",
+  "Only the chosen staff (and owner / manager) see this customer.": "ಆಯ್ಕೆ ಮಾಡಿದ ಸಿಬ್ಬಂದಿ (ಮತ್ತು ಮಾಲೀಕ / ಮ್ಯಾನೇಜರ್) ಮಾತ್ರ ಈ ಗ್ರಾಹಕರನ್ನು ನೋಡುತ್ತಾರೆ.",
+  "All collectors": "ಎಲ್ಲಾ ಸಂಗ್ರಹಿಸುವವರು",
+  "All staff (nobody chosen)": "ಎಲ್ಲಾ ಸಿಬ್ಬಂದಿ (ಯಾರನ್ನೂ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ)",
+  "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.": "Collector IDs: ಸಂಗ್ರಹಿಸುವ ಸಿಬ್ಬಂದಿಯ ಬಳಕೆದಾರ ID (ಬಳಕೆದಾರರಲ್ಲಿ ನೋಡಿ), ಉದಾ. 7 ಅಥವಾ 7, 8. ಎಲ್ಲಾ ಸಿಬ್ಬಂದಿಗೆ ತೋರಿಸಲು ಖಾಲಿ ಬಿಡಿ.",
+  "Choose Excel or CSV file": "Excel ಅಥವಾ CSV ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ",
+  "Excel (.xlsx) or CSV UTF-8": "Excel (.xlsx) ಅಥವಾ CSV UTF-8",
+  "Could not read this file. Save it again as .xlsx or CSV UTF-8.": "ಈ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ .xlsx ಅಥವಾ CSV UTF-8 ಆಗಿ ಉಳಿಸಿ.",
+  "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.": "Excel ಅಥವಾ CSV ಫೈಲ್‌ನಿಂದ ಒಮ್ಮೆಗೆ ಹಲವು ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿ: ಹೆಸರು, ಮೊಬೈಲ್, STB ಸಂಖ್ಯೆ, ಯೋಜನೆ ಅಥವಾ ಮಾಸಿಕ ಮೊತ್ತ, ಪ್ರದೇಶ, ಸಂಗ್ರಹಿಸುವವರು.",
+  "Import Excel / CSV": "Excel / CSV ಆಮದು"
 }

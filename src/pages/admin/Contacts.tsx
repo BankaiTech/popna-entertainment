@@ -71,6 +71,8 @@ const Contacts = () => {
     const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('not_paid');
     const [areaFilter, setAreaFilter] = useState<string>('All');
+    // 'All' | 'none' (shared by all staff) | user id as text
+    const [collectorFilter, setCollectorFilter] = useState<string>('All');
     const [customerPage, setCustomerPage] = useState(1);
     const customerPageSize = 10;
 
@@ -115,15 +117,34 @@ const Contacts = () => {
             const matchesConnection = connectionFilter === 'All' || customer.connectionType === connectionFilter;
             const matchesArea = areaFilter === 'All'
                 || (areaFilter === '' ? !customer.area : (customer.area || '').trim().toLowerCase() === areaFilter.toLowerCase());
+            const ids = customer.collectorIds ?? [];
+            const matchesCollector = collectorFilter === 'All'
+                || (collectorFilter === 'none' ? ids.length === 0 : ids.includes(Number(collectorFilter)));
             const matchesPayment =
                 paymentStatusFilter === 'All'
                     ? true
                     : paymentStatusFilter === 'paid'
                         ? customer.paymentStatus === 'paid'
                         : customer.paymentStatus === 'not_paid';
-            return matchesSearch && matchesStatus && matchesConnection && matchesArea && matchesPayment;
+            return matchesSearch && matchesStatus && matchesConnection && matchesArea && matchesCollector && matchesPayment;
         });
-    }, [customers, customerSearch, statusFilter, connectionFilter, areaFilter, paymentStatusFilter, isEmployee]);
+    }, [customers, customerSearch, statusFilter, connectionFilter, areaFilter, collectorFilter, paymentStatusFilter, isEmployee]);
+
+    // Collectors for the filter (owner / manager), with how many customers each has
+    const collectorOptions = useMemo(() => {
+        const byId = new Map<number, { name: string; n: number }>();
+        let shared = 0;
+        for (const c of customers) {
+            const ids = c.collectorIds ?? [];
+            if (ids.length === 0) shared++;
+            ids.forEach((id, i) => {
+                const cur = byId.get(id) ?? { name: c.collectorNames?.[i] ?? String(id), n: 0 };
+                cur.n++;
+                byId.set(id, cur);
+            });
+        }
+        return { list: [...byId.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name)), shared };
+    }, [customers]);
 
     // Areas for the filter, with how many customers each has
     const areaOptions = useMemo(() => {
@@ -142,7 +163,7 @@ const Contacts = () => {
         return filteredCustomers.slice(start, start + customerPageSize);
     }, [filteredCustomers, customerPage, customerPageSize]);
 
-    useEffect(() => { setCustomerPage(1); }, [customerSearch, statusFilter, connectionFilter, areaFilter, paymentStatusFilter]);
+    useEffect(() => { setCustomerPage(1); }, [customerSearch, statusFilter, connectionFilter, areaFilter, collectorFilter, paymentStatusFilter]);
 
     // ─── Customer Handlers ───
     const handleAddCustomer = () => {
@@ -472,6 +493,22 @@ const Contacts = () => {
                                         )}
                                     </Select>
                                 )}
+                                {!isEmployee && collectorOptions.list.length > 0 && (
+                                    <Select
+                                        value={collectorFilter}
+                                        onChange={(e) => setCollectorFilter(e.target.value)}
+                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[160px] sm:flex-1 xl:flex-initial"
+                                        aria-label={tr('Collected by')}
+                                    >
+                                        <option value="All">{tr('All collectors')}</option>
+                                        {collectorOptions.list.map(([id, c]) => (
+                                            <option key={id} value={String(id)}>{c.name} ({c.n})</option>
+                                        ))}
+                                        {collectorOptions.shared > 0 && (
+                                            <option value="none">{tr('All staff (nobody chosen)')} ({collectorOptions.shared})</option>
+                                        )}
+                                    </Select>
+                                )}
                                 {!isEmployee && (
                                     <Select
                                         value={paymentStatusFilter}
@@ -776,7 +813,7 @@ const Contacts = () => {
                         <p className="text-sm text-gray-500 max-w-md mx-auto">
                             {isMockMode()
                                 ? t('contacts.importDesc', 'Import customers and suppliers from a CSV file. Download the sample template to get the correct format.')
-                                : tr('Add many customers at once from a CSV file: name, mobile, STB number, plan or monthly amount, area.')}
+                                : tr('Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.')}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <a
@@ -787,7 +824,7 @@ const Contacts = () => {
                                 {t('contacts.downloadTemplate', 'Download Template')}
                             </a>
                             <Button onClick={() => setShowImportModal(true)}>
-                                <Upload className="w-4 h-4 mr-2" /> {t('contacts.importCsv', 'Import CSV')}
+                                <Upload className="w-4 h-4 mr-2" /> {isMockMode() ? t('contacts.importCsv', 'Import CSV') : tr('Import Excel / CSV')}
                             </Button>
                         </div>
                     </CardContent>

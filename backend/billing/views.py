@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.mixins import require_org
+from customers.models import visible_customer_ids
 from core.modules import has_module
 from core.permissions import ReadWriteRoles, Roles, role_in
 
@@ -25,6 +26,9 @@ class BillViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         org = require_org(self.request.user)
         qs = Bill.objects.filter(organization=org).select_related("customer__plan")
+        visible = visible_customer_ids(self.request.user, org)
+        if visible is not None:
+            qs = qs.filter(customer_id__in=visible)
         period = self.request.query_params.get("period")
         if period:
             qs = qs.filter(period=parse_period(period))
@@ -67,6 +71,9 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        visible = visible_customer_ids(request.user, request.user.organization)
+        if visible is not None and not visible.filter(id=data["customer"].id).exists():
+            raise PermissionDenied("This customer is assigned to another collector.")
         payment = record_payment(
             user=request.user,
             customer=data["customer"],

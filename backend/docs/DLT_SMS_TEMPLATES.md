@@ -8,10 +8,10 @@ LCO Desk sends SMS **only to customers**. Owners and staff never get SMS; they s
 | Payment receipt | English | 1607100000000376221 | `SMS_TPL_RECEIPT_EN` / `SMS_TEXT_RECEIPT_EN` |
 | Due reminder | English | 1607100000000376221 | `SMS_TPL_REMINDER_EN` / `SMS_TEXT_REMINDER_EN` |
 | Payment receipt | Tamil | **1677100000000399325** (new) | `SMS_TPL_RECEIPT_TA` / `SMS_TEXT_RECEIPT_TA` |
-| Due reminder | Tamil | 1607100000000376222 (old, until a new one is approved) | `SMS_TPL_REMINDER_TA` / `SMS_TEXT_REMINDER_TA` |
+| Due reminder | Tamil | **1677100000000399495** (new) | `SMS_TPL_REMINDER_TA` / `SMS_TEXT_REMINDER_TA` |
 
 The ids above are built in; set them in `.env` only to change them.
-(`SMS_TPL_CUSTOMER_EN` / `_TA` and `SMS_TEXT_CUSTOMER_EN` / `_TA` are older names, still read as a fallback.)
+(`SMS_TPL_CUSTOMER_EN` and `SMS_TEXT_CUSTOMER_EN` are older names, still read as a fallback for English.)
 
 Internet customers get **no SMS** for now (`SMS_INTERNET_ENABLED=false`). Cable SMS always go.
 
@@ -33,15 +33,13 @@ Tamil payment receipt (new):
 PING4SMS
 ```
 
-Tamil due reminder (old):
+Tamil due reminder (new):
 ```
-அன்புள்ள வாடிக்கையாளர் {#var#},
-{#var#}
-உங்கள் தொடர்ந்து வழங்கும் ஆதரவிற்கு நன்றி.
-அன்புடன்,
-{#var#}
+{#var#}, கேபிள் கட்டணம் {#var#}க்குள் செலுத்தவும். {#var#}
 PING4SMS
 ```
+Example: `Raj, கேபிள் கட்டணம் ₹230, 20-11-26 க்குள் செலுத்தவும். Popna`. The date is the provider's
+cut-off date (bill due date).
 
 Variables: 1 = customer name, 2 = message part (below), 3 = business name (Settings → SMS → business name).
 **DLT allows at most 30 characters per variable**, so LCO Desk fits each value to 30 characters.
@@ -52,7 +50,7 @@ Variables: 1 = customer name, 2 = message part (below), 3 = business name (Setti
 |---|---|---|
 | Payment received | `Paid Rs.230, Receipt 000123` | `₹230, 19-11-2026` (amount + payment date) |
 | Partial payment | `Paid Rs.200, balance Rs.30` | `₹200, 19-11-2026` |
-| Due reminder | `Rs.230 due 10-11-26, pay early` | `ரூ.230 10-11-26க்குள் செலுத்தவும்` |
+| Due reminder | `Rs.230 due 10-11-26, pay early` | `₹230, 20-11-26 ` (amount + due date) |
 
 Shorter forms are used automatically when an amount is large.
 

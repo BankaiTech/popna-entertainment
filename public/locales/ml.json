@@ -2127,7 +2127,7 @@
   "Code": "കോഡ്",
   "Collect": "പിരിവ്",
   "Collect payment": "പേയ്‌മെന്റ് പിരിക്കുക",
-  "Collected by": "പിരിച്ചത്",
+  "Collected by": "പിരിക്കുന്നവർ",
   "Collected this month": "ഈ മാസത്തെ പിരിവ്",
   "Collected today": "ഇന്നത്തെ പിരിവ്",
   "Collection": "പിരിവ്",
@@ -2746,5 +2746,16 @@
   "Technician": "ടെക്നീഷ്യൻ",
   "Unpaid after cut-off / expired": "കട്ട്-ഓഫിന് ശേഷം അടയ്ക്കാത്തവർ / കാലാവധി കഴിഞ്ഞവർ",
   "{{n}} customers · ₹{{amount}} due": "{{n}} ഉപഭോക്താക്കൾ · ₹{{amount}} കുടിശ്ശിക",
-  "{{n}} days per recharge": "ഓരോ റീചാർജിനും {{n}} ദിവസം"
+  "{{n}} days per recharge": "ഓരോ റീചാർജിനും {{n}} ദിവസം",
+  "No collection agents yet. Add them in Users.": "ഇതുവരെ പിരിവ് ഏജന്റുമാരില്ല. ഉപയോക്താക്കളിൽ ചേർക്കുക.",
+  "Nobody chosen: all staff see this customer.": "ആരെയും തിരഞ്ഞെടുത്തിട്ടില്ല: എല്ലാ ജീവനക്കാരും ഈ ഉപഭോക്താവിനെ കാണും.",
+  "Only the chosen staff (and owner / manager) see this customer.": "തിരഞ്ഞെടുത്ത ജീവനക്കാർ (ഉടമ / മാനേജർ) മാത്രം ഈ ഉപഭോക്താവിനെ കാണും.",
+  "All collectors": "എല്ലാ പിരിക്കുന്നവരും",
+  "All staff (nobody chosen)": "എല്ലാ ജീവനക്കാരും (ആരെയും തിരഞ്ഞെടുത്തിട്ടില്ല)",
+  "Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.": "Collector IDs: പിരിക്കുന്ന ജീവനക്കാരന്റെ യൂസർ ID (ഉപയോക്താക്കളിൽ കാണുക), ഉദാ. 7 അല്ലെങ്കിൽ 7, 8. എല്ലാ ജീവനക്കാർക്കും കാണിക്കാൻ ശൂന്യമായി വിടുക.",
+  "Choose Excel or CSV file": "Excel അല്ലെങ്കിൽ CSV ഫയൽ തിരഞ്ഞെടുക്കുക",
+  "Excel (.xlsx) or CSV UTF-8": "Excel (.xlsx) അല്ലെങ്കിൽ CSV UTF-8",
+  "Could not read this file. Save it again as .xlsx or CSV UTF-8.": "ഈ ഫയൽ വായിക്കാനായില്ല. വീണ്ടും .xlsx അല്ലെങ്കിൽ CSV UTF-8 ആയി സേവ് ചെയ്യുക.",
+  "Add many customers at once from an Excel or CSV file: name, mobile, STB number, plan or monthly amount, area, collector.": "Excel അല്ലെങ്കിൽ CSV ഫയലിൽ നിന്ന് ഒരേസമയം നിരവധി ഉപഭോക്താക്കളെ ചേർക്കുക: പേര്, മൊബൈൽ, STB നമ്പർ, പ്ലാൻ അല്ലെങ്കിൽ പ്രതിമാസ തുക, ഏരിയ, പിരിക്കുന്നയാൾ.",
+  "Import Excel / CSV": "Excel / CSV ഇമ്പോർട്ട്"
 }

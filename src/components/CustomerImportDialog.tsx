@@ -1,5 +1,5 @@
 /**
- * Upload many cable / internet customers from a CSV (LCO Desk format).
+ * Upload many cable / internet customers from an Excel (.xlsx) or CSV file (LCO Desk format).
  * Step 1: read the file and ask the server to CHECK it (nothing saved).
  * Step 2: show what will be added / skipped / needs fixing, then import for real.
  * The server matches each row to a plan by name, or by monthly amount, and skips STB numbers it already has.
@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import apiClient from '@/lib/apiClient';
 import { unwrapApiData } from '@/lib/apiHelpers';
 import { parseCsv } from '@/lib/csv';
+import { parseXlsx } from '@/lib/xlsx';
 import { endpoints } from '@/api/endpoints';
 import { useLt } from '@/lib/lt';
 
@@ -32,6 +33,8 @@ const COLUMNS: Record<string, string[]> = {
   notes: ['notes', 'remarks', 'note'],
   status: ['status'],
   sms_language: ['sms language', 'language'],
+  // User IDs of the field staff who collect from this customer: "7" or "7, 8". Empty = all field staff.
+  collector_ids: ['collector ids', 'collector id', 'collectors', 'collector', 'emp id', 'employee id', 'collected by'],
 };
 
 type ServerRow = Record<string, string>;
@@ -57,7 +60,7 @@ function toServerRows(rows: Record<string, string>[], headers: string[]): Server
       out.sms_language = v.startsWith('ta') || v === 'தமிழ்' ? 'ta' : v.startsWith('en') ? 'en' : '';
     }
     return out;
-  });
+  }).filter((r) => Object.keys(r).length > 0);
 }
 
 export default function CustomerImportDialog({ open, onClose, onImported }: {
@@ -88,9 +91,16 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
     if (!f) return;
     reset();
     setFileName(f.name);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const { headers, rows: raw } = parseCsv(String(reader.result ?? ''));
+    const isXlsx = /\.xlsx$/i.test(f.name);
+    (async () => {
+      let parsed: { headers: string[]; rows: Record<string, string>[] };
+      try {
+        parsed = isXlsx ? await parseXlsx(f) : parseCsv(await f.text());
+      } catch {
+        setError(tr('Could not read this file. Save it again as .xlsx or CSV UTF-8.'));
+        return;
+      }
+      const { headers, rows: raw } = parsed;
       const mapped = toServerRows(raw, headers);
       if (!headers.some((h) => COLUMNS.name.includes(h.trim().toLowerCase())) || mapped.length === 0) {
         setError(tr('This file has no Name column or no rows. Use the template.'));
@@ -105,8 +115,7 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
       } finally {
         setBusy(false);
       }
-    };
-    reader.readAsText(f, 'utf-8');
+    })();
   };
 
   const doImport = async () => {
@@ -135,6 +144,9 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
             {tr('Columns: Name, Mobile, STB Number, Plan or Monthly Amount, Area, Notes. Mobile is optional.')}
           </p>
           <p className="text-blue-800/80 dark:text-blue-300/80 text-xs">
+            {tr('Collector IDs: user ID of the staff who collects (see Users), e.g. 7 or 7, 8. Leave empty to show the customer to all staff.')}
+          </p>
+          <p className="text-blue-800/80 dark:text-blue-300/80 text-xs">
             {tr('Create your plans first (Settings > Providers & Plans). A row with only an amount gets the plan with that price. Customers whose STB number is already added are skipped.')}
           </p>
           <a href={CUSTOMER_TEMPLATE_URL} download className="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-300 font-medium">
@@ -145,9 +157,9 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
         {!done && (
           <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-6 cursor-pointer hover:bg-muted/40">
             <Upload className="w-6 h-6 text-muted-foreground" />
-            <span className="text-sm font-medium">{fileName || tr('Choose CSV file')}</span>
-            <span className="text-xs text-muted-foreground">{tr('In Excel: File > Save As > CSV UTF-8')}</span>
-            <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} disabled={busy} />
+            <span className="text-sm font-medium">{fileName || tr('Choose Excel or CSV file')}</span>
+            <span className="text-xs text-muted-foreground">{tr('Excel (.xlsx) or CSV UTF-8')}</span>
+            <input ref={fileRef} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={onFile} disabled={busy} />
           </label>
         )}
 
