@@ -32,7 +32,7 @@ const Settings = () => {
     { id: 'company', label: tr('Business Profile'), icon: Building2, description: tr('Your plan, business details and UPI') },
     { id: 'products', label: tr('Providers & Plans'), icon: Package, description: tr('Service connection types (GTPL, RailWire...) and their plans') },
     { id: 'billing', label: tr('Billing & Reminders'), icon: CreditCard, description: tr('Due dates, reminder SMS, payment SMS and field staff rules') },
-    { id: 'sms-templates', label: tr('SMS'), icon: MessageSquare, description: tr('Business name in SMS, SMS language and the messages we send') },
+    { id: 'sms-templates', label: tr('SMS'), icon: MessageSquare, description: tr('Business name in SMS and the messages we send') },
     { id: 'plan', label: tr('Plan & SMS'), icon: Wallet, description: tr('Subscription, SMS balance, buy SMS and renew') },
   ], []);
 

@@ -1,5 +1,6 @@
 // SaaS Ready - Customer Edit/Add Sheet (payment collection is a separate modal)
-// Connection type selection bug fixed
+// Live (Django) form order: Information (name, mobile, AREA*) → Connection (connection*, product*,
+// device ID* for cable) → Address → More (status). Fields the server does not store are shown in mock mode only.
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLt } from '@/lib/lt';
@@ -25,7 +26,8 @@ interface CustomerSheetProps {
   isOpen: boolean;
   onClose: () => void;
   customer?: Customer | null;
-  onSave: (customer: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => void | Promise<void>;
+  /** Return false (or a promise of false) to keep the form open, e.g. when the server refused it. */
+  onSave: (customer: Omit<Customer, 'id' | 'createdAt'> | Partial<Customer>) => void | boolean | Promise<void | boolean>;
   prefillData?: {
     name?: string;
     email?: string;
@@ -40,7 +42,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
   const tr = useLt();
   const { term } = useTerminology();
   const { role } = useAuthStore();
-  const { products, fetchActiveProducts, plans, fetchPlans } = useStore();
+  const { products, fetchActiveProducts, plans, fetchPlans, customers } = useStore();
   const { currentOrganization } = useOrganizationStore();
   const contactFormConfig = useMemo(() => {
     const template = currentOrganization?.industryType ? getTemplateById(currentOrganization.industryType) : undefined;
@@ -102,7 +104,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     canCafId: '',
     cin: '',
     area: '',
-    smsLanguage: '' as '' | 'en' | 'ta',
     permanentDiscount: undefined as number | undefined,
     address: {
       line1: '',
@@ -119,14 +120,28 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     customFields: {} as Record<string, unknown>,
   });
 
-  // Plans filtered by selected connectionType (category)
+  // Products (plans) of the chosen connection only. Nothing to pick until a connection is chosen.
   const availablePlans = useMemo(
-    () => (Array.isArray(plans)
-      ? plans.filter((p) => (!formData.connectionType || p.provider === formData.connectionType)
+    () => (Array.isArray(plans) && formData.connectionType
+      ? plans.filter((p) => p.provider === formData.connectionType
         && (p.isActive !== false || p.planName === formData.package))
       : []),
     [plans, formData.connectionType, formData.package]
   );
+  const isCable = isCableProvider(formData.connectionType, products);
+  const live = !isMockMode();
+  // Areas already used, to pick from (and avoid "Gandhi Nagar" vs "Gandhinagar").
+  const knownAreas = useMemo(
+    () => Array.from(new Set(customers.map((c) => (c.area || '').trim()).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b)),
+    [customers]
+  );
+
+  const changeConnection = (connectionType: Provider) => {
+    // A product from the old connection is not valid for the new one.
+    const keep = plans.some((p) => p.provider === connectionType && p.planName === formData.package);
+    setFormData({ ...formData, connectionType, package: keep ? formData.package : '' });
+  };
 
   // Reset form when dialog opens/closes or customer changes - NOT on availableProviders change
   useEffect(() => {
@@ -144,7 +159,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         boxNumber: customer.boxNumber || '',
         stbNumber: customer.stbNumber || '',
         canCafId: customer.canCafId || '',
-        smsLanguage: customer.smsLanguage || '',
         cin: customer.cin || '',
         area: customer.area || '',
         permanentDiscount: customer.permanentDiscount ?? undefined,
@@ -169,7 +183,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         boxNumber: '',
         stbNumber: '',
         canCafId: '',
-        smsLanguage: '',
         cin: '',
         area: '',
         permanentDiscount: undefined,
@@ -190,7 +203,8 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     }
   }, [customer, isOpen, prefillData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Security check: Employees cannot add or edit customers
     if (isReadOnly) {
@@ -200,6 +214,16 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
         showError(t('customers.noPermissionAdd', 'You do not have permission to add customers.'));
       }
       return;
+    }
+
+    // Required fields (other tabs are not on screen, so the browser cannot check them).
+    const missing = (tab: typeof activeTab, message: string) => { setActiveTab(tab); showError(message); };
+    if (!formData.name.trim()) return missing('info', tr('Enter the customer name.'));
+    if (showIspFields && !formData.area.trim()) return missing('info', tr('Enter the area.'));
+    if (showIspFields && showPlanTab) {
+      if (!formData.connectionType) return missing('plan', tr('Choose the connection.'));
+      if (!formData.package) return missing('plan', tr('Choose the product.'));
+      if (isCable && !formData.stbNumber.trim()) return missing('plan', tr('Enter the device ID. It is required for cable.'));
     }
 
     if (formData.gstin && formData.gstin.trim() !== '') {
@@ -221,12 +245,13 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
     const cf = { ...(payload.customFields ?? {}) };
     Object.keys(cf).forEach((k) => { if (k.trim() === '') delete cf[k]; });
     payload.customFields = Object.keys(cf).length ? cf : {};
-    if (customer) {
-      onSave(payload);
-    } else {
-      onSave(payload);
+    setSaving(true);
+    try {
+      const result = await onSave(payload);
+      if (result !== false) onClose();
+    } finally {
+      setSaving(false);
     }
-    onClose();
   };
 
   const statuses: CustomerStatus[] = ['Active', 'Inactive'];
@@ -326,15 +351,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.email', 'Email')}</label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.mobile', 'Mobile')}
                     {isMockMode() && <span className="text-destructive"> *</span>}
@@ -349,19 +365,32 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     disabled={isReadOnly}
                   />
                 </div>
+                {showIspFields && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
-                  <Select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.area', 'Area')} <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={formData.area}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                    placeholder={t('customerSheet.areaPlaceholder', 'Enter service area')}
+                    list="customer-area-list"
+                    autoComplete="off"
                     disabled={isReadOnly}
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
-                      </option>
-                    ))}
-                  </Select>
+                  />
+                  <datalist id="customer-area-list">
+                    {knownAreas.map((a) => <option key={a} value={a} />)}
+                  </datalist>
+                </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium mb-2">{t('customerSheet.email', 'Email')}</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={isReadOnly}
+                  />
                 </div>
                 <div className="col-span-full">
                   <label className="block text-sm font-medium mb-2">{t('customerSheet.description', 'Description')}</label>
@@ -385,40 +414,11 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    {t('customerSheet.connectionType', 'Connection')} <span className="text-destructive">*</span>
                   </label>
-                  <Input
-                    value={formData.gstin || ''}
-                    onChange={(e) => {
-                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
-                      setFormData({ ...formData, gstin: value || undefined });
-                    }}
-                    placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
-                    maxLength={15}
-                    disabled={isReadOnly}
-                    className="uppercase"
-                  />
-                </div>
-                )}
-                {showIspFields && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.area', 'Area')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
-                  </label>
-                  <Input
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    placeholder={t('customerSheet.areaPlaceholder', 'Enter service area')}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                )}
-                {showIspFields && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.connectionType', 'Connection Type')}</label>
                   <Select
                     value={formData.connectionType}
-                    onChange={(e) => setFormData({ ...formData, connectionType: e.target.value as Provider })}
+                    onChange={(e) => changeConnection(e.target.value as Provider)}
                     disabled={isReadOnly}
                   >
                     {availableProviders.length === 0 ? (
@@ -438,13 +438,19 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 )}
                 {showIspFields && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('customerSheet.package', 'Package')}</label>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.package', 'Product')} <span className="text-destructive">*</span>
+                  </label>
                   <Select
                     value={formData.package}
                     onChange={(e) => setFormData({ ...formData, package: e.target.value })}
-                    disabled={isReadOnly}
+                    disabled={isReadOnly || !formData.connectionType}
                   >
-                    <option value="">- {t('customerSheet.selectPlan', 'Select Plan')} -</option>
+                    <option value="">
+                      {formData.connectionType
+                        ? `- ${t('customerSheet.selectPlan', 'Select Product')} -`
+                        : tr('Choose the connection first')}
+                    </option>
                     {availablePlans.map((plan) => (
                       <option key={plan.id} value={plan.planName}>{plan.planName}</option>
                     ))}
@@ -454,27 +460,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 {showIspFields && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.permanentDiscount', 'Permanent Discount')} <span className="text-xs text-muted-foreground font-normal">(%)</span>
-                  </label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.5}
-                    value={formData.permanentDiscount ?? ''}
-                    onChange={(e) => {
-                      const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                      setFormData({ ...formData, permanentDiscount: v === undefined || isNaN(v) ? undefined : Math.min(100, Math.max(0, v)) });
-                    }}
-                    placeholder={t('customerSheet.permanentDiscountPlaceholder', '0–100')}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                )}
-                {showIspFields && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('customerSheet.stbNumber', 'STB No.')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                    {t('customerSheet.stbNumber', 'Device ID')}{' '}
+                    {isCable
+                      ? <span className="text-destructive">*</span>
+                      : <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>}
                   </label>
                   <Input
                     value={formData.stbNumber}
@@ -501,21 +490,6 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 )}
                 {showIspFields && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">{tr('SMS language')}</label>
-                  <select
-                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                    value={formData.smsLanguage}
-                    onChange={(e) => setFormData({ ...formData, smsLanguage: e.target.value as '' | 'en' | 'ta' })}
-                    disabled={isReadOnly}
-                  >
-                    <option value="">{tr('Same as business setting')}</option>
-                    <option value="en">English</option>
-                    <option value="ta">தமிழ் (Tamil)</option>
-                  </select>
-                </div>
-                )}
-                {showIspFields && (
-                <div>
                   <label className="block text-sm font-medium mb-2">
                     {t('customerSheet.cin', 'CIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
                   </label>
@@ -529,7 +503,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                 </div>
                 )}
                 {/* Box Number - only for cable product customers when showIspFields */}
-                {showIspFields && isCableProvider(formData.connectionType, products) && (
+                {showIspFields && isCable && (
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       {t('customerSheet.boxNumber', 'Box Number')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
@@ -541,6 +515,45 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                       disabled={isReadOnly}
                     />
                   </div>
+                )}
+                {showIspFields && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.permanentDiscount', 'Permanent Discount')} <span className="text-xs text-muted-foreground font-normal">(%)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={formData.permanentDiscount ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                      setFormData({ ...formData, permanentDiscount: v === undefined || isNaN(v) ? undefined : Math.min(100, Math.max(0, v)) });
+                    }}
+                    placeholder={t('customerSheet.permanentDiscountPlaceholder', '0–100')}
+                    disabled={isReadOnly}
+                  />
+                </div>
+                )}
+                {/* GSTIN is not stored for cable / internet customers on the server: demo mode only */}
+                {showIspFields && !live && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground font-normal">({t('common.optional', 'Optional')})</span>
+                  </label>
+                  <Input
+                    value={formData.gstin || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                      setFormData({ ...formData, gstin: value || undefined });
+                    }}
+                    placeholder={t('customerSheet.gstinPlaceholder', '15-character GSTIN')}
+                    maxLength={15}
+                    disabled={isReadOnly}
+                    className="uppercase"
+                  />
+                </div>
                 )}
               </div>
             </>
@@ -626,6 +639,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   disabled={isReadOnly}
                 />
               </div>
+              {!live && (
               <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('customerSheet.gstin', 'GSTIN')} <span className="text-xs text-muted-foreground">({t('common.optional', 'Optional')})</span>
@@ -645,8 +659,10 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   className="uppercase"
                 />
               </div>
+              )}
 
-              {/* Multiple Addresses Section (Edit Mode Only) */}
+              {/* Multiple Addresses Section (Edit Mode Only; demo mode only - not stored on the server) */}
+              {!live && (
               <div className="mt-8 pt-6 border-t border-border col-span-1 md:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold">{t('customerSheet.additionalAddresses', 'Additional Addresses')}</h3>
@@ -787,13 +803,29 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
 
           {/* More tab: credit limit, loyalty (industry-driven), tags, custom fields */}
           {activeTab === 'more' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {showLoyaltyCredit && (
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('customerSheet.status', 'Status')}</label>
+                <Select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as CustomerStatus })}
+                  disabled={isReadOnly}
+                >
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status === 'Active' ? t('common.active', 'Active') : t('common.inactive', 'Inactive')}
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">{tr('Inactive customers get no bills or SMS.')}</p>
+              </div>
+              {showLoyaltyCredit && !live && (
               <>
               <div>
                 <label className="block text-sm font-medium mb-2">{t('customerSheet.creditLimit', 'Credit Limit')}</label>
@@ -827,6 +859,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
               </div>
               </>
               )}
+              {!live && (<>
               <div className="col-span-full">
                 <label className="block text-sm font-medium mb-2">{t('customerSheet.tags', 'Tags')}</label>
                 <Input
@@ -908,6 +941,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                   )}
                 </div>
               </div>
+              </>)}
             </div>
           )}
 
@@ -1098,7 +1132,7 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
             {isReadOnly ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
           </Button>
           {!isReadOnly && (
-            <Button type="submit" className="w-full sm:w-auto">{customer ? t('common.update', 'Update') : t('common.create', 'Create')} {t('customers.customer', 'Customer')}</Button>
+            <Button type="submit" disabled={saving} className="w-full sm:w-auto">{saving ? tr('Saving...') : customer ? tr('Save changes') : tr('Add customer')}</Button>
           )}
         </DialogFooter>
       </form>

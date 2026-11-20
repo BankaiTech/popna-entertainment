@@ -17,6 +17,8 @@ from .helpers import client_for, first_of_this_month, make_customer, make_org, m
 GPS = {"latitude": 12.6919, "longitude": 79.9765, "accuracy": 15}
 
 
+# These check the English/Tamil choice logic, so switch off "Tamil only" for them.
+@override_settings(SMS_ONLY_LANGUAGE="")
 class PaymentTests(TestCase):
     def setUp(self):
         self.org = make_org("CGP01", extra_alert_mobiles="9876500001")
@@ -134,6 +136,7 @@ class PaymentTests(TestCase):
         self.assertEqual(len(client_for(self.owner).get("/api/payments").json()), 1)
 
 
+@override_settings(SMS_ONLY_LANGUAGE="")
 class ReminderTests(TestCase):
     def setUp(self):
         self.org = make_org("REM", reminder_days_before=3)
@@ -210,3 +213,17 @@ class OutboxTests(TestCase):
         process_outbox(gateway=gw)
         m.refresh_from_db()
         self.assertEqual((m.status, m.attempts), ("failed", 2))
+
+
+class TamilOnlySmsTests(TestCase):
+    def test_every_sms_is_tamil_even_if_english_was_chosen(self):
+        from notifications.services import customer_language
+
+        org = make_org("TAO")
+        org.sms_language = "en"
+        org.save()
+        cable, _ = make_plans(org)
+        cust = make_customer(org, cable)
+        cust.sms_language = "en"
+        cust.save()
+        self.assertEqual(customer_language(cust), "ta")

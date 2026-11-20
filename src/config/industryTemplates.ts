@@ -137,7 +137,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
       customer: 'Subscriber',
       contact: 'Subscribers',
       complaint: 'Ticket',
-      connectionType: 'Service Plan',
+      connectionType: 'Connection',
       subscription: 'Plans',
       serviceRequest: 'Fault Report',
     },

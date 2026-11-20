@@ -42,7 +42,13 @@ function mapContactToCustomer(raw: Record<string, unknown>): Customer {
     connectionType: (c.connectionType ?? c.contactType ?? '') as Provider,
     package: String(c.package ?? c.planName ?? ''),
     status: (c.status === 'Inactive' || c.status === 'inactive' ? 'Inactive' : 'Active') as Customer['status'],
-    description: c.description != null ? String(c.description) : undefined,
+    // Server field names: notes, customer_code, stb_number, box_number, can_caf_id
+    description: c.notes != null ? String(c.notes) : c.description != null ? String(c.description) : undefined,
+    cin: c.customerCode != null ? String(c.customerCode) : undefined,
+    stbNumber: c.stbNumber != null ? String(c.stbNumber) : undefined,
+    boxNumber: c.boxNumber != null ? String(c.boxNumber) : undefined,
+    canCafId: c.canCafId != null ? String(c.canCafId) : undefined,
+    permanentDiscount: c.permanentDiscount != null ? Number(c.permanentDiscount) : undefined,
     address: (c.address as Customer['address']) ?? emptyAddress,
     additionalAddresses: c.additionalAddresses as Customer['additionalAddresses'],
     createdAt: String(c.createdAt ?? new Date().toISOString()),
@@ -61,8 +67,22 @@ function mapContactToCustomer(raw: Record<string, unknown>): Customer {
   };
 }
 
+/**
+ * App customer → server fields. Before this, the area typed in the form and the description / customer
+ * code were silently dropped, and editing a customer blanked its STB / box / CAF numbers.
+ */
 function contactPayload(customer: Partial<Customer>): Record<string, unknown> {
-  const payload: Record<string, unknown> = { ...customer };
+  const {
+    area, description, cin,
+    // not stored on the server for cable / internet customers
+    gstin: _gstin, tags: _tags, customFields: _cf, additionalAddresses: _aa, creditLimit: _cl,
+    loyaltyPoints: _lp, password: _pw, smsLanguage: _sl,
+    ...rest
+  } = customer;
+  const payload: Record<string, unknown> = { ...rest };
+  if (area !== undefined) payload.areaName = area; // found or created by name on the server
+  if (description !== undefined) payload.notes = description;
+  if (cin !== undefined) payload.customerCode = cin;
   if (customer.connectionType) payload.contact_type = 'customer';
   return toSnakeCase(payload);
 }

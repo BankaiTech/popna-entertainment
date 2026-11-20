@@ -156,6 +156,9 @@ class CustomerSerializer(serializers.ModelSerializer):
             data.setdefault("city", address.get("city", ""))
             data.setdefault("state", address.get("state", "") or "Tamil Nadu")
             data.setdefault("pincode", address.get("pincode", "") or "")
+        # The app sends the area as typed text: same as area_name (found or created by name).
+        if isinstance(data.get("area"), str) and "area_name" not in data and "area_id" not in data:
+            data["area_name"] = data.pop("area")
         if isinstance(data.get("status"), str):
             data["status"] = data["status"].lower()
         if "mobile" in data:
@@ -173,6 +176,17 @@ class CustomerSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance is None and "plan" not in attrs:
             raise serializers.ValidationError({"plan_id": "Choose a plan (or send connection_type + package)."})
+        plan = attrs.get("plan", getattr(self.instance, "plan", None))
+        bulk = self.context.get("bulk_import", False)  # CSV import keeps its own, lighter rules
+        if not bulk:
+            # Area is needed to list and filter customers by area.
+            has_area = attrs.get("area") or str(attrs.get("area_name", "")).strip()
+            if self.instance is None and not has_area:
+                raise serializers.ValidationError({"area": "Area is required."})
+            # Cable customers must have their device (STB) ID: the provider portal needs it.
+            stb = attrs.get("stb_number", getattr(self.instance, "stb_number", ""))
+            if plan is not None and plan.category == "cable" and not str(stb or "").strip():
+                raise serializers.ValidationError({"stb_number": "Device ID is required for cable customers."})
         area_name = attrs.pop("area_name", "").strip()
         if area_name and "area" not in attrs:
             org = require_org(self.context["request"].user)

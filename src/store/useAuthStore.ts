@@ -1,4 +1,5 @@
 // Client folder removed - SaaS multi-tenant architecture used
+import { setLanguage } from '@/i18n';
 import { create } from 'zustand';
 import { authApi } from '@/api/auth';
 import { loginCustomer } from '@/api/customerAuth';
@@ -122,6 +123,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         localStorage.setItem('auth-storage', JSON.stringify({ token: tokens.access }));
 
         const me = await authApi.me();
+        // Open the app in this person's language (set by the owner / app owner, or picked by them).
+        if (me.language) setLanguage(me.language);
         const role: UserRole = me.role === 'superadmin' || me.role === 'super_admin'
           ? 'superadmin'
           : me.role === 'admin' ? 'admin' : 'employee';

@@ -23,6 +23,8 @@ export interface AuthUser {
   allowedModules?: ModuleKey[] | null;
   superAdminRole?: SuperAdminRole | null;
   saPermissions?: SAPermissionKey[] | null;
+  /** App language to open in after login ('' = keep the device's choice). */
+  language?: string;
   /** Operator users only. Checked when the dashboard opens. */
   subscription?: {
     state: 'active' | 'expired' | 'not_started';
@@ -51,6 +53,7 @@ function mapAuthUser(raw: Record<string, unknown>): AuthUser {
     superAdminRole: (user.superAdminRole as SuperAdminRole | null) ?? null,
     saPermissions: (user.saPermissions as SAPermissionKey[] | null) ?? null,
     subscription: (user.subscription as AuthUser['subscription']) ?? null,
+    language: String(user.language ?? ''),
   };
 }
 
@@ -91,6 +94,12 @@ export const authApi = {
     meCache = { at: Date.now(), promise };
     promise.catch(() => { if (meCache?.promise === promise) meCache = null; });
     return promise;
+  },
+
+  /** Remember the app language this person picked (used at their next login, on any device). */
+  saveLanguage: async (language: string): Promise<void> => {
+    meCache = null;
+    await apiClient.patch(endpoints.auth.me, { language });
   },
 
   /** Forget the cached answer (after logout or when the session changes). */

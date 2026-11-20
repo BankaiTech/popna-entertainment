@@ -70,6 +70,7 @@ const Contacts = () => {
     const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('Active');
     const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('not_paid');
+    const [areaFilter, setAreaFilter] = useState<string>('All');
     const [customerPage, setCustomerPage] = useState(1);
     const customerPageSize = 10;
 
@@ -108,18 +109,32 @@ const Contacts = () => {
             }
             const matchesSearch =
                 customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                customer.mobile.includes(customerSearch);
+                customer.mobile.includes(customerSearch) ||
+                (customer.stbNumber || '').toLowerCase().includes(customerSearch.toLowerCase());
             const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
             const matchesConnection = connectionFilter === 'All' || customer.connectionType === connectionFilter;
+            const matchesArea = areaFilter === 'All'
+                || (areaFilter === '' ? !customer.area : (customer.area || '').trim().toLowerCase() === areaFilter.toLowerCase());
             const matchesPayment =
                 paymentStatusFilter === 'All'
                     ? true
                     : paymentStatusFilter === 'paid'
                         ? customer.paymentStatus === 'paid'
                         : customer.paymentStatus === 'not_paid';
-            return matchesSearch && matchesStatus && matchesConnection && matchesPayment;
+            return matchesSearch && matchesStatus && matchesConnection && matchesArea && matchesPayment;
         });
-    }, [customers, customerSearch, statusFilter, connectionFilter, paymentStatusFilter, isEmployee]);
+    }, [customers, customerSearch, statusFilter, connectionFilter, areaFilter, paymentStatusFilter, isEmployee]);
+
+    // Areas for the filter, with how many customers each has
+    const areaOptions = useMemo(() => {
+        const counts = new Map<string, number>();
+        let noArea = 0;
+        for (const c of customers) {
+            const a = (c.area || '').trim();
+            if (a) counts.set(a, (counts.get(a) ?? 0) + 1); else noArea += 1;
+        }
+        return { list: Array.from(counts.entries()).sort((x, y) => x[0].localeCompare(y[0])), noArea };
+    }, [customers]);
 
     const totalCustomerPages = Math.ceil(filteredCustomers.length / customerPageSize);
     const paginatedCustomers = useMemo(() => {
@@ -127,7 +142,7 @@ const Contacts = () => {
         return filteredCustomers.slice(start, start + customerPageSize);
     }, [filteredCustomers, customerPage, customerPageSize]);
 
-    useEffect(() => { setCustomerPage(1); }, [customerSearch, statusFilter, connectionFilter, paymentStatusFilter]);
+    useEffect(() => { setCustomerPage(1); }, [customerSearch, statusFilter, connectionFilter, areaFilter, paymentStatusFilter]);
 
     // ─── Customer Handlers ───
     const handleAddCustomer = () => {
@@ -155,7 +170,16 @@ const Contacts = () => {
             return;
         }
         if (editingCustomer) {
-            await updateCustomer(editingCustomer.id, customerData);
+            const updated = await updateCustomer(editingCustomer.id, customerData);
+            if (!updated) return false; // error shown; keep the form open
+            setIsAddCustomerOpen(false);
+            setShowCustomerSheet(false);
+            setEditingCustomer(null);
+        } else if (!isMockMode()) {
+            // Live: customers have no login yet, so no password to show.
+            const saved = await addCustomer(customerData as Omit<Customer, 'id' | 'createdAt'>);
+            if (!saved) return false; // error shown; keep the form open
+            showSuccess(tr('Customer added'));
             setIsAddCustomerOpen(false);
             setShowCustomerSheet(false);
             setEditingCustomer(null);
@@ -431,6 +455,22 @@ const Contacts = () => {
                                         ))
                                     ) : null}
                                 </Select>
+                                )}
+                                {(areaOptions.list.length > 0 || areaOptions.noArea > 0) && (
+                                    <Select
+                                        value={areaFilter}
+                                        onChange={(e) => setAreaFilter(e.target.value)}
+                                        className="h-9 text-sm w-full min-w-0 sm:min-w-[160px] sm:flex-1 xl:flex-initial"
+                                        aria-label={t('customers.area', 'Area')}
+                                    >
+                                        <option value="All">{tr('All Areas')}</option>
+                                        {areaOptions.list.map(([name, n]) => (
+                                            <option key={name} value={name}>{name} ({n})</option>
+                                        ))}
+                                        {areaOptions.noArea > 0 && (
+                                            <option value="">{tr('No area')} ({areaOptions.noArea})</option>
+                                        )}
+                                    </Select>
                                 )}
                                 {!isEmployee && (
                                     <Select

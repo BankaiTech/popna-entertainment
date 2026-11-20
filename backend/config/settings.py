@@ -239,6 +239,9 @@ SMS_TEXT_OVERRIDES = {
 # Internet customers' SMS (receipts and reminders) are switched off for everyone until there is an
 # approved template for them. Cable SMS are not affected.
 SMS_INTERNET_ENABLED = env_bool("SMS_INTERNET_ENABLED", False)
+# All customer SMS go in this language for now (the app no longer asks per customer / per operator).
+# Empty = use the customer's / operator's choice again.
+SMS_ONLY_LANGUAGE = env("SMS_ONLY_LANGUAGE", "ta")
 
 # ── Scheduler (python manage.py run_scheduler) ──────────────────────────────
 SCHEDULE_DUE_REMINDERS_AT = env("SCHEDULE_DUE_REMINDERS_AT", "09:00")
