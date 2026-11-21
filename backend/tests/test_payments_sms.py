@@ -103,9 +103,10 @@ class PaymentTests(TestCase):
         client_for(self.agent).post("/api/payments", {"customer_id": self.cable_cust.id, "amount": "230", **GPS},
                                     format="json")
         msg = SmsMessage.objects.get()
-        self.assertEqual((msg.language, msg.template_id), ("ta", "1677100000000399325"))
-        self.assertTrue(msg.body.startswith("அன்புள்ள வாடிக்கையாளர்"))
-        self.assertIn("கேபிள் கட்டணம் ₹230, ", msg.body)
+        self.assertEqual((msg.language, msg.template_id), ("ta", "1677100000000399500"))
+        self.assertTrue(msg.body.startswith("கேபிள் சந்தா ₹230, "))
+        self.assertIn(" அன்று பெறப்பட்டது. ", msg.body)
+        self.assertNotIn("₹₹", msg.body)
         self.assertTrue(msg.body.endswith("\nPING4SMS"))
 
     def test_overpayment_rejected_and_partial_allowed(self):

@@ -6,12 +6,12 @@ Each message type (payment receipt, due reminder) has its own template per langu
 
   receipt / en   1607100000000376221   Dear Customer {name},\\n{body}\\nThank you ... Regards,\\n{org}\\nPING4SMS
   reminder / en  1607100000000376221   (same English template)
-  receipt / ta   1677100000000399325   அன்புள்ள வாடிக்கையாளர் {name}, உங்கள் கேபிள் கட்டணம் {body} அன்று
-                                       பெறப்பட்டது. இப்படிக்கு {org}\\nPING4SMS        ({body} = "₹250, 19-11-2026")
+  receipt / ta   1677100000000399500   கேபிள் சந்தா ₹{body} அன்று பெறப்பட்டது. {org}\\nPING4SMS
+                                       (2 variables only, no name; {body} = "250, 19-11-2026", ₹ is fixed text)
   reminder / ta  1677100000000399495   {name}, கேபிள் கட்டணம் {body}க்குள் செலுத்தவும். {org}\nPING4SMS
                                        ({body} = "₹230, 20-11-26 ", the provider's cut-off date)
 
-{name}, {body}, {org} are the three {#var#} places. DLT rejects any value longer than 30 characters,
+{name}, {body}, {org} are the {#var#} places (a template may leave {name} out). DLT rejects any value longer than 30 characters,
 so every value is fitted to 30 here.
 
 New template from the vendor with the SAME variables? No code change: set its id and text in .env
@@ -28,7 +28,7 @@ KINDS = ("receipt", "reminder")
 
 _EN = "Dear Customer {name},\n{body}\nThank you for your continued support.\nRegards,\n{org}\nPING4SMS"
 _TA_REMINDER = "{name}, கேபிள் கட்டணம் {body}க்குள் செலுத்தவும். {org}\nPING4SMS"
-_TA_RECEIPT = "அன்புள்ள வாடிக்கையாளர் {name}, உங்கள் கேபிள் கட்டணம் {body} அன்று பெறப்பட்டது. இப்படிக்கு {org}\nPING4SMS"
+_TA_RECEIPT = "கேபிள் சந்தா ₹{body} அன்று பெறப்பட்டது. {org}\nPING4SMS"
 
 DEFAULT_TEXTS = {
     ("receipt", "en"): _EN,
@@ -59,8 +59,8 @@ def receipt_body(lang, amount, receipt_no, balance, paid_on):
     """The middle variable of the payment receipt SMS."""
     a = money(amount)
     if lang == "ta":
-        # "...கேபிள் கட்டணம் ₹250, 19-11-2026 அன்று பெறப்பட்டது."
-        return fit(f"₹{a}, {paid_on:%d-%m-%Y}", f"₹{a}, {short_date(paid_on)}", f"₹{a}")
+        # "கேபிள் சந்தா ₹250, 19-11-2026 அன்று பெறப்பட்டது." The ₹ is part of the DLT template, not the variable.
+        return fit(f"{a}, {paid_on:%d-%m-%Y}", f"{a}, {short_date(paid_on)}", a)
     seq = receipt_no.rsplit("-", 1)[-1]
     if Decimal(balance) > 0:
         return fit(f"Paid Rs.{a}, balance Rs.{money(balance)}", f"Paid Rs.{a}, bal Rs.{money(balance)}", f"Paid Rs.{a}")

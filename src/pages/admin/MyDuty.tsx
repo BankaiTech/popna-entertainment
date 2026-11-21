@@ -66,7 +66,7 @@ const MyDuty = () => {
           <span className="font-semibold">{onDuty ? tr('On duty') : tr('Off duty')}</span>
         </div>
         {onDuty && status?.session && (
-          <p className="text-sm text-muted-foreground">Since {time(status.session.startedAt)}</p>
+          <p className="text-sm text-muted-foreground">{tr('Since {{time}}', { time: time(status.session.startedAt) })}</p>
         )}
         <button
           type="button"
@@ -96,7 +96,7 @@ const MyDuty = () => {
           <div className="flex items-center gap-2 font-semibold"><Wallet className="w-4 h-4" /> {tr('Today')}</div>
           <div className="text-right">
             <div className="text-lg font-bold">₹{total.toLocaleString('en-IN')}</div>
-            <div className="text-xs text-muted-foreground">{valid.length} collections</div>
+            <div className="text-xs text-muted-foreground">{tr('{{n}} collections', { n: valid.length })}</div>
           </div>
         </div>
         <ul className="divide-y divide-border text-sm max-h-72 overflow-y-auto">
@@ -104,7 +104,7 @@ const MyDuty = () => {
             <li key={p.id} className="py-2 flex justify-between gap-2">
               <span className="truncate">
                 {p.customerName}
-                <span className="block text-xs text-muted-foreground">{p.receiptNo} · {time(p.collectedAt)} · {p.method.toUpperCase()}</span>
+                <span className="block text-xs text-muted-foreground">{p.receiptNo} · {time(p.collectedAt)} · {p.method === 'cash' ? tr('Cash') : p.method.toUpperCase()}</span>
               </span>
               <span className={p.status === 'cancelled' ? 'line-through text-muted-foreground' : 'font-medium'}>₹{Number(p.amount)}</span>
             </li>

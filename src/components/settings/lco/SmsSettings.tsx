@@ -12,15 +12,15 @@ const EN: Tpl = (name, body, org) =>
   `Dear Customer ${name},\n${body}\nThank you for your continued support.\nRegards,\n${org}\nPING4SMS`;
 const TA_REMINDER: Tpl = (name, body, org) =>
   `${name}, கேபிள் கட்டணம் ${body}க்குள் செலுத்தவும். ${org}\nPING4SMS`;
-const TA_RECEIPT: Tpl = (name, body, org) =>
-  `அன்புள்ள வாடிக்கையாளர் ${name}, உங்கள் கேபிள் கட்டணம் ${body} அன்று பெறப்பட்டது. இப்படிக்கு ${org}\nPING4SMS`;
+const TA_RECEIPT: Tpl = (_name, body, org) =>
+  `கேபிள் சந்தா ₹${body} அன்று பெறப்பட்டது. ${org}\nPING4SMS`;
 const TEMPLATE: Record<'en' | 'ta', Record<'receipt' | 'reminder', Tpl>> = {
   en: { receipt: EN, reminder: EN },
   ta: { receipt: TA_RECEIPT, reminder: TA_REMINDER },
 };
 const EXAMPLES = {
   en: { receipt: 'Paid Rs.230, Receipt 000123', reminder: 'Rs.230 due 10-11-26, pay early' },
-  ta: { receipt: '₹230, 19-11-2026', reminder: '₹230, 20-11-26 ' },
+  ta: { receipt: '230, 19-11-2026', reminder: '₹230, 20-11-26 ' },
 };
 
 const SmsSettings = () => {

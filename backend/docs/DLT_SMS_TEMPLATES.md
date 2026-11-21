@@ -7,7 +7,7 @@ LCO Desk sends SMS **only to customers**. Owners and staff never get SMS; they s
 |---|---|---|---|
 | Payment receipt | English | 1607100000000376221 | `SMS_TPL_RECEIPT_EN` / `SMS_TEXT_RECEIPT_EN` |
 | Due reminder | English | 1607100000000376221 | `SMS_TPL_REMINDER_EN` / `SMS_TEXT_REMINDER_EN` |
-| Payment receipt | Tamil | **1677100000000399325** (new) | `SMS_TPL_RECEIPT_TA` / `SMS_TEXT_RECEIPT_TA` |
+| Payment receipt | Tamil | **1677100000000399500** (new) | `SMS_TPL_RECEIPT_TA` / `SMS_TEXT_RECEIPT_TA` |
 | Due reminder | Tamil | **1677100000000399495** (new) | `SMS_TPL_REMINDER_TA` / `SMS_TEXT_REMINDER_TA` |
 
 The ids above are built in; set them in `.env` only to change them.
@@ -27,11 +27,13 @@ Regards,
 PING4SMS
 ```
 
-Tamil payment receipt (new):
+Tamil payment receipt (new, 2 variables, no customer name):
 ```
-அன்புள்ள வாடிக்கையாளர் {#var#}, உங்கள் கேபிள் கட்டணம் {#var#} அன்று பெறப்பட்டது. இப்படிக்கு {#var#}
+கேபிள் சந்தா ₹{#var#} அன்று பெறப்பட்டது. {#var#}
 PING4SMS
 ```
+Example: `கேபிள் சந்தா ₹230, 19-11-2026 அன்று பெறப்பட்டது. Popna`. Variable 1 = amount + payment date
+(the ₹ is fixed text in the template), variable 2 = business name.
 
 Tamil due reminder (new):
 ```
@@ -41,15 +43,15 @@ PING4SMS
 Example: `Raj, கேபிள் கட்டணம் ₹230, 20-11-26 க்குள் செலுத்தவும். Popna`. The date is the provider's
 cut-off date (bill due date).
 
-Variables: 1 = customer name, 2 = message part (below), 3 = business name (Settings → SMS → business name).
+Variables (English and Tamil reminder): 1 = customer name, 2 = message part (below), 3 = business name (Settings → SMS → business name).
 **DLT allows at most 30 characters per variable**, so LCO Desk fits each value to 30 characters.
 
 ## Variable 2
 
 | When | English | Tamil |
 |---|---|---|
-| Payment received | `Paid Rs.230, Receipt 000123` | `₹230, 19-11-2026` (amount + payment date) |
-| Partial payment | `Paid Rs.200, balance Rs.30` | `₹200, 19-11-2026` |
+| Payment received | `Paid Rs.230, Receipt 000123` | `230, 19-11-2026` (amount + payment date; ₹ is in the template) |
+| Partial payment | `Paid Rs.200, balance Rs.30` | `200, 19-11-2026` |
 | Due reminder | `Rs.230 due 10-11-26, pay early` | `₹230, 20-11-26 ` (amount + due date) |
 
 Shorter forms are used automatically when an amount is large.

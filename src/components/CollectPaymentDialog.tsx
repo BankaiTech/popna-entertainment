@@ -40,13 +40,13 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (amountNum + discountNum <= 0) return setError('Enter the amount collected.');
+    if (amountNum + discountNum <= 0) return setError(tr('Enter the amount collected.'));
     if (amountNum + discountNum > balance) return setError(tr('Amount is more than the balance (₹{{balance}}).', { balance }));
     setSaving(true);
     try {
       const gps = await getPosition();
       if (!gps && !isOffice) {
-        setError(GPS_HELP);
+        setError(tr(GPS_HELP));
         return;
       }
       const r = await paymentsApi.collect({

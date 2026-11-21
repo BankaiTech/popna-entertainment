@@ -7,6 +7,9 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { env } from './env';
+import { GPS_HELP } from './geo';
+import { tr } from './lt';
+import i18n from '@/i18n';
 import { reportError } from './errorReporter';
 import { SUBSCRIPTION_EVENT, SUBSCRIPTION_MSG_KEY, isGateMounted } from './subscription';
 
@@ -125,15 +128,26 @@ function notifySubscriptionInactive(code: string, message: string, attempt = 0) 
   clearAuthAndGoToLogin();
 }
 
-/** Turn Django error bodies into one readable sentence, so screens can show `error.message`. */
+/** Server sentences we have translations for (public/locales): shown in the user's language. */
+function translated(message: string): string | null {
+  return i18n.exists(message, { nsSeparator: false, keySeparator: false }) ? tr(message) : null;
+}
+
+/**
+ * Turn Django error bodies into one readable sentence, so screens can show `error.message`.
+ * The server answers in English; known sentences are translated here (English text = key).
+ */
 function readableMessage(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
   const body = data as Record<string, unknown>;
-  if (typeof body.detail === 'string') return body.detail;
+  if (typeof body.detail === 'string') return tr(body.detail);
   for (const [field, value] of Object.entries(body)) {
     const first = Array.isArray(value) ? value[0] : value;
     if (typeof first === 'string') {
-      return field === 'non_field_errors' || field === 'detail' ? first : `${field.replace(/_/g, ' ')}: ${first}`;
+      // A missing or bad GPS point: same help text as the app shows when location is off.
+      if (field === 'latitude' || field === 'longitude') return tr(GPS_HELP);
+      if (field === 'non_field_errors' || field === 'detail') return tr(first);
+      return translated(first) ?? `${field.replace(/_/g, ' ')}: ${first}`;
     }
   }
   return null;

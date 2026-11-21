@@ -223,7 +223,7 @@ PLATFORM_UPI_IDS = {
 SMS_TEMPLATE_IDS = {
     ("receipt", "en"): env("SMS_TPL_RECEIPT_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
     ("reminder", "en"): env("SMS_TPL_REMINDER_EN", env("SMS_TPL_CUSTOMER_EN", "1607100000000376221")),
-    ("receipt", "ta"): env("SMS_TPL_RECEIPT_TA", "1677100000000399325"),
+    ("receipt", "ta"): env("SMS_TPL_RECEIPT_TA", "1677100000000399500"),
     ("reminder", "ta"): env("SMS_TPL_REMINDER_TA", "1677100000000399495"),
 }
 # Extra URL text added for Tamil (Unicode) SMS, as your gateway needs it, e.g. "&unicode=1".

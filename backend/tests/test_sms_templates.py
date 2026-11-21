@@ -29,13 +29,12 @@ class TemplateTests(TestCase):
 
     def test_new_tamil_receipt_template_exact_text(self):
         body = receipt_body("ta", 250, "CGP01-000001", 0, date(2026, 11, 19))
-        self.assertEqual(body, "₹250, 19-11-2026")
+        self.assertEqual(body, "250, 19-11-2026")
         self.assertEqual(
-            render("receipt", "ta", "ரவி", body, "Sri Cable"),
-            "அன்புள்ள வாடிக்கையாளர் ரவி, உங்கள் கேபிள் கட்டணம் ₹250, 19-11-2026 அன்று பெறப்பட்டது. "
-            "இப்படிக்கு Sri Cable\nPING4SMS",
+            render("receipt", "ta", "ரவி", body, "Popna"),
+            "கேபிள் சந்தா ₹250, 19-11-2026 அன்று பெறப்பட்டது. Popna\nPING4SMS",
         )
-        self.assertEqual(template_id("receipt", "ta"), "1677100000000399325")
+        self.assertEqual(template_id("receipt", "ta"), "1677100000000399500")
 
     def test_new_tamil_reminder_template_exact_text(self):
         body = reminder_body("ta", 230, date(2026, 11, 20))
