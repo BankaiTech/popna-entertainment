@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "in.lcodesk.twa",
+        "sha256_cert_fingerprints": ["88:B5:91:A1:17:47:F3:A6:AA:C5:5D:43:DE:BD:84:59:54:89:44:41:76:C1:C8:0B:7C:AF:37:74:76:85:D8:C5"]
+      }
+    }]
