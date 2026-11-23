@@ -87,3 +87,26 @@ class CustomerCollectorTests(TestCase):
         self.assertEqual(len(r.json()["errors"]), 1)
         self.assertIn("999", r.json()["errors"][0]["error"])
         self.assertEqual(self.names(self.ramach) & {"Imp A", "Imp B", "Imp C"}, {"Imp B", "Imp C"})
+
+
+class FieldStaffReadTests(TestCase):
+    """Agents / technicians load their own operator (modules, subscription) and their own payments only."""
+
+    def setUp(self):
+        self.org = make_org("FS1")
+        self.other = make_org("FS2")
+        self.agent = make_user("fs_agent", Roles.AGENT, org=self.org)
+        self.tech = make_user("fs_tech", Roles.TECHNICIAN, org=self.org)
+
+    def test_field_staff_read_own_operator_only(self):
+        for user in (self.agent, self.tech):
+            c = client_for(user)
+            self.assertEqual(c.get(f"/api/organizations/{self.org.id}").status_code, 200)
+            self.assertEqual(c.get(f"/api/organizations/{self.other.id}").status_code, 404)
+            r = c.patch(f"/api/organizations/{self.org.id}", {"name": "Hacked"}, format="json")
+            self.assertEqual(r.status_code, 403, r.content)
+
+    def test_technician_payment_list_is_empty_not_forbidden(self):
+        r = client_for(self.tech).get("/api/payments")
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json(), [])

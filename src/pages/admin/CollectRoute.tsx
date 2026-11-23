@@ -34,7 +34,7 @@ const CollectRoute = () => {
   const due = useMemo(
     () =>
       customers
-        .filter((c) => c.status === 'Active' && c.paymentStatus !== 'paid' && (c.balanceAmount ?? 0) > 0)
+        .filter((c) => c.status === 'Active' && c.paymentStatus !== 'paid')
         .sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999')),
     [customers],
   );
@@ -95,7 +95,7 @@ const CollectRoute = () => {
               </div>
               <button type="button" onClick={() => setCollecting(c)}
                 className="shrink-0 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
-                ₹{(c.balanceAmount ?? 0).toLocaleString('en-IN')}
+                {(c.balanceAmount ?? 0) > 0 ? `₹${(c.balanceAmount ?? 0).toLocaleString('en-IN')}` : tr('Mark paid')}
               </button>
             </li>
           ))}

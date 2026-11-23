@@ -54,17 +54,76 @@ def refresh_due_dates(provider, today=None):
     return changed
 
 
+def opening_status(amount_due):
+    """
+    Every bill starts unpaid, also a ₹0 bill (100% permanent discount = free connection).
+    The operator still has to renew a free box in the provider's portal, so staff mark it paid by hand
+    each month; until then it shows as unpaid and in the cut-off list (but gets no reminder SMS).
+    """
+    return Bill.Status.UNPAID
+
+
+def settle_status(bill):
+    """Bill.refresh_status, except a bill with nothing to pay is paid only once a payment row marks it."""
+    bill.refresh_status()
+    if bill.status == Bill.Status.CANCELLED:
+        return
+    if bill.amount_paid <= 0 and bill.amount_due - bill.discount <= 0:
+        marked = Payment.objects.filter(bill=bill, status=Payment.Status.VALID).exists()
+        bill.status = Bill.Status.PAID if marked else Bill.Status.UNPAID
+
+
+def _renew_internet(customer, bill, today=None):
+    """Internet: bill fully paid -> extend validity from the old expiry (paid early) or from today."""
+    today = today or timezone.localdate()
+    bill.previous_valid_until = customer.valid_until
+    start = max(bill.period, today)
+    customer.valid_until = start + timedelta(days=customer.validity_days())
+    customer.save(update_fields=["valid_until", "updated_at"])
+
+
 def get_or_create_bill(customer, period):
+    amount = customer.monthly_amount()
     bill, _ = Bill.objects.get_or_create(
         customer=customer,
         period=period,
         defaults={
             "organization_id": customer.organization_id,
-            "amount_due": customer.monthly_amount(),
+            "amount_due": amount,
             "due_date": due_date_for(customer, period),
+            "status": opening_status(amount),
         },
     )
     return bill
+
+
+@transaction.atomic
+def reprice_open_bills(customer, today=None):
+    """
+    The plan or permanent discount changed: open bills (not yet fully paid) take the new monthly amount,
+    so the customer is asked for the right money. Paid and cancelled bills are history and stay as they are.
+    Cable: only this month's bill. Internet: the open renewal bill.
+    """
+    today = today or timezone.localdate()
+    bills = Bill.objects.select_for_update().filter(
+        customer=customer, status__in=[Bill.Status.UNPAID, Bill.Status.PARTIAL]
+    )
+    if customer.is_cable:
+        bills = bills.filter(period__gte=month_start(today))
+    amount = customer.monthly_amount()
+    changed = 0
+    for bill in bills:
+        if bill.amount_due == amount:
+            continue
+        bill.amount_due = amount
+        settle_status(bill)
+        fields = ["amount_due", "status", "updated_at"]
+        if bill.status == Bill.Status.PAID and not customer.is_cable:
+            _renew_internet(customer, bill, today)
+            fields.append("previous_valid_until")
+        bill.save(update_fields=fields)
+        changed += 1
+    return changed
 
 
 def current_bill(customer, today=None):
@@ -83,10 +142,11 @@ def current_bill(customer, today=None):
     if open_bill:
         return open_bill
     start = customer.valid_until if customer.valid_until and customer.valid_until >= today else today
+    amount = customer.monthly_amount()
     bill, _ = Bill.objects.get_or_create(
         customer=customer, period=start,
-        defaults={"organization_id": customer.organization_id, "amount_due": customer.monthly_amount(),
-                  "due_date": start},
+        defaults={"organization_id": customer.organization_id, "amount_due": amount,
+                  "due_date": start, "status": opening_status(amount)},
     )
     return bill
 
@@ -107,10 +167,11 @@ def generate_internet_renewals(today=None, organization=None):
             continue
         if Bill.objects.filter(customer=c, status__in=[Bill.Status.UNPAID, Bill.Status.PARTIAL]).exists():
             continue
-        _, made = Bill.objects.get_or_create(
+        amount = c.monthly_amount()
+        bill, made = Bill.objects.get_or_create(
             customer=c, period=c.valid_until,
-            defaults={"organization_id": c.organization_id, "amount_due": c.monthly_amount(),
-                      "due_date": c.valid_until},
+            defaults={"organization_id": c.organization_id, "amount_due": amount,
+                      "due_date": c.valid_until, "status": opening_status(amount)},
         )
         created += int(made)
     return created
@@ -132,6 +193,7 @@ def generate_bills(period, organization=None):
             period=period,
             amount_due=c.monthly_amount(),
             due_date=due_date_for(c, period),
+            status=opening_status(c.monthly_amount()),
         )
         for c in customers
         if c.id not in existing
@@ -163,7 +225,7 @@ def record_payment(*, user, customer, amount, method, bill=None, latitude=None, 
     discount = Decimal(discount or 0)
     if discount and user.role not in ("owner", "manager"):
         raise ValidationError({"discount": "Only the owner or manager can give a discount."})
-    if amount < 0 or discount < 0 or amount + discount <= 0:
+    if amount < 0 or discount < 0:
         raise ValidationError({"amount": "Enter an amount to collect."})
     is_field_staff = user.role in ("agent", "technician")
 
@@ -184,6 +246,14 @@ def record_payment(*, user, customer, amount, method, bill=None, latitude=None, 
         raise ValidationError({"bill_id": "This bill belongs to a different customer."})
     if bill.status == Bill.Status.CANCELLED:
         raise ValidationError({"bill_id": "This bill is cancelled."})
+    if bill.status == Bill.Status.PAID:
+        raise ValidationError({"amount": "Nothing is due for this customer."})
+    if bill.balance <= 0:
+        # Free connection (₹0 bill): "Mark paid" records a ₹0 payment for this month.
+        if amount + discount > 0:
+            raise ValidationError({"amount": "This is a free connection. Mark it paid without an amount."})
+    elif amount + discount <= 0:
+        raise ValidationError({"amount": "Enter an amount to collect."})
     if amount + discount > bill.balance:
         raise ValidationError({"amount": f"Amount is more than the balance (Rs.{bill.balance})."})
 
@@ -203,15 +273,11 @@ def record_payment(*, user, customer, amount, method, bill=None, latitude=None, 
     )
     bill.amount_paid += amount
     bill.discount += discount
-    bill.refresh_status()
+    settle_status(bill)
     fields = ["amount_paid", "discount", "status", "updated_at"]
     if not was_paid and bill.status == Bill.Status.PAID and not customer.is_cable:
         # Internet: renew validity — from the old expiry if paid in advance, else from today.
-        today = timezone.localdate()
-        bill.previous_valid_until = customer.valid_until
-        start = max(bill.period, today)
-        customer.valid_until = start + timedelta(days=customer.validity_days())
-        customer.save(update_fields=["valid_until", "updated_at"])
+        _renew_internet(customer, bill)
         fields.append("previous_valid_until")
     bill.save(update_fields=fields)
 
@@ -234,9 +300,11 @@ def cancel_payment(*, user, payment, reason):
         raise ValidationError({"detail": "Payment is already cancelled."})
     bill = Bill.objects.select_for_update().get(pk=payment.bill_id)
     was_paid = bill.status == Bill.Status.PAID
+    # Mark the payment cancelled first, so a ₹0 "mark paid" bill goes back to unpaid.
+    Payment.objects.filter(pk=payment.pk).update(status=Payment.Status.CANCELLED)
     bill.amount_paid -= payment.amount
     bill.discount -= payment.discount
-    bill.refresh_status()
+    settle_status(bill)
     bill.save(update_fields=["amount_paid", "discount", "status", "updated_at"])
     customer = payment.customer
     if was_paid and bill.status != Bill.Status.PAID and not customer.is_cable:

@@ -45,7 +45,8 @@ class DistributorViewSet(viewsets.ModelViewSet):
 
 class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadWriteRoles]
-    read_roles = (Roles.PLATFORM_ADMIN, Roles.DISTRIBUTOR, Roles.OWNER, Roles.MANAGER)
+    # Field staff read their own operator (modules, subscription, terminology); only owners+ change it.
+    read_roles = (Roles.PLATFORM_ADMIN, Roles.DISTRIBUTOR, Roles.OWNER, Roles.MANAGER, Roles.AGENT, Roles.TECHNICIAN)
     write_roles = (Roles.PLATFORM_ADMIN, Roles.DISTRIBUTOR, Roles.OWNER)
     search_fields = ["name", "code"]
     filterset_fields = ["status", "distributor"]
@@ -61,7 +62,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         role = self.request.user.role
-        if role in (Roles.OWNER, Roles.MANAGER):
+        if role in (Roles.OWNER, Roles.MANAGER, Roles.AGENT, Roles.TECHNICIAN):
             return OrganizationOwnerSerializer
         if role == Roles.DISTRIBUTOR:
             return DistributorOrganizationSerializer

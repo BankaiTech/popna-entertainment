@@ -13,6 +13,7 @@ import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import CustomerSheet from '@/components/CustomerSheet';
 import CustomerHistoryPanel from '@/components/CustomerHistoryPanel';
+import CustomerPaymentsDialog from '@/components/CustomerPaymentsDialog';
 import PaymentCollectionModal from '@/components/PaymentCollectionModal';
 import CollectPaymentDialog from '@/components/CollectPaymentDialog';
 import ServiceStatusBadge from '@/components/ServiceStatusBadge';
@@ -833,11 +834,19 @@ const Contacts = () => {
 
             {/* ═══════════ MODALS ═══════════ */}
 
-            {/* Customer History Panel */}
-            <CustomerHistoryPanel
-                customer={historyCustomer}
-                onClose={() => setHistoryCustomer(null)}
-            />
+            {/* Customer history: payments (live app, owner can cancel) / demo history panel */}
+            {isMockMode() ? (
+                <CustomerHistoryPanel
+                    customer={historyCustomer}
+                    onClose={() => setHistoryCustomer(null)}
+                />
+            ) : historyCustomer && (
+                <CustomerPaymentsDialog
+                    customer={historyCustomer}
+                    onClose={() => setHistoryCustomer(null)}
+                    onChanged={() => { fetchCustomers(); }}
+                />
+            )}
 
             {/* Supplier Modal */}
             <SupplierModal

@@ -36,11 +36,15 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
   const amountNum = Number(amount || 0);
   const discountNum = Number(discount || 0);
   const remaining = Math.max(balance - amountNum - discountNum, 0);
+  // Paid already: nothing to do. Free connection (₹0 bill, not yet marked): "Mark paid" for this month.
+  const nothingDue = customer.paymentStatus === 'paid';
+  const freeConnection = !nothingDue && balance <= 0;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (amountNum + discountNum <= 0) return setError(tr('Enter the amount collected.'));
+    if (nothingDue) return setError(tr('Nothing is due for this customer.'));
+    if (!freeConnection && amountNum + discountNum <= 0) return setError(tr('Enter the amount collected.'));
     if (amountNum + discountNum > balance) return setError(tr('Amount is more than the balance (₹{{balance}}).', { balance }));
     setSaving(true);
     try {
@@ -50,7 +54,8 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
         return;
       }
       const r = await paymentsApi.collect({
-        customerId: customer.id, amount: amountNum, method, discount: discountNum, note, gps,
+        customerId: customer.id, amount: freeConnection ? 0 : amountNum, method,
+        discount: freeConnection ? 0 : discountNum, note, gps,
       });
       setReceipt(r);
       onCollected?.();
@@ -76,9 +81,9 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
               <dt className="text-muted-foreground">{tr('Date')}</dt><dd>{at.toLocaleDateString('en-IN')}</dd>
               <dt className="text-muted-foreground">{tr('Time')}</dt><dd>{at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</dd>
               <dt className="text-muted-foreground">{tr('Collected by')}</dt><dd>{receipt.collectedByName}</dd>
-              <dt className="text-muted-foreground">{tr('Mode')}</dt><dd>{receipt.method.toUpperCase()}</dd>
+              <dt className="text-muted-foreground">{tr('Mode')}</dt><dd>{receipt.method === 'cash' ? tr('Cash') : receipt.method.toUpperCase()}</dd>
             </dl>
-            {customer.category !== 'internet' && (
+            {customer.category !== 'internet' && Number(receipt.amount) > 0 && (
               <p className="text-xs text-muted-foreground">{tr('SMS receipt sent to the customer.')}</p>
             )}
           </div>
@@ -112,6 +117,23 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
               )}
             </div>
 
+            {nothingDue && (
+              <p role="status" className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-900 p-3 text-sm text-green-800 dark:text-green-300">
+                {tr('Nothing is due for this customer.')}
+              </p>
+            )}
+            {freeConnection && (
+              <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-900 p-3 text-sm text-amber-800 dark:text-amber-300">
+                {tr('Free connection. Mark it paid for this month after renewing it in the provider portal.')}
+              </p>
+            )}
+            {freeConnection && (
+              <label className="block text-sm">
+                <span className="block font-medium mb-1">{tr('Note (optional)')}</span>
+                <Input value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />
+              </label>
+            )}
+            {!nothingDue && !freeConnection && (<>
             <label className="block text-sm">
               <span className="block font-medium mb-1">{tr('Amount collected (₹)')}</span>
               <Input type="number" inputMode="decimal" min={0} step="0.01" value={amount}
@@ -146,12 +168,17 @@ const CollectPaymentDialog = ({ customer, onClose, onCollected }: Props) => {
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="w-3 h-3" /> {tr('Your location is saved with this collection.')}
             </p>
+            </>)}
             {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           </div>
         </DialogBody>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>{tr('Cancel')}</Button>
-          <Button type="submit" disabled={saving}>{saving ? tr('Saving…') : tr('Save payment')}</Button>
+          {!nothingDue && (
+            <Button type="submit" disabled={saving}>
+              {saving ? tr('Saving…') : freeConnection ? tr('Mark paid') : tr('Save payment')}
+            </Button>
+          )}
         </DialogFooter>
       </form>
     </Dialog>

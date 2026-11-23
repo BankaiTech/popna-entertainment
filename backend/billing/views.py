@@ -51,7 +51,7 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
 
     serializer_class = PaymentSerializer
     permission_classes = [ReadWriteRoles]
-    read_roles = (Roles.OWNER, Roles.MANAGER, Roles.AGENT)
+    read_roles = (Roles.OWNER, Roles.MANAGER, Roles.AGENT, Roles.TECHNICIAN)
     write_roles = (Roles.OWNER, Roles.MANAGER, Roles.AGENT)
     filterset_fields = {"method": ["exact"], "status": ["exact"], "collected_by": ["exact"],
                         "customer": ["exact"], "collected_at": ["date", "date__gte", "date__lte"]}
@@ -61,8 +61,8 @@ class PaymentViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
         user = self.request.user
         org = require_org(user)
         qs = Payment.objects.filter(organization=org).select_related("customer", "bill", "collected_by")
-        if user.role == Roles.AGENT:
-            qs = qs.filter(collected_by=user)  # agents only see their own collections
+        if user.role in Roles.FIELD:
+            qs = qs.filter(collected_by=user)  # field staff only see their own collections
         return qs
 
     def create(self, request, *args, **kwargs):

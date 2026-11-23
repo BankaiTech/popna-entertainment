@@ -228,11 +228,21 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def _bill(self, obj):
         bills = getattr(obj, "current_bills", None)
+        if bills is None:
+            # Not prefetched (the answer to a create / edit): read it, or the app would show a paid
+            # customer as unpaid right after saving.
+            bills = list(obj.bills.exclude(status="cancelled").order_by("-period")[:1])
+            obj.current_bills = bills
         return bills[0] if bills else None
 
     def _last_payment(self, obj):
         bill = self._bill(obj)
-        payments = [p for p in getattr(obj, "current_payments", []) if bill and p.bill_id == bill.id]
+        payments = getattr(obj, "current_payments", None)
+        if payments is None:
+            payments = list(obj.payments.filter(status="valid").select_related("collected_by")
+                            .order_by("-collected_at")[:5]) if bill else []
+            obj.current_payments = payments
+        payments = [p for p in payments if bill and p.bill_id == bill.id]
         return payments[0] if payments else None
 
     def get_service_status(self, obj):

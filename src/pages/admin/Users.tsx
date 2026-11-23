@@ -36,6 +36,20 @@ const MODULE_I18N_KEYS: Record<string, string> = {
   'pos': 'users.modules.pos',
 };
 
+/** Jobs an owner can give: manager (office, sees everything), collection agent, technician. */
+type LcoJob = 'manager' | 'agent' | 'technician';
+const LCO_JOBS: LcoJob[] = ['agent', 'technician', 'manager'];
+const jobToRole = (j: LcoJob): 'admin' | 'employee' => (j === 'manager' ? 'admin' : 'employee');
+const jobLabel = (j: string) => ({
+  owner: tr('Owner'), manager: tr('Manager'), agent: tr('Collection agent'), technician: tr('Technician'),
+} as Record<string, string>)[j] ?? j;
+const jobHint = (j: string) => ({
+  owner: tr('Full access. Only the owner can cancel payments.'),
+  manager: tr('Office staff: sees all customers, payments and settings.'),
+  agent: tr('Collects payments in the field. Sees only their customers and shared ones.'),
+  technician: tr('Field work and faults. Sees only their customers and shared ones. Cannot collect payments.'),
+} as Record<string, string>)[j] ?? '';
+
 const AdminUsers = () => {
   const { t } = useTranslation();
   // Field staff can only get modules this operator has, and never office-only ones.
@@ -58,6 +72,8 @@ const AdminUsers = () => {
   const [addUsername, setAddUsername] = useState('');
   const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<'admin' | 'employee'>('employee');
+  // LCO Desk job: manager / agent / technician (owner is made by the platform). Drives `addRole`.
+  const [addLcoRole, setAddLcoRole] = useState<LcoJob>('agent');
   const [addStatus, setAddStatus] = useState<'active' | 'inactive'>('active');
   const [addLanguage, setAddLanguage] = useState('');
   const [editLanguage, setEditLanguage] = useState('');
@@ -68,6 +84,7 @@ const AdminUsers = () => {
   const [editUsername, setEditUsername] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editRole, setEditRole] = useState<'admin' | 'employee'>('employee');
+  const [editLcoRole, setEditLcoRole] = useState<string>('agent');
   const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active');
   const [editAllowedModules, setEditAllowedModules] = useState<ModuleKey[]>([]);
 
@@ -109,6 +126,7 @@ const AdminUsers = () => {
     setAddUsername('');
     setAddPassword('');
     setAddRole('employee');
+    setAddLcoRole('agent');
     setAddStatus('active');
     setAddLanguage('');
     setAddAllowedModules(defaultAgentModules);
@@ -138,9 +156,10 @@ const AdminUsers = () => {
         organizationId: MOCK_ORGANIZATION_ID,
         name, username, password,
         role: addRole,
+        lcoRole: addLcoRole,
         status: addStatus,
         language: addLanguage,
-        allowedModules: addRole === 'employee' ? addAllowedModules : undefined,
+        allowedModules: addRole === 'employee' ? addAllowedModules.filter((m) => modulesFor(addLcoRole).includes(m)) : undefined,
       });
       await loadUsers();
       handleCloseAdd();
@@ -157,6 +176,7 @@ const AdminUsers = () => {
     setEditUsername(user.username);
     setEditPassword('');
     setEditRole(user.role);
+    setEditLcoRole(user.lcoRole || (user.role === 'admin' ? 'manager' : 'agent'));
     setEditStatus(user.status);
     setEditLanguage(user.language ?? '');
     setEditAllowedModules(user.allowedModules || []);
@@ -186,10 +206,10 @@ const AdminUsers = () => {
       const updates: Partial<Omit<User, 'id' | 'createdAt'>> = {
         name, username,
         role: editRole,
-        lcoRole: editingUser.lcoRole,
+        lcoRole: editLcoRole,
         status: editStatus,
         language: editLanguage,
-        allowedModules: editRole === 'employee' ? editAllowedModules : undefined,
+        allowedModules: editRole === 'employee' ? editAllowedModules.filter((m) => modulesFor(editLcoRole).includes(m) || !staffModules.includes(m)) : undefined,
       };
       if (editPassword) updates.password = editPassword;
       await usersApi.update(editingUser.id, updates);
@@ -231,7 +251,9 @@ const AdminUsers = () => {
   const inactiveCount = users.filter((u) => u.status === 'inactive').length;
 
   // Module access checkboxes component - mobile: single column + large touch targets for multi-select
-  const ModuleAccessCheckboxes = ({ modules, setModules }: { modules: ModuleKey[]; setModules: (m: ModuleKey[]) => void }) => (
+  // Technicians cannot record payments, so they never get the Collect module.
+  const modulesFor = (job: string) => staffModules.filter((m) => !(job === 'technician' && m === 'collect'));
+  const ModuleAccessCheckboxes = ({ modules, setModules, job }: { modules: ModuleKey[]; setModules: (m: ModuleKey[]) => void; job: string }) => (
     <div>
       <label className="block text-sm font-medium mb-2">
         <Shield className="w-4 h-4 inline mr-1" />
@@ -239,7 +261,7 @@ const AdminUsers = () => {
       </label>
       <p className="text-xs text-muted-foreground mb-3">{t('users.hints.moduleAccess', 'Select which modules this employee can access')}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {staffModules.map((mod) => (
+        {modulesFor(job).map((mod) => (
           <label
             key={mod}
             className={cn(
@@ -506,10 +528,10 @@ const AdminUsers = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
-                    <Select value={addRole} onChange={(e) => setAddRole(e.target.value as 'admin' | 'employee')} disabled={addSaving}>
-                      <option value="admin">{t('users.roles.admin', 'Admin')}</option>
-                      <option value="employee">{t('users.roles.employee', 'Employee')}</option>
+                    <Select value={addLcoRole} onChange={(e) => { const j = e.target.value as LcoJob; setAddLcoRole(j); setAddRole(jobToRole(j)); }} disabled={addSaving}>
+                      {LCO_JOBS.map((j) => <option key={j} value={j}>{jobLabel(j)}</option>)}
                     </Select>
+                    <p className="text-xs text-muted-foreground mt-1">{jobHint(addLcoRole)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
@@ -529,7 +551,7 @@ const AdminUsers = () => {
 
                   {/* Module access - only for employees */}
                   {addRole === 'employee' && (
-                    <ModuleAccessCheckboxes modules={addAllowedModules} setModules={setAddAllowedModules} />
+                    <ModuleAccessCheckboxes modules={addAllowedModules} setModules={setAddAllowedModules} job={addLcoRole} />
                   )}
 
                   {addError && (
@@ -573,10 +595,14 @@ const AdminUsers = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
-                    <Select value={editRole} onChange={(e) => setEditRole(e.target.value as 'admin' | 'employee')} disabled={editSaving}>
-                      <option value="admin">{t('users.roles.admin', 'Admin')}</option>
-                      <option value="employee">{t('users.roles.employee', 'Employee')}</option>
-                    </Select>
+                    {editLcoRole === 'owner' ? (
+                      <Input value={jobLabel('owner')} disabled />
+                    ) : (
+                      <Select value={editLcoRole} onChange={(e) => { const j = e.target.value as LcoJob; setEditLcoRole(j); setEditRole(jobToRole(j)); }} disabled={editSaving}>
+                        {LCO_JOBS.map((j) => <option key={j} value={j}>{jobLabel(j)}</option>)}
+                      </Select>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">{jobHint(editLcoRole)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('users.fields.status', 'Status')}</label>
@@ -597,7 +623,7 @@ const AdminUsers = () => {
 
                   {/* Module access - only for employees */}
                   {editRole === 'employee' && (
-                    <ModuleAccessCheckboxes modules={editAllowedModules} setModules={setEditAllowedModules} />
+                    <ModuleAccessCheckboxes modules={editAllowedModules} setModules={setEditAllowedModules} job={editLcoRole} />
                   )}
 
                   {editError && (

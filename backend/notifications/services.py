@@ -66,6 +66,8 @@ def queue_payment_sms(payment):
     org = payment.organization
     if not should_send_for(customer, org.internet_payment_sms_enabled):
         return []
+    if payment.amount <= 0:
+        return []  # free connection marked paid (or discount only): no "₹0 received" SMS
     msg = enqueue_customer_sms(
         customer=customer, kind=SmsMessage.Kind.PAYMENT_RECEIPT,
         body=lambda lang: receipt_body(lang, payment.amount, payment.receipt_no, payment.bill.balance,
@@ -102,6 +104,8 @@ def queue_due_reminders(today=None):
             customer = bill.customer
             if not should_send_for(customer, org.internet_reminders_enabled):
                 continue
+            if bill.balance <= 0:
+                continue  # free connection: nothing to ask the customer for
             # One SMS per reminder stage: e.g. 3 days before, then 1 day before. The smallest stage that
             # applies wins, so a late run never sends two reminders on the same day.
             days_left = (bill.due_date - today).days

@@ -586,6 +586,21 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     placeholder={t('customerSheet.permanentDiscountPlaceholder', '0–100')}
                     disabled={isReadOnly}
                   />
+                  {(() => {
+                    // Show the money, so nobody types ₹30 into a % box (30 = 30%, 100 = free).
+                    const plan = availablePlans.find((p) => p.planName === formData.package);
+                    if (!plan) return null;
+                    const full = Math.round(plan.price * (100 + (plan.gstRate ?? 0))) / 100;
+                    const pct = formData.permanentDiscount ?? 0;
+                    const pay = Math.round(full * (100 - pct)) / 100;
+                    return (
+                      <p className={`text-xs mt-1.5 ${pct >= 100 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                        {pct >= 100
+                          ? tr('Free connection: mark it paid every month. No reminder SMS.')
+                          : tr('Customer pays ₹{{pay}} per month (plan ₹{{full}}).', { pay: pay.toLocaleString('en-IN'), full: full.toLocaleString('en-IN') })}
+                      </p>
+                    );
+                  })()}
                 </div>
                 )}
                 {/* GSTIN is not stored for cable / internet customers on the server: demo mode only */}

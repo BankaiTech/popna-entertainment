@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from billing.models import Bill, Payment
-from billing.services import month_start, refresh_due_dates
+from billing.services import month_start, refresh_due_dates, reprice_open_bills
 from core.audit import audit
 from core.mixins import OrgScopedViewSet, require_org
 from core.permissions import Roles, role_in
@@ -102,6 +102,18 @@ class CustomerViewSet(OrgScopedViewSet):
     def perform_create(self, serializer):
         super().perform_create(serializer)
         audit(self.request.user, "customer_created", serializer.instance)
+
+    def perform_update(self, serializer):
+        before = serializer.instance
+        old_plan, old_discount = before.plan_id, before.permanent_discount
+        with transaction.atomic():
+            customer = serializer.save()
+            # New plan or permanent discount: this month's unpaid bill must ask for the new amount.
+            if customer.plan_id != old_plan or customer.permanent_discount != old_discount:
+                reprice_open_bills(customer)
+        # The answer must show the bill as it is now, not the copy loaded before saving.
+        for attr in ("current_bills", "current_payments"):
+            customer.__dict__.pop(attr, None)
 
     IMPORT_MAX_ROWS = 3000
     IMPORT_FIELDS = (
