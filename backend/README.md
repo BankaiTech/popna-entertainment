@@ -128,9 +128,14 @@ docker compose ps                       # db, web, scheduler, caddy should be "r
 docker compose logs -f web              # Ctrl+C to stop watching
 ```
 
-**4.6 Create your platform admin login**
+**4.6 Create your logins (two separate accounts)**
 
 ```bash
+# LCO Desk app: Super Admin screens (operators, sign-ups, payments). Cannot open the Django admin.
+docker compose exec web python manage.py create_platform_admin yourname --name "Your Name"
+
+# Optional, server admin only (Django admin page at DJANGO_ADMIN_URL). Cannot sign in to the app.
+# Use a different username and password from the app login.
 docker compose exec web python manage.py createsuperuser
 ```
 

@@ -2798,5 +2798,6 @@
   "Full access. Only the owner can cancel payments.": "முழு அணுகல். உரிமையாளர் மட்டுமே கட்டணங்களை ரத்து செய்ய முடியும்.",
   "Office staff: sees all customers, payments and settings.": "அலுவலகப் பணியாளர்: அனைத்து வாடிக்கையாளர்கள், கட்டணங்கள், அமைப்புகளைப் பார்க்கலாம்.",
   "Collects payments in the field. Sees only their customers and shared ones.": "களத்தில் பணம் வசூலிப்பவர். தமக்கு ஒதுக்கப்பட்ட மற்றும் பொதுவான வாடிக்கையாளர்களை மட்டும் பார்க்கலாம்.",
-  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "களப்பணி மற்றும் பழுது நீக்கம். தமக்கு ஒதுக்கப்பட்ட மற்றும் பொதுவான வாடிக்கையாளர்களை மட்டும் பார்க்கலாம். பணம் வசூலிக்க முடியாது."
+  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "களப்பணி மற்றும் பழுது நீக்கம். தமக்கு ஒதுக்கப்பட்ட மற்றும் பொதுவான வாடிக்கையாளர்களை மட்டும் பார்க்கலாம். பணம் வசூலிக்க முடியாது.",
+  "This is a server admin account. Use your LCO Desk login for the app.": "இது சர்வர் நிர்வாகக் கணக்கு. ஆப்பிற்கு உங்கள் LCO Desk உள்நுழைவைப் பயன்படுத்தவும்."
 }

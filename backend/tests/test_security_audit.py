@@ -290,3 +290,48 @@ class DistributorScopeTests(TestCase):
         theirs_owner = make_user("dtheirs_owner", Roles.OWNER, org=theirs)
         r = c.patch(f"/api/users/{theirs_owner.id}", {"password": "Owned@12345"}, format="json")
         self.assertIn(r.status_code, (403, 404), r.content)
+
+
+class SeparateAdminLoginTests(TestCase):
+    """Server admin (Django admin) and LCO Desk platform admin are separate logins."""
+
+    def setUp(self):
+        from accounts.models import User
+        self.server_admin = User.objects.create_superuser("ops-admin", "ops@example.com", "Server@Pass123")
+        self.platform = make_user("app-admin", Roles.PLATFORM_ADMIN)
+        self.platform.set_password("App@Pass12345")
+        self.platform.save()
+
+    def test_superuser_is_not_promoted_to_platform_admin(self):
+        self.server_admin.refresh_from_db()
+        self.assertNotEqual(self.server_admin.role, Roles.PLATFORM_ADMIN)
+
+    def test_server_admin_cannot_sign_in_to_the_app(self):
+        from rest_framework.test import APIClient
+        r = APIClient(SERVER_NAME="localhost").post(
+            "/api/auth/login", {"username": "ops-admin", "password": "Server@Pass123"}, format="json")
+        self.assertEqual(r.status_code, 401, r.content)
+        self.assertIn("server admin", r.content.decode())
+        # Even a token made some other way is refused.
+        from rest_framework_simplejwt.tokens import RefreshToken
+        c = APIClient(SERVER_NAME="localhost")
+        c.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(self.server_admin).access_token}")
+        self.assertEqual(c.get("/api/organizations").status_code, 401)
+
+    def test_platform_admin_cannot_open_django_admin(self):
+        from django.conf import settings
+        self.assertTrue(self.client.login(username="app-admin", password="App@Pass12345"))
+        r = self.client.get(f"/{settings.ADMIN_URL}", SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)  # sent to the admin login page: not staff
+        self.assertIn("login", r["Location"])
+
+    def test_platform_admin_uses_the_app(self):
+        from rest_framework.test import APIClient
+        r = APIClient(SERVER_NAME="localhost").post(
+            "/api/auth/login", {"username": "app-admin", "password": "App@Pass12345"}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+
+    def test_server_admin_opens_django_admin(self):
+        from django.conf import settings
+        self.client.login(username="ops-admin", password="Server@Pass123")
+        self.assertEqual(self.client.get(f"/{settings.ADMIN_URL}", SERVER_NAME="localhost").status_code, 200)

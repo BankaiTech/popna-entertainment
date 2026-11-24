@@ -32,7 +32,7 @@ class Command(BaseCommand):
             subscription_end=today + timedelta(days=365), max_providers=5, max_plans=20,
         )
         users = [
-            ("platform", User.Role.PLATFORM_ADMIN, None, None, True),
+            ("platform", User.Role.PLATFORM_ADMIN, None, None, False),
             ("distributor", User.Role.DISTRIBUTOR, None, dist, False),
             ("owner", User.Role.OWNER, org, None, False),
             ("manager", User.Role.MANAGER, org, None, False),

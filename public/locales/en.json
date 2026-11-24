@@ -2438,5 +2438,6 @@
   "Full access. Only the owner can cancel payments.": "Full access. Only the owner can cancel payments.",
   "Office staff: sees all customers, payments and settings.": "Office staff: sees all customers, payments and settings.",
   "Collects payments in the field. Sees only their customers and shared ones.": "Collects payments in the field. Sees only their customers and shared ones.",
-  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "Field work and faults. Sees only their customers and shared ones. Cannot collect payments."
+  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.",
+  "This is a server admin account. Use your LCO Desk login for the app.": "This is a server admin account. Use your LCO Desk login for the app."
 }

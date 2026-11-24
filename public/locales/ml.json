@@ -2798,5 +2798,6 @@
   "Full access. Only the owner can cancel payments.": "പൂർണ്ണ ആക്സസ്. ഉടമയ്ക്ക് മാത്രമേ പേയ്‌മെന്റുകൾ റദ്ദാക്കാനാകൂ.",
   "Office staff: sees all customers, payments and settings.": "ഓഫീസ് ജീവനക്കാർ: എല്ലാ ഉപഭോക്താക്കളെയും പേയ്‌മെന്റുകളെയും ക്രമീകരണങ്ങളെയും കാണും.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ഫീൽഡിൽ പണം പിരിക്കുന്നു. സ്വന്തം ഉപഭോക്താക്കളെയും പങ്കിട്ടവരെയും മാത്രം കാണും.",
-  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ഫീൽഡ് ജോലിയും തകരാറുകളും. സ്വന്തം ഉപഭോക്താക്കളെയും പങ്കിട്ടവരെയും മാത്രം കാണും. പണം പിരിക്കാനാകില്ല."
+  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ഫീൽഡ് ജോലിയും തകരാറുകളും. സ്വന്തം ഉപഭോക്താക്കളെയും പങ്കിട്ടവരെയും മാത്രം കാണും. പണം പിരിക്കാനാകില്ല.",
+  "This is a server admin account. Use your LCO Desk login for the app.": "ഇത് സെർവർ അഡ്മിൻ അക്കൗണ്ടാണ്. ആപ്പിന് നിങ്ങളുടെ LCO Desk ലോഗിൻ ഉപയോഗിക്കുക."
 }

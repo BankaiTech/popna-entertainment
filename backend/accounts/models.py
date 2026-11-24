@@ -40,9 +40,14 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.mobile = normalize_mobile(self.mobile)
-        if self.is_superuser and not self.organization_id and not self.distributor_id:
-            self.role = Roles.PLATFORM_ADMIN
+        # A Django superuser is a server-admin account only (see accounts/authentication.py); it is no longer
+        # turned into an LCO Desk platform admin. App platform admins: `manage.py create_platform_admin`.
         super().save(*args, **kwargs)
+
+    @property
+    def is_server_admin(self):
+        """Django admin account (is_staff / is_superuser). It cannot sign in to the LCO Desk app."""
+        return bool(self.is_staff or self.is_superuser)
 
     @property
     def display_name(self):

@@ -14,11 +14,13 @@ from core.permissions import ReadWriteRoles, Roles
 
 from core.validators import APP_LANGUAGES
 
+from .authentication import AppLoginSerializer
 from .models import User
 from .serializers import MeSerializer, UserSerializer
 
 
 class LoginView(TokenObtainPairView):
+    serializer_class = AppLoginSerializer
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "login"

@@ -2798,5 +2798,6 @@
   "Full access. Only the owner can cancel payments.": "పూర్తి యాక్సెస్. యజమాని మాత్రమే చెల్లింపులు రద్దు చేయగలరు.",
   "Office staff: sees all customers, payments and settings.": "ఆఫీస్ సిబ్బంది: అన్ని కస్టమర్లు, చెల్లింపులు, సెట్టింగ్‌లు చూడగలరు.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ఫీల్డ్‌లో చెల్లింపులు వసూలు చేస్తారు. తమ కస్టమర్లు, షేర్ చేసినవారిని మాత్రమే చూస్తారు.",
-  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ఫీల్డ్ పని, లోపాలు. తమ కస్టమర్లు, షేర్ చేసినవారిని మాత్రమే చూస్తారు. చెల్లింపులు వసూలు చేయలేరు."
+  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ఫీల్డ్ పని, లోపాలు. తమ కస్టమర్లు, షేర్ చేసినవారిని మాత్రమే చూస్తారు. చెల్లింపులు వసూలు చేయలేరు.",
+  "This is a server admin account. Use your LCO Desk login for the app.": "ఇది సర్వర్ అడ్మిన్ ఖాతా. యాప్ కోసం మీ LCO Desk లాగిన్ వాడండి."
 }

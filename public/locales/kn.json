@@ -2798,5 +2798,6 @@
   "Full access. Only the owner can cancel payments.": "ಪೂರ್ಣ ಪ್ರವೇಶ. ಮಾಲೀಕರು ಮಾತ್ರ ಪಾವತಿಗಳನ್ನು ರದ್ದುಮಾಡಬಹುದು.",
   "Office staff: sees all customers, payments and settings.": "ಕಚೇರಿ ಸಿಬ್ಬಂದಿ: ಎಲ್ಲಾ ಗ್ರಾಹಕರು, ಪಾವತಿಗಳು, ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ನೋಡುತ್ತಾರೆ.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ಕ್ಷೇತ್ರದಲ್ಲಿ ಪಾವತಿ ಸಂಗ್ರಹಿಸುತ್ತಾರೆ. ತಮ್ಮ ಮತ್ತು ಹಂಚಿಕೊಂಡ ಗ್ರಾಹಕರನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ.",
-  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ಕ್ಷೇತ್ರ ಕೆಲಸ ಮತ್ತು ದೋಷಗಳು. ತಮ್ಮ ಮತ್ತು ಹಂಚಿಕೊಂಡ ಗ್ರಾಹಕರನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ. ಪಾವತಿ ಸಂಗ್ರಹಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ."
+  "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ಕ್ಷೇತ್ರ ಕೆಲಸ ಮತ್ತು ದೋಷಗಳು. ತಮ್ಮ ಮತ್ತು ಹಂಚಿಕೊಂಡ ಗ್ರಾಹಕರನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ. ಪಾವತಿ ಸಂಗ್ರಹಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "This is a server admin account. Use your LCO Desk login for the app.": "ಇದು ಸರ್ವರ್ ನಿರ್ವಾಹಕ ಖಾತೆ. ಆ್ಯಪ್‌ಗೆ ನಿಮ್ಮ LCO Desk ಲಾಗಿನ್ ಬಳಸಿ."
 }
