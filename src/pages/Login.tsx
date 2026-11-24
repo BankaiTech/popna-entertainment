@@ -425,7 +425,7 @@ const Login = () => {
                   {/* Hidden trap field for bots. Not shown to people or screen readers. */}
                   <input
                     type="text"
-                    name="website"
+                    name="lcd_trap_field"
                     tabIndex={-1}
                     autoComplete="off"
                     aria-hidden="true"

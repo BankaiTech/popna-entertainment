@@ -34,3 +34,14 @@ export function parseCsv(text: string): { headers: string[]; rows: Record<string
   });
   return { headers, rows };
 }
+
+/**
+ * One CSV cell, safe to open in Excel. Quotes commas, quotes and line breaks, and stops "formula
+ * injection": text starting with = + - @ (e.g. a customer named "=HYPERLINK(...)") is prefixed with '
+ * so Excel shows it as text instead of running it. Plain numbers (e.g. -50) stay numbers.
+ */
+export function csvCell(value: unknown): string {
+  let s = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}

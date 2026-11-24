@@ -1,3 +1,4 @@
+import { csvCell } from '@/lib/csv';
 import { useNavigate } from 'react-router-dom';
 // Contacts Module - Unified: Customers + Suppliers + Import
 // Customers tab now has full features from the standalone Customers page
@@ -70,7 +71,8 @@ const Contacts = () => {
     const [customerSearch, setCustomerSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('Active');
     const [connectionFilter, setConnectionFilter] = useState<Provider | 'All'>('All');
-    const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>('not_paid');
+    // Owner / manager open on every active customer; field staff open on who still has to pay.
+    const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | 'paid' | 'not_paid'>(isEmployee ? 'not_paid' : 'All');
     const [areaFilter, setAreaFilter] = useState<string>('All');
     // 'All' | 'none' (shared by all staff) | user id as text
     const [collectorFilter, setCollectorFilter] = useState<string>('All');
@@ -276,13 +278,8 @@ const Contacts = () => {
             c.address?.state || '', c.address?.country || '', c.gstin || '', c.description || '',
         ]);
         const csvContent = [
-            headers.join(','),
-            ...rows.map((row) =>
-                row.map((cell) => {
-                    const s = String(cell);
-                    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
-                }).join(',')
-            ),
+            headers.map(csvCell).join(','),
+            ...rows.map((row) => row.map(csvCell).join(',')),
         ].join('\n');
         const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');

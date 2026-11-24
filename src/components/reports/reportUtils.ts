@@ -1,3 +1,4 @@
+import { csvCell } from '@/lib/csv';
 /** Build CSV string from array of objects and trigger download */
 export function downloadCSV(
   rows: Record<string, string | number>[],
@@ -18,9 +19,7 @@ export function downloadCSV(
 }
 
 function escapeCsv(val: string | number): string {
-  const s = String(val ?? '');
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
-  return s;
+  return csvCell(val);
 }
 
 function triggerDownload(csv: string, filename: string): void {

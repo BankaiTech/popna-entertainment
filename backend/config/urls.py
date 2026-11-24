@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -54,10 +55,12 @@ api = [
     path("", include(router.urls)),
 ]
 
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/", include(api)),
-]
+urlpatterns = [path("api/", include(api))]
+
+# Django admin: only where DJANGO_ADMIN_URL says (a hard-to-guess path), so bots cannot find a login page.
+# Empty = no admin on this server. Local / test: "admin/" by default.
+if settings.ADMIN_URL:
+    urlpatterns.append(path(settings.ADMIN_URL, admin.site.urls))
 
 admin.site.site_header = "LCO Desk admin"
 admin.site.site_title = "LCO Desk"

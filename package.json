@@ -10,12 +10,12 @@
     "api": "json-server --watch db.json --port 3001"
   },
   "dependencies": {
-    "@cashfreepayments/cashfree-js": "^1.0.7",
+    "@cashfreepayments/cashfree-js": "1.0.7",
     "@emailjs/browser": "^4.4.1",
-    "axios": "^1.7.2",
+    "axios": "1.21.1",
     "clsx": "^2.1.1",
     "i18next": "^25.8.13",
-    "i18next-http-backend": "^3.0.2",
+    "i18next-http-backend": "4.0.10",
     "jsbarcode": "^3.12.3",
     "leaflet": "1.9.4",
     "lucide-react": "^0.344.0",
@@ -24,7 +24,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.5.4",
-    "react-router-dom": "^6.26.0",
+    "react-router-dom": "6.30.6",
     "recharts": "^3.7.0",
     "tailwind-merge": "^2.5.2",
     "zustand": "^4.5.2"

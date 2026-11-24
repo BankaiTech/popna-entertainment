@@ -41,6 +41,10 @@ if not SECRET_KEY:
         raise RuntimeError("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false")
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# Path of the Django admin, e.g. "ops-7f3k9q/". Empty in production = admin switched off.
+ADMIN_URL = env("DJANGO_ADMIN_URL", "admin/" if DEBUG else "").strip().lstrip("/")
+if ADMIN_URL and not ADMIN_URL.endswith("/"):
+    ADMIN_URL += "/"
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "")
 
 INSTALLED_APPS = [
