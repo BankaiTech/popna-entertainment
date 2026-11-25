@@ -2921,10 +2921,8 @@
   "Not sent: the payment was cancelled.": "नहीं भेजा गया: भुगतान रद्द हो गया।",
   "Same name and mobile is already added.": "यही नाम और मोबाइल पहले से जुड़ा है।",
   "This Device ID is already used by another customer.": "यह डिवाइस ID पहले से किसी दूसरे ग्राहक के पास है।",
-  "Max 8 characters. {{n}} left.": "अधिकतम 8 अक्षर। {{n}} बाकी।",
   "Suggestions from your business name:": "आपके व्यवसाय के नाम से सुझाव:",
   "Not set: SMS will end with \"{{name}}\".": "सेट नहीं: SMS \"{{name}}\" पर खत्म होगा।",
-  "Use at most 8 characters.": "अधिकतम 8 अक्षर रखें।",
   "Use letters, numbers, spaces and & . - only.": "केवल अक्षर, अंक, स्पेस और & . - का उपयोग करें।",
   "Pay ₹{{amount}} with {{gateway}}": "{{gateway}} से ₹{{amount}} चुकाएँ",
   "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.": "ऑनलाइन (Cashfree / PayU) भुगतान अपने-आप स्वीकृत होकर 'स्वीकृत' में दिखते हैं।",
@@ -2935,5 +2933,8 @@
   "Login": "लॉगिन",
   "Operator / staff login": "ऑपरेटर / स्टाफ लॉगिन",
   "Cable operators, managers and collection staff": "केबल ऑपरेटर, मैनेजर और कलेक्शन स्टाफ",
-  "Cable TV and internet customers: see your bill and complaints": "केबल टीवी और इंटरनेट ग्राहक: अपना बिल और शिकायतें देखें"
+  "Cable TV and internet customers: see your bill and complaints": "केबल टीवी और इंटरनेट ग्राहक: अपना बिल और शिकायतें देखें",
+  "Max {{max}} characters. {{n}} left.": "अधिकतम {{max}} अक्षर। {{n}} बाकी।",
+  "Use at most 11 characters.": "अधिकतम 11 अक्षर रखें।",
+  "pwa.updated": "नवीनतम संस्करण में अपडेट हो गया।"
 }

@@ -1,10 +1,21 @@
-// PWA: Install prompt, Offline banner, Update prompt (new version available)
+// PWA: Install prompt, Offline banner, automatic update to a new version.
+//
+// A new version updates itself, but only at a safe moment, so nobody loses work:
+//   - when the app is opened again / comes back from the background, or the user moves to another page
+//   - never while a dialog is open (Collect payment, Add customer...), a save is running,
+//     or the person has typed something on this page that may not be saved yet.
+// If no safe moment comes for 2 minutes, the old "New version - Reload" banner appears instead.
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useLocation } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import { Download, WifiOff, RefreshCw, X } from 'lucide-react';
+import { pendingWrites } from '@/lib/apiClient';
+import { showInfo } from '@/utils/toast';
+
+const UPDATED_KEY = 'lcd-just-updated';
+const BANNER_AFTER_MS = 2 * 60 * 1000;
 
 // BeforeInstallPromptEvent is not in all TypeScript libs
 interface BeforeInstallPromptEvent extends Event {
@@ -120,9 +131,53 @@ export function PWAFeatures() {
   }, []);
 
   const handleReload = useCallback(() => {
+    try { sessionStorage.setItem(UPDATED_KEY, '1'); } catch { /* private mode */ }
     setNeedRefresh(false);
     updateServiceWorker(true);
   }, [updateServiceWorker, setNeedRefresh]);
+
+  // Typed something on this page since it opened? Then it may not be saved: wait for another page.
+  const typedRef = useRef(false);
+  useEffect(() => {
+    const onInput = () => { typedRef.current = true; };
+    document.addEventListener('input', onInput, true);
+    return () => document.removeEventListener('input', onInput, true);
+  }, []);
+  useEffect(() => { typedRef.current = false; }, [path]);
+
+  const safeToReload = useCallback(() => (
+    !document.querySelector('[role="dialog"], [role="alertdialog"]')
+    && pendingWrites() === 0
+    && !typedRef.current
+  ), []);
+
+  // New version ready: switch to it at the first safe moment.
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const tryUpdate = useCallback(() => {
+    if (needRefresh && safeToReload()) handleReload();
+  }, [needRefresh, safeToReload, handleReload]);
+  useEffect(() => {
+    if (!needRefresh) return undefined;
+    tryUpdate(); // e.g. still on the page that just opened, nothing typed
+    const onVisibility = () => tryUpdate(); // opened again, or put in the background
+    document.addEventListener('visibilitychange', onVisibility);
+    const banner = window.setTimeout(() => setShowUpdateBanner(true), BANNER_AFTER_MS);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.clearTimeout(banner);
+    };
+  }, [needRefresh, tryUpdate]);
+  useEffect(() => { tryUpdate(); }, [path, tryUpdate]); // moved to another page
+
+  // After the switch: tell the person once.
+  useEffect(() => {
+    let updated = false;
+    try {
+      updated = sessionStorage.getItem(UPDATED_KEY) === '1';
+      sessionStorage.removeItem(UPDATED_KEY);
+    } catch { /* private mode */ }
+    if (updated) showInfo(t('pwa.updated', 'Updated to the latest version.'));
+  }, [t]);
 
   return (
     <>
@@ -139,7 +194,7 @@ export function PWAFeatures() {
       )}
 
       {/* Install app banner - mobile only, hidden when update banner is showing */}
-      {showInstallBanner && !isInstalled && isMobileView && !needRefresh && !onLogin && (
+      {showInstallBanner && !isInstalled && isMobileView && !(needRefresh && showUpdateBanner) && !onLogin && (
         <div className="fixed bottom-20 left-4 right-4 z-[45] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
           <div className="flex items-start gap-2">
             <p className="text-sm text-foreground flex-1">
@@ -167,8 +222,8 @@ export function PWAFeatures() {
         </div>
       )}
 
-      {/* Update available - new version - positioned above mobile bottom nav */}
-      {needRefresh && (
+      {/* Fallback: no safe moment for 2 minutes (e.g. a long form). Positioned above mobile bottom nav */}
+      {needRefresh && showUpdateBanner && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[45] flex items-center gap-3 bg-primary text-primary-foreground shadow-xl rounded-lg p-3 safe-area-inset-bottom animate-slide-up">
           <p className="text-sm flex-1">
             {t('pwa.updateAvailable', 'New version available. Reload to update.')}

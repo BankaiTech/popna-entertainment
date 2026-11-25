@@ -259,4 +259,29 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Saves (POST / PUT / PATCH / DELETE) still on their way. The app never updates itself to a new
+ * version while one is running, so a payment or a save is never cut off by a reload.
+ */
+let writesInFlight = 0;
+export const pendingWrites = () => writesInFlight;
+const isWrite = (m?: string) => (m ?? 'get').toLowerCase() !== 'get';
+apiClient.interceptors.request.use((config) => {
+  if (isWrite(config.method)) {
+    writesInFlight += 1;
+    (config as InternalAxiosRequestConfig & { _counted?: boolean })._counted = true;
+  }
+  return config;
+});
+const doneWrite = (config?: InternalAxiosRequestConfig & { _counted?: boolean }) => {
+  if (config?._counted) {
+    config._counted = false;
+    writesInFlight = Math.max(0, writesInFlight - 1);
+  }
+};
+apiClient.interceptors.response.use(
+  (response) => { doneWrite(response.config); return response; },
+  (error: AxiosError) => { doneWrite(error.config ?? undefined); return Promise.reject(error); },
+);
+
 export default apiClient;

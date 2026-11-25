@@ -5,7 +5,7 @@ import { Field, inputClass, SaveBar, Section, useOperatorSettings } from './Sett
 
 const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
 /** Name at the end of each SMS: short, so the SMS stays one part and reads like a signature. */
-const SMS_NAME_MAX = 8;
+const SMS_NAME_MAX = 11; // same as MAX_SMS_NAME in backend/orgs/smsname.py
 
 // Preview only. Must match the DLT-approved templates in backend/notifications/templates.py
 // (see backend/docs/DLT_SMS_TEMPLATES.md).
@@ -39,7 +39,7 @@ const SmsSettings = () => {
       <Section title={tr('SMS to customers')} hint={tr('SMS are sent only to customers. You see every SMS in the SMS Log.')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label={tr('Business name in SMS')}
-            hint={tr('Max 8 characters. {{n}} left.', { n: Math.max(0, SMS_NAME_MAX - [...s.smsDisplayName].length) })}
+            hint={tr('Max {{max}} characters. {{n}} left.', { max: SMS_NAME_MAX, n: Math.max(0, SMS_NAME_MAX - [...s.smsDisplayName].length) })}
             error={errors.smsDisplayName}>
             <input className={inputClass} maxLength={SMS_NAME_MAX} value={s.smsDisplayName}
               placeholder={suggestions[0] ?? ''}

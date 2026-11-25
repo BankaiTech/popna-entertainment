@@ -1,10 +1,10 @@
 """
 The operator's name at the end of every customer SMS ("... செலுத்தவும். Velu TV").
-Kept to 8 characters so the SMS stays short (fewer SMS parts = lower cost) and reads like a signature.
+Kept to 11 characters so the SMS stays short (fewer SMS parts = lower cost) and reads like a signature.
 """
 import re
 
-MAX_SMS_NAME = 8
+MAX_SMS_NAME = 11
 
 # Words that say what the business is, not who it is: dropped when we shorten a name.
 GENERIC = {
@@ -57,9 +57,11 @@ def suggestions(name, limit=4):
         first = nice(main[0])
         add("".join(nice(w) for w in main))   # VeluRaj
         add(" ".join(nice(w) for w in main))  # Velu Raj
+        add(" ".join(nice(w) for w in core))  # Sri Murugan
         add("".join(nice(w) for w in core))   # OmMuruga
         add(first)                            # Murugan
         add(f"{first} TV")                    # Velu TV
+        add(f"{first} Cable")                 # Velu Cable
         if all(w.isascii() for w in words):
             initials = "".join(w[0] for w in words if w[0].isalnum()).upper()
             if len(initials) >= 2:

@@ -2921,10 +2921,8 @@
   "Not sent: the payment was cancelled.": "పంపబడలేదు: చెల్లింపు రద్దు చేయబడింది.",
   "Same name and mobile is already added.": "అదే పేరు మరియు మొబైల్ ఇప్పటికే జోడించబడింది.",
   "This Device ID is already used by another customer.": "ఈ డివైస్ ID ఇప్పటికే మరో కస్టమర్‌కు ఉంది.",
-  "Max 8 characters. {{n}} left.": "గరిష్టం 8 అక్షరాలు. ఇంకా {{n}} మిగిలాయి.",
   "Suggestions from your business name:": "మీ వ్యాపార పేరు నుండి సూచనలు:",
   "Not set: SMS will end with \"{{name}}\".": "సెట్ చేయలేదు: SMS \"{{name}}\" తో ముగుస్తుంది.",
-  "Use at most 8 characters.": "గరిష్టంగా 8 అక్షరాలు వాడండి.",
   "Use letters, numbers, spaces and & . - only.": "అక్షరాలు, అంకెలు, ఖాళీలు మరియు & . - మాత్రమే వాడండి.",
   "Pay ₹{{amount}} with {{gateway}}": "{{gateway}} ద్వారా ₹{{amount}} చెల్లించండి",
   "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.": "ఆన్‌లైన్ (Cashfree / PayU) చెల్లింపులు ఆటోమేటిక్‌గా ఆమోదించబడి 'ఆమోదించినవి' లో కనిపిస్తాయి.",
@@ -2935,5 +2933,8 @@
   "Login": "లాగిన్",
   "Operator / staff login": "ఆపరేటర్ / సిబ్బంది లాగిన్",
   "Cable operators, managers and collection staff": "కేబుల్ ఆపరేటర్లు, మేనేజర్లు మరియు కలెక్షన్ సిబ్బంది",
-  "Cable TV and internet customers: see your bill and complaints": "కేబుల్ టీవీ మరియు ఇంటర్నెట్ కస్టమర్లు: మీ బిల్లు మరియు ఫిర్యాదులు చూడండి"
+  "Cable TV and internet customers: see your bill and complaints": "కేబుల్ టీవీ మరియు ఇంటర్నెట్ కస్టమర్లు: మీ బిల్లు మరియు ఫిర్యాదులు చూడండి",
+  "Max {{max}} characters. {{n}} left.": "గరిష్టం {{max}} అక్షరాలు. ఇంకా {{n}} మిగిలాయి.",
+  "Use at most 11 characters.": "గరిష్టంగా 11 అక్షరాలు వాడండి.",
+  "pwa.updated": "తాజా వెర్షన్‌కు అప్‌డేట్ అయింది."
 }

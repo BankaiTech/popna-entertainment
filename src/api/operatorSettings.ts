@@ -15,7 +15,7 @@ export interface OperatorSettings {
   upiId: string;
   upiPayeeName: string;
   smsDisplayName: string;
-  /** Short names (max 8 characters) made from the business name; read-only. */
+  /** Short names (max 11 characters) made from the business name; read-only. */
   smsNameSuggestions?: string[];
   /** What goes in the SMS now (the chosen name, else the first suggestion); read-only. */
   smsName?: string;
