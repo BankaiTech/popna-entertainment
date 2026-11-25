@@ -119,6 +119,9 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             raise ValidationError({"password": list(exc.messages)})
         owner.set_password(password)
         owner.save(update_fields=["password"])
+        from accounts.authentication import end_all_sessions
+
+        end_all_sessions(owner)
         audit(request.user, "owner_password_reset", org, username=owner.username)
         return Response({"username": owner.username, "password": password})
 

@@ -52,11 +52,13 @@ function saveTokens(access: string, refresh?: string) {
 }
 
 function clearAuthAndGoToLogin() {
+  const a = readAuth();
+  const wasCustomer = (a?.state?.role ?? a?.role) === 'customer';
   localStorage.removeItem('auth-storage');
   localStorage.removeItem('customer_auth');
   localStorage.removeItem('current_org_id');
   if (window.location.pathname !== '/login') {
-    window.location.replace('/login');
+    window.location.replace(wasCustomer ? '/login?as=customer' : '/login');  // customers land on their own tab
   }
 }
 

@@ -14,7 +14,7 @@ from core.permissions import ReadWriteRoles, Roles
 
 from core.validators import APP_LANGUAGES
 
-from .authentication import AppLoginSerializer, StaffRefreshSerializer
+from .authentication import AppLoginSerializer, StaffRefreshSerializer, end_all_sessions
 from .models import User
 from .serializers import MeSerializer, UserSerializer
 
@@ -88,4 +88,5 @@ class UserViewSet(viewsets.ModelViewSet):
             raise ValidationError({"detail": "Owners can deactivate managers, agents and technicians only."})
         instance.is_active = False
         instance.save(update_fields=["is_active"])
+        end_all_sessions(instance)
         audit(self.request.user, "user_deactivated", instance)

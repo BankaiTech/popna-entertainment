@@ -4,6 +4,7 @@ from django.db.models import Prefetch
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import action, api_view, permission_classes
@@ -11,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from billing.models import Bill, Payment
-from billing.services import month_start, refresh_due_dates, reprice_open_bills
+from billing.services import (ensure_this_months_bill, generate_bills, month_start, refresh_due_dates,
+                              reprice_open_bills)
 from core.audit import audit
 from core.mixins import OrgScopedViewSet, require_org
 from core.permissions import Roles, role_in
@@ -132,13 +134,16 @@ class CustomerViewSet(OrgScopedViewSet):
 
     def perform_create(self, serializer):
         super().perform_create(serializer)
+        ensure_this_months_bill(serializer.instance)
         audit(self.request.user, "customer_created", serializer.instance)
 
     def perform_update(self, serializer):
         before = serializer.instance
-        old_plan, old_discount = before.plan_id, before.permanent_discount
+        old_plan, old_discount, old_status = before.plan_id, before.permanent_discount, before.status
         with transaction.atomic():
             customer = serializer.save()
+            if customer.status != old_status:
+                ensure_this_months_bill(customer)  # switched back on: bill this month
             # New plan or permanent discount: this month's unpaid bill must ask for the new amount.
             if customer.plan_id != old_plan or customer.permanent_discount != old_discount:
                 reprice_open_bills(customer)
@@ -256,6 +261,8 @@ class CustomerViewSet(OrgScopedViewSet):
             created += 1
 
         if not dry_run and created:
+            if timezone.localdate().day >= settings.BILL_GENERATION_DAY:
+                generate_bills(month_start(timezone.localdate()), organization=org)  # bill the new customers now
             audit(request.user, "customers_imported", org, created=created, skipped=len(skipped), errors=len(errors))
         return Response({"dry_run": dry_run, "created": created, "skipped": skipped, "errors": errors})
 

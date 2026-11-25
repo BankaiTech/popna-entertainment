@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.models import User
@@ -234,7 +235,11 @@ class CustomerSerializer(serializers.ModelSerializer):
             # customer as unpaid right after saving.
             bills = list(obj.bills.exclude(status="cancelled").order_by("-period")[:1])
             obj.current_bills = bills
-        return bills[0] if bills else None
+        bill = bills[0] if bills else None
+        # Cable: only THIS month's bill is current. Last month's paid bill must not make this month look paid.
+        if bill is not None and obj.is_cable and bill.period < timezone.localdate().replace(day=1):
+            return None
+        return bill
 
     def _last_payment(self, obj):
         bill = self._bill(obj)

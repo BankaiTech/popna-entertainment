@@ -155,4 +155,8 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
         instance.save()
+        if password or not instance.is_active:
+            from .authentication import end_all_sessions
+
+            end_all_sessions(instance)  # old logins on other phones stop working
         return instance

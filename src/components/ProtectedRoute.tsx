@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly }: ProtectedRoute
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={customerOnly ? '/login?as=customer' : '/login'} state={{ from: location }} replace />;
   }
 
   // Customer routes - only customers can access

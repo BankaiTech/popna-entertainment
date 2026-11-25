@@ -60,13 +60,21 @@ const CustomerComplaints = () => {
     }
   };
 
+  if (profile?.complaintsEnabled === false) {
+    return (
+      <p className="mt-10 text-center text-sm text-gray-500">
+        {tr('Complaints are not available. Please call your cable operator.')}
+      </p>
+    );
+  }
+
   const isNet = profile?.category === 'internet';
   const choices = CATEGORIES.filter((c) => (isNet ? c.internet : c.cable));
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">{tr('Complaints')}</h1>
+        <h1 className="text-xl md:text-2xl font-bold">{tr('Complaints')}</h1>
         {!showForm && (
           <button type="button" onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 text-white text-sm font-semibold px-3 py-2">
@@ -76,14 +84,14 @@ const CustomerComplaints = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="rounded-2xl bg-white border border-gray-200 p-4 space-y-3">
+        <form onSubmit={submit} className="md:max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-4 space-y-3">
           <fieldset>
             <legend className="text-sm font-semibold mb-2">{tr('What is the problem?')}</legend>
-            <div className="grid gap-2">
+            <div className="grid gap-2 md:grid-cols-2">
               {choices.map((c) => (
                 <label key={c.key}
                   className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm cursor-pointer ${
-                    category === c.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    category === c.key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-gray-200 dark:border-slate-700'}`}>
                   <input type="radio" name="category" value={c.key} checked={category === c.key}
                     onChange={() => setCategory(c.key)} className="accent-blue-600" />
                   {c.label()}
@@ -96,7 +104,7 @@ const CustomerComplaints = () => {
             <textarea id="c-desc" rows={3} maxLength={500} value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={tr('Example: no channels since morning, red light on the box')}
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="mt-1 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={closeForm}
@@ -111,7 +119,7 @@ const CustomerComplaints = () => {
 
       {rows === null && (
         <div className="space-y-3" aria-busy="true">
-          {[0, 1].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200/70 animate-pulse" />)}
+          {[0, 1].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200/70 dark:bg-slate-800 animate-pulse" />)}
         </div>
       )}
       {rows?.length === 0 && !showForm && (
@@ -120,10 +128,11 @@ const CustomerComplaints = () => {
           {tr('No complaints. If something is not working, tap New complaint.')}
         </div>
       )}
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
       {rows?.map((c) => {
         const open = c.status === 'open' || c.status === 'assigned';
         return (
-          <article key={c.id} className="rounded-2xl bg-white border border-gray-200 p-4">
+          <article key={c.id} className="rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold">{categoryLabel(c.category)}</p>
@@ -154,6 +163,7 @@ const CustomerComplaints = () => {
           </article>
         );
       })}
+      </div>
     </div>
   );
 };

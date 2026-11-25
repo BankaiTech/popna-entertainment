@@ -2,6 +2,7 @@ import calendar
 from datetime import date, timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.utils import timezone
@@ -124,6 +125,15 @@ def reprice_open_bills(customer, today=None):
         bill.save(update_fields=fields)
         changed += 1
     return changed
+
+
+def ensure_this_months_bill(customer, today=None):
+    """New / imported / re-activated cable customer: make this month's bill now, as the scheduler would."""
+    today = today or timezone.localdate()
+    if (customer.is_cable and customer.status == Customer.Status.ACTIVE
+            and today.day >= settings.BILL_GENERATION_DAY):
+        return get_or_create_bill(customer, month_start(today))
+    return None
 
 
 def current_bill(customer, today=None):

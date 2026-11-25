@@ -31,9 +31,12 @@ class SchedulerTests(TestCase):
         self.assertEqual(Bill.objects.count(), 1)
         self.assertEqual(JobRun.objects.filter(name="generate_bills").count(), 1)
 
-    def test_bills_not_generated_on_other_days(self):
+    def test_missed_billing_day_is_caught_up_later(self):
+        # Server down on the 1st: the next daily run still makes the month's bills (once).
         run_due_daily_jobs(datetime(2026, 11, 2, 9, 30, tzinfo=IST))
-        self.assertEqual(Bill.objects.count(), 0)
+        self.assertEqual(Bill.objects.count(), 1)
+        run_due_daily_jobs(datetime(2026, 11, 3, 9, 30, tzinfo=IST))
+        self.assertEqual(Bill.objects.count(), 1)
 
 
 class ReceiptRegressionTests(TestCase):

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { tr } from '@/lib/lt';
+import { LOGIN_AS_KEY } from '@/pages/customer/portalShared';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -33,8 +34,15 @@ const Login = () => {
   const [shaking, setShaking] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   // Staff (operator, manager, agent...) or customer (mobile + box number)
-  const [mode, setMode] = useState<'staff' | 'customer'>(() =>
-    new URLSearchParams(window.location.search).get('as') === 'customer' ? 'customer' : 'staff');
+  const [mode, setMode] = useState<'staff' | 'customer'>(() => {
+    const asParam = new URLSearchParams(window.location.search).get('as');
+    if (asParam === 'customer' || asParam === 'staff') return asParam;
+    try {
+      return localStorage.getItem(LOGIN_AS_KEY) === 'customer' ? 'customer' : 'staff';
+    } catch {
+      return 'staff';
+    }
+  });
   const [custMobile, setCustMobile] = useState('');
   const [custBox, setCustBox] = useState('');
   // Set when an operator was logged out because the subscription ended
@@ -113,6 +121,7 @@ const Login = () => {
 
     const adminSuccess = await login(username.trim(), password);
     if (adminSuccess) {
+      try { localStorage.setItem(LOGIN_AS_KEY, 'staff'); } catch { /* private mode */ }
       const userRole = useAuthStore.getState().role;
       setIsLoading(false);
       if (userRole === 'customer') {
@@ -145,6 +154,7 @@ const Login = () => {
     const result = await customerLogin(mobile, custBox.trim());
     setIsLoading(false);
     if (result.success) {
+      try { localStorage.setItem(LOGIN_AS_KEY, 'customer'); } catch { /* private mode */ }
       navigate('/customer/dashboard', { replace: true });
       return;
     }

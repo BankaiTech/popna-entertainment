@@ -45,7 +45,10 @@ const Complaints = () => {
   useEffect(() => {
     if (!isOffice || isMockMode()) return;
     usersApi.getAll()
-      .then((all) => setStaff(all.filter((u) => ['technician', 'agent'].includes(u.lcoRole ?? '') && u.status === 'active')))
+      .then((all) => setStaff(all.filter((u) => ['technician', 'agent'].includes(u.lcoRole ?? '')
+        && u.status === 'active'
+        // only people who can open Complaints, or they would never see the job
+        && (u.allowedModules ?? []).includes('complaints'))))
       .catch(() => setStaff([]));
   }, [isOffice]);
 

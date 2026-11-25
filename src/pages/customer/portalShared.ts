@@ -2,6 +2,9 @@ import i18n from '@/i18n';
 import { tr } from '@/lib/lt';
 import type { ComplaintCategory, PortalProfile } from '@/api/customerPortal';
 
+/** Login page opens on the tab used last time on this phone. */
+export const LOGIN_AS_KEY = 'login-as';
+
 export type PortalContext = { profile: PortalProfile | null; reload: () => void };
 
 const locale = () => `${(i18n.language || 'en').slice(0, 2)}-IN`;
@@ -24,8 +27,9 @@ export const billStatusLabel = (status: string, balance: string) => {
 };
 
 export const billStatusClass = (status: string) =>
-  status === 'paid' ? 'bg-green-100 text-green-700' : status === 'partial' ? 'bg-amber-100 text-amber-700'
-    : 'bg-red-100 text-red-700';
+  status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+    : status === 'partial' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+      : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300';
 
 export const methodLabel = (m: string) => (m === 'upi' ? 'UPI' : m === 'cash' ? tr('Cash') : m.toUpperCase());
 
@@ -46,5 +50,7 @@ export const complaintStatusLabel = (s: string) =>
   ({ open: tr('Received'), assigned: tr('Technician assigned'), resolved: tr('Fixed'), cancelled: tr('Closed') }[s] ?? s);
 
 export const complaintStatusClass = (s: string) =>
-  ({ open: 'bg-amber-100 text-amber-700', assigned: 'bg-blue-100 text-blue-700',
-    resolved: 'bg-green-100 text-green-700', cancelled: 'bg-gray-100 text-gray-600' }[s] ?? 'bg-gray-100 text-gray-600');
+  ({ open: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+    assigned: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+    resolved: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+    cancelled: 'bg-gray-100 text-gray-600' }[s] ?? 'bg-gray-100 text-gray-600');

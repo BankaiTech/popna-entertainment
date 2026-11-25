@@ -38,6 +38,8 @@ export interface PortalProfile {
   validUntil: string | null;
   serviceStatus: string;
   currentBill: PortalBill | null;
+  /** The operator uses the Complaints page (else the customer is asked to call). */
+  complaintsEnabled: boolean;
   operator: { name: string; phone: string; upiId: string; upiPayeeName: string; appLanguage: string };
 }
 
@@ -75,7 +77,7 @@ const demoBill: PortalBill = {
 const demoProfile: PortalProfile = {
   id: 1, name: 'Ravi', mobile: '9876543210', area: 'Main Road', stbNumber: '832B0051B347', category: 'cable',
   plan: 'TAMIL PRIME', provider: 'GTPL HATHWAY LIMITED', monthlyAmount: '230.00', validUntil: null,
-  serviceStatus: 'due', currentBill: demoBill,
+  serviceStatus: 'due', currentBill: demoBill, complaintsEnabled: true,
   operator: { name: 'Demo Cable', phone: '9876500000', upiId: '', upiPayeeName: 'Demo Cable', appLanguage: 'ta' },
 };
 let demoComplaints: PortalComplaint[] = [];

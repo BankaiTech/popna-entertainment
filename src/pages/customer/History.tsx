@@ -20,11 +20,11 @@ const CustomerHistory = () => {
 
   return (
     <div className="space-y-3">
-      <h1 className="text-xl font-bold">{tr('Bills and receipts')}</h1>
+      <h1 className="text-xl md:text-2xl font-bold">{tr('Bills and receipts')}</h1>
       {error && <p role="alert" className="text-sm text-red-600">{tr(error)}</p>}
       {rows === null && !error && (
         <div className="space-y-3" aria-busy="true">
-          {[0, 1, 2].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200/70 animate-pulse" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-200/70 dark:bg-slate-800 animate-pulse" />)}
         </div>
       )}
       {rows?.length === 0 && (
@@ -33,8 +33,9 @@ const CustomerHistory = () => {
           {tr('No bills yet.')}
         </div>
       )}
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
       {rows?.map((b) => (
-        <article key={b.id} className="rounded-2xl bg-white border border-gray-200 p-4">
+        <article key={b.id} className="rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-semibold">{fmtMonth(b.period)}</h2>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${billStatusClass(b.status)}`}>
@@ -59,7 +60,7 @@ const CustomerHistory = () => {
             <p className="mt-1 text-xs text-gray-500">{tr('Discount')}: {rupees(b.discount)}</p>
           )}
           {b.payments.length > 0 && (
-            <ul className="mt-3 border-t border-gray-100 pt-2 space-y-2">
+            <ul className="mt-3 border-t border-gray-100 dark:border-slate-800 pt-2 space-y-2">
               {b.payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
                   <div className="min-w-0">
@@ -78,6 +79,7 @@ const CustomerHistory = () => {
           )}
         </article>
       ))}
+      </div>
     </div>
   );
 };

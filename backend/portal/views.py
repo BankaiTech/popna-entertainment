@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
-from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
+from rest_framework.exceptions import AuthenticationFailed, NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, BasePermission
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
@@ -9,12 +9,23 @@ from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
 from core.validators import normalize_mobile
 
 from billing.models import Bill, Payment
+from billing.services import current_bill
 from complaints.models import Complaint, raise_complaint
 
 from .auth import (SCOPE, CustomerJWTAuthentication, NoAuth, customer_from_refresh, find_customer, issue_tokens,
                    require_service)
 
 MAX_OPEN_COMPLAINTS = 3
+
+
+def complaints_enabled(org):
+    """Complaints only when the operator has the Complaints page; otherwise nobody would see them."""
+    return "complaints" in (org.allowed_modules or [])
+
+
+def require_complaints(customer):
+    if not complaints_enabled(customer.organization):
+        raise PermissionDenied("Complaints are not available. Please call your cable operator.")
 
 
 class IsCustomer(BasePermission):
@@ -86,7 +97,11 @@ def logout(request):
 
 def _profile(customer):
     org = customer.organization
-    bill = customer.bills.exclude(status=Bill.Status.CANCELLED).order_by("-period").first()
+    if customer.is_cable:
+        bill = current_bill(customer)  # this month's bill, same as the collector sees (made now if missing)
+    else:
+        bill = (customer.bills.filter(status__in=[Bill.Status.UNPAID, Bill.Status.PARTIAL]).order_by("-period").first()
+                or customer.bills.exclude(status=Bill.Status.CANCELLED).order_by("-period").first())
     return {
         "id": customer.id,
         "name": customer.name,
@@ -100,6 +115,7 @@ def _profile(customer):
         "valid_until": customer.valid_until,
         "service_status": customer.service_status(bill),
         "current_bill": _bill(bill) if bill else None,
+        "complaints_enabled": complaints_enabled(org),
         "operator": {
             "name": org.name,
             "phone": org.contact_phone or org.owner_mobile,
@@ -169,6 +185,7 @@ def complaints(request):
     customer = request.user.customer
     require_service(customer)
     if request.method == "POST":
+        require_complaints(customer)
         if customer.complaints.filter(status__in=Complaint.OPEN_STATES).count() >= MAX_OPEN_COMPLAINTS:
             raise ValidationError({"detail": "You already have open complaints. Please wait for them to be fixed."})
         s = CustomerComplaintSerializer(data=request.data)
@@ -187,6 +204,7 @@ def cancel_complaint(request, pk):
 
     customer = request.user.customer
     require_service(customer)
+    require_complaints(customer)
     complaint = customer.complaints.filter(pk=pk).first()
     if complaint is None:
         raise NotFound("Complaint not found.")

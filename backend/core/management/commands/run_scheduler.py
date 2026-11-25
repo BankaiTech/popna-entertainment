@@ -29,7 +29,9 @@ def _purge_locations():
 def daily_jobs():
     return [
         ("generate_bills", settings.SCHEDULE_GENERATE_BILLS_AT,
-         lambda today: today.day == settings.BILL_GENERATION_DAY,
+         # Every day from the billing day on (not only on that day): if the server was down on the 1st,
+         # or customers were added later in the month, their bills are still made. Safe to rerun.
+         lambda today: today.day >= settings.BILL_GENERATION_DAY,
          lambda today: generate_bills(month_start(today))),
         ("internet_renewals", settings.SCHEDULE_GENERATE_BILLS_AT, None,
          lambda today: generate_internet_renewals(today)),

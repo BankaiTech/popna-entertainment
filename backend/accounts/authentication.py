@@ -50,3 +50,12 @@ class StaffRefreshSerializer(TokenRefreshSerializer):
         if token is not None and (_is_customer_token(token) or not token.get("user_id")):
             raise AuthenticationFailed(CUSTOMER_TOKEN_MESSAGE, code="token_not_valid")
         return super().validate(attrs)
+
+
+def end_all_sessions(user):
+    """Password changed or login switched off: every refresh token this person holds stops working.
+    (Access tokens die within JWT_ACCESS_MINUTES; deactivated users are refused at once anyway.)"""
+    from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
+    for token in OutstandingToken.objects.filter(user=user, blacklistedtoken__isnull=True):
+        BlacklistedToken.objects.get_or_create(token=token)
