@@ -203,6 +203,15 @@ class CustomerSerializer(serializers.ModelSerializer):
             stb = attrs.get("stb_number", getattr(self.instance, "stb_number", ""))
             if plan is not None and plan.category == "cable" and not str(stb or "").strip():
                 raise serializers.ValidationError({"stb_number": "Device ID is required for cable customers."})
+        # The same STB / box on two customers would mix up bills (and the customer app login).
+        new_stb = str(attrs.get("stb_number") or "").strip()
+        if new_stb and new_stb.upper() != str(getattr(self.instance, "stb_number", "") or "").strip().upper():
+            org = require_org(self.context["request"].user)
+            others = Customer.objects.filter(organization=org, stb_number__iexact=new_stb)
+            if self.instance is not None:
+                others = others.exclude(pk=self.instance.pk)
+            if others.exists():
+                raise serializers.ValidationError({"stb_number": "This Device ID is already used by another customer."})
         area_name = attrs.pop("area_name", "").strip()
         if area_name and "area" not in attrs:
             org = require_org(self.context["request"].user)

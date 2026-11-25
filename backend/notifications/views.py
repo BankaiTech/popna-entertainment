@@ -96,6 +96,8 @@ class SmsLogViewSet(viewsets.ReadOnlyModelViewSet):
         msg = self.get_object()
         if msg.status != SmsMessage.Status.FAILED:
             raise ValidationError({"detail": "Only failed SMS can be sent again."})
+        if msg.payment_id and msg.payment.status == "cancelled":
+            raise ValidationError({"detail": "This payment was cancelled. Its receipt cannot be sent."})
         msg.status = SmsMessage.Status.PENDING
         msg.attempts = 0
         msg.next_attempt_at = timezone.now()

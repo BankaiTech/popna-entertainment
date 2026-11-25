@@ -1,3 +1,4 @@
+import { tr } from '@/lib/lt';
 import type { SubscriptionState } from '@/models/types';
 
 /** Message shown on the login page after a forced logout. */
@@ -46,8 +47,9 @@ export function formatDateTimeIN(value?: string | null): string {
 }
 
 export function subscriptionMessage(state: SubscriptionState, start?: string | null, end?: string | null): string {
+  // Built here (not the server's English sentence) so it shows in the person's language.
   if (state === 'not_started') {
-    return `Your LCO Desk subscription starts on ${formatDateIN(start)}.`;
+    return tr('Your LCO Desk subscription starts on {{date}}.', { date: formatDateIN(start) });
   }
-  return `Your LCO Desk subscription ended on ${formatDateIN(end)}. Contact LCO Desk to renew.`;
+  return tr('Your LCO Desk subscription ended on {{date}}. Contact LCO Desk to renew.', { date: formatDateIN(end) });
 }

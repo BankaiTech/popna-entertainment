@@ -2577,5 +2577,13 @@
   "This complaint is already open.": "This complaint is already open.",
   "Only the owner or manager can do this.": "Only the owner or manager can do this.",
   "Complaints are not available. Please call your cable operator.": "Complaints are not available. Please call your cable operator.",
-  "Menu": "Menu"
+  "Menu": "Menu",
+  "Your LCO Desk subscription ended on {{date}}. Contact LCO Desk to renew.": "Your LCO Desk subscription ended on {{date}}. Contact LCO Desk to renew.",
+  "Your LCO Desk subscription starts on {{date}}.": "Your LCO Desk subscription starts on {{date}}.",
+  "These columns are not used: {{cols}}. Rename them like the template if they matter.": "These columns are not used: {{cols}}. Rename them like the template if they matter.",
+  "No STB number column. Uploading this file again may add the same customers twice.": "No STB number column. Uploading this file again may add the same customers twice.",
+  "This payment was cancelled. Its receipt cannot be sent.": "This payment was cancelled. Its receipt cannot be sent.",
+  "Not sent: the payment was cancelled.": "Not sent: the payment was cancelled.",
+  "Same name and mobile is already added.": "Same name and mobile is already added.",
+  "This Device ID is already used by another customer.": "This Device ID is already used by another customer."
 }

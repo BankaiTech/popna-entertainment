@@ -27,10 +27,12 @@ export default function LanguageSwitcher({ triggerClassName }: { triggerClassNam
   const { i18n } = useTranslation();
   const current = supportedLanguages.find((l) => l.code === i18n.language) ?? supportedLanguages[0];
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.role);
   const pick = (code: string) => {
     setLanguage(code);
-    // Logged in: remember it on the account, so the next login (on any phone) opens in it too.
-    if (isAuthenticated && !isMockMode()) authApi.saveLanguage(code).catch(() => undefined);
+    // Staff: remember it on the account, so the next login (on any phone) opens in it too.
+    // Customers have no staff account: the language is kept on this phone only.
+    if (isAuthenticated && role !== 'customer' && !isMockMode()) authApi.saveLanguage(code).catch(() => undefined);
   };
 
   return (

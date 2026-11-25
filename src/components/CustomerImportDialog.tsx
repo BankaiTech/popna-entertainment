@@ -45,11 +45,24 @@ interface Report {
   errors: { row: number; name: string; error: string }[];
 }
 
+/** "STB_Number", "stb-number", " STB  Number " -> "stb number" */
+const headerKey = (h: string) => h.trim().toLowerCase().replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ');
+
+/** Which server field a column heading means (its own field name works too, e.g. stb_number). */
+function fieldFor(header: string): string | undefined {
+  const key = headerKey(header);
+  return Object.keys(COLUMNS).find((f) => COLUMNS[f].includes(key) || headerKey(f) === key);
+}
+
+/** Headings in the file that match nothing: shown to the owner so no column is lost silently. */
+export function unusedColumns(headers: string[]): string[] {
+  return headers.filter((h) => h.trim() && !fieldFor(h));
+}
+
 function toServerRows(rows: Record<string, string>[], headers: string[]): ServerRow[] {
   const lookup: Record<string, string> = {};
   for (const h of headers) {
-    const key = h.trim().toLowerCase();
-    const field = Object.keys(COLUMNS).find((f) => COLUMNS[f].includes(key));
+    const field = fieldFor(h);
     if (field) lookup[h] = field;
   }
   return rows.map((r) => {
@@ -76,9 +89,11 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState<Report | null>(null);
+  const [ignored, setIgnored] = useState<string[]>([]);
+  const [noDevice, setNoDevice] = useState(false);
 
   const reset = () => {
-    setFileName(''); setRows([]); setReport(null); setError(''); setDone(null);
+    setFileName(''); setRows([]); setReport(null); setError(''); setDone(null); setIgnored([]); setNoDevice(false);
     if (fileRef.current) fileRef.current.value = '';
   };
   const close = () => { if (!busy) { reset(); onClose(); } };
@@ -102,7 +117,9 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
       }
       const { headers, rows: raw } = parsed;
       const mapped = toServerRows(raw, headers);
-      if (!headers.some((h) => COLUMNS.name.includes(h.trim().toLowerCase())) || mapped.length === 0) {
+      setIgnored(unusedColumns(headers));
+      setNoDevice(!headers.some((h) => fieldFor(h) === 'stb_number'));
+      if (!headers.some((h) => fieldFor(h) === 'name') || mapped.length === 0) {
         setError(tr('This file has no Name column or no rows. Use the template.'));
         return;
       }
@@ -165,6 +182,17 @@ export default function CustomerImportDialog({ open, onClose, onImported }: {
 
         {busy && <p className="text-sm text-muted-foreground text-center">{report ? tr('Importing...') : tr('Checking the file...')}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {report && !done && (ignored.length > 0 || noDevice) && (
+          <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200 space-y-1">
+            {ignored.length > 0 && (
+              <p>{tr('These columns are not used: {{cols}}. Rename them like the template if they matter.', { cols: ignored.join(', ') })}</p>
+            )}
+            {noDevice && (
+              <p>{tr('No STB number column. Uploading this file again may add the same customers twice.')}</p>
+            )}
+          </div>
+        )}
 
         {shown && (
           <div className="space-y-3">

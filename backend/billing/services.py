@@ -325,5 +325,11 @@ def cancel_payment(*, user, payment, reason):
     payment.cancelled_at = timezone.now()
     payment.cancel_reason = reason
     payment.save(update_fields=["status", "cancelled_by", "cancelled_at", "cancel_reason", "updated_at"])
+    # Its receipt SMS, if still waiting in the outbox, must not go out ("₹250 received" for a cancelled payment).
+    from notifications.models import SmsMessage
+    from notifications.services import PAYMENT_CANCELLED_ERROR
+
+    SmsMessage.objects.filter(payment=payment, status__in=[SmsMessage.Status.PENDING, SmsMessage.Status.FAILED]).update(
+        status=SmsMessage.Status.FAILED, last_error=PAYMENT_CANCELLED_ERROR, updated_at=timezone.now())
     audit(user, "payment_cancelled", payment, receipt=payment.receipt_no, reason=reason)
     return payment

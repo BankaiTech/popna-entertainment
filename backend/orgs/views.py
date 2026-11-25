@@ -77,6 +77,10 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             obj = serializer.save(distributor=user.distributor, status=Organization.Status.DISABLED)
         else:
             obj = serializer.save()
+        # The sign-up request from this person is done: it should not stay "New" in the list.
+        if obj.owner_mobile:
+            SignupRequest.objects.filter(mobile=obj.owner_mobile, status__in=[
+                SignupRequest.Status.NEW, SignupRequest.Status.CONTACTED]).update(status=SignupRequest.Status.JOINED)
         audit(user, "organization_created", obj)
 
     def perform_update(self, serializer):

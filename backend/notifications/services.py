@@ -133,13 +133,24 @@ def _claim_batch(limit):
             .values_list("id", flat=True)[:limit]
         )
         SmsMessage.objects.filter(id__in=ids).update(status=SmsMessage.Status.SENDING, claimed_at=now)
-    return SmsMessage.objects.filter(id__in=ids).order_by("id")
+    return SmsMessage.objects.filter(id__in=ids).select_related("payment").order_by("id")
+
+
+PAYMENT_CANCELLED_ERROR = "Not sent: the payment was cancelled."
 
 
 def process_outbox(limit=100, gateway=None):
     gateway = gateway or get_gateway()
     sent = failed = 0
     for msg in _claim_batch(limit):
+        # Receipt for a payment the owner cancelled before it went out: never send it.
+        if msg.payment_id and msg.payment.status == "cancelled":
+            msg.status = SmsMessage.Status.FAILED
+            msg.last_error = PAYMENT_CANCELLED_ERROR
+            msg.claimed_at = None
+            msg.save(update_fields=["status", "last_error", "claimed_at", "updated_at"])
+            failed += 1
+            continue
         # LCO Desk billing: free SMS this month first, then a paid credit, else not sent.
         charge = reserve_sms(msg.organization_id)
         if charge is None:

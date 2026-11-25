@@ -30,6 +30,8 @@ export const LCO_MODULES: { key: ModuleKey; label: string; staff: boolean; ready
 export const DEFAULT_OPERATOR_MODULES: ModuleKey[] = LCO_MODULES.filter((m) => m.ready).map((m) => m.key);
 
 export const DEFAULT_AGENT_MODULES: ModuleKey[] = ['dashboard', 'contacts', 'collect', 'duty'];
+/** Technicians fix complaints, so they start with the Complaints page (no collection). */
+export const DEFAULT_TECHNICIAN_MODULES: ModuleKey[] = ['dashboard', 'contacts', 'complaints', 'duty'];
 
 export const LCO_SETTINGS_TABS: { key: SettingsTabKey; label: string }[] = [
   { key: 'company', label: 'Business Profile' },

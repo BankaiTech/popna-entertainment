@@ -129,3 +129,69 @@ class CustomerTokenEverywhereTests(TestCase):
         for u in urls:
             self.assertEqual(c.get(f"/api/{u}").status_code, 401, u)
             self.assertIn(c.post(f"/api/{u}", {}, format="json").status_code, (401, 405), u)
+
+
+class DuplicateCustomerTests(TestCase):
+    def setUp(self):
+        self.org = make_org("DU1")
+        self.owner = make_user("du_owner", Roles.OWNER, org=self.org)
+        self.cable, _ = make_plans(self.org)
+
+    def test_same_stb_by_hand_is_refused(self):
+        c = client_for(self.owner)
+        body = {"name": "A", "mobile": "9000000041", "plan_id": self.cable.id, "area": "Main", "stb_number": "DU-1"}
+        self.assertEqual(c.post("/api/contacts", body, format="json").status_code, 201)
+        r = c.post("/api/contacts", {**body, "name": "B", "stb_number": "du-1"}, format="json")
+        self.assertEqual(r.status_code, 400, r.content)
+        self.assertIn("already used", str(r.content))
+
+    def test_reupload_without_stb_skips_same_name_and_mobile(self):
+        c = client_for(self.owner)
+        rows = [{"name": "No Box", "mobile": "9000000042", "monthly_amount": "230"}]
+        self.assertEqual(c.post("/api/contacts/import", {"rows": rows}, format="json").json()["created"], 1)
+        r = c.post("/api/contacts/import", {"rows": rows}, format="json").json()
+        self.assertEqual((r["created"], len(r["skipped"])), (0, 1))
+
+
+class CancelledPaymentSmsTests(TestCase):
+    """A receipt SMS still waiting in the outbox must not go out after the payment is cancelled."""
+
+    def test_pending_receipt_is_dropped_and_cannot_be_retried(self):
+        from notifications.models import SmsMessage
+        from notifications.services import process_outbox
+
+        org = make_org("SM1", require_checkin_for_collection=False)
+        owner = make_user("sm_owner", Roles.OWNER, org=org)
+        cable, _ = make_plans(org)
+        c = make_customer(org, cable, mobile="9000000051", stb_number="SM-1")
+        pay = record_payment(user=owner, customer=c, amount=Decimal("230"), method="cash")
+        msg = SmsMessage.objects.get(payment=pay)
+        self.assertEqual(msg.status, SmsMessage.Status.PENDING)
+        r = client_for(owner).post(f"/api/payments/{pay.id}/cancel", {"reason": "wrong customer"}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+
+        class Gateway:
+            def send(self, m):
+                raise AssertionError("must not send")
+
+        process_outbox(gateway=Gateway())
+        msg.refresh_from_db()
+        self.assertEqual(msg.status, SmsMessage.Status.FAILED)
+        self.assertIn("cancelled", msg.last_error)
+        r = client_for(owner).post(f"/api/sms-logs/{msg.id}/retry", {}, format="json")
+        self.assertEqual(r.status_code, 400, r.content)
+
+
+class SignupJoinedTests(TestCase):
+    def test_creating_the_operator_marks_the_signup_joined(self):
+        from orgs.models import SignupRequest
+
+        cache.clear()
+        anon().post("/api/signup-requests", {"name": "Velu", "mobile": "9840011122", "business_name": "Velu Cable",
+                                             "city": "Tindivanam", "service": "cable"}, format="json")
+        pa = make_user("pa1", Roles.PLATFORM_ADMIN)
+        r = client_for(pa).post("/api/organizations", {
+            "name": "Velu Cable", "code": "VEL01", "owner_mobile": "9840011122", "owner_name": "Velu",
+            "owner_username": "velu", "owner_password": PASSWORD}, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(SignupRequest.objects.get().status, SignupRequest.Status.JOINED)

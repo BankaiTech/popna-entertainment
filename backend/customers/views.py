@@ -19,6 +19,7 @@ from core.mixins import OrgScopedViewSet, require_org
 from core.permissions import Roles, role_in
 
 from accounts.models import User
+from core.validators import normalize_mobile
 
 from .models import Area, Customer, Plan, Provider, visible_customer_ids
 from .serializers import AreaSerializer, CustomerSerializer, PlanSerializer, ProviderSerializer
@@ -202,6 +203,12 @@ class CustomerViewSet(OrgScopedViewSet):
             if v and v.strip()
         }
         seen_devices: set[str] = set()
+        # Rows without an STB number: the same name + mobile again is the same customer (re-upload).
+        existing_people = {
+            (n.strip().lower(), m) for n, m in Customer.objects.filter(organization=org).exclude(mobile="")
+            .values_list("name", "mobile")
+        }
+        seen_people: set[tuple] = set()
         created, skipped, errors = 0, [], []
         staff_ids = set(User.objects.filter(organization=org, role__in=Roles.FIELD, is_active=True)
                         .values_list("id", flat=True))
@@ -237,6 +244,10 @@ class CustomerViewSet(OrgScopedViewSet):
             if device and (device in existing_devices or device in seen_devices):
                 skipped.append({"row": number, "name": name, "reason": f"STB {device} is already added."})
                 continue
+            person = (name.lower(), normalize_mobile(str(row.get("mobile") or "")))
+            if not device and person[1] and (person in existing_people or person in seen_people):
+                skipped.append({"row": number, "name": name, "reason": "Same name and mobile is already added."})
+                continue
             plan, problem = find_plan(row)
             if problem:
                 errors.append({"row": number, "name": name, "error": problem})
@@ -255,6 +266,8 @@ class CustomerViewSet(OrgScopedViewSet):
                 continue
             if device:
                 seen_devices.add(device)
+            if person[1]:
+                seen_people.add(person)
             if not dry_run:
                 with transaction.atomic():
                     serializer.save(organization=org)

@@ -11,7 +11,7 @@ import { GPS_HELP } from './geo';
 import { tr } from './lt';
 import i18n from '@/i18n';
 import { reportError } from './errorReporter';
-import { SUBSCRIPTION_EVENT, SUBSCRIPTION_MSG_KEY, isGateMounted } from './subscription';
+import { SUBSCRIPTION_EVENT, SUBSCRIPTION_MSG_KEY, isGateMounted, subscriptionMessage } from './subscription';
 
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
@@ -79,7 +79,21 @@ function isNotBuiltYet(url?: string): boolean {
 }
 
 /** Attach the access token. The organization comes from the token on the server — never from the client. */
+/** Logged in as a customer (customer app). */
+function isCustomerSession(): boolean {
+  const a = readAuth();
+  return (a?.state?.role ?? a?.role) === 'customer';
+}
+
 apiClient.interceptors.request.use((config) => {
+  // A customer token only works on /customer/*. Never send it to a staff URL: the server answers 401
+  // and that would log the customer out (this is what happened when changing the language).
+  if (isCustomerSession() && !/^\/?(customer\/|auth\/login|signup-requests)/.test(config.url ?? '')) {
+    config.adapter = async () => {
+      throw new axios.AxiosError('Not available in the customer app.', 'ERR_CUSTOMER_SCOPE', config);
+    };
+    return config;
+  }
   const token = getAccessToken();
   // The public sign-up form is sent without login; an old expired token would only get it rejected.
   const publicSignup = (config.method ?? 'get').toLowerCase() === 'post' && /\/signup-requests\/?$/.test(config.url ?? '');
@@ -172,7 +186,9 @@ apiClient.interceptors.response.use(
       if (friendly) error.message = friendly;
 
       if (status === 403 && body?.code?.startsWith('subscription_')) {
-        notifySubscriptionInactive(body.code, body.detail ?? 'Your subscription is not active.');
+        const sub = body as { subscription_start?: string; subscription_end?: string };
+        const state = body.code === 'subscription_not_started' ? 'not_started' : 'expired';
+        notifySubscriptionInactive(body.code, subscriptionMessage(state, sub.subscription_start, sub.subscription_end));
         return Promise.reject(error);
       }
       const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;

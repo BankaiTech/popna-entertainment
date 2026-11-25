@@ -2912,5 +2912,13 @@
   "This complaint is closed. Reopen it first.": "ഈ പരാതി അടച്ചതാണ്. ആദ്യം വീണ്ടും തുറക്കുക.",
   "This complaint is already open.": "ഈ പരാതി ഇതിനകം തുറന്നിരിക്കുന്നു.",
   "Only the owner or manager can do this.": "ഉടമയ്ക്കോ മാനേജർക്കോ മാത്രമേ ഇത് ചെയ്യാൻ കഴിയൂ.",
-  "Complaints are not available. Please call your cable operator.": "പരാതി സൗകര്യം ലഭ്യമല്ല. ദയവായി നിങ്ങളുടെ കേബിൾ ഓപ്പറേറ്ററെ വിളിക്കുക."
+  "Complaints are not available. Please call your cable operator.": "പരാതി സൗകര്യം ലഭ്യമല്ല. ദയവായി നിങ്ങളുടെ കേബിൾ ഓപ്പറേറ്ററെ വിളിക്കുക.",
+  "Your LCO Desk subscription ended on {{date}}. Contact LCO Desk to renew.": "നിങ്ങളുടെ LCO Desk സബ്‌സ്ക്രിപ്ഷൻ {{date}} ന് അവസാനിച്ചു. പുതുക്കാൻ LCO Desk-നെ ബന്ധപ്പെടുക.",
+  "Your LCO Desk subscription starts on {{date}}.": "നിങ്ങളുടെ LCO Desk സബ്‌സ്ക്രിപ്ഷൻ {{date}} ന് ആരംഭിക്കും.",
+  "These columns are not used: {{cols}}. Rename them like the template if they matter.": "ഈ കോളങ്ങൾ ഉപയോഗിച്ചിട്ടില്ല: {{cols}}. ആവശ്യമെങ്കിൽ ടെംപ്ലേറ്റിലെ പോലെ പേര് മാറ്റുക.",
+  "No STB number column. Uploading this file again may add the same customers twice.": "STB നമ്പർ കോളം ഇല്ല. ഈ ഫയൽ വീണ്ടും അപ്‌ലോഡ് ചെയ്താൽ അതേ ഉപഭോക്താക്കൾ രണ്ടുതവണ ചേരാം.",
+  "This payment was cancelled. Its receipt cannot be sent.": "ഈ പേയ്മെന്റ് റദ്ദാക്കി. അതിന്റെ രസീത് അയയ്ക്കാൻ കഴിയില്ല.",
+  "Not sent: the payment was cancelled.": "അയച്ചില്ല: പേയ്മെന്റ് റദ്ദാക്കി.",
+  "Same name and mobile is already added.": "ഇതേ പേരും മൊബൈലും ഇതിനകം ചേർത്തിട്ടുണ്ട്.",
+  "This Device ID is already used by another customer.": "ഈ ഉപകരണ ID ഇതിനകം മറ്റൊരു ഉപഭോക്താവിനുണ്ട്."
 }

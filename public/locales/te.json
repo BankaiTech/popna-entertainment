@@ -2912,5 +2912,13 @@
   "This complaint is closed. Reopen it first.": "ఈ ఫిర్యాదు మూసివేయబడింది. ముందుగా మళ్ళీ తెరవండి.",
   "This complaint is already open.": "ఈ ఫిర్యాదు ఇప్పటికే తెరిచి ఉంది.",
   "Only the owner or manager can do this.": "యజమాని లేదా మేనేజర్ మాత్రమే ఇది చేయగలరు.",
-  "Complaints are not available. Please call your cable operator.": "ఫిర్యాదుల సదుపాయం అందుబాటులో లేదు. దయచేసి మీ కేబుల్ ఆపరేటర్‌కు కాల్ చేయండి."
+  "Complaints are not available. Please call your cable operator.": "ఫిర్యాదుల సదుపాయం అందుబాటులో లేదు. దయచేసి మీ కేబుల్ ఆపరేటర్‌కు కాల్ చేయండి.",
+  "Your LCO Desk subscription ended on {{date}}. Contact LCO Desk to renew.": "మీ LCO Desk సభ్యత్వం {{date}} న ముగిసింది. పునరుద్ధరించడానికి LCO Desk ను సంప్రదించండి.",
+  "Your LCO Desk subscription starts on {{date}}.": "మీ LCO Desk సభ్యత్వం {{date}} న ప్రారంభమవుతుంది.",
+  "These columns are not used: {{cols}}. Rename them like the template if they matter.": "ఈ కాలమ్‌లు వాడబడలేదు: {{cols}}. అవసరమైతే టెంప్లేట్‌లో ఉన్నట్లు పేరు మార్చండి.",
+  "No STB number column. Uploading this file again may add the same customers twice.": "STB నంబర్ కాలమ్ లేదు. ఈ ఫైల్‌ను మళ్ళీ అప్‌లోడ్ చేస్తే అవే కస్టమర్లు రెండుసార్లు చేరవచ్చు.",
+  "This payment was cancelled. Its receipt cannot be sent.": "ఈ చెల్లింపు రద్దు చేయబడింది. దాని రసీదు పంపలేము.",
+  "Not sent: the payment was cancelled.": "పంపబడలేదు: చెల్లింపు రద్దు చేయబడింది.",
+  "Same name and mobile is already added.": "అదే పేరు మరియు మొబైల్ ఇప్పటికే జోడించబడింది.",
+  "This Device ID is already used by another customer.": "ఈ డివైస్ ID ఇప్పటికే మరో కస్టమర్‌కు ఉంది."
 }

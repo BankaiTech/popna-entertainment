@@ -16,7 +16,7 @@ import { isMockMode } from '@/lib/apiHelpers';
 import { useStore } from '@/store/useStore';
 import type { User, ModuleKey } from '@/models/types';
 import { MOCK_ORGANIZATION_ID } from '@/models/types';
-import { LCO_MODULES, DEFAULT_AGENT_MODULES } from '@/config/lcoModules';
+import { LCO_MODULES, DEFAULT_AGENT_MODULES, DEFAULT_TECHNICIAN_MODULES } from '@/config/lcoModules';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { Plus, UserCog, Shield } from 'lucide-react';
 import { cn, formatCurrencyINR } from '@/lib/utils';
@@ -57,6 +57,8 @@ const AdminUsers = () => {
   const orgModules = useOrganizationStore((s) => s.currentOrganization?.allowedModules);
   const staffModules = LCO_MODULES.filter((m) => m.staff && m.ready && (!orgModules || orgModules.includes(m.key))).map((m) => m.key);
   const defaultAgentModules = DEFAULT_AGENT_MODULES.filter((m) => staffModules.includes(m));
+  const defaultModulesFor = (job: LcoJob) =>
+    (job === 'technician' ? DEFAULT_TECHNICIAN_MODULES : DEFAULT_AGENT_MODULES).filter((m) => staffModules.includes(m));
   const moduleName = (mod: string) => tr(LCO_MODULES.find((m) => m.key === mod)?.label ?? '') || t(MODULE_I18N_KEYS[mod] || mod, mod);
   const { customers, initialize, fetchCustomers } = useStore();
   const [users, setUsers] = useState<User[]>([]);
@@ -529,7 +531,7 @@ const AdminUsers = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
-                    <Select value={addLcoRole} onChange={(e) => { const j = e.target.value as LcoJob; setAddLcoRole(j); setAddRole(jobToRole(j)); }} disabled={addSaving}>
+                    <Select value={addLcoRole} onChange={(e) => { const j = e.target.value as LcoJob; setAddLcoRole(j); setAddRole(jobToRole(j)); setAddAllowedModules(defaultModulesFor(j)); }} disabled={addSaving}>
                       {LCO_JOBS.map((j) => <option key={j} value={j}>{jobLabel(j)}</option>)}
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">{jobHint(addLcoRole)}</p>
