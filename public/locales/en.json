@@ -2439,5 +2439,21 @@
   "Office staff: sees all customers, payments and settings.": "Office staff: sees all customers, payments and settings.",
   "Collects payments in the field. Sees only their customers and shared ones.": "Collects payments in the field. Sees only their customers and shared ones.",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.",
-  "This is a server admin account. Use your LCO Desk login for the app.": "This is a server admin account. Use your LCO Desk login for the app."
+  "This is a server admin account. Use your LCO Desk login for the app.": "This is a server admin account. Use your LCO Desk login for the app.",
+  "Choose the provider.": "Choose the provider.",
+  "Plan": "Plan",
+  "Enter the plan name.": "Enter the plan name.",
+  "Enter the price.": "Enter the price.",
+  "This plan name is used twice.": "This plan name is used twice.",
+  "{{n}} plans saved": "{{n}} plans saved",
+  "per month": "per month",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% GST",
+  "No GST": "No GST",
+  "Add {{n}} plans": "Add {{n}} plans",
+  "Remove": "Remove",
+  "Price before GST (₹)": "Price before GST (₹)",
+  "Customer pays per month (after GST)": "Customer pays per month (after GST)",
+  "Add another plan": "Add another plan",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "A new price is billed from the next bill. This month's unpaid bills keep their amount.",
+  "Save {{n}} plans": "Save {{n}} plans"
 }

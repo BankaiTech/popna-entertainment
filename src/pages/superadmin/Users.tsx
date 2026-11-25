@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import NewCredentialInput from '@/components/ui/NewCredentialInput';
 import Select from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
@@ -411,11 +412,11 @@ const SuperAdminUsers = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
-                  <Input value={addUsername} onChange={(e) => setAddUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={addSaving} />
+                  <NewCredentialInput kind="username" value={addUsername} onChange={(e) => setAddUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={addSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')} <span className="text-destructive">*</span></label>
-                  <Input type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} placeholder="••••••••" required disabled={addSaving} />
+                  <NewCredentialInput kind="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} placeholder="••••••••" required disabled={addSaving} />
                 </div>
                 {ROLE_CHOICE && <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.role', 'Role')}</label>
@@ -462,11 +463,11 @@ const SuperAdminUsers = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.username', 'Username')} <span className="text-destructive">*</span></label>
-                  <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={editSaving} />
+                  <NewCredentialInput kind="username" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder={t('users.placeholders.uniqueUsername', 'Unique username')} required disabled={editSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('users.fields.password', 'Password')}</label>
-                  <Input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')} disabled={editSaving} />
+                  <NewCredentialInput kind="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder={t('users.placeholders.leaveBlank', 'Leave blank to keep current')} disabled={editSaving} />
                   <p className="text-xs text-muted-foreground mt-1">{t('users.hints.keepPassword', 'Leave blank to keep current password')}</p>
                 </div>
                 {ROLE_CHOICE && <div>

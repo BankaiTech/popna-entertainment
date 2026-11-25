@@ -5,6 +5,7 @@ from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
+from rest_framework import status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -57,6 +58,36 @@ class PlanViewSet(OrgScopedViewSet):
     serializer_class = PlanSerializer
     filterset_fields = ["category", "provider", "is_active"]
     search_fields = ["provider", "name"]
+    MAX_BULK = 30
+
+    @action(detail=False, methods=["post"], url_path="bulk")
+    def bulk(self, request):
+        """
+        Add several plans of one provider in one go: {"provider": "GTPL", "plans": [{name, price, gst_rate}, ...]}.
+        All or nothing: if one row is wrong (or the plan limit is reached), nothing is saved and the answer
+        names the row.
+        """
+        rows = request.data.get("plans")
+        provider = request.data.get("provider")
+        if not isinstance(rows, list) or not rows:
+            raise ValidationError({"plans": "Add at least one plan."})
+        if len(rows) > self.MAX_BULK:
+            raise ValidationError({"plans": f"Add up to {self.MAX_BULK} plans at a time."})
+        created = []
+        with transaction.atomic():
+            for number, row in enumerate(rows, start=1):
+                if not isinstance(row, dict):
+                    raise ValidationError({"plans": f"Plan {number}: wrong format."})
+                serializer = self.get_serializer(data={**row, "provider": provider or row.get("provider")})
+                if not serializer.is_valid():
+                    errors = serializer.errors
+                    detail = errors.get("detail") or errors.get("non_field_errors") or next(iter(errors.values()))
+                    text = detail[0] if isinstance(detail, list) else detail
+                    name = row.get("name") or row.get("plan_name") or ""
+                    raise ValidationError({"detail": f"Plan {number} ({name}): {text}", "row": number})
+                self.perform_create(serializer)
+                created.append(serializer.data)
+        return Response(created, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
         if instance.customers.exists():
@@ -184,7 +215,8 @@ class CustomerViewSet(OrgScopedViewSet):
                 amount = Decimal(raw)
             except InvalidOperation:
                 return None, f"Monthly amount '{raw}' is not a number."
-            match = [p for p in pool if p.final_price.quantize(Decimal("0.01")) == amount or p.price == amount]
+            # The amount a customer pays = price incl. GST; the price before GST is accepted too.
+            match = [p for p in pool if p.price_with_gst == amount] or [p for p in pool if p.price == amount]
             if len(match) == 1:
                 return match[0], None
             if not match:

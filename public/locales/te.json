@@ -2799,5 +2799,21 @@
   "Office staff: sees all customers, payments and settings.": "ఆఫీస్ సిబ్బంది: అన్ని కస్టమర్లు, చెల్లింపులు, సెట్టింగ్‌లు చూడగలరు.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ఫీల్డ్‌లో చెల్లింపులు వసూలు చేస్తారు. తమ కస్టమర్లు, షేర్ చేసినవారిని మాత్రమే చూస్తారు.",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ఫీల్డ్ పని, లోపాలు. తమ కస్టమర్లు, షేర్ చేసినవారిని మాత్రమే చూస్తారు. చెల్లింపులు వసూలు చేయలేరు.",
-  "This is a server admin account. Use your LCO Desk login for the app.": "ఇది సర్వర్ అడ్మిన్ ఖాతా. యాప్ కోసం మీ LCO Desk లాగిన్ వాడండి."
+  "This is a server admin account. Use your LCO Desk login for the app.": "ఇది సర్వర్ అడ్మిన్ ఖాతా. యాప్ కోసం మీ LCO Desk లాగిన్ వాడండి.",
+  "Choose the provider.": "ప్రొవైడర్‌ను ఎంచుకోండి.",
+  "Plan": "ప్లాన్",
+  "Enter the plan name.": "ప్లాన్ పేరు నమోదు చేయండి.",
+  "Enter the price.": "ధర నమోదు చేయండి.",
+  "This plan name is used twice.": "ఈ ప్లాన్ పేరు రెండుసార్లు ఉంది.",
+  "{{n}} plans saved": "{{n}} ప్లాన్‌లు సేవ్ అయ్యాయి",
+  "per month": "నెలకు",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% GST",
+  "No GST": "GST లేదు",
+  "Add {{n}} plans": "{{n}} ప్లాన్‌లు జోడించండి",
+  "Remove": "తొలగించు",
+  "Price before GST (₹)": "GSTకి ముందు ధర (₹)",
+  "Customer pays per month (after GST)": "కస్టమర్ నెలకు చెల్లించేది (GST తో)",
+  "Add another plan": "మరో ప్లాన్ జోడించండి",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "కొత్త ధర తదుపరి బిల్లు నుండి వర్తిస్తుంది. ఈ నెల చెల్లించని బిల్లుల మొత్తం మారదు.",
+  "Save {{n}} plans": "{{n}} ప్లాన్‌లు సేవ్ చేయండి"
 }

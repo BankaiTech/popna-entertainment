@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import NewCredentialInput from '@/components/ui/NewCredentialInput';
 import Select from '@/components/ui/Select';
 import { Plus, Building2, Check, Settings, Pencil, KeyRound, Trash2, Copy } from 'lucide-react';
 import { useLt, type Lt } from '@/lib/lt';
@@ -418,12 +419,12 @@ const Organizations = () => {
                                         </label>
                                         <label className="block text-sm">
                                             <span className="block font-medium mb-1">{tr('Username')}</span>
-                                            <Input autoComplete="off" value={form.ownerUsername}
+                                            <NewCredentialInput kind="username" value={form.ownerUsername}
                                                 onChange={(e) => setForm({ ...form, ownerUsername: e.target.value.trim() })} />
                                         </label>
                                         <label className="block text-sm">
                                             <span className="block font-medium mb-1">{tr('Password (min 8 characters)')}</span>
-                                            <Input type="password" autoComplete="new-password" value={form.ownerPassword}
+                                            <NewCredentialInput kind="password" value={form.ownerPassword}
                                                 onChange={(e) => setForm({ ...form, ownerPassword: e.target.value })} />
                                         </label>
                                     </div>
@@ -548,7 +549,7 @@ const Organizations = () => {
                                     <p>{tr('Owner login')}: <b className="font-mono">{resetOrg.ownerLogin ?? '—'}</b></p>
                                     <label className="block">
                                         <span className="block font-medium mb-1">{tr('New password (leave empty to create one)')}</span>
-                                        <Input type="text" autoComplete="new-password" value={newPassword}
+                                        <NewCredentialInput kind="password" type="text" value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)} placeholder={tr('Min 8 characters')} />
                                     </label>
                                 </>

@@ -2799,5 +2799,21 @@
   "Office staff: sees all customers, payments and settings.": "ऑफ़िस स्टाफ़: सभी ग्राहक, भुगतान और सेटिंग्स देखता है।",
   "Collects payments in the field. Sees only their customers and shared ones.": "फ़ील्ड में भुगतान वसूलता है। केवल अपने और साझा ग्राहक देखता है।",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "फ़ील्ड काम और खराबी। केवल अपने और साझा ग्राहक देखता है। भुगतान नहीं ले सकता।",
-  "This is a server admin account. Use your LCO Desk login for the app.": "यह सर्वर एडमिन खाता है। ऐप के लिए अपने LCO Desk लॉगिन का उपयोग करें।"
+  "This is a server admin account. Use your LCO Desk login for the app.": "यह सर्वर एडमिन खाता है। ऐप के लिए अपने LCO Desk लॉगिन का उपयोग करें।",
+  "Choose the provider.": "प्रोवाइडर चुनें।",
+  "Plan": "प्लान",
+  "Enter the plan name.": "प्लान का नाम डालें।",
+  "Enter the price.": "कीमत डालें।",
+  "This plan name is used twice.": "यह प्लान नाम दो बार है।",
+  "{{n}} plans saved": "{{n}} प्लान सेव हुए",
+  "per month": "प्रति माह",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% GST",
+  "No GST": "GST नहीं",
+  "Add {{n}} plans": "{{n}} प्लान जोड़ें",
+  "Remove": "हटाएँ",
+  "Price before GST (₹)": "GST से पहले कीमत (₹)",
+  "Customer pays per month (after GST)": "ग्राहक हर महीने देगा (GST सहित)",
+  "Add another plan": "एक और प्लान जोड़ें",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "नई कीमत अगले बिल से लगेगी। इस महीने के बकाया बिल की राशि वही रहेगी।",
+  "Save {{n}} plans": "{{n}} प्लान सेव करें"
 }

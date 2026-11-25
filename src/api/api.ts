@@ -89,6 +89,19 @@ function contactPayload(customer: Partial<Customer>): Record<string, unknown> {
   return toSnakeCase(payload);
 }
 
+/** Price incl. GST, rounded to paise like the server (0% GST = same price). */
+export function planPriceWithGst(price: number, gstRate: number): number {
+  return Math.round(price * (100 + (gstRate || 0))) / 100;
+}
+
+/** ₹230 / ₹241.50 / ₹1,250 */
+export const rupeesIN = (n: number): string =>
+  `₹${n.toLocaleString('en-IN', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+
+/** The amount a customer pays for this plan per month. */
+export const planMonthly = (p: Pick<Plan, 'price' | 'gstRate' | 'priceWithGst'>): number =>
+  p.priceWithGst ?? planPriceWithGst(p.price, p.gstRate);
+
 function mapPlan(raw: Record<string, unknown>): Plan {
   const p = toCamelCase<Record<string, unknown>>(raw);
   return {
@@ -99,6 +112,7 @@ function mapPlan(raw: Record<string, unknown>): Plan {
     imageUrl: '',
     price: Number(p.price ?? 0),
     gstRate: Number(p.gstRate ?? 0),
+    priceWithGst: Number(p.priceWithGst ?? p.finalPrice ?? planPriceWithGst(Number(p.price ?? 0), Number(p.gstRate ?? 0))),
     installationAmount: Number(p.installationAmount ?? 0),
     description: String(p.description ?? ''),
     permanentDiscount: 0,
@@ -158,6 +172,19 @@ export const plansApi = {
     };
     plansData.push(newPlan);
     return Promise.resolve(newPlan);
+  },
+  /** Add several plans of one provider at once. All or nothing (the server names the wrong row). */
+  createMany: async (provider: string, plans: Partial<Plan>[]): Promise<Plan[]> => {
+    if (!isMockMode()) {
+      const response = await apiClient.post(`${endpoints.plans}/bulk`, {
+        provider, plans: plans.map((p) => planPayload({ ...p, provider: provider as Provider })),
+      });
+      const list = unwrapApiData<Record<string, unknown>[]>(response);
+      return (Array.isArray(list) ? list : []).map(mapPlan);
+    }
+    const made: Plan[] = [];
+    for (const p of plans) made.push(await plansApi.create({ ...(p as Omit<Plan, 'id'>), provider: provider as Provider }));
+    return made;
   },
   update: async (id: number, plan: Partial<Plan>): Promise<Plan> => {
     if (!isMockMode()) {

@@ -2799,5 +2799,21 @@
   "Office staff: sees all customers, payments and settings.": "ഓഫീസ് ജീവനക്കാർ: എല്ലാ ഉപഭോക്താക്കളെയും പേയ്‌മെന്റുകളെയും ക്രമീകരണങ്ങളെയും കാണും.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ഫീൽഡിൽ പണം പിരിക്കുന്നു. സ്വന്തം ഉപഭോക്താക്കളെയും പങ്കിട്ടവരെയും മാത്രം കാണും.",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ഫീൽഡ് ജോലിയും തകരാറുകളും. സ്വന്തം ഉപഭോക്താക്കളെയും പങ്കിട്ടവരെയും മാത്രം കാണും. പണം പിരിക്കാനാകില്ല.",
-  "This is a server admin account. Use your LCO Desk login for the app.": "ഇത് സെർവർ അഡ്മിൻ അക്കൗണ്ടാണ്. ആപ്പിന് നിങ്ങളുടെ LCO Desk ലോഗിൻ ഉപയോഗിക്കുക."
+  "This is a server admin account. Use your LCO Desk login for the app.": "ഇത് സെർവർ അഡ്മിൻ അക്കൗണ്ടാണ്. ആപ്പിന് നിങ്ങളുടെ LCO Desk ലോഗിൻ ഉപയോഗിക്കുക.",
+  "Choose the provider.": "പ്രൊവൈഡറെ തിരഞ്ഞെടുക്കുക.",
+  "Plan": "പ്ലാൻ",
+  "Enter the plan name.": "പ്ലാനിന്റെ പേര് നൽകുക.",
+  "Enter the price.": "വില നൽകുക.",
+  "This plan name is used twice.": "ഈ പ്ലാൻ പേര് രണ്ടുതവണയുണ്ട്.",
+  "{{n}} plans saved": "{{n}} പ്ലാനുകൾ സേവ് ചെയ്തു",
+  "per month": "പ്രതിമാസം",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% GST",
+  "No GST": "GST ഇല്ല",
+  "Add {{n}} plans": "{{n}} പ്ലാനുകൾ ചേർക്കുക",
+  "Remove": "നീക്കുക",
+  "Price before GST (₹)": "GST-ക്ക് മുമ്പുള്ള വില (₹)",
+  "Customer pays per month (after GST)": "ഉപഭോക്താവ് മാസം അടയ്ക്കുന്നത് (GST ഉൾപ്പെടെ)",
+  "Add another plan": "മറ്റൊരു പ്ലാൻ ചേർക്കുക",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "പുതിയ വില അടുത്ത ബില്ലിൽ നിന്ന് ബാധകമാകും. ഈ മാസത്തെ അടയ്ക്കാത്ത ബില്ലുകളുടെ തുക മാറില്ല.",
+  "Save {{n}} plans": "{{n}} പ്ലാനുകൾ സേവ് ചെയ്യുക"
 }

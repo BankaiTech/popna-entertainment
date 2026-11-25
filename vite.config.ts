@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => {
         // Allow large assets (e.g. hero image) to be precached; default is 2 MiB
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MiB
         navigateFallback: 'index.html',
-         // Not for /api, /v1 or /.well-known/ (assetlinks.json for the Play Store app must come from the server).
-         navigateFallbackAllowlist: [/^(?!\/(api|v1|\.well-known)(\/|$))/],
+        // Not for /api, /v1 or /.well-known/ (assetlinks.json for the Play Store app must come from the server).
+        navigateFallbackAllowlist: [/^(?!\/(api|v1|\.well-known)(\/|$))/],
         // API responses are NOT cached by the service worker on purpose: they contain customer data,
         // and on a shared phone the next staff member could otherwise read the previous user's data.
         runtimeCaching: [],

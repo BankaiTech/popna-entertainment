@@ -2799,5 +2799,21 @@
   "Office staff: sees all customers, payments and settings.": "ಕಚೇರಿ ಸಿಬ್ಬಂದಿ: ಎಲ್ಲಾ ಗ್ರಾಹಕರು, ಪಾವತಿಗಳು, ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ನೋಡುತ್ತಾರೆ.",
   "Collects payments in the field. Sees only their customers and shared ones.": "ಕ್ಷೇತ್ರದಲ್ಲಿ ಪಾವತಿ ಸಂಗ್ರಹಿಸುತ್ತಾರೆ. ತಮ್ಮ ಮತ್ತು ಹಂಚಿಕೊಂಡ ಗ್ರಾಹಕರನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ.",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "ಕ್ಷೇತ್ರ ಕೆಲಸ ಮತ್ತು ದೋಷಗಳು. ತಮ್ಮ ಮತ್ತು ಹಂಚಿಕೊಂಡ ಗ್ರಾಹಕರನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ. ಪಾವತಿ ಸಂಗ್ರಹಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
-  "This is a server admin account. Use your LCO Desk login for the app.": "ಇದು ಸರ್ವರ್ ನಿರ್ವಾಹಕ ಖಾತೆ. ಆ್ಯಪ್‌ಗೆ ನಿಮ್ಮ LCO Desk ಲಾಗಿನ್ ಬಳಸಿ."
+  "This is a server admin account. Use your LCO Desk login for the app.": "ಇದು ಸರ್ವರ್ ನಿರ್ವಾಹಕ ಖಾತೆ. ಆ್ಯಪ್‌ಗೆ ನಿಮ್ಮ LCO Desk ಲಾಗಿನ್ ಬಳಸಿ.",
+  "Choose the provider.": "ಪೂರೈಕೆದಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+  "Plan": "ಯೋಜನೆ",
+  "Enter the plan name.": "ಯೋಜನೆಯ ಹೆಸರು ನಮೂದಿಸಿ.",
+  "Enter the price.": "ಬೆಲೆ ನಮೂದಿಸಿ.",
+  "This plan name is used twice.": "ಈ ಯೋಜನೆಯ ಹೆಸರು ಎರಡು ಬಾರಿ ಇದೆ.",
+  "{{n}} plans saved": "{{n}} ಯೋಜನೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ",
+  "per month": "ತಿಂಗಳಿಗೆ",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% GST",
+  "No GST": "GST ಇಲ್ಲ",
+  "Add {{n}} plans": "{{n}} ಯೋಜನೆಗಳನ್ನು ಸೇರಿಸಿ",
+  "Remove": "ತೆಗೆದುಹಾಕಿ",
+  "Price before GST (₹)": "GST ಮೊದಲು ಬೆಲೆ (₹)",
+  "Customer pays per month (after GST)": "ಗ್ರಾಹಕರು ತಿಂಗಳಿಗೆ ಪಾವತಿಸುವುದು (GST ಸಹಿತ)",
+  "Add another plan": "ಇನ್ನೊಂದು ಯೋಜನೆ ಸೇರಿಸಿ",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "ಹೊಸ ಬೆಲೆ ಮುಂದಿನ ಬಿಲ್‌ನಿಂದ ಅನ್ವಯಿಸುತ್ತದೆ. ಈ ತಿಂಗಳ ಪಾವತಿಸದ ಬಿಲ್‌ಗಳ ಮೊತ್ತ ಬದಲಾಗುವುದಿಲ್ಲ.",
+  "Save {{n}} plans": "{{n}} ಯೋಜನೆಗಳನ್ನು ಉಳಿಸಿ"
 }

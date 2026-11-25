@@ -120,8 +120,11 @@ export interface Plan {
   provider: Provider;
   planName: string;
   imageUrl: string;
+  /** Monthly price before GST */
   price: number;
   gstRate: number;
+  /** What the customer pays per month (price + GST, stored by the server). Show this everywhere. */
+  priceWithGst?: number;
   installationAmount: number;
   description: string;
   /** Permanent discount percentage (0–100) for this plan */

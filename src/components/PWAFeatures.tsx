@@ -136,7 +136,7 @@ export function PWAFeatures() {
 
       {/* Install app banner - mobile only, hidden when update banner is showing */}
       {showInstallBanner && !isInstalled && isMobileView && !needRefresh && (
-        <div className="fixed bottom-20 left-4 right-4 z-[99] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-20 left-4 right-4 z-[45] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
           <div className="flex items-start gap-2">
             <p className="text-sm text-foreground flex-1">
               {t('pwa.installMessage', 'Install LCO Desk for a better experience')}
@@ -165,7 +165,7 @@ export function PWAFeatures() {
 
       {/* Update available - new version - positioned above mobile bottom nav */}
       {needRefresh && (
-        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[101] flex items-center gap-3 bg-primary text-primary-foreground shadow-xl rounded-lg p-3 safe-area-inset-bottom animate-slide-up">
+        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[45] flex items-center gap-3 bg-primary text-primary-foreground shadow-xl rounded-lg p-3 safe-area-inset-bottom animate-slide-up">
           <p className="text-sm flex-1">
             {t('pwa.updateAvailable', 'New version available. Reload to update.')}
           </p>

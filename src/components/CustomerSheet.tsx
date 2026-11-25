@@ -22,6 +22,7 @@ import { useOrganizationStore } from '@/store/useOrganizationStore';
 import { getTemplateById, getContactConfig } from '@/config/industryTemplates';
 import { useTerminology } from '@/hooks/useTerminology';
 import { usersApi } from '@/api/users';
+import { planMonthly, rupeesIN } from '@/api/api';
 
 interface CustomerSheetProps {
   isOpen: boolean;
@@ -504,7 +505,9 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                         : tr('Choose the connection first')}
                     </option>
                     {availablePlans.map((plan) => (
-                      <option key={plan.id} value={plan.planName}>{plan.planName}</option>
+                      <option key={plan.id} value={plan.planName}>
+                        {plan.planName} · {rupeesIN(planMonthly(plan))}
+                      </option>
                     ))}
                   </Select>
                 </div>
@@ -590,14 +593,14 @@ const CustomerSheet = ({ isOpen, onClose, customer, onSave, prefillData }: Custo
                     // Show the money, so nobody types ₹30 into a % box (30 = 30%, 100 = free).
                     const plan = availablePlans.find((p) => p.planName === formData.package);
                     if (!plan) return null;
-                    const full = Math.round(plan.price * (100 + (plan.gstRate ?? 0))) / 100;
+                    const full = planMonthly(plan);
                     const pct = formData.permanentDiscount ?? 0;
                     const pay = Math.round(full * (100 - pct)) / 100;
                     return (
                       <p className={`text-xs mt-1.5 ${pct >= 100 ? 'text-amber-600' : 'text-muted-foreground'}`}>
                         {pct >= 100
                           ? tr('Free connection: mark it paid every month. No reminder SMS.')
-                          : tr('Customer pays ₹{{pay}} per month (plan ₹{{full}}).', { pay: pay.toLocaleString('en-IN'), full: full.toLocaleString('en-IN') })}
+                          : tr('Customer pays ₹{{pay}} per month (plan ₹{{full}}).', { pay: rupeesIN(pay).slice(1), full: rupeesIN(full).slice(1) })}
                       </p>
                     );
                   })()}

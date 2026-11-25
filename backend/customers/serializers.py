@@ -72,12 +72,13 @@ class ProviderSerializer(serializers.ModelSerializer):
 
 class PlanSerializer(serializers.ModelSerializer):
     final_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    price_with_gst = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     plan_name = serializers.CharField(source="name", read_only=True)  # frontend field name
 
     class Meta:
         model = Plan
         fields = [
-            "id", "provider", "name", "plan_name", "category", "price", "gst_rate", "final_price",
+            "id", "provider", "name", "plan_name", "category", "price", "gst_rate", "price_with_gst", "final_price",
             "installation_amount", "description", "is_active", "created_at",
         ]
         extra_kwargs = {"category": {"required": False}}

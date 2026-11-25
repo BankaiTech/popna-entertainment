@@ -2799,5 +2799,21 @@
   "Office staff: sees all customers, payments and settings.": "அலுவலகப் பணியாளர்: அனைத்து வாடிக்கையாளர்கள், கட்டணங்கள், அமைப்புகளைப் பார்க்கலாம்.",
   "Collects payments in the field. Sees only their customers and shared ones.": "களத்தில் பணம் வசூலிப்பவர். தமக்கு ஒதுக்கப்பட்ட மற்றும் பொதுவான வாடிக்கையாளர்களை மட்டும் பார்க்கலாம்.",
   "Field work and faults. Sees only their customers and shared ones. Cannot collect payments.": "களப்பணி மற்றும் பழுது நீக்கம். தமக்கு ஒதுக்கப்பட்ட மற்றும் பொதுவான வாடிக்கையாளர்களை மட்டும் பார்க்கலாம். பணம் வசூலிக்க முடியாது.",
-  "This is a server admin account. Use your LCO Desk login for the app.": "இது சர்வர் நிர்வாகக் கணக்கு. ஆப்பிற்கு உங்கள் LCO Desk உள்நுழைவைப் பயன்படுத்தவும்."
+  "This is a server admin account. Use your LCO Desk login for the app.": "இது சர்வர் நிர்வாகக் கணக்கு. ஆப்பிற்கு உங்கள் LCO Desk உள்நுழைவைப் பயன்படுத்தவும்.",
+  "Choose the provider.": "வழங்குநரைத் தேர்ந்தெடுக்கவும்.",
+  "Plan": "திட்டம்",
+  "Enter the plan name.": "திட்டத்தின் பெயரை உள்ளிடவும்.",
+  "Enter the price.": "விலையை உள்ளிடவும்.",
+  "This plan name is used twice.": "இந்தத் திட்டப் பெயர் இருமுறை உள்ளது.",
+  "{{n}} plans saved": "{{n}} திட்டங்கள் சேமிக்கப்பட்டன",
+  "per month": "மாதத்திற்கு",
+  "{{price}} + {{gst}}% GST": "{{price}} + {{gst}}% ஜிஎஸ்டி",
+  "No GST": "ஜிஎஸ்டி இல்லை",
+  "Add {{n}} plans": "{{n}} திட்டங்களைச் சேர்",
+  "Remove": "நீக்கு",
+  "Price before GST (₹)": "ஜிஎஸ்டிக்கு முன் விலை (₹)",
+  "Customer pays per month (after GST)": "வாடிக்கையாளர் மாதம் செலுத்துவது (ஜிஎஸ்டி உட்பட)",
+  "Add another plan": "மேலும் ஒரு திட்டம் சேர்",
+  "A new price is billed from the next bill. This month's unpaid bills keep their amount.": "புதிய விலை அடுத்த கட்டணத்திலிருந்து பொருந்தும். இந்த மாதச் செலுத்தப்படாத கட்டணங்களின் தொகை மாறாது.",
+  "Save {{n}} plans": "{{n}} திட்டங்களைச் சேமி"
 }

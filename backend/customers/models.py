@@ -57,6 +57,9 @@ class Plan(OrgOwnedModel):
     gst_rate = models.DecimalField(
         max_digits=5, decimal_places=2, default=0, validators=[MinValueValidator(0), MaxValueValidator(28)]
     )
+    # What the customer pays per month: price + GST, worked out on every save (0% GST = same as price).
+    # This is the amount shown everywhere and billed every month.
+    price_with_gst = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
     installation_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
@@ -70,9 +73,22 @@ class Plan(OrgOwnedModel):
     def __str__(self):
         return f"{self.provider} - {self.name}"
 
+    @staticmethod
+    def with_gst(price, gst_rate):
+        price, gst_rate = Decimal(price or 0), Decimal(gst_rate or 0)
+        return (price * (Decimal(100) + gst_rate) / Decimal(100)).quantize(TWO_PLACES, ROUND_HALF_UP)
+
+    def save(self, *args, **kwargs):
+        self.price_with_gst = self.with_gst(self.price, self.gst_rate)
+        fields = kwargs.get("update_fields")
+        if fields is not None and ("price" in fields or "gst_rate" in fields):
+            kwargs["update_fields"] = set(fields) | {"price_with_gst"}
+        super().save(*args, **kwargs)
+
     @property
     def final_price(self):
-        return (self.price * (Decimal(100) + self.gst_rate) / Decimal(100)).quantize(TWO_PLACES, ROUND_HALF_UP)
+        """Monthly amount incl. GST (stored as price_with_gst)."""
+        return self.with_gst(self.price, self.gst_rate) if self.pk is None else self.price_with_gst
 
 
 class Customer(OrgOwnedModel):
