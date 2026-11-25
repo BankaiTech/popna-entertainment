@@ -53,12 +53,14 @@ function saveTokens(access: string, refresh?: string) {
 
 function clearAuthAndGoToLogin() {
   const a = readAuth();
-  const wasCustomer = (a?.state?.role ?? a?.role) === 'customer';
+  // Also by the page: two calls can fail together, and the second one finds the session already cleared.
+  const wasCustomer = (a?.state?.role ?? a?.role) === 'customer' || window.location.pathname.startsWith('/customer');
   localStorage.removeItem('auth-storage');
   localStorage.removeItem('customer_auth');
   localStorage.removeItem('current_org_id');
-  if (window.location.pathname !== '/login') {
-    window.location.replace(wasCustomer ? '/login?as=customer' : '/login');  // customers land on their own tab
+  const loginPage = wasCustomer ? '/customer/login' : '/login';  // customers have their own login page
+  if (window.location.pathname !== loginPage) {
+    window.location.replace(loginPage);
   }
 }
 

@@ -32,7 +32,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-const PUBLIC_PATHS = ['/', '/login'];
+const PUBLIC_PATHS = ['/', '/login', '/customer/login'];
 
 function getSystemTheme(): Resolved {
     if (typeof window === 'undefined') return 'light';

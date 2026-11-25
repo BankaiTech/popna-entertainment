@@ -5,6 +5,7 @@ SMS rule: every operator gets `sms_free_per_month` free SMS each calendar month 
 After that each SMS uses one paid credit. With no free SMS and no credits left, the SMS is not sent
 and is marked failed with NO_BALANCE_ERROR; the owner can retry it from the SMS Log after buying SMS.
 """
+import logging
 from datetime import datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -15,6 +16,8 @@ from django.utils import timezone
 
 from . import cashfree, payu
 from .models import Organization, PlatformPayment
+
+log = logging.getLogger(__name__)
 
 NO_BALANCE_ERROR = "No SMS balance: this month's free SMS are used up. Buy SMS in Settings > Plan & SMS, then retry."
 UPI_APPS = ("gpay", "phonepe", "paytm", "bhim")
@@ -179,3 +182,37 @@ def approve_payment(payment, by):
     payment.decided_at = timezone.now()
     payment.save(update_fields=["status", "decided_by", "decided_at", "updated_at"])
     return payment
+
+
+def reconcile_online_payments(now=None, limit=50):
+    """
+    Safety net for online payments (Cashfree / PayU): money taken but our app never heard back
+    (webhook lost, operator closed the browser). Every few minutes ask the gateway again about orders
+    still "started". After 3 days unanswered, close them as not completed. Approving stays idempotent.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from . import cashfree, payu
+
+    now = now or timezone.now()
+    checked = approved = 0
+    open_orders = PlatformPayment.objects.filter(
+        status=PlatformPayment.Status.CREATED,
+        gateway__in=[PlatformPayment.Gateway.CASHFREE, PlatformPayment.Gateway.PAYU],
+        created_at__lte=now - timedelta(minutes=2),  # give the normal return / webhook a chance first
+    ).order_by("created_at")[:limit]
+    for payment in open_orders:
+        module = payu if payment.gateway == PlatformPayment.Gateway.PAYU else cashfree
+        try:
+            payment = module.confirm(payment)
+        except (cashfree.CashfreeError, payu.PayUError) as exc:
+            # e.g. an old test-mode order the live gateway does not know: still closed after 3 days.
+            log.warning("reconcile %s %s: %s", payment.gateway, payment.gateway_order_id, exc)
+        checked += 1
+        approved += int(payment.status == PlatformPayment.Status.APPROVED)
+        if payment.status == PlatformPayment.Status.CREATED and payment.created_at < now - timedelta(days=3):
+            PlatformPayment.objects.filter(pk=payment.pk, status=PlatformPayment.Status.CREATED).update(
+                status=PlatformPayment.Status.REJECTED, admin_note="Online payment not completed", decided_at=now)
+    return {"checked": checked, "approved": approved}

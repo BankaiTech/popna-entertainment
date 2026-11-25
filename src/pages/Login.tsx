@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { tr } from '@/lib/lt';
 import { LOGIN_AS_KEY } from '@/pages/customer/portalShared';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
@@ -25,7 +25,7 @@ const EMPTY_SIGNUP = {
 const Login = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { login, customerLogin, isAuthenticated, role, initialize } = useAuthStore();
+  const { login, isAuthenticated, role, initialize } = useAuthStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,18 +33,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  // Staff (operator, manager, agent...) or customer (mobile + box number)
-  const [mode, setMode] = useState<'staff' | 'customer'>(() => {
-    const asParam = new URLSearchParams(window.location.search).get('as');
-    if (asParam === 'customer' || asParam === 'staff') return asParam;
-    try {
-      return localStorage.getItem(LOGIN_AS_KEY) === 'customer' ? 'customer' : 'staff';
-    } catch {
-      return 'staff';
-    }
-  });
-  const [custMobile, setCustMobile] = useState('');
-  const [custBox, setCustBox] = useState('');
   // Set when an operator was logged out because the subscription ended
   const [subscriptionNotice] = useState<string | null>(() => sessionStorage.getItem(SUBSCRIPTION_MSG_KEY));
   useEffect(() => {
@@ -89,6 +77,13 @@ const Login = () => {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Old links (/login?as=customer) open the customer login page.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('as') === 'customer') {
+      navigate('/customer/login', { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     if (!isAuthenticated || !role) return;
@@ -138,29 +133,6 @@ const Login = () => {
 
     setIsLoading(false);
     setError(t('login.wrongCredentials', 'Username and password is wrong'));
-    triggerShake();
-  };
-
-  const handleCustomerSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    const mobile = custMobile.replace(/\D/g, '').slice(-10);
-    if (!/^[6-9]\d{9}$/.test(mobile) || custBox.trim().length < 3) {
-      setError(tr('Enter your 10-digit mobile number and the box number.'));
-      triggerShake();
-      return;
-    }
-    setIsLoading(true);
-    const result = await customerLogin(mobile, custBox.trim());
-    setIsLoading(false);
-    if (result.success) {
-      try { localStorage.setItem(LOGIN_AS_KEY, 'customer'); } catch { /* private mode */ }
-      navigate('/customer/dashboard', { replace: true });
-      return;
-    }
-    setError(result.message === 'too_many'
-      ? tr('Too many tries. Please wait a few minutes and try again.')
-      : tr('Mobile number or box number is not correct. Check the number on your set-top box or ask your cable operator.'));
     triggerShake();
   };
 
@@ -287,9 +259,7 @@ const Login = () => {
                     {t('login.title', 'Login')}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {mode === 'staff'
-                      ? t('login.subtitle', 'Enter your username and password. You will be directed to the right dashboard.')
-                      : tr('Cable TV and internet customers')}
+                    {t('login.subtitle', 'Enter your username and password. You will be directed to the right dashboard.')}
                   </p>
                 </div>
 
@@ -299,61 +269,6 @@ const Login = () => {
                   </div>
                 )}
 
-                <div role="tablist" className="grid grid-cols-2 gap-1 p-1 mb-5 rounded-xl bg-gray-100">
-                  {([['staff', tr('Operator / staff')], ['customer', tr('Customer')]] as const).map(([key, label]) => (
-                    <button key={key} type="button" role="tab" aria-selected={mode === key}
-                      onClick={() => { setMode(key); setError(''); }}
-                      className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === key
-                        ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {mode === 'customer' ? (
-                <form onSubmit={handleCustomerSubmit} className={`space-y-5 ${shaking ? 'animate-shake' : ''}`}>
-                  {error && (
-                    <div role="alert" className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                      <span className="shrink-0 mt-px">⚠</span>
-                      {error}
-                    </div>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    {tr('See your bill, receipts and complaints. Use the mobile number you gave your cable operator.')}
-                  </p>
-                  <div>
-                    <label htmlFor="cust-mobile" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {tr('Mobile number')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input id="cust-mobile" type="tel" inputMode="numeric" maxLength={14} value={custMobile}
-                        onChange={(e) => { setCustMobile(e.target.value); setError(''); }}
-                        placeholder="98765 43210" className={inputClass} disabled={isLoading} autoComplete="tel-national" />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="cust-box" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {tr('Box number (STB / VC no.)')}
-                    </label>
-                    <div className="relative">
-                      <Tv className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input id="cust-box" type="text" value={custBox} autoCapitalize="characters" spellCheck={false}
-                        onChange={(e) => { setCustBox(e.target.value); setError(''); }}
-                        placeholder={tr('Printed on the sticker under your set-top box')}
-                        className={inputClass} disabled={isLoading} autoComplete="off" />
-                    </div>
-                    <p className="mt-1.5 text-xs text-gray-400">
-                      {tr('Internet customers: use the customer ID on your bill.')}
-                    </p>
-                  </div>
-                  <button type="submit" disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-                    {isLoading ? t('login.loggingIn') : t('nav.login')}
-                    {!isLoading && <ArrowRight className="w-4 h-4" />}
-                  </button>
-                </form>
-                ) : (
                 <form
                   onSubmit={handleSubmit}
                   className={`space-y-5 ${shaking ? 'animate-shake' : ''}`}
@@ -436,10 +351,21 @@ const Login = () => {
                     )}
                   </button>
                 </form>
-                )}
+
+                {/* Customers have their own login page (mobile + box number) */}
+                <Link to="/customer/login"
+                  className="mt-6 flex items-center justify-between gap-3 rounded-xl border-2 border-blue-100 bg-blue-50/60 px-4 py-3 hover:border-blue-300 transition-colors">
+                  <span className="flex items-center gap-3 min-w-0">
+                    <Tv className="w-5 h-5 text-blue-600 shrink-0" />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-gray-900">{tr('Customer login')}</span>
+                      <span className="block text-xs text-gray-500">{tr('Cable TV and internet customers: see your bill and complaints')}</span>
+                    </span>
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
+                </Link>
 
                 {/* Sign up: sends a request; the app owner calls back and creates the account */}
-                {mode === 'staff' && (
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-500">
                     {t('login.noAccount', "Don't have an account?")}{' '}
@@ -452,7 +378,6 @@ const Login = () => {
                     </button>
                   </p>
                 </div>
-                )}
 
                 {/* Demo credentials — mock mode only, never shown with the real backend */}
                 {env.USE_MOCK_API && (

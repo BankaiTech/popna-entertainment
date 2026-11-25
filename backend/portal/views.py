@@ -60,10 +60,20 @@ class LoginMobileThrottle(SimpleRateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": mobile} if mobile else None
 
 
+class LoginBoxThrottle(SimpleRateThrottle):
+    """Per box number, so trying many mobile numbers against one (printed) box number is slow too."""
+
+    scope = "customer_login_mobile"
+
+    def get_cache_key(self, request, view):
+        box = str(request.data.get("box_number") or "").strip().upper()[:40]
+        return self.cache_format % {"scope": "customer_login_box", "ident": box} if box else None
+
+
 @api_view(["POST"])
 @authentication_classes([NoAuth])
 @permission_classes([AllowAny])
-@throttle_classes([LoginIpThrottle, LoginMobileThrottle])
+@throttle_classes([LoginIpThrottle, LoginMobileThrottle, LoginBoxThrottle])
 def login(request):
     customer = find_customer(request.data.get("mobile"), request.data.get("box_number"))
     if customer is None:

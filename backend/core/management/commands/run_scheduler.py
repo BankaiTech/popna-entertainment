@@ -15,6 +15,7 @@ from django.utils import timezone
 from billing.services import generate_bills, generate_internet_renewals, month_start
 from core.models import JobRun
 from notifications.services import process_outbox, queue_due_reminders
+from orgs.billing import reconcile_online_payments
 
 log = logging.getLogger("scheduler")
 
@@ -74,6 +75,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         log.info("scheduler started")
+        last_reconcile = 0.0
         while True:
             close_old_connections()
             try:
@@ -83,6 +85,12 @@ class Command(BaseCommand):
                 result = process_outbox()
                 if result["sent"] or result["failed"]:
                     log.info("sms outbox: %s", result)
+                # Every 5 minutes: ask Cashfree / PayU about online payments we never heard back on.
+                if systime.monotonic() - last_reconcile >= 300:
+                    last_reconcile = systime.monotonic()
+                    done = reconcile_online_payments()
+                    if done["checked"]:
+                        log.info("online payments re-checked: %s", done)
             except Exception:
                 log.exception("scheduler cycle failed")
             if opts["once"]:

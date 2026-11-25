@@ -2928,5 +2928,12 @@
   "Use letters, numbers, spaces and & . - only.": "केवल अक्षर, अंक, स्पेस और & . - का उपयोग करें।",
   "Pay ₹{{amount}} with {{gateway}}": "{{gateway}} से ₹{{amount}} चुकाएँ",
   "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.": "ऑनलाइन (Cashfree / PayU) भुगतान अपने-आप स्वीकृत होकर 'स्वीकृत' में दिखते हैं।",
-  "PayU (automatic)": "PayU (स्वचालित)"
+  "PayU (automatic)": "PayU (स्वचालित)",
+  "Customer login": "ग्राहक लॉगिन",
+  "The mobile number you gave your cable operator.": "वह मोबाइल नंबर जो आपने अपने केबल ऑपरेटर को दिया है।",
+  "Logging in...": "लॉगिन हो रहा है...",
+  "Login": "लॉगिन",
+  "Operator / staff login": "ऑपरेटर / स्टाफ लॉगिन",
+  "Cable operators, managers and collection staff": "केबल ऑपरेटर, मैनेजर और कलेक्शन स्टाफ",
+  "Cable TV and internet customers: see your bill and complaints": "केबल टीवी और इंटरनेट ग्राहक: अपना बिल और शिकायतें देखें"
 }

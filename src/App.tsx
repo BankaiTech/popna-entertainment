@@ -45,6 +45,7 @@ import CustomerDashboard from './pages/customer/Dashboard';
 import CustomerHistory from './pages/customer/History';
 import CustomerComplaints from './pages/customer/Complaints';
 import CustomerLayout from './layouts/CustomerLayout';
+import CustomerLogin from './pages/CustomerLogin';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { PWAFeatures } from './components/PWAFeatures';
@@ -87,6 +88,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Customer app (mobile + box number login) */}
+        <Route path="/customer/login" element={<CustomerLogin />} />
         <Route
           path="/customer"
           element={

@@ -120,3 +120,49 @@ class PayUTests(TestCase):
     def test_return_redirect_never_uses_a_url_from_the_request(self):
         r = APIClient().post("/api/payments/payu/return", {"txnid": "https://evil.example/x", "status": "success"})
         self.assertEqual(r["Location"], "https://lcodesk.in/admin/settings?tab=plan")
+
+
+class ReconcileTests(TestCase):
+    """Paid, but the webhook was lost and the operator closed the browser: the scheduler still finds it."""
+
+    def setUp(self):
+        self.org = make_org("RC1", contact_phone="9876500012")
+        self.owner = make_user("rc_owner", Roles.OWNER, org=self.org)
+        self.keys = override_settings(**KEYS, PAYU_SANDBOX_ORG_IDS={self.org.id})
+        self.keys.enable()
+        self.addCleanup(self.keys.disable)
+
+    def test_lost_webhook_is_picked_up_and_old_orders_close(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from orgs.billing import reconcile_online_payments
+
+        r = client_for(self.owner).post("/api/platform-payments/checkout",
+                                        {"kind": "sms", "quantity": 500, "gateway": "payu"}, format="json")
+        f = r.json()["fields"]
+        PlatformPayment.objects.update(created_at=timezone.now() - timedelta(minutes=10))
+        ok = {"status": 1, "transaction_details": {f["txnid"]: {"status": "success", "amt": f["amount"],
+                                                                "udf1": str(self.org.id)}}}
+        with mock.patch("orgs.payu.requests.post", return_value=FakeResp(200, ok)):
+            self.assertEqual(reconcile_online_payments()["approved"], 1)
+            self.assertEqual(reconcile_online_payments()["checked"], 0)  # nothing left to check
+        self.assertEqual(Organization.objects.get(pk=self.org.pk).sms_credits, 500)
+
+        r = client_for(self.owner).post("/api/platform-payments/checkout",
+                                        {"kind": "sms", "quantity": 500, "gateway": "payu"}, format="json")
+        txn = r.json()["fields"]["txnid"]
+        PlatformPayment.objects.filter(gateway_order_id=txn).update(created_at=timezone.now() - timedelta(days=4))
+        pending = {"status": 1, "transaction_details": {txn: {"status": "pending", "amt": "150.00"}}}
+        with mock.patch("orgs.payu.requests.post", return_value=FakeResp(200, pending)):
+            reconcile_online_payments()
+        self.assertEqual(PlatformPayment.objects.get(gateway_order_id=txn).status, "rejected")
+
+    def test_zero_rate_cannot_start_an_online_order(self):
+        self.org.sms_rate = 0
+        self.org.save()
+        r = client_for(self.owner).post("/api/platform-payments/checkout",
+                                        {"kind": "sms", "quantity": 500, "gateway": "payu"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PlatformPayment.objects.exists())

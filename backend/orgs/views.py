@@ -297,7 +297,10 @@ def _price(org, kind, quantity):
     """(rate, amount) from the operator's own rates / the renewal offer. Never from the browser."""
     if kind == PlatformPayment.Kind.SMS:
         rate = org.sms_rate
-        return rate, platform_billing.money(rate * quantity)
+        amount = platform_billing.money(rate * quantity)
+        if amount <= 0:
+            raise ValidationError({"kind": "Nothing to pay for SMS. Contact LCO Desk."})
+        return rate, amount
     amount = platform_billing.renewal_price(org, quantity)
     if amount is None:
         raise ValidationError({"quantity": "Choose 1, 3, 6 or 12 months."})

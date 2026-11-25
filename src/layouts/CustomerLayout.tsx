@@ -25,7 +25,7 @@ const CustomerLayout = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login?as=customer', { replace: true });
+    navigate('/customer/login', { replace: true });
   };
 
   const tabs = [

@@ -1,6 +1,7 @@
 // Client folder removed - SaaS multi-tenant only
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, UserRole } from '@/store/useAuthStore';
+import { LOGIN_AS_KEY } from '@/pages/customer/portalShared';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,13 +14,18 @@ const ProtectedRoute = ({ children, allowedRoles, customerOnly }: ProtectedRoute
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to={customerOnly ? '/login?as=customer' : '/login'} state={{ from: location }} replace />;
+    // Customers go to their own login page; so does a phone whose last login was a customer's
+    // (the installed app opens at /admin/dashboard).
+    let lastWasCustomer = false;
+    try { lastWasCustomer = localStorage.getItem(LOGIN_AS_KEY) === 'customer'; } catch { /* private mode */ }
+    const to = customerOnly || lastWasCustomer ? '/customer/login' : '/login';
+    return <Navigate to={to} state={{ from: location }} replace />;
   }
 
   // Customer routes - only customers can access
   if (customerOnly) {
     if (!isAuthenticated || role !== 'customer') {
-      return <Navigate to="/login" state={{ from: location }} replace />;
+      return <Navigate to="/customer/login" state={{ from: location }} replace />;
     }
     return <>{children}</>;
   }

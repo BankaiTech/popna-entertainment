@@ -277,3 +277,14 @@ class StaffComplaintTests(PortalBase):
 
     def test_complaints_module_is_on_by_default(self):
         self.assertIn("complaints", DEFAULT_MODULES)
+
+
+class CustomerLoginBoxThrottleTests(PortalBase):
+    def test_many_mobiles_against_one_box_are_throttled(self):
+        from unittest import mock
+        # Each try from a "different IP": only the per-box limit can stop this.
+        codes = []
+        for i in range(25):
+            with mock.patch("portal.views.LoginIpThrottle.allow_request", return_value=True):
+                codes.append(self.login(f"90000{i:05d}", "832B0051B347").status_code)
+        self.assertIn(429, codes)
