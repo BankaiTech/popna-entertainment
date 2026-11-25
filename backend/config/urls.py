@@ -14,6 +14,8 @@ from notifications.views import SmsLogViewSet
 from orgs.views import (
     DistributorViewSet, OrganizationViewSet, PlatformPaymentViewSet, SignupRequestViewSet, distributor_summary, my_plan,
     cashfree_webhook,
+    payu_return,
+    payu_webhook,
 )
 from tracking import views as tracking
 
@@ -49,6 +51,8 @@ api = [
     path("distributor/summary", distributor_summary),
     path("my-plan", my_plan),
     path("payments/cashfree/webhook", cashfree_webhook),
+    path("payments/payu/return", payu_return),
+    path("payments/payu/webhook", payu_webhook),
     # Customer app (separate customer token; staff tokens are refused there and vice versa)
     path("customer/auth/login", portal.login),
     path("customer/auth/refresh", portal.refresh),

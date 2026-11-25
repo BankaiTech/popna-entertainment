@@ -99,7 +99,7 @@ export function RenewSection({ plan, onChanged }: { plan: MyPlan; onChanged: () 
             key={`renew-${chosen.months}`}
             kind="renewal" quantity={chosen.months} amount={Number(chosen.amount)} note={plan.pay.renewalNote}
             payeeName={plan.pay.payeeName} upiIds={plan.pay.upiIds} onClaimed={onChanged}
-            online={plan.pay.online} onlineMode={plan.pay.onlineMode}
+            online={plan.pay.online} onlineMode={plan.pay.onlineMode} gateways={plan.pay.gateways}
           />
         </div>
       )}
@@ -130,7 +130,7 @@ function PaymentHistory({ payments }: { payments: PlatformPayment[] }) {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDateTimeIN(p.createdAt)}
-                  {p.gateway === 'cashfree' ? <> · {tr('Paid online')}</> : p.utr && <> · UTR <span className="font-mono">{p.utr}</span></>}
+                  {p.gateway !== 'upi_qr' ? <> · {tr('Paid online')}</> : p.utr && <> · UTR <span className="font-mono">{p.utr}</span></>}
                 </p>
                 {p.status === 'rejected' && p.adminNote && <p className="text-xs text-red-600">{p.adminNote}</p>}
               </div>
@@ -255,7 +255,7 @@ export default function PlanAndSms() {
             key={`sms-${qty}`}
             kind="sms" quantity={qty} amount={Math.round(qty * rate * 100) / 100} note={plan.pay.smsNote}
             payeeName={plan.pay.payeeName} upiIds={plan.pay.upiIds} onClaimed={load}
-            online={plan.pay.online} onlineMode={plan.pay.onlineMode}
+            online={plan.pay.online} onlineMode={plan.pay.onlineMode} gateways={plan.pay.gateways}
           />
         )}
       </Section>

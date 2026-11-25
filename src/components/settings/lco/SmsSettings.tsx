@@ -4,6 +4,8 @@ import { useLt } from '@/lib/lt';
 import { Field, inputClass, SaveBar, Section, useOperatorSettings } from './SettingsUI';
 
 const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
+/** Name at the end of each SMS: short, so the SMS stays one part and reads like a signature. */
+const SMS_NAME_MAX = 8;
 
 // Preview only. Must match the DLT-approved templates in backend/notifications/templates.py
 // (see backend/docs/DLT_SMS_TEMPLATES.md).
@@ -27,16 +29,40 @@ const SmsSettings = () => {
   const tr = useLt();
   const { settings: s, set, save, saving, errors, dirty } = useOperatorSettings();
   if (!s) return <p className="py-8 text-center text-muted-foreground">{tr('Loading…')}</p>;
-  const org = (s.smsDisplayName || s.name).slice(0, 30);
+  const suggestions = s.smsNameSuggestions ?? [];
+  const typed = s.smsDisplayName.trim();
+  const org = (typed || suggestions[0] || s.name).slice(0, SMS_NAME_MAX);
   const lang = 'ta' as const; // all customer SMS go in Tamil for now (server setting SMS_ONLY_LANGUAGE)
 
   return (
     <div className="space-y-4">
       <Section title={tr('SMS to customers')} hint={tr('SMS are sent only to customers. You see every SMS in the SMS Log.')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label={tr('Business name in SMS')} hint={tr('Max 30 characters')} error={errors.smsDisplayName}>
-            <input className={inputClass} maxLength={30} value={s.smsDisplayName} placeholder={s.name}
-              onChange={(e) => set('smsDisplayName', e.target.value)} />
+          <Field label={tr('Business name in SMS')}
+            hint={tr('Max 8 characters. {{n}} left.', { n: Math.max(0, SMS_NAME_MAX - [...s.smsDisplayName].length) })}
+            error={errors.smsDisplayName}>
+            <input className={inputClass} maxLength={SMS_NAME_MAX} value={s.smsDisplayName}
+              placeholder={suggestions[0] ?? ''}
+              onChange={(e) => set('smsDisplayName', e.target.value.replace(/\s+/g, ' ').slice(0, SMS_NAME_MAX))} />
+            {suggestions.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-muted-foreground mb-1.5">{tr('Suggestions from your business name:')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((name) => (
+                    <button key={name} type="button" onClick={() => set('smsDisplayName', name)}
+                      aria-pressed={typed === name}
+                      className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${typed === name
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-border hover:bg-muted'}`}>
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!typed && suggestions[0] && (
+              <p className="text-xs text-muted-foreground mt-2">{tr('Not set: SMS will end with "{{name}}".', { name: suggestions[0] })}</p>
+            )}
           </Field>
         </div>
         <p className="text-xs text-muted-foreground">{tr('All SMS to customers are sent in Tamil.')}</p>

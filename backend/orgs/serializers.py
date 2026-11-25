@@ -10,6 +10,7 @@ from rest_framework import serializers
 from core.permissions import Roles
 from core.validators import normalize_mobile
 
+from . import smsname
 from .models import Distributor, Organization, PlatformPayment, SignupRequest
 
 OWNER_EDITABLE = [
@@ -27,6 +28,7 @@ PLATFORM_CONTROLLED = [
 ]
 COMPUTED = [
     "industry_type", "subscription_state", "days_left", "providers_used", "plans_used", "internet_sms_available",
+    "sms_name_suggestions", "sms_name",
 ]
 
 
@@ -52,6 +54,23 @@ class OrgComputedMixin(serializers.Serializer):
     plans_used = serializers.SerializerMethodField()
     # Internet customers' SMS switched off platform-wide for now: the settings page hides those options.
     internet_sms_available = serializers.SerializerMethodField()
+    # Short names (max 8 characters) for the end of customer SMS, made from the business name.
+    sms_name_suggestions = serializers.SerializerMethodField()
+    sms_name = serializers.SerializerMethodField()
+
+    def get_sms_name_suggestions(self, obj):
+        return smsname.suggestions(obj.name)
+
+    def get_sms_name(self, obj):
+        return obj.display_name
+
+    def validate_sms_display_name(self, value):
+        value = smsname.clean(value)
+        if value and not smsname.is_valid(value):
+            if len(value) > smsname.MAX_SMS_NAME:
+                raise serializers.ValidationError("Use at most 8 characters.")
+            raise serializers.ValidationError("Use letters, numbers, spaces and & . - only.")
+        return value
 
     def get_internet_sms_available(self, obj):
         return settings.SMS_INTERNET_ENABLED

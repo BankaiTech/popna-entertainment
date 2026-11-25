@@ -14,6 +14,8 @@ export const UPI_APPS: { id: UpiApp; label: string }[] = [
 ];
 
 export type PaymentKind = 'sms' | 'renewal';
+export type OnlineGateway = 'cashfree' | 'payu';
+
 /** created = online (Cashfree) payment started but not paid yet. */
 export type PaymentStatus = 'created' | 'pending' | 'approved' | 'rejected';
 
@@ -33,7 +35,7 @@ export interface PlatformPayment {
   createdByName: string;
   createdAt: string;
   decidedAt: string | null;
-  gateway: 'upi_qr' | 'cashfree';
+  gateway: 'upi_qr' | OnlineGateway;
   gatewayOrderId: string;
 }
 
@@ -78,9 +80,11 @@ export interface MyPlan {
     upiIds: Record<UpiApp, string>;
     smsNote: string;
     renewalNote: string;
-    /** Cashfree keys set on the server: show "Pay online". */
+    /** Some gateway's keys are set on the server: show "Pay online". */
     online: boolean;
     onlineMode: 'sandbox' | 'production';
+    /** Gateways ready for this operator, in order (one "Pay online" button each). */
+    gateways?: OnlineGateway[];
   };
   payments: PlatformPayment[];
 }
@@ -115,9 +119,16 @@ export const platformBillingApi = {
   reject: async (id: number, note: string): Promise<PlatformPayment> =>
     toCamelCase<PlatformPayment>(unwrapApiData(await apiClient.post(`/platform-payments/${id}/reject`, { note }))),
 
-  /** Operator: start a Cashfree payment. The server works out the amount. */
-  checkout: async (kind: PaymentKind, quantity: number): Promise<{ orderId: string; paymentSessionId: string }> =>
-    toCamelCase(unwrapApiData(await apiClient.post('/platform-payments/checkout', { kind, quantity }))),
+  /** Operator: start an online payment. The server works out the amount (and signs the PayU form). */
+  checkout: async (kind: PaymentKind, quantity: number, gateway: OnlineGateway = 'cashfree'): Promise<{
+    orderId: string; paymentSessionId?: string; action?: string; fields?: Record<string, string>;
+  }> => {
+    const raw = unwrapApiData<Record<string, unknown>>(
+      await apiClient.post('/platform-payments/checkout', { kind, quantity, gateway }));
+    // PayU form fields go to PayU exactly as the server signed them (no camelCase).
+    return { ...toCamelCase<{ orderId: string; paymentSessionId?: string; action?: string }>(raw),
+      fields: raw.fields as Record<string, string> | undefined };
+  },
 
   /** Operator: after Cashfree sends them back. The server asks Cashfree; approved only if really paid. */
   verify: async (orderId: string): Promise<PlatformPayment> =>
@@ -155,9 +166,11 @@ export function isInstalledApp(): boolean {
  *   phone layout with UPI app buttons. Resolves when the popup closes; the caller then checks the order.
  */
 export async function payOnline(
-  kind: PaymentKind, quantity: number, mode: 'sandbox' | 'production',
+  kind: PaymentKind, quantity: number, mode: 'sandbox' | 'production', gateway: OnlineGateway = 'cashfree',
 ): Promise<{ orderId: string; inApp: boolean; finished: boolean }> {
-  const { orderId, paymentSessionId } = await platformBillingApi.checkout(kind, quantity);
+  if (gateway === 'payu') return payWithPayU(kind, quantity);
+  const { orderId, paymentSessionId } = await platformBillingApi.checkout(kind, quantity, 'cashfree');
+  if (!paymentSessionId) throw new Error('Payment could not start.');
   const { load } = await import('@cashfreepayments/cashfree-js');
   const cashfree = await load({ mode });
   if (!cashfree) throw new Error('Could not open the payment page. Check your internet and try again.');
@@ -165,4 +178,35 @@ export async function payOnline(
   const result = await cashfree.checkout({ paymentSessionId, redirectTarget: inApp ? '_modal' : '_self' });
   if (!inApp && result?.error) throw new Error(result.error.message || 'Payment could not start.');
   return { orderId, inApp, finished: Boolean(result?.paymentDetails) };
+}
+
+/** PayU pages we may send the operator to. Anything else from the server is refused. */
+const PAYU_HOSTS = ['secure.payu.in', 'test.payu.in'];
+
+/**
+ * Open PayU checkout: post the server-signed form to PayU (this page is left).
+ * PayU sends the result to our server, which checks it with PayU and brings the operator back to
+ * Settings > Plan & SMS with ?order_id=..., where the app checks it once more.
+ */
+async function payWithPayU(kind: PaymentKind, quantity: number): Promise<never> {
+  const { action, fields } = await platformBillingApi.checkout(kind, quantity, 'payu');
+  let host = '';
+  try { host = new URL(action ?? '').hostname; } catch { /* bad URL */ }
+  if (!fields || !PAYU_HOSTS.includes(host) || !action?.startsWith('https://')) {
+    throw new Error('Payment could not start.');
+  }
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = action;
+  form.style.display = 'none';
+  for (const [name, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = String(value);
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+  return new Promise<never>(() => undefined); // the page is leaving
 }

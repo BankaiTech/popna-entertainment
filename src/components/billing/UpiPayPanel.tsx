@@ -9,7 +9,7 @@ import QRCode from 'qrcode';
 import { CheckCircle2, Copy, CreditCard, Download, QrCode } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import {
-  UPI_APPS, isPhone, payOnline, platformBillingApi, upiQuery, type PaymentKind, type UpiApp,
+  UPI_APPS, isPhone, payOnline, platformBillingApi, upiQuery, type OnlineGateway, type PaymentKind, type UpiApp,
 } from '@/api/platformBilling';
 import { showError, showSuccess } from '@/utils/toast';
 import { checkOnlinePayment } from '@/lib/cashfreeReturn';
@@ -24,14 +24,19 @@ interface Props {
   payeeName: string;
   upiIds: Record<UpiApp, string>;
   onClaimed: () => void;
-  /** Cashfree is set up on the server. */
+  /** An online gateway is set up on the server. */
   online?: boolean;
   onlineMode?: 'sandbox' | 'production';
+  /** Which gateways (one button each). Default: Cashfree when `online`. */
+  gateways?: OnlineGateway[];
 }
 
+const GATEWAY_LABEL: Record<OnlineGateway, string> = { cashfree: 'Cashfree', payu: 'PayU' };
+
 export default function UpiPayPanel({
-  kind, quantity, amount, note, payeeName, upiIds, onClaimed, online = false, onlineMode = 'sandbox',
+  kind, quantity, amount, note, payeeName, upiIds, onClaimed, online = false, onlineMode = 'sandbox', gateways,
 }: Props) {
+  const ready: OnlineGateway[] = gateways ?? (online ? ['cashfree'] : []);
   const tr = useLt();
   const [open, setOpen] = useState(false);
   const [app, setApp] = useState<UpiApp>('gpay');
@@ -58,11 +63,11 @@ export default function UpiPayPanel({
     }
   };
 
-  const startOnline = async () => {
+  const startOnline = async (gateway: OnlineGateway) => {
     setBusy(true);
     try {
-      // Browser tab: leaves this page for Cashfree. Installed app: popup, resolves when it closes.
-      const { orderId, inApp, finished } = await payOnline(kind, quantity, onlineMode);
+      // Browser tab: leaves this page for the gateway. Cashfree in the installed app: popup, resolves when it closes.
+      const { orderId, inApp, finished } = await payOnline(kind, quantity, onlineMode, gateway);
       if (inApp) {
         await checkOnlinePayment(orderId, finished);
         setBusy(false);
@@ -109,7 +114,7 @@ export default function UpiPayPanel({
   }
 
   if (!open) {
-    if (!online) {
+    if (ready.length === 0) {
       return (
         <Button onClick={() => setOpen(true)} disabled={!valid} className="w-full sm:w-auto">
           <QrCode className="w-4 h-4 mr-2" />
@@ -120,10 +125,15 @@ export default function UpiPayPanel({
     return (
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button onClick={startOnline} disabled={!valid || busy} className="w-full sm:w-auto">
-            <CreditCard className="w-4 h-4 mr-2" />
-            {busy ? tr('Opening...') : tr('Pay ₹{{amount}} online', { amount: amount.toFixed(2) })}
-          </Button>
+          {ready.map((gateway, i) => (
+            <Button key={gateway} onClick={() => startOnline(gateway)} disabled={!valid || busy}
+              variant={i === 0 ? 'primary' : 'outline'} className="w-full sm:w-auto">
+              <CreditCard className="w-4 h-4 mr-2" />
+              {busy ? tr('Opening...') : ready.length === 1
+                ? tr('Pay ₹{{amount}} online', { amount: amount.toFixed(2) })
+                : tr('Pay ₹{{amount}} with {{gateway}}', { amount: amount.toFixed(2), gateway: GATEWAY_LABEL[gateway] })}
+            </Button>
+          ))}
           <Button variant="outline" onClick={() => setOpen(true)} disabled={!valid || busy} className="w-full sm:w-auto">
             <QrCode className="w-4 h-4 mr-2" />{tr('Pay by UPI QR')}
           </Button>

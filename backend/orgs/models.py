@@ -76,7 +76,8 @@ class Organization(TimeStampedModel):
     extra_alert_mobiles = models.CharField(
         max_length=200, blank=True, help_text="Comma-separated mobiles that also get owner alerts"
     )
-    sms_display_name = models.CharField(max_length=30, blank=True, help_text="Name shown at the end of SMS")
+    sms_display_name = models.CharField(max_length=8, blank=True,
+                                        help_text="Name at the end of every customer SMS, max 8 characters")
     # App language for this operator's staff (each user can still have their own). Empty = English.
     app_language = models.CharField(max_length=5, blank=True, choices=APP_LANGUAGES)
     sms_language = models.CharField(max_length=2, default="en", choices=[("en", "English"), ("ta", "Tamil")],
@@ -151,7 +152,10 @@ class Organization(TimeStampedModel):
 
     @property
     def display_name(self):
-        return (self.sms_display_name or self.name)[:30]
+        """Name signed at the end of customer SMS (max 8 characters)."""
+        from .smsname import sms_name
+
+        return sms_name(self)
 
     def alert_mobiles(self):
         numbers = [self.owner_mobile] + [normalize_mobile(m) for m in self.extra_alert_mobiles.split(",")]
@@ -227,6 +231,7 @@ class PlatformPayment(TimeStampedModel):
     class Gateway(models.TextChoices):
         UPI_QR = "upi_qr", "UPI QR (manual check)"
         CASHFREE = "cashfree", "Cashfree (automatic)"
+        PAYU = "payu", "PayU (automatic)"
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="platform_payments")
     kind = models.CharField(max_length=10, choices=Kind.choices)
@@ -238,7 +243,7 @@ class PlatformPayment(TimeStampedModel):
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
     admin_note = models.CharField(max_length=300, blank=True)
     gateway = models.CharField(max_length=10, choices=Gateway.choices, default=Gateway.UPI_QR)
-    gateway_order_id = models.CharField(max_length=45, blank=True, db_index=True)  # our order_id at Cashfree
+    gateway_order_id = models.CharField(max_length=45, blank=True, db_index=True)  # our order id at Cashfree / PayU
     created_by = models.ForeignKey("accounts.User", null=True, on_delete=models.SET_NULL, related_name="+")
     decided_by = models.ForeignKey("accounts.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     decided_at = models.DateTimeField(null=True, blank=True)

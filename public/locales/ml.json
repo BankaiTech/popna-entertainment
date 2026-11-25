@@ -2920,5 +2920,13 @@
   "This payment was cancelled. Its receipt cannot be sent.": "ഈ പേയ്മെന്റ് റദ്ദാക്കി. അതിന്റെ രസീത് അയയ്ക്കാൻ കഴിയില്ല.",
   "Not sent: the payment was cancelled.": "അയച്ചില്ല: പേയ്മെന്റ് റദ്ദാക്കി.",
   "Same name and mobile is already added.": "ഇതേ പേരും മൊബൈലും ഇതിനകം ചേർത്തിട്ടുണ്ട്.",
-  "This Device ID is already used by another customer.": "ഈ ഉപകരണ ID ഇതിനകം മറ്റൊരു ഉപഭോക്താവിനുണ്ട്."
+  "This Device ID is already used by another customer.": "ഈ ഉപകരണ ID ഇതിനകം മറ്റൊരു ഉപഭോക്താവിനുണ്ട്.",
+  "Max 8 characters. {{n}} left.": "പരമാവധി 8 അക്ഷരങ്ങൾ. ഇനി {{n}} ബാക്കി.",
+  "Suggestions from your business name:": "നിങ്ങളുടെ ബിസിനസ് പേരിൽ നിന്നുള്ള നിർദ്ദേശങ്ങൾ:",
+  "Not set: SMS will end with \"{{name}}\".": "സജ്ജമാക്കിയില്ല: SMS \"{{name}}\" എന്ന് അവസാനിക്കും.",
+  "Use at most 8 characters.": "പരമാവധി 8 അക്ഷരങ്ങൾ ഉപയോഗിക്കുക.",
+  "Use letters, numbers, spaces and & . - only.": "അക്ഷരങ്ങൾ, അക്കങ്ങൾ, സ്പേസ്, & . - എന്നിവ മാത്രം ഉപയോഗിക്കുക.",
+  "Pay ₹{{amount}} with {{gateway}}": "{{gateway}} വഴി ₹{{amount}} അടയ്ക്കുക",
+  "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.": "ഓൺലൈൻ (Cashfree / PayU) പേയ്മെന്റുകൾ സ്വയം അംഗീകരിച്ച് 'അംഗീകരിച്ചവ' യിൽ കാണാം.",
+  "PayU (automatic)": "PayU (ഓട്ടോമാറ്റിക്)"
 }

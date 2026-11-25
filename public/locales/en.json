@@ -2585,5 +2585,13 @@
   "This payment was cancelled. Its receipt cannot be sent.": "This payment was cancelled. Its receipt cannot be sent.",
   "Not sent: the payment was cancelled.": "Not sent: the payment was cancelled.",
   "Same name and mobile is already added.": "Same name and mobile is already added.",
-  "This Device ID is already used by another customer.": "This Device ID is already used by another customer."
+  "This Device ID is already used by another customer.": "This Device ID is already used by another customer.",
+  "Max 8 characters. {{n}} left.": "Max 8 characters. {{n}} left.",
+  "Suggestions from your business name:": "Suggestions from your business name:",
+  "Not set: SMS will end with \"{{name}}\".": "Not set: SMS will end with \"{{name}}\".",
+  "Use at most 8 characters.": "Use at most 8 characters.",
+  "Use letters, numbers, spaces and & . - only.": "Use letters, numbers, spaces and & . - only.",
+  "Pay ₹{{amount}} with {{gateway}}": "Pay ₹{{amount}} with {{gateway}}",
+  "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.": "Online (Cashfree / PayU) payments are approved automatically and appear under Approved.",
+  "PayU (automatic)": "PayU (automatic)"
 }

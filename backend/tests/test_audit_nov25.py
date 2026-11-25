@@ -195,3 +195,28 @@ class SignupJoinedTests(TestCase):
             "owner_username": "velu", "owner_password": PASSWORD}, format="json")
         self.assertEqual(r.status_code, 201, r.content)
         self.assertEqual(SignupRequest.objects.get().status, SignupRequest.Status.JOINED)
+
+
+class SmsNameTests(TestCase):
+    def test_suggestions_and_8_character_limit(self):
+        from notifications.templates import render
+        from orgs.smsname import suggestions
+
+        self.assertEqual(suggestions("Sri Murugan Cable Network")[0], "Murugan")
+        self.assertEqual(suggestions("முருகன் கேபிள்"), ["முருகன்"])
+        self.assertTrue(all(len(s) <= 8 for s in suggestions("Balasubramaniyan Cables Pvt Ltd")))
+        org = make_org("SN1", name="Velu Cable Vision")
+        owner = make_user("sn_owner", Roles.OWNER, org=org)
+        c = client_for(owner)
+        data = c.get(f"/api/organizations/{org.id}").json()
+        self.assertEqual(data["sms_name"], "Velu")  # nothing chosen yet: best suggestion
+        self.assertIn("Velu TV", data["sms_name_suggestions"])
+        self.assertEqual(c.patch(f"/api/organizations/{org.id}", {"sms_display_name": "Velu Cable"},
+                                 format="json").status_code, 400)
+        self.assertEqual(c.patch(f"/api/organizations/{org.id}", {"sms_display_name": "Velu{1}"},
+                                 format="json").status_code, 400)
+        r = c.patch(f"/api/organizations/{org.id}", {"sms_display_name": "  Velu  TV "}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+        org.refresh_from_db()
+        self.assertEqual(org.display_name, "Velu TV")
+        self.assertTrue(render("receipt", "ta", "Ravi", "250, 25-11-2026", org.display_name).endswith("Velu TV\nPING4SMS"))

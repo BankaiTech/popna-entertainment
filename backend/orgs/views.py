@@ -1,4 +1,8 @@
+import logging
+
+from django.conf import settings
 from django.db.models import Count, Q, Sum
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from datetime import timedelta
 import uuid
@@ -6,7 +10,8 @@ import uuid
 from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
+from rest_framework.decorators import action, api_view, authentication_classes, parser_classes, permission_classes
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -21,8 +26,10 @@ from customers.models import Customer
 
 from .models import Distributor, Organization, PlatformPayment, SignupRequest
 from . import billing as platform_billing
-from . import cashfree
+from . import cashfree, payu
 from .services import delete_organization, generate_password
+
+log = logging.getLogger(__name__)
 from .serializers import (
     PlatformPaymentClaimSerializer,
     PlatformPaymentSerializer,
@@ -371,8 +378,11 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @action(detail=False, methods=["post"])
     def checkout(self, request):
+        """POST {"kind", "quantity", "gateway": "cashfree"|"payu"}. Amount is always worked out here."""
         org = require_org_member(request.user)
-        if not cashfree.enabled(org):
+        gateway = str(request.data.get("gateway") or PlatformPayment.Gateway.CASHFREE)
+        modules = {PlatformPayment.Gateway.CASHFREE: cashfree, PlatformPayment.Gateway.PAYU: payu}
+        if gateway not in modules or not modules[gateway].enabled(org):
             raise ValidationError({"detail": "Online payment is not available. Pay by UPI QR."})
         form = PlatformPaymentClaimSerializer(data={"kind": request.data.get("kind"),
                                                     "quantity": request.data.get("quantity")})
@@ -382,18 +392,31 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         order_id = f"lcod_{org.id}_{uuid.uuid4().hex[:12]}"
         payment = PlatformPayment.objects.create(
             organization=org, kind=kind, quantity=quantity, rate=rate, amount=amount,
-            status=PlatformPayment.Status.CREATED, gateway=PlatformPayment.Gateway.CASHFREE,
+            status=PlatformPayment.Status.CREATED, gateway=gateway,
             gateway_order_id=order_id, created_by=request.user,
         )
         note = (f"Sms payment org_{org.id}" if kind == PlatformPayment.Kind.SMS else f"Renewal Payment org_{org.id}")
+        if gateway == PlatformPayment.Gateway.PAYU:
+            product = (f"LCO Desk SMS {quantity}" if kind == PlatformPayment.Kind.SMS
+                       else f"LCO Desk renewal {quantity} months")
+            try:
+                form_data = payu.checkout_form(order_id=order_id, amount=amount, org=org, user=request.user,
+                                               product=product)
+            except payu.PayUError as exc:
+                payment.delete()
+                raise ValidationError({"detail": f"Could not start online payment. {exc}"})
+            audit(request.user, "platform_payment_checkout", payment, kind=kind, amount=str(amount), gateway="payu")
+            return Response({"gateway": "payu", "order_id": order_id, "amount": str(amount), **form_data},
+                            status=status.HTTP_201_CREATED)
         try:
             order = cashfree.create_order(order_id=order_id, amount=amount, org=org, user=request.user, note=note)
         except cashfree.CashfreeError as exc:
             payment.delete()  # never reached Cashfree: nothing to keep
             raise ValidationError({"detail": f"Could not start online payment. {exc}"})
         audit(request.user, "platform_payment_checkout", payment, kind=kind, amount=str(amount))
-        return Response({"order_id": order_id, "payment_session_id": order["payment_session_id"],
-                         "amount": str(amount)}, status=status.HTTP_201_CREATED)
+        return Response({"gateway": "cashfree", "order_id": order_id,
+                         "payment_session_id": order["payment_session_id"], "amount": str(amount)},
+                        status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"])
     def verify(self, request):
@@ -403,8 +426,8 @@ class PlatformPaymentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         if not payment:
             raise ValidationError({"order_id": "Payment not found."})
         try:
-            payment = cashfree.confirm(payment)
-        except cashfree.CashfreeError as exc:
+            payment = confirm_online(payment)
+        except (cashfree.CashfreeError, payu.PayUError) as exc:
             raise ValidationError({"detail": f"Could not check the payment now. {exc}"})
         return Response(PlatformPaymentSerializer(payment).data)
 
@@ -432,4 +455,62 @@ def cashfree_webhook(request):
             cashfree.confirm(payment)
         except cashfree.CashfreeError:
             return Response({"detail": "retry"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)  # Cashfree retries
+    return Response({"ok": True})
+
+
+def confirm_online(payment):
+    """Ask the gateway this payment went through (never the browser)."""
+    if payment.gateway == PlatformPayment.Gateway.PAYU:
+        return payu.confirm(payment)
+    if payment.gateway == PlatformPayment.Gateway.CASHFREE:
+        return cashfree.confirm(payment)
+    return payment
+
+
+def _payu_payment(posted):
+    """The CREATED PayU payment this form is about, only if PayU really signed it."""
+    order_id = str(posted.get("txnid", ""))[:45]
+    if not payu.ORDER_ID.match(order_id) or not payu.response_hash_ok(posted):
+        if order_id:
+            log.warning("PayU: bad hash or order id for %s", order_id)
+        return None, order_id
+    payment = PlatformPayment.objects.filter(gateway=PlatformPayment.Gateway.PAYU, gateway_order_id=order_id).first()
+    return payment, order_id
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+@parser_classes([FormParser, MultiPartParser])
+def payu_return(request):
+    """
+    POST /api/payments/payu/return - PayU sends the operator's browser here (surl / furl) with the result.
+    We check the signature, ask PayU ourselves, then send the browser back to Settings > Plan & SMS,
+    where the app shows the result. Only our own fixed page, never a URL from the request.
+    """
+    payment, order_id = _payu_payment(request.data)
+    if payment is not None:
+        try:
+            confirm_online(payment)
+        except payu.PayUError:
+            pass  # the Plan page checks again with /verify
+    back = settings.PAYU_APP_RETURN_URL
+    if payu.ORDER_ID.match(order_id or ""):
+        back += ("&" if "?" in back else "?") + f"order_id={order_id}"
+    return HttpResponseRedirect(back, status=303)
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+@parser_classes([FormParser, MultiPartParser, JSONParser])
+def payu_webhook(request):
+    """POST /api/payments/payu/webhook - PayU's server calls this. Signature checked, then PayU asked again."""
+    payment, _ = _payu_payment(request.data)
+    if payment is None:
+        return Response({"detail": "ignored"}, status=status.HTTP_200_OK)  # never tell callers why
+    try:
+        confirm_online(payment)
+    except payu.PayUError:
+        return Response({"detail": "retry"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     return Response({"ok": True})
