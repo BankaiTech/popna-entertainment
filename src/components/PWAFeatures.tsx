@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useLocation } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import { Download, WifiOff, RefreshCw, X } from 'lucide-react';
 
@@ -13,6 +14,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAFeatures() {
   const { t } = useTranslation();
+  // Not on the login page: on a phone the banner sits over the Login button. It shows after login.
+  const onLogin = useLocation().pathname === '/login';
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -135,7 +138,7 @@ export function PWAFeatures() {
       )}
 
       {/* Install app banner - mobile only, hidden when update banner is showing */}
-      {showInstallBanner && !isInstalled && isMobileView && !needRefresh && (
+      {showInstallBanner && !isInstalled && isMobileView && !needRefresh && !onLogin && (
         <div className="fixed bottom-20 left-4 right-4 z-[45] flex flex-col gap-3 bg-card border border-border shadow-lg rounded-lg p-3 safe-area-inset-bottom max-w-[calc(100vw-2rem)]">
           <div className="flex items-start gap-2">
             <p className="text-sm text-foreground flex-1">

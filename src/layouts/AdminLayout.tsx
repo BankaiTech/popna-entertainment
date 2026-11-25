@@ -8,7 +8,7 @@ import {
   UserCog, Settings, LogOut, Menu, Contact2,
   GitBranch, Store, ChevronDown, ChevronLeft,
   Calendar, Wrench, UserPlus, BarChart3, Activity, MapPin, Map as MapIcon, Wallet, ScissorsLineDashed,
-  MessageSquare,
+  MessageSquare, MessageSquareWarning,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useOrganizationStore } from '@/store/useOrganizationStore';
@@ -85,6 +85,7 @@ const AdminLayout = () => {
       labelKey: 'nav.groupBusiness',
       items: [
         { path: '/admin/contacts', labelKey: 'nav.customers', icon: Contact2, moduleKey: 'contacts', color: 'text-violet-500' },
+        { path: '/admin/complaints', labelKey: 'nav.complaints', icon: MessageSquareWarning, moduleKey: 'complaints', color: 'text-amber-500' },
         { path: '/admin/inventory-products', labelKey: 'nav.stock', icon: Package, moduleKey: 'inventory-products', color: 'text-emerald-500' },
         { path: '/admin/sales', labelKey: 'nav.sales', icon: FileText, moduleKey: 'invoices', color: 'text-orange-500' },
         { path: '/admin/purchase', labelKey: 'nav.purchase', icon: ShoppingCart, moduleKey: 'purchase-invoices', color: 'text-pink-500' },

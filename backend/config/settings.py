@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     "notifications",
     "tracking",
     "inventory",
+    "complaints",
+    "portal",
 ]
 
 MIDDLEWARE = [
@@ -152,7 +154,8 @@ REST_FRAMEWORK = {
     ],
     # The existing React frontend expects plain JSON arrays, so pagination is off for now.
     "DEFAULT_PAGINATION_CLASS": None,
-    "DEFAULT_THROTTLE_RATES": {"login": "10/min", "ping": "60/min", "signup": env("SIGNUP_RATE", "5/hour")},
+    "DEFAULT_THROTTLE_RATES": {"login": "10/min", "ping": "60/min", "signup": env("SIGNUP_RATE", "5/hour"),
+                               "customer_login": "10/min", "customer_login_mobile": "20/hour"},
     # Caddy sits in front of Django and adds the real client IP as the last X-Forwarded-For entry.
     "NUM_PROXIES": int(env("DRF_NUM_PROXIES", "1")),
 }
@@ -164,6 +167,9 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
 }
+
+# Customer app (mobile + box number) stays logged in for this many days, then asks again.
+CUSTOMER_REFRESH_DAYS = int(env("CUSTOMER_REFRESH_DAYS", "30"))
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 

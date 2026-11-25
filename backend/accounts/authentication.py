@@ -7,13 +7,24 @@ works in the app.
 """
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 SERVER_ADMIN_MESSAGE = "This is a server admin account. Use your LCO Desk login for the app."
 
 
+CUSTOMER_TOKEN_MESSAGE = "Please log in again."
+
+
+def _is_customer_token(token):
+    """Customer-app tokens (portal app) carry scope=customer and no user id. Never valid for staff."""
+    return token.get("scope") is not None or token.get("customer_id") is not None
+
+
 class AppJWTAuthentication(JWTAuthentication):
     def get_user(self, validated_token):
+        if _is_customer_token(validated_token):
+            raise AuthenticationFailed(CUSTOMER_TOKEN_MESSAGE, code="token_not_valid")
         user = super().get_user(validated_token)
         if user.is_staff or user.is_superuser:
             raise AuthenticationFailed(SERVER_ADMIN_MESSAGE, code="server_admin")
@@ -26,3 +37,16 @@ class AppLoginSerializer(TokenObtainPairSerializer):
         if self.user.is_staff or self.user.is_superuser:
             raise AuthenticationFailed(SERVER_ADMIN_MESSAGE, code="server_admin")
         return data
+
+
+class StaffRefreshSerializer(TokenRefreshSerializer):
+    """Staff token refresh. A customer refresh token is refused here (it has its own refresh endpoint)."""
+
+    def validate(self, attrs):
+        try:
+            token = RefreshToken(attrs["refresh"])
+        except Exception:
+            token = None  # let the parent give its normal error
+        if token is not None and (_is_customer_token(token) or not token.get("user_id")):
+            raise AuthenticationFailed(CUSTOMER_TOKEN_MESSAGE, code="token_not_valid")
+        return super().validate(attrs)

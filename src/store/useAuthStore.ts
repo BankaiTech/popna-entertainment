@@ -2,7 +2,7 @@
 import { setLanguage } from '@/i18n';
 import { create } from 'zustand';
 import { authApi } from '@/api/auth';
-import { loginCustomer } from '@/api/customerAuth';
+import { customerPortalApi } from '@/api/customerPortal';
 import { usersApi } from '@/api/users';
 import { superadminUsersApi } from '@/api/superadminUsers';
 import { env } from '@/lib/env';
@@ -24,7 +24,8 @@ interface AuthState {
   superAdminRole: SuperAdminRole | null;
   saPermissions: SAPermissionKey[] | null;
   login: (username: string, password: string) => Promise<boolean>;
-  customerLogin: (mobile: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  /** Customer app: mobile + box / STB number. */
+  customerLogin: (mobile: string, boxNumber: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   initialize: () => void;
   hasSAPermission: (key: SAPermissionKey) => boolean;
@@ -36,8 +37,8 @@ const loadAuthFromStorage = () => {
     const customerId = localStorage.getItem('customer_id');
     const customerMobile = localStorage.getItem('customer_mobile');
 
-    // The customer portal is demo-only; never restore an old demo customer session on the real server.
-    if (env.USE_MOCK_API && customerAuth === 'true' && customerId && customerMobile) {
+    // Old demo-only customer session keys (before the real customer app). Mock mode only.
+    if (env.USE_MOCK_API && customerAuth === 'true' && customerId && customerMobile && !localStorage.getItem('auth-storage')) {
       return {
         isAuthenticated: true,
         role: 'customer' as UserRole,
@@ -199,18 +200,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return true;
   },
 
-  customerLogin: async (mobile: string, password: string) => {
-    const result = await loginCustomer(mobile, password);
-
-    if (result.success && result.customerId && result.customerMobile) {
+  customerLogin: async (mobile: string, boxNumber: string) => {
+    try {
+      // Drop any old staff session first so its token is never sent with the customer one.
+      localStorage.removeItem('auth-storage');
+      localStorage.removeItem('current_org_id');
+      const res = await customerPortalApi.login(mobile, boxNumber);
+      const lang = res.customer.operator.appLanguage;
+      if (lang && !localStorage.getItem('language')) setLanguage(lang); // keep a language they picked
       const newState = {
         isAuthenticated: true,
         role: 'customer' as UserRole,
-        username: result.customerMobile,
-        token: null,
-        refreshToken: null,
-        customerId: result.customerId,
-        customerMobile: result.customerMobile,
+        username: res.customer.name,
+        token: res.access,
+        refreshToken: res.refresh,
+        customerId: res.customer.id,
+        customerMobile: res.customer.mobile,
         organizationId: null,
         allowedModules: null,
         superAdminRole: null,
@@ -219,16 +224,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set(newState);
       saveAuthToStorage(newState);
       return { success: true };
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      return { success: false, message: status === 429 ? 'too_many' : (err as Error)?.message };
     }
-
-    return {
-      success: false,
-      message: result.message || 'Invalid mobile number or password',
-    };
   },
 
   logout: () => {
-    if (!env.USE_MOCK_API) {
+    if (get().role === 'customer') {
+      customerPortalApi.logout(get().refreshToken).catch(() => {});
+    } else if (!env.USE_MOCK_API) {
       authApi.logout(get().refreshToken).catch(() => {});
       localStorage.removeItem('current_org_id');
     }

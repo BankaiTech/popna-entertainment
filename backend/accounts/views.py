@@ -14,7 +14,7 @@ from core.permissions import ReadWriteRoles, Roles
 
 from core.validators import APP_LANGUAGES
 
-from .authentication import AppLoginSerializer
+from .authentication import AppLoginSerializer, StaffRefreshSerializer
 from .models import User
 from .serializers import MeSerializer, UserSerializer
 
@@ -27,6 +27,7 @@ class LoginView(TokenObtainPairView):
 
 
 class RefreshView(TokenRefreshView):
+    serializer_class = StaffRefreshSerializer
     permission_classes = [AllowAny]
 
 

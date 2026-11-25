@@ -43,6 +43,8 @@ import SuperAdminUsers from './pages/superadmin/Users';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/customer/Dashboard';
 import CustomerHistory from './pages/customer/History';
+import CustomerComplaints from './pages/customer/Complaints';
+import CustomerLayout from './layouts/CustomerLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { PWAFeatures } from './components/PWAFeatures';
@@ -84,27 +86,21 @@ function App() {
         {/* Single Login - admin/employee/customer determined by credentials */}
         <Route path="/login" element={<Login />} />
 
-        {/* Customer Routes - Protected */}
-        <Route
-          path="/customer/dashboard"
-          element={
-            <ProtectedRoute customerOnly>
-              {isMockMode() ? <CustomerDashboard /> : <Navigate to="/login" replace />}
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/customer/history"
-          element={
-            <ProtectedRoute customerOnly>
-              {isMockMode() ? <CustomerHistory /> : <Navigate to="/login" replace />}
-            </ProtectedRoute>
-          }
-        />
+        {/* Customer app (mobile + box number login) */}
         <Route
           path="/customer"
-          element={<Navigate to="/customer/dashboard" replace />}
-        />
+          element={
+            <ProtectedRoute customerOnly>
+              <CustomerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/customer/dashboard" replace />} />
+          <Route path="dashboard" element={<CustomerDashboard />} />
+          <Route path="history" element={<CustomerHistory />} />
+          <Route path="complaints" element={<CustomerComplaints />} />
+          <Route path="*" element={<Navigate to="/customer/dashboard" replace />} />
+        </Route>
 
         {/* Super Admin Routes - SaaS Master Controller */}
         <Route
@@ -247,7 +243,7 @@ function App() {
             path="complaints"
             element={
               <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                {isMockMode() ? <AdminComplaints /> : <Navigate to="/admin/dashboard" replace />}
+                <AdminComplaints />
               </ProtectedRoute>
             }
           />

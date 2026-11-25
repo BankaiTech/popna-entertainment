@@ -21,7 +21,10 @@ export const apiClient = axios.create({
   },
 });
 
-type StoredAuth = { state?: { token?: string; refreshToken?: string }; token?: string; refreshToken?: string };
+type StoredAuth = {
+  state?: { token?: string; refreshToken?: string; role?: string };
+  token?: string; refreshToken?: string; role?: string;
+};
 
 function readAuth(): StoredAuth | null {
   try {
@@ -100,7 +103,11 @@ async function refreshAccessToken(): Promise<string | null> {
   const refresh = getRefreshToken();
   if (!refresh) return null;
   try {
-    const res = await axios.post(`${env.API_BASE_URL}/auth/refresh`, { refresh }, { timeout: 15_000 });
+    // Customers have their own refresh endpoint; the staff one refuses customer tokens (and vice versa).
+    const a = readAuth();
+    const isCustomer = (a?.state?.role ?? a?.role) === 'customer';
+    const url = `${env.API_BASE_URL}/${isCustomer ? 'customer/auth' : 'auth'}/refresh`;
+    const res = await axios.post(url, { refresh }, { timeout: 15_000 });
     const access = res.data?.access as string | undefined;
     if (!access) return null;
     saveTokens(access, res.data?.refresh);

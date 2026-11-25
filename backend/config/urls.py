@@ -4,6 +4,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import LoginView, RefreshView, UserViewSet, logout_view, me_view
+from complaints.views import ComplaintViewSet
+from portal import views as portal
 from billing.views import BillViewSet, PaymentViewSet
 from core.views import dashboard_stats, health
 from customers.views import AreaViewSet, CustomerViewSet, PlanViewSet, ProviderViewSet, cutoff_list
@@ -34,6 +36,7 @@ router.register("stock-items", StockItemViewSet, basename="stock-item")
 router.register("stock-units", StockUnitViewSet, basename="stock-unit")
 router.register("purchases", PurchaseViewSet, basename="purchase")
 router.register("sales", SaleViewSet, basename="sale")
+router.register("complaints", ComplaintViewSet, basename="complaint")
 
 api = [
     path("health", health),
@@ -46,6 +49,14 @@ api = [
     path("distributor/summary", distributor_summary),
     path("my-plan", my_plan),
     path("payments/cashfree/webhook", cashfree_webhook),
+    # Customer app (separate customer token; staff tokens are refused there and vice versa)
+    path("customer/auth/login", portal.login),
+    path("customer/auth/refresh", portal.refresh),
+    path("customer/auth/logout", portal.logout),
+    path("customer/me", portal.me),
+    path("customer/bills", portal.bills),
+    path("customer/complaints", portal.complaints),
+    path("customer/complaints/<int:pk>/cancel", portal.cancel_complaint),
     path("tracking/status", tracking.duty_status),
     path("tracking/check-in", tracking.check_in),
     path("tracking/check-out", tracking.check_out),
