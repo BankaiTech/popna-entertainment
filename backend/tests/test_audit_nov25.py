@@ -198,13 +198,13 @@ class SignupJoinedTests(TestCase):
 
 
 class SmsNameTests(TestCase):
-    def test_suggestions_and_11_character_limit(self):
+    def test_suggestions_and_12_character_limit(self):
         from notifications.templates import render
         from orgs.smsname import suggestions
 
         self.assertEqual(suggestions("Sri Murugan Cable Network")[0], "Murugan")
         self.assertEqual(suggestions("முருகன் கேபிள்")[0], "முருகன்")
-        self.assertTrue(all(len(s) <= 11 for s in suggestions("Balasubramaniyan Cables Pvt Ltd")))
+        self.assertTrue(all(len(s) <= 12 for s in suggestions("Balasubramaniyan Cables Pvt Ltd")))
         org = make_org("SN1", name="Velu Cable Vision")
         owner = make_user("sn_owner", Roles.OWNER, org=org)
         c = client_for(owner)

@@ -54,7 +54,7 @@ class OrgComputedMixin(serializers.Serializer):
     plans_used = serializers.SerializerMethodField()
     # Internet customers' SMS switched off platform-wide for now: the settings page hides those options.
     internet_sms_available = serializers.SerializerMethodField()
-    # Short names (max 11 characters) for the end of customer SMS, made from the business name.
+    # Short names (max 12 characters) for the end of customer SMS, made from the business name.
     sms_name_suggestions = serializers.SerializerMethodField()
     sms_name = serializers.SerializerMethodField()
 
@@ -68,7 +68,7 @@ class OrgComputedMixin(serializers.Serializer):
         value = smsname.clean(value)
         if value and not smsname.is_valid(value):
             if len(value) > smsname.MAX_SMS_NAME:
-                raise serializers.ValidationError("Use at most 11 characters.")
+                raise serializers.ValidationError("Use at most 12 characters.")
             raise serializers.ValidationError("Use letters, numbers, spaces and & . - only.")
         return value
 

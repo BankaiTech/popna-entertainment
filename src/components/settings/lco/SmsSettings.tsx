@@ -5,7 +5,7 @@ import { Field, inputClass, SaveBar, Section, useOperatorSettings } from './Sett
 
 const FIELDS: (keyof OperatorSettings)[] = ['smsDisplayName'];
 /** Name at the end of each SMS: short, so the SMS stays one part and reads like a signature. */
-const SMS_NAME_MAX = 11; // same as MAX_SMS_NAME in backend/orgs/smsname.py
+const SMS_NAME_MAX = 12; // same as MAX_SMS_NAME in backend/orgs/smsname.py
 
 // Preview only. Must match the DLT-approved templates in backend/notifications/templates.py
 // (see backend/docs/DLT_SMS_TEMPLATES.md).

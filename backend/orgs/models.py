@@ -76,8 +76,8 @@ class Organization(TimeStampedModel):
     extra_alert_mobiles = models.CharField(
         max_length=200, blank=True, help_text="Comma-separated mobiles that also get owner alerts"
     )
-    sms_display_name = models.CharField(max_length=11, blank=True,
-                                        help_text="Name at the end of every customer SMS, max 11 characters")
+    sms_display_name = models.CharField(max_length=12, blank=True,
+                                        help_text="Name at the end of every customer SMS, max 12 characters")
     # App language for this operator's staff (each user can still have their own). Empty = English.
     app_language = models.CharField(max_length=5, blank=True, choices=APP_LANGUAGES)
     sms_language = models.CharField(max_length=2, default="en", choices=[("en", "English"), ("ta", "Tamil")],
@@ -152,7 +152,7 @@ class Organization(TimeStampedModel):
 
     @property
     def display_name(self):
-        """Name signed at the end of customer SMS (max 11 characters)."""
+        """Name signed at the end of customer SMS (max 12 characters)."""
         from .smsname import sms_name
 
         return sms_name(self)

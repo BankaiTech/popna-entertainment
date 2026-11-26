@@ -1,10 +1,10 @@
 """
 The operator's name at the end of every customer SMS ("... செலுத்தவும். Velu TV").
-Kept to 11 characters so the SMS stays short (fewer SMS parts = lower cost) and reads like a signature.
+Kept to 12 characters so the SMS stays short (fewer SMS parts = lower cost) and reads like a signature.
 """
 import re
 
-MAX_SMS_NAME = 11
+MAX_SMS_NAME = 12
 
 # Words that say what the business is, not who it is: dropped when we shorten a name.
 GENERIC = {
