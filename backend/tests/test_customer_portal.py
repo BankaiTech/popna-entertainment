@@ -18,6 +18,9 @@ from orgs.models import DEFAULT_MODULES
 from .helpers import client_for, first_of_this_month, make_customer, make_org, make_plans, make_user
 
 
+GPS = {"latitude": 12.69, "longitude": 79.98, "accuracy": 12}
+
+
 def anon():
     return APIClient(SERVER_NAME="localhost")
 
@@ -183,7 +186,8 @@ class CustomerDataTests(PortalBase):
         mine = c.get("/api/customer/complaints").json()[0]
         self.assertEqual((mine["status"], mine["technician"]), ("assigned", "Cp_Tech"))
         # Technician fixes it
-        r = client_for(self.tech).post(f"/api/complaints/{cid}/resolve", {"note": "Cable joint fixed"}, format="json")
+        r = client_for(self.tech).post(f"/api/complaints/{cid}/resolve", {"note": "Cable joint fixed", **GPS},
+                                       format="json")
         self.assertEqual(r.status_code, 200, r.content)
         mine = c.get("/api/customer/complaints").json()[0]
         self.assertEqual((mine["status"], mine["resolution_note"]), ("resolved", "Cable joint fixed"))
@@ -250,7 +254,7 @@ class StaffComplaintTests(PortalBase):
         self.assertEqual(t.post(f"/api/complaints/{a['id']}/assign", {"user_id": self.tech2.id},
                                 format="json").status_code, 403)
         self.assertEqual(t.post(f"/api/complaints/{a['id']}/resolve", {"note": ""}, format="json").status_code, 400)
-        self.assertEqual(t.post(f"/api/complaints/{a['id']}/resolve", {"note": "Replaced adapter"},
+        self.assertEqual(t.post(f"/api/complaints/{a['id']}/resolve", {"note": "Replaced adapter", **GPS},
                                 format="json").status_code, 200)
 
     def test_tenant_isolation(self):

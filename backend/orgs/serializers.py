@@ -131,6 +131,11 @@ class OrganizationSerializer(OrgComputedMixin, serializers.ModelSerializer):
     def get_owner_login(self, obj):
         from accounts.models import User
 
+        # Only the app owner / distributor need it (password reset screen). Operator staff never see it.
+        request = self.context.get("request")
+        if not request or getattr(request.user, "role", None) not in (Roles.PLATFORM_ADMIN, Roles.DISTRIBUTOR):
+            return None
+
         return User.objects.filter(organization=obj, role=Roles.OWNER).order_by("id").values_list(
             "username", flat=True).first()
 

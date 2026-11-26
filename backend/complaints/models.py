@@ -7,6 +7,9 @@ class Complaint(OrgOwnedModel):
     """
     A customer's problem (no signal, slow internet...). Raised by the customer in the app or by the office.
     Flow: open -> assigned (to a technician / agent) -> resolved. The office can reopen or cancel.
+    Unassigned open complaints are seen by every field staff member (any of them can take it);
+    an assigned one only by the person it is assigned to. Office staff see everything.
+    Closing in the field records where it was closed (shown on a map), like a collection.
     """
 
     class Category(models.TextChoices):
@@ -41,6 +44,10 @@ class Complaint(OrgOwnedModel):
     resolved_by = models.ForeignKey("accounts.User", null=True, blank=True, on_delete=models.SET_NULL,
                                     related_name="+")
     resolution_note = models.CharField(max_length=300, blank=True)
+    # Where the complaint was closed (field staff: required; office: if the phone gave it).
+    resolved_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    resolved_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    resolved_accuracy_m = models.FloatField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -66,6 +73,8 @@ class ComplaintUpdate(TimeStampedModel):
     class Action(models.TextChoices):
         RAISED = "raised", "Raised"
         ASSIGNED = "assigned", "Assigned"
+        UNASSIGNED = "unassigned", "Unassigned"
+        TAKEN = "taken", "Taken"
         RESOLVED = "resolved", "Resolved"
         REOPENED = "reopened", "Reopened"
         CANCELLED = "cancelled", "Cancelled"

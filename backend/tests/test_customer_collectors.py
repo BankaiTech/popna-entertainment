@@ -17,6 +17,8 @@ class CustomerCollectorTests(TestCase):
         self.pugazh = make_user("pugazh", Roles.AGENT, org=self.org)
         self.ramach = make_user("ramach", Roles.AGENT, org=self.org)
         self.tech = make_user("col_tech", Roles.TECHNICIAN, org=self.org)
+        self.tech.allowed_modules = ["dashboard", "complaints", "contacts"]  # given the Customers page
+        self.tech.save()
         self.cable, _ = make_plans(self.org)
         self.c_pugazh = make_customer(self.org, self.cable, name="P only", mobile="9000000001", stb_number="A1")
         self.c_pugazh.collectors.set([self.pugazh])

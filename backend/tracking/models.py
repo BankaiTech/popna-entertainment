@@ -31,6 +31,7 @@ class LocationPing(OrgOwnedModel):
         CHECK_IN = "check_in", "Check-in"
         CHECK_OUT = "check_out", "Check-out"
         PAYMENT = "payment", "Payment collected"
+        COMPLAINT = "complaint", "Complaint closed"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="location_pings")
     session = models.ForeignKey(DutySession, on_delete=models.CASCADE, related_name="pings")

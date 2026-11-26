@@ -11,7 +11,7 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.decorators import action, api_view, authentication_classes, parser_classes, permission_classes
-from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -19,6 +19,7 @@ from rest_framework.response import Response
 
 from billing.models import Bill, Payment
 from billing.services import month_start
+from core.parsers import ObjectJSONParser
 from core.audit import audit
 from core.mixins import require_org_member
 from core.permissions import ReadWriteRoles, Roles, role_in
@@ -506,7 +507,7 @@ def payu_return(request):
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([AllowAny])
-@parser_classes([FormParser, MultiPartParser, JSONParser])
+@parser_classes([FormParser, MultiPartParser, ObjectJSONParser])
 def payu_webhook(request):
     """POST /api/payments/payu/webhook - PayU's server calls this. Signature checked, then PayU asked again."""
     payment, _ = _payu_payment(request.data)

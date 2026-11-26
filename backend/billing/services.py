@@ -224,6 +224,9 @@ def _next_receipt_no(org):
     return f"{org.code}-{counter.last_number + 1:06d}"
 
 
+DUPLICATE_PAYMENT_WINDOW = timedelta(seconds=90)
+
+
 @transaction.atomic
 def record_payment(*, user, customer, amount, method, bill=None, latitude=None, longitude=None,
                    accuracy=None, note="", discount=0):
@@ -266,6 +269,12 @@ def record_payment(*, user, customer, amount, method, bill=None, latitude=None, 
         raise ValidationError({"amount": "Enter an amount to collect."})
     if amount + discount > bill.balance:
         raise ValidationError({"amount": f"Amount is more than the balance (Rs.{bill.balance})."})
+    # Double tap / retry on a slow network: the same person saving the same amount on the same bill
+    # moments apart is the same payment. The bill row is locked above, so the second request sees the first.
+    if amount > 0 and Payment.objects.filter(
+            bill=bill, collected_by=user, amount=amount, status=Payment.Status.VALID,
+            collected_at__gte=timezone.now() - DUPLICATE_PAYMENT_WINDOW).exists():
+        raise ValidationError({"amount": "This payment was just saved. Check Receipts before collecting again."})
 
     payment = Payment.objects.create(
         organization=org,

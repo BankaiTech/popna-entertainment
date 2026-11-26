@@ -107,6 +107,17 @@ class CustomerViewSet(OrgScopedViewSet):
     search_fields = ["name", "mobile", "customer_code", "box_number", "stb_number", "can_caf_id"]
     ordering_fields = ["name", "created_at"]
 
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # Customer names, mobiles and addresses: only field staff whose work needs them
+        # (the Customers page, or Collect to find who is paying). A technician gets customer
+        # details through the complaint given to them, not the whole list.
+        from core.modules import has_module
+
+        user = request.user
+        if user.role in Roles.FIELD and not (has_module(user, "contacts") or has_module(user, "collect")):
+            raise PermissionDenied("You do not have the Customers page. Ask your owner.")
+
     def get_queryset(self):
         # Latest bill per customer = its current bill (cable: this month; internet: current renewal).
         since = timezone.localdate() - timedelta(days=70)

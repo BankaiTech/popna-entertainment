@@ -10,6 +10,18 @@ import { todayInIndia } from '@/lib/subscription';
 import { showError } from '@/utils/toast';
 import { tr } from '@/lib/lt';
 
+/** Map labels as plain text (never HTML): staff and customer names are typed by users. */
+function textNode(lines: string | string[], boldFirst = false): HTMLElement {
+  const box = document.createElement('div');
+  (Array.isArray(lines) ? lines : [lines]).forEach((line, i) => {
+    const el = document.createElement(i === 0 && boldFirst ? 'b' : 'div');
+    el.textContent = line;
+    if (el.tagName === 'B') el.style.display = 'block';
+    box.appendChild(el);
+  });
+  return box;
+}
+
 const DEFAULT_CENTER: L.LatLngTuple = [12.6921, 79.9762]; // Chengalpattu
 const STALE_MINUTES = 15;
 const REFRESH_SECONDS = 60;
@@ -78,7 +90,7 @@ const LiveMap = () => {
       L.circleMarker(p, {
         radius: 10, weight: 3, color: '#fff', fillOpacity: 1, fillColor: stale ? '#9ca3af' : '#16a34a',
       })
-        .bindTooltip(`${a.name} · ${ago(a.minutesSinceLastSeen)}`, { permanent: true, direction: 'top', offset: [0, -10] })
+        .bindTooltip(textNode(`${a.name} · ${ago(a.minutesSinceLastSeen)}`), { permanent: true, direction: 'top', offset: [0, -10] })
         .addTo(layer);
     });
     if (points.length && !fitted.current && !route) {
@@ -96,12 +108,12 @@ const LiveMap = () => {
     const line: L.LatLngTuple[] = route.points.map((p) => [p.lat, p.lng]);
     if (line.length) {
       L.polyline(line, { color: '#2563eb', weight: 4, opacity: 0.8 }).addTo(layer);
-      L.circleMarker(line[0], { radius: 6, color: '#2563eb', fillOpacity: 1 }).bindTooltip(`Start ${hhmm(route.points[0].at)}`).addTo(layer);
+      L.circleMarker(line[0], { radius: 6, color: '#2563eb', fillOpacity: 1 }).bindTooltip(textNode(`${tr('Start')} ${hhmm(route.points[0].at)}`)).addTo(layer);
     }
     route.collections.forEach((c) => {
       if (c.lat == null || c.lng == null) return;
       L.circleMarker([c.lat, c.lng], { radius: 8, color: '#fff', weight: 2, fillOpacity: 1, fillColor: c.status === 'cancelled' ? '#9ca3af' : '#f59e0b' })
-        .bindPopup(`<b>${c.customer}</b><br/>₹${Number(c.amount)} · ${c.method.toUpperCase()}<br/>${hhmm(c.at)} · ${c.receiptNo}`)
+        .bindPopup(textNode([c.customer, `₹${Number(c.amount)} · ${String(c.method).toUpperCase()}`, `${hhmm(c.at)} · ${c.receiptNo}`], true))
         .addTo(layer);
       line.push([c.lat, c.lng]);
     });

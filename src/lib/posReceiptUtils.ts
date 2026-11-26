@@ -1,5 +1,6 @@
 // POS Receipt & Invoice generation - thermal (80mm) and A4 tax invoice
 import type { CompanyProfile } from '@/models/types';
+import { escapeDeep } from '@/lib/escapeHtml';
 import type { CartItem } from '@/store/usePOSStore';
 import { formatCurrencyINR } from './utils';
 
@@ -100,7 +101,10 @@ const formatDateTime = (d: Date) => {
 };
 
 // ── Thermal Receipt (80mm) ──
-export function generatePOSReceipt(data: POSReceiptData, companyProfile: CompanyProfile | null): void {
+export function generatePOSReceipt(rawData: POSReceiptData, rawCompany: CompanyProfile | null): void {
+  // Pasted into HTML: escape product / customer / shop names first.
+  const data = escapeDeep(rawData);
+  const companyProfile = escapeDeep(rawCompany);
   const companyName = companyProfile?.companyName || 'Store';
   const addr = [companyProfile?.addressLine1, companyProfile?.city, companyProfile?.state].filter(Boolean).join(', ');
   const gstin = companyProfile?.gstin;
@@ -172,7 +176,10 @@ export function generatePOSReceipt(data: POSReceiptData, companyProfile: Company
 }
 
 // ── A4 Tax Invoice ──
-export function generatePOSInvoice(data: POSReceiptData, companyProfile: CompanyProfile | null): void {
+export function generatePOSInvoice(rawData: POSReceiptData, rawCompany: CompanyProfile | null): void {
+  // Pasted into HTML: escape product / customer / shop names first.
+  const data = escapeDeep(rawData);
+  const companyProfile = escapeDeep(rawCompany);
   const companyName = companyProfile?.companyName || 'Company Name';
   const companyLines: string[] = [];
   const addr = [companyProfile?.addressLine1, companyProfile?.addressLine2].filter(Boolean).join(', ');

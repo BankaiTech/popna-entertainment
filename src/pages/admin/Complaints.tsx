@@ -1,46 +1,61 @@
-// Complaints: customers raise them from the customer app (or the office raises them on a call).
-// Owner / manager assign a technician; the technician fixes it and writes what was done.
+// Complaints. Customers raise them in the customer app, or the office adds them on a phone call.
+// Office (owner / manager): sees all, assigns to one staff member or leaves it open for everyone.
+// Field staff: see complaints nobody has taken plus their own; "I will go" takes one; marking fixed saves GPS.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Plus, Search, Phone, MapPin, Tv, Wrench, CheckCircle2, RotateCcw, XCircle, Smartphone, ChevronDown, ChevronUp,
+  CheckCircle2, Hand, List, Map as MapIcon, MapPin, Plus, RefreshCw, Search, Smartphone, Users, Wrench, Inbox,
 } from 'lucide-react';
 import { useLt } from '@/lib/lt';
 import { useAuthStore } from '@/store/useAuthStore';
-import { ticketsApi, type Ticket } from '@/api/complaintTickets';
-import { customersApi } from '@/api/api';
+import {
+  ticketsApi, ticketInTab, isOpenTicket,
+  type FieldSummary, type OfficeSummary, type Ticket, type TicketTab,
+} from '@/api/complaintTickets';
 import { usersApi } from '@/api/users';
 import { isMockMode } from '@/lib/apiHelpers';
-import type { ComplaintCategory } from '@/api/customerPortal';
-import type { Customer, User } from '@/models/types';
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '@/components/ui/Dialog';
-import Button from '@/components/ui/Button';
+import type { User } from '@/models/types';
+import { categoryLabel } from '@/pages/customer/portalShared';
 import { showError, showSuccess } from '@/utils/toast';
 import {
-  CATEGORIES, categoryLabel, complaintStatusClass, fmtDate,
-} from '@/pages/customer/portalShared';
+  AssignSheet, DetailsSheet, NewComplaintSheet, NoteSheet, ResolveSheet, staffStatusClass, staffStatusLabel, timeAgo,
+} from '@/components/complaints/ComplaintSheets';
+import { PointsMap, type MapPoint } from '@/components/complaints/ComplaintMap';
 
-type Filter = 'open' | 'resolved' | 'cancelled' | 'all';
-type NoteAction = { kind: 'resolve' | 'cancel' | 'reopen'; ticket: Ticket };
+type Open =
+  | { kind: 'details' | 'assign' | 'resolve' | 'cancel' | 'reopen'; id: number }
+  | { kind: 'new' }
+  | null;
 
 const Complaints = () => {
   const tr = useLt();
   const role = useAuthStore((s) => s.role);
   const isOffice = role === 'admin';
-  const [filter, setFilter] = useState<Filter>('open');
+  const [tab, setTab] = useState<TicketTab>(isOffice ? 'open' : 'pool');
   const [rows, setRows] = useState<Ticket[] | null>(null);
+  const [summary, setSummary] = useState<OfficeSummary | FieldSummary | null>(null);
   const [search, setSearch] = useState('');
   const [staff, setStaff] = useState<User[]>([]);
-  const [noteAction, setNoteAction] = useState<NoteAction | null>(null);
-  const [newOpen, setNewOpen] = useState(false);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [open, setOpen] = useState<Open>(null);
   const [busy, setBusy] = useState<number | null>(null);
+  const [view, setView] = useState<'list' | 'map'>('list');
 
-  const load = useCallback(() => {
-    setRows(null);
-    const params = filter === 'open' ? { open: true } : filter === 'all' ? {} : { status: filter };
-    ticketsApi.list(params).then(setRows).catch((e: Error) => { setRows([]); showError(tr(e.message)); });
-  }, [filter, tr]);
+  const loadSummary = useCallback(() => {
+    ticketsApi.summary().then(setSummary).catch(() => undefined);
+  }, []);
+
+  const load = useCallback((quiet = false) => {
+    if (!quiet) setRows(null);
+    ticketsApi.list(tab).then(setRows).catch((e: Error) => { setRows((r) => r ?? []); showError(tr(e.message)); });
+    loadSummary();
+  }, [tab, tr, loadSummary]);
   useEffect(() => { load(); }, [load]);
+
+  // New complaints show up when the app comes back to the screen.
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') load(true); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [load]);
 
   useEffect(() => {
     if (!isOffice || isMockMode()) return;
@@ -55,354 +70,259 @@ const Complaints = () => {
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!rows || !q) return rows ?? [];
-    return rows.filter((r) => [r.ticketNo, r.customerName, r.customerMobile, r.customerStb, r.customerArea]
+    return rows.filter((r) => [r.ticketNo, r.customerName, r.customerMobile, r.customerStb, r.customerArea, r.assignedToName]
       .some((v) => (v ?? '').toLowerCase().includes(q)));
   }, [rows, search]);
 
+  const current = open && 'id' in open ? rows?.find((r) => r.id === open.id) ?? null : null;
+
+  /** After an action: update the row (or drop it if it left this tab) and refresh the counts. */
   const replace = (t: Ticket) => {
     setRows((prev) => {
       if (!prev) return prev;
-      const stillShown = filter === 'all' || (filter === 'open' ? ['open', 'assigned'].includes(t.status) : t.status === filter);
-      return stillShown ? prev.map((r) => (r.id === t.id ? t : r)) : prev.filter((r) => r.id !== t.id);
+      const exists = prev.some((r) => r.id === t.id);
+      if (!ticketInTab(t, tab)) return prev.filter((r) => r.id !== t.id);
+      return exists ? prev.map((r) => (r.id === t.id ? t : r)) : [t, ...prev];
     });
+    loadSummary();
   };
 
-  const assign = async (t: Ticket, userId: number) => {
+  const afterAction = (t: Ticket) => {
+    replace(t);
+    // Keep the details open when it is still in this list; otherwise close everything.
+    setOpen(ticketInTab(t, tab) ? { kind: 'details', id: t.id } : null);
+  };
+
+  const take = async (t: Ticket) => {
     setBusy(t.id);
     try {
-      replace(await ticketsApi.assign(t.id, userId));
-      showSuccess(tr('Assigned'));
+      const updated = await ticketsApi.take(t.id);
+      showSuccess(tr('It is yours now. Find it in My complaints.'));
+      // Go to My complaints with it open: call the customer or get directions right away.
+      if (tab !== 'mine') setTab('mine');
+      setOpen({ kind: 'details', id: updated.id });
     } catch (e) {
       showError(tr((e as Error).message));
+      load(true);
+      setOpen(null);
     } finally {
       setBusy(null);
     }
   };
 
-  const filters: { key: Filter; label: string }[] = [
-    { key: 'open', label: tr('Open') },
-    { key: 'resolved', label: tr('Fixed') },
-    { key: 'cancelled', label: tr('Closed') },
-    { key: 'all', label: tr('All') },
-  ];
+  const office = summary && 'counts' in summary ? summary : null;
+  const field = summary && !('counts' in summary) ? summary : null;
+  const tabs: { key: TicketTab; label: string; count?: number }[] = isOffice
+    ? [
+      { key: 'open', label: tr('Open'), count: office?.open },
+      { key: 'unassigned', label: tr('Not assigned'), count: office?.unassigned },
+      { key: 'assigned', label: tr('Assigned'), count: office?.counts.assigned },
+      { key: 'resolved', label: tr('Fixed'), count: office?.counts.resolved },
+      { key: 'cancelled', label: tr('Closed'), count: office?.counts.cancelled },
+      { key: 'all', label: tr('All') },
+    ]
+    : [
+      { key: 'pool', label: tr('Open for all'), count: field?.unassigned },
+      { key: 'mine', label: tr('My complaints'), count: field?.mineOpen },
+      { key: 'done', label: tr('Done'), count: field?.mineClosed },
+    ];
 
-  const statusLabel = (s: string) =>
-    ({ open: tr('New'), assigned: tr('Assigned'), resolved: tr('Fixed'), cancelled: tr('Closed') }[s] ?? s);
+  const mapPoints: MapPoint[] = useMemo(() => shown
+    .filter((t) => t.resolvedLatitude != null && t.resolvedLongitude != null)
+    .map((t) => ({
+      id: t.id, lat: Number(t.resolvedLatitude), lng: Number(t.resolvedLongitude),
+      label: `${t.ticketNo} · ${t.customerName} · ${t.resolvedByName}`,
+    }))
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)), [shown]);
+  const mapAllowed = isOffice && (tab === 'resolved' || tab === 'all');
+  const showMap = mapAllowed && view === 'map';
+  const pickOnMap = useCallback((id: number) => setOpen({ kind: 'details', id }), []);
+
+  const emptyText = isOffice
+    ? (tab === 'open' || tab === 'unassigned' ? tr('No open complaints.') : tr('Nothing here.'))
+    : tab === 'pool' ? tr('No new complaints right now.')
+      : tab === 'mine' ? tr('Nothing given to you. Take one from Open for all.') : tr('Nothing here.');
 
   return (
     <div className="space-y-4 max-w-5xl">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{tr('Complaints')}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{tr('Complaints')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {isOffice
-              ? tr('Complaints from the customer app and phone calls. Assign a technician and track until fixed.')
-              : tr('Complaints given to you. Mark fixed after the work is done.')}
+              ? tr('Assign a complaint to one staff member, or leave it open so any of them can take it.')
+              : tr('Take a complaint, fix it, then mark it fixed at the customer\'s place.')}
           </p>
         </div>
-        {isOffice && (
-          <Button onClick={() => setNewOpen(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" /> {tr('New complaint')}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => load()} aria-label={tr('Refresh')}
+            className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          {isOffice && (
+            <button type="button" onClick={() => setOpen({ kind: 'new' })}
+              className="inline-flex items-center gap-1.5 min-h-[42px] px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
+              <Plus className="w-4 h-4" />{tr('New complaint')}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex gap-1 p-1 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-x-auto">
-          {filters.map((f) => (
-            <button key={f.key} type="button" onClick={() => setFilter(f.key)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap ${filter === f.key
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'}`}>
-              {f.label}
-            </button>
-          ))}
+      {/* Tabs */}
+      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+        <div role="tablist" aria-label={tr('Complaints')} className="inline-flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
+          {tabs.map((f) => {
+            const active = tab === f.key;
+            return (
+              <button key={f.key} role="tab" aria-selected={active} type="button"
+                onClick={() => { setTab(f.key); setView('list'); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${active
+                  ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300'}`}>
+                {f.label}
+                {f.count != null && (
+                  <span className={`min-w-[1.25rem] px-1.5 rounded-full text-xs ${active
+                    ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}>{f.count}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr('Search name, mobile, box number, ticket')}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} type="search"
+            placeholder={tr('Search name, mobile, box number, ticket')} aria-label={tr('Search')}
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" />
         </div>
+        {mapAllowed && (
+          <div className="inline-flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
+            {(['list', 'map'] as const).map((v) => (
+              <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v}
+                className={`inline-flex items-center gap-1 px-3 text-sm ${view === v ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300'}`}>
+                {v === 'list' ? <List className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
+                <span className="hidden sm:inline">{v === 'list' ? tr('List') : tr('Map')}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {rows === null && (
         <div className="space-y-3" aria-busy="true">
-          {[0, 1, 2].map((i) => <div key={i} className="h-32 rounded-xl bg-gray-200/70 dark:bg-gray-800 animate-pulse" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-28 rounded-2xl bg-gray-200/70 dark:bg-gray-800 animate-pulse" />)}
         </div>
       )}
-      {rows !== null && shown.length === 0 && (
+
+      {rows !== null && showMap && (
+        mapPoints.length ? (
+          <div className="space-y-2">
+            <PointsMap points={mapPoints} onPick={pickOnMap} />
+            <p className="text-xs text-gray-500">{tr('Each dot is where a complaint was marked fixed. Tap a dot for details.')}</p>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-gray-500">
+            <MapPin className="w-10 h-10 mx-auto mb-2 text-gray-300" />{tr('No fixed complaints with a location yet.')}
+          </div>
+        )
+      )}
+
+      {rows !== null && !showMap && shown.length === 0 && (
         <div className="text-center py-16 text-gray-500">
-          <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-          {filter === 'open' ? tr('No open complaints.') : tr('Nothing here.')}
+          {tab === 'pool' || tab === 'open' ? <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+            : <Inbox className="w-10 h-10 mx-auto mb-2 text-gray-300" />}
+          {emptyText}
         </div>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        {shown.map((t) => {
-          const open = t.status === 'open' || t.status === 'assigned';
-          return (
-            <article key={t.id}
-              className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col gap-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 dark:text-white">{categoryLabel(t.category)}</p>
-                  <p className="text-xs text-gray-500">
-                    {t.ticketNo} · {fmtDate(t.createdAt)}
-                    {t.raisedByCustomer && (
-                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-violet-600">
-                        <Smartphone className="w-3 h-3" /> {tr('from customer app')}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${complaintStatusClass(t.status)}`}>
-                  {statusLabel(t.status)}
-                </span>
-              </div>
-
-              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                <p className="font-medium break-words">{t.customerName}</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                  {t.customerMobile && (
-                    <a href={`tel:+91${t.customerMobile}`} className="inline-flex items-center gap-1 text-blue-600">
-                      <Phone className="w-3 h-3" /> {t.customerMobile}
-                    </a>
-                  )}
-                  {t.customerStb && (
-                    <span className="inline-flex items-center gap-1 font-mono break-all"><Tv className="w-3 h-3" /> {t.customerStb}</span>
-                  )}
-                  {(t.customerArea || t.customerAddress) && (
-                    <span className="inline-flex items-center gap-1 break-words">
-                      <MapPin className="w-3 h-3" /> {[t.customerAddress, t.customerArea].filter(Boolean).join(', ')}
+      {!showMap && (
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {shown.map((t) => {
+            const isOpen = isOpenTicket(t);
+            const unassigned = t.status === 'open' && !t.assignedTo;
+            const stripe = { open: 'border-l-amber-500', assigned: 'border-l-blue-500', resolved: 'border-l-green-600', cancelled: 'border-l-gray-400' }[t.status];
+            return (
+              <li key={t.id}
+                className={`rounded-2xl border border-gray-200 dark:border-gray-700 border-l-4 ${stripe} bg-white dark:bg-gray-900 shadow-sm flex flex-col`}>
+                <button type="button" onClick={() => setOpen({ kind: 'details', id: t.id })}
+                  className="text-left p-4 pb-3 flex-1 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-gray-900 dark:text-white break-words">{categoryLabel(t.category)}</p>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${staffStatusClass(t.status)}`}>
+                      {staffStatusLabel(tr, t)}
                     </span>
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200 break-words">{t.customerName}</p>
+                  {(t.customerArea || t.customerAddress) && (
+                    <p className="text-xs text-gray-500 break-words flex items-start gap-1">
+                      <MapPin className="w-3.5 h-3.5 shrink-0 mt-px" />{[t.customerAddress, t.customerArea].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {t.description && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2 break-words">{t.description}</p>}
+                  <p className="mt-2 text-xs text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-mono">{t.ticketNo}</span>
+                    <span>· {timeAgo(t.createdAt)}</span>
+                    {t.raisedByCustomer && <span className="inline-flex items-center gap-0.5 text-violet-600 dark:text-violet-400"><Smartphone className="w-3 h-3" />{tr('from customer app')}</span>}
+                  </p>
+                </button>
+                <div className="flex items-center gap-2 px-4 pb-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <span className="min-w-0 flex-1 text-xs inline-flex items-center gap-1.5">
+                    {t.assignedTo ? (
+                      <><Wrench className="w-3.5 h-3.5 text-blue-600 shrink-0" /><span className="truncate">{t.status === 'resolved' && t.resolvedByName ? t.resolvedByName : t.assignedToName}</span></>
+                    ) : unassigned ? (
+                      <><Users className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span className="text-amber-800 dark:text-amber-300 truncate">{tr('Open for all staff')}</span></>
+                    ) : null}
+                  </span>
+                  {isOffice && isOpen && (
+                    <button type="button" onClick={() => setOpen({ kind: 'assign', id: t.id })}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      {t.assignedTo ? tr('Change') : tr('Assign')}
+                    </button>
+                  )}
+                  {!isOffice && unassigned && (
+                    <button type="button" onClick={() => take(t)} disabled={busy === t.id}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50">
+                      <Hand className="w-3.5 h-3.5" />{busy === t.id ? tr('Saving...') : tr('I will go')}
+                    </button>
+                  )}
+                  {isOpen && (isOffice || !unassigned) && (
+                    <button type="button" onClick={() => setOpen({ kind: 'resolve', id: t.id })}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5" />{tr('Mark fixed')}
+                    </button>
                   )}
                 </div>
-              </div>
-
-              {t.description && (
-                <p className="text-sm bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 break-words">{t.description}</p>
-              )}
-              {t.status === 'resolved' && t.resolutionNote && (
-                <p className="text-sm text-green-700 dark:text-green-400 break-words">
-                  {tr('Fixed')}: {t.resolutionNote}
-                </p>
-              )}
-
-              {/* Technician */}
-              {isOffice && open ? (
-                <label className="flex items-center gap-2 text-sm">
-                  <Wrench className="w-4 h-4 text-gray-400 shrink-0" />
-                  <select value={t.assignedTo ?? ''} disabled={busy === t.id}
-                    onChange={(e) => e.target.value && assign(t, Number(e.target.value))}
-                    aria-label={tr('Technician')}
-                    className="flex-1 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1.5 text-sm">
-                    <option value="">{tr('Assign technician…')}</option>
-                    {staff.map((u) => <option key={u.id} value={u.id}>{u.name || u.username}</option>)}
-                  </select>
-                </label>
-              ) : t.assignedToName ? (
-                <p className="text-xs text-gray-500 inline-flex items-center gap-1">
-                  <Wrench className="w-3 h-3" /> {t.assignedToName}
-                </p>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2 pt-1 mt-auto">
-                {open && (
-                  <Button size="xs" variant="success" onClick={() => setNoteAction({ kind: 'resolve', ticket: t })}>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> {tr('Mark fixed')}
-                  </Button>
-                )}
-                {isOffice && open && (
-                  <Button size="xs" variant="outline" onClick={() => setNoteAction({ kind: 'cancel', ticket: t })}>
-                    <XCircle className="w-3.5 h-3.5 mr-1" /> {tr('Close')}
-                  </Button>
-                )}
-                {isOffice && !open && (
-                  <Button size="xs" variant="outline" onClick={() => setNoteAction({ kind: 'reopen', ticket: t })}>
-                    <RotateCcw className="w-3.5 h-3.5 mr-1" /> {tr('Reopen')}
-                  </Button>
-                )}
-                {t.updates.length > 0 && (
-                  <button type="button" onClick={() => setExpanded(expanded === t.id ? null : t.id)}
-                    className="ml-auto text-xs text-gray-500 inline-flex items-center gap-0.5">
-                    {tr('History')} {expanded === t.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                )}
-              </div>
-
-              {expanded === t.id && (
-                <ol className="border-t border-gray-100 dark:border-gray-800 pt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                  {t.updates.map((u, i) => (
-                    <li key={i} className="break-words">
-                      <span className="text-gray-400">{fmtDate(u.createdAt)}</span>{' '}
-                      <b>{statusWord(tr, u.action)}</b>
-                      {u.byCustomer ? ` · ${tr('Customer')}` : u.by ? ` · ${u.by}` : ''}
-                      {u.note ? ` — ${u.note}` : ''}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </article>
-          );
-        })}
-      </div>
-
-      {noteAction && (
-        <NoteDialog action={noteAction} onClose={() => setNoteAction(null)}
-          onDone={(t) => { replace(t); setNoteAction(null); }} />
+              </li>
+            );
+          })}
+        </ul>
       )}
-      {newOpen && (
-        <NewComplaintDialog onClose={() => setNewOpen(false)}
-          onDone={(t) => { setNewOpen(false); if (filter === 'open' || filter === 'all') setRows((p) => [t, ...(p ?? [])]); }} />
+
+      {current && open?.kind === 'details' && (
+        <DetailsSheet ticket={current} isOffice={isOffice} busy={busy === current.id}
+          onClose={() => setOpen(null)}
+          onAssign={() => setOpen({ kind: 'assign', id: current.id })}
+          onTake={() => take(current)}
+          onResolve={() => setOpen({ kind: 'resolve', id: current.id })}
+          onCancel={() => setOpen({ kind: 'cancel', id: current.id })}
+          onReopen={() => setOpen({ kind: 'reopen', id: current.id })} />
+      )}
+      {current && open?.kind === 'assign' && (
+        <AssignSheet ticket={current} staff={staff} onClose={() => setOpen(null)} onDone={afterAction} />
+      )}
+      {current && open?.kind === 'resolve' && (
+        <ResolveSheet ticket={current} isOffice={isOffice} onClose={() => setOpen(null)} onDone={afterAction} />
+      )}
+      {current && (open?.kind === 'cancel' || open?.kind === 'reopen') && (
+        <NoteSheet kind={open.kind} ticket={current} onClose={() => setOpen(null)} onDone={afterAction} />
+      )}
+      {open?.kind === 'new' && (
+        <NewComplaintSheet staff={staff} onClose={() => setOpen(null)}
+          onDone={(t) => { setOpen(null); replace(t); }} />
       )}
     </div>
   );
 };
-
-function statusWord(tr: (s: string) => string, action: string) {
-  return ({ raised: tr('Raised'), assigned: tr('Assigned'), resolved: tr('Fixed'), reopened: tr('Reopened'),
-    cancelled: tr('Closed') } as Record<string, string>)[action] ?? action;
-}
-
-function NoteDialog({ action, onClose, onDone }: {
-  action: NoteAction; onClose: () => void; onDone: (t: Ticket) => void;
-}) {
-  const tr = useLt();
-  const [note, setNote] = useState('');
-  const [saving, setSaving] = useState(false);
-  const { kind, ticket } = action;
-  const required = kind !== 'reopen';
-  const title = kind === 'resolve' ? tr('Mark fixed') : kind === 'cancel' ? tr('Close complaint') : tr('Reopen complaint');
-  const label = kind === 'resolve' ? tr('What was done?') : kind === 'cancel' ? tr('Reason for closing') : tr('Note (optional)');
-
-  const save = async () => {
-    if (required && note.trim().length < 3) {
-      showError(tr('Please write a short note.'));
-      return;
-    }
-    setSaving(true);
-    try {
-      const fn = kind === 'resolve' ? ticketsApi.resolve : kind === 'cancel' ? ticketsApi.cancel : ticketsApi.reopen;
-      onDone(await fn(ticket.id, note.trim()));
-      showSuccess(tr('Saved'));
-    } catch (e) {
-      showError(tr((e as Error).message));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open onClose={onClose} closeOnOverlayClick={false}>
-      <DialogHeader title={`${title} · ${ticket.ticketNo}`} onClose={onClose} />
-      <DialogBody>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{ticket.customerName} — {categoryLabel(ticket.category)}</p>
-        <label htmlFor="ticket-note" className="text-sm font-medium">{label}</label>
-        <textarea id="ticket-note" rows={3} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)}
-          placeholder={kind === 'resolve' ? tr('Example: replaced the adapter, signal OK') : ''}
-          className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-sm" />
-        {kind === 'resolve' && (
-          <p className="text-xs text-gray-500 mt-1">{tr('The customer sees this note in their app.')}</p>
-        )}
-      </DialogBody>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose}>{tr('Cancel')}</Button>
-        <Button onClick={save} disabled={saving}>{saving ? tr('Saving...') : tr('Save')}</Button>
-      </DialogFooter>
-    </Dialog>
-  );
-}
-
-function NewComplaintDialog({ onClose, onDone }: { onClose: () => void; onDone: (t: Ticket) => void }) {
-  const tr = useLt();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [query, setQuery] = useState('');
-  const [picked, setPicked] = useState<Customer | null>(null);
-  const [category, setCategory] = useState<ComplaintCategory>('no_signal');
-  const [description, setDescription] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    customersApi.getAll().then(setCustomers).catch(() => setCustomers([]));
-  }, []);
-
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return customers.filter((c) => [c.name, c.mobile, c.stbNumber, c.boxNumber, c.area]
-      .some((v) => (v ?? '').toLowerCase().includes(q))).slice(0, 8);
-  }, [customers, query]);
-
-  const save = async () => {
-    if (!picked) {
-      showError(tr('Choose the customer.'));
-      return;
-    }
-    setSaving(true);
-    try {
-      const t = await ticketsApi.create(picked.id, category, description.trim());
-      showSuccess(tr('Complaint {{no}} created', { no: t.ticketNo }));
-      onDone(t);
-    } catch (e) {
-      showError(tr((e as Error).message));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open onClose={onClose} closeOnOverlayClick={false} size="md">
-      <DialogHeader title={tr('New complaint')} onClose={onClose} />
-      <DialogBody className="space-y-3">
-        <div>
-          <label htmlFor="nc-customer" className="text-sm font-medium">{tr('Customer')}</label>
-          {picked ? (
-            <div className="mt-1 flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950 px-3 py-2 text-sm">
-              <span className="min-w-0 break-words">{picked.name} · {picked.mobile || picked.stbNumber}</span>
-              <button type="button" className="text-xs text-blue-700 underline shrink-0" onClick={() => setPicked(null)}>
-                {tr('Change')}
-              </button>
-            </div>
-          ) : (
-            <>
-              <input id="nc-customer" value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off"
-                placeholder={tr('Type name, mobile or box number')}
-                className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm" />
-              {matches.length > 0 && (
-                <ul className="mt-1 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800 max-h-56 overflow-y-auto">
-                  {matches.map((c) => (
-                    <li key={c.id}>
-                      <button type="button" onClick={() => setPicked(c)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <span className="font-medium">{c.name}</span>
-                        <span className="block text-xs text-gray-500">{[c.mobile, c.stbNumber, c.area].filter(Boolean).join(' · ')}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-        <div>
-          <label htmlFor="nc-cat" className="text-sm font-medium">{tr('Problem')}</label>
-          <select id="nc-cat" value={category} onChange={(e) => setCategory(e.target.value as ComplaintCategory)}
-            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm">
-            {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label()}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="nc-desc" className="text-sm font-medium">{tr('Details (optional)')}</label>
-          <textarea id="nc-desc" rows={3} maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-sm" />
-        </div>
-      </DialogBody>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose}>{tr('Cancel')}</Button>
-        <Button onClick={save} disabled={saving}>{saving ? tr('Saving...') : tr('Save')}</Button>
-      </DialogFooter>
-    </Dialog>
-  );
-}
 
 export default Complaints;

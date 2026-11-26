@@ -53,5 +53,5 @@ class ReceiptRegressionTests(TestCase):
         stale_org.reminder_days_before = 5
         stale_org.save()
         client_for(owner).patch(f"/api/organizations/{org.id}", {"reminder_days_before": 4}, format="json")
-        r2 = c.post("/api/payments", {"customer_id": cust.id, "amount": "10", **GPS}, format="json").json()
+        r2 = c.post("/api/payments", {"customer_id": cust.id, "amount": "11", **GPS}, format="json").json()
         self.assertEqual((r1["receipt_no"], r2["receipt_no"]), ("RCP-000001", "RCP-000002"))

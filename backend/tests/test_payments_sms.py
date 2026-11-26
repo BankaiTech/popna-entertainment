@@ -85,7 +85,7 @@ class PaymentTests(TestCase):
         self.assertEqual(SmsMessage.objects.count(), 0)
         self.org.internet_payment_sms_enabled = True
         self.org.save()
-        c.post("/api/payments", {"customer_id": self.net_cust.id, "amount": "100", **GPS}, format="json")
+        c.post("/api/payments", {"customer_id": self.net_cust.id, "amount": "101", **GPS}, format="json")
         self.assertEqual(SmsMessage.objects.filter(kind="payment_receipt").count(), 1)
 
     def test_owner_alert_settings_never_send_sms_to_owner(self):

@@ -17,7 +17,7 @@ export default function ErrorShowPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const hasParam = searchParams.has('error_show');
-  const messageFromUrl = searchParams.get('message');
+  // Never show text from the URL: a crafted link could put any message on our own domain (phishing).
 
   let data: StoredError | null = null;
   if (typeof window !== 'undefined') {
@@ -29,7 +29,7 @@ export default function ErrorShowPage() {
     }
   }
 
-  const message = data?.message ?? messageFromUrl ?? t('errorPage.fallbackMessage', 'An error occurred.');
+  const message = data?.message ?? t('errorPage.fallbackMessage', 'An error occurred.');
   const stack = data?.stack ?? '';
   const time = data?.time ?? '';
   const context = data?.context ?? '';
@@ -38,7 +38,7 @@ export default function ErrorShowPage() {
     return null;
   }
 
-  if (!data && !messageFromUrl) {
+  if (!data) {
     return <Navigate to="/" replace />;
   }
 

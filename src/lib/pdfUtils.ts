@@ -3,6 +3,7 @@
 // Replace with backend PDF generation later
 
 import type { SalesInvoice, PurchaseInvoice, Customer, CompanyProfile, Vendor } from '@/models/types';
+import { escapeDeep } from '@/lib/escapeHtml';
 import { getProviderDisplayName } from '@/lib/providerUtils';
 import { formatCurrencyINR, formatDateDMY } from './utils';
 
@@ -124,10 +125,14 @@ const getStatusClass = (status: string) => {
 };
 
 export const generateSalesInvoicePdf = async (
-  invoice: SalesInvoice,
-  customer: Customer | null,
-  companyProfile: CompanyProfile | null
+  rawInvoice: SalesInvoice,
+  rawCustomer: Customer | null,
+  rawCompany: CompanyProfile | null
 ): Promise<void> => {
+  // Everything below is pasted into HTML: escape names, addresses and notes first.
+  const invoice = escapeDeep(rawInvoice);
+  const customer = escapeDeep(rawCustomer);
+  const companyProfile = escapeDeep(rawCompany);
   const companyName = companyProfile?.companyName || 'Company Name';
   const companyLines: string[] = [];
   const addr = [companyProfile?.addressLine1, companyProfile?.addressLine2].filter(Boolean).join(', ');
@@ -260,10 +265,14 @@ function formatVendorAddress(vendor: Vendor | null | undefined): string[] {
 }
 
 export const generatePurchaseInvoicePdf = async (
-  invoice: PurchaseInvoice,
-  companyProfile: CompanyProfile | null,
-  vendor?: Vendor | null
+  rawInvoice: PurchaseInvoice,
+  rawCompany: CompanyProfile | null,
+  rawVendor?: Vendor | null
 ): Promise<void> => {
+  // Everything below is pasted into HTML: escape names, addresses and notes first.
+  const invoice = escapeDeep(rawInvoice);
+  const companyProfile = escapeDeep(rawCompany);
+  const vendor = escapeDeep(rawVendor);
   const cgst = invoice.gstBreakup.cgst || 0;
   const sgst = invoice.gstBreakup.sgst || 0;
   const igst = invoice.gstBreakup.igst || 0;
