@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { tr } from '@/lib/lt';
 import { LOGIN_AS_KEY } from '@/pages/customer/portalShared';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { useTheme } from '@/components/ThemeProvider';
 import { signupRequestsApi, SIGNUP_SIZES, type SignupService, type SignupSize } from '@/api/signupRequests';
 import { showError } from '@/utils/toast';
 import { env } from '@/lib/env';
@@ -42,37 +41,7 @@ const Login = () => {
   const [signupForm, setSignupForm] = useState(EMPTY_SIGNUP);
   const [signupDone, setSignupDone] = useState(false);
 
-  // Force light mode while on the login page and restore previous theme on unmount
-  const { resolvedTheme } = useTheme();
-  const prevThemeRef = useRef<'light' | 'dark' | null>(null);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    // Capture the current theme only once on mount
-    if (!prevThemeRef.current) {
-      prevThemeRef.current = root.classList.contains('dark') ? 'dark' : 'light';
-    }
-
-    // Always enforce light mode while this component is mounted
-    root.classList.remove('dark');
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute('content', '#2563eb');
-    }
-
-    return () => {
-      // We only want to restore on true unmount, but Strict Mode unmounts and remounts
-      // If we navigate away, we restore. In StrictMode, it might flash. 
-      // Actually, relying on ThemeProvider is better, but this handles DOM.
-      if (prevThemeRef.current === 'dark') {
-        root.classList.add('dark');
-        const metaTag = document.querySelector('meta[name="theme-color"]');
-        if (metaTag) {
-          metaTag.setAttribute('content', '#0f172a');
-        }
-      }
-    };
-  }, [resolvedTheme]); // Re-run if ThemeProvider tries to apply dark mode again
+  // Theme: ThemeProvider applies the user's light / dark choice here too (this page has its own dark design).
 
   useEffect(() => {
     initialize();
@@ -237,7 +206,7 @@ const Login = () => {
       </div>
 
       {/* Right panel (form) */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <span />
           <div className="flex items-center gap-1">
@@ -264,7 +233,7 @@ const Login = () => {
                 </div>
 
                 {subscriptionNotice && (
-                  <div role="alert" className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+                  <div role="alert" className="mb-4 p-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/60 text-sm text-red-700 dark:text-red-200">
                     {subscriptionNotice}
                   </div>
                 )}
@@ -274,7 +243,7 @@ const Login = () => {
                   className={`space-y-5 ${shaking ? 'animate-shake' : ''}`}
                 >
                   {error && (
-                    <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                    <div className="flex items-start gap-2.5 p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl text-sm text-red-700 dark:text-red-200">
                       <span className="shrink-0 mt-px">⚠</span>
                       {error}
                     </div>
@@ -322,7 +291,7 @@ const Login = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                         tabIndex={-1}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -354,7 +323,7 @@ const Login = () => {
 
                 {/* Customers have their own login page (mobile + box number) */}
                 <Link to="/customer/login"
-                  className="mt-6 flex items-center justify-between gap-3 rounded-xl border-2 border-blue-100 bg-blue-50/60 px-4 py-3 hover:border-blue-300 transition-colors">
+                  className="mt-6 flex items-center justify-between gap-3 rounded-xl border-2 border-blue-100 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/40 px-4 py-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
                   <span className="flex items-center gap-3 min-w-0">
                     <Tv className="w-5 h-5 text-blue-600 shrink-0" />
                     <span className="min-w-0">
@@ -394,7 +363,7 @@ const Login = () => {
                           key={d.user}
                           type="button"
                           onClick={() => { setUsername(d.user); setPassword('test123'); setError(''); }}
-                          className="flex items-center justify-between w-full rounded-lg px-2 py-1.5 hover:bg-blue-50 transition-colors text-left"
+                          className="flex items-center justify-between w-full rounded-lg px-2 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors text-left"
                         >
                           <span>{d.label}</span>
                           <span className="font-mono text-blue-600">{d.user} / test123</span>
@@ -418,7 +387,7 @@ const Login = () => {
                 </div>
 
                 {signupDone ? (
-                  <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
+                  <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/50 p-6 text-center">
                     <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-3" />
                     <p className="font-semibold text-gray-900">{tr('Thank you! We received your request.')}</p>
                     <p className="text-sm text-gray-600 mt-1">{tr('We will call you soon on the mobile number you gave.')}</p>
@@ -487,7 +456,7 @@ const Login = () => {
                           onClick={() => setSignupForm({ ...signupForm, service: value })}
                           className={`py-2.5 px-2 rounded-xl border-2 text-sm font-medium transition-colors ${
                             signupForm.service === value
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-200'
                               : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300'
                           }`}>
                           {label}

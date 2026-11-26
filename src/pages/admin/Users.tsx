@@ -271,7 +271,7 @@ const AdminUsers = () => {
               'flex items-center gap-3 p-3 sm:p-2 rounded-lg border cursor-pointer transition-all text-sm min-h-[48px] sm:min-h-0 touch-manipulation',
               modules.includes(mod)
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                : 'border-gray-200 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:border-gray-300'
             )}
           >
             <input
@@ -436,7 +436,7 @@ const AdminUsers = () => {
                               ))}
                             </div>
                           ) : u.role === 'admin' ? (
-                            <span className="text-xs text-gray-400 italic">{t('users.allModules', 'All modules')}</span>
+                            <span className="text-xs text-gray-500 italic">{t('users.allModules', 'All modules')}</span>
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
                           )}

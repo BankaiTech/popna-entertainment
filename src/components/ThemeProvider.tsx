@@ -2,7 +2,8 @@
 //
 // Rules:
 // - The user's choice (light / dark / system) is saved in localStorage.
-// - Public pages ('/' and '/login') are always shown in light mode.
+// - Every page follows that choice, the login pages too (they have their own dark design).
+//   They used to be forced light, and '/customer/login/' (trailing slash) slipped through half-dark.
 // - What is ON SCREEN and what the toggle/logo think is on screen must always match, so the
 //   theme is re-applied on every route change (it used to be applied only when the choice changed,
 //   which left the dashboard light after logging in from the always-light login page).
@@ -32,8 +33,6 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-const PUBLIC_PATHS = ['/', '/login', '/customer/login'];
-
 function getSystemTheme(): Resolved {
     if (typeof window === 'undefined') return 'light';
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -52,23 +51,23 @@ function applyTheme(shown: Resolved) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setThemeState] = useState<Theme>(() => {
         if (typeof window === 'undefined') return 'system';
-        return (localStorage.getItem('theme') as Theme) || 'system';
+        try { return (localStorage.getItem('theme') as Theme) || 'system'; } catch { return 'system'; }
     });
     const [systemTheme, setSystemTheme] = useState<Resolved>(getSystemTheme);
-    const [pathname, setPathname] = useState<string>(
+    // Re-render on navigation so the theme is re-applied on every route (see the rules above).
+    const [, setPathname] = useState<string>(
         () => (typeof window === 'undefined' ? '/' : window.location.pathname)
     );
 
     const preferred: Resolved = theme === 'system' ? systemTheme : theme;
-    const resolvedTheme: Resolved = PUBLIC_PATHS.includes(pathname) ? 'light' : preferred;
+    const resolvedTheme: Resolved = preferred;
 
     const setTheme = useCallback((newTheme: Theme) => {
         setThemeState(newTheme);
-        if (newTheme === 'system') {
-            localStorage.removeItem('theme');
-        } else {
-            localStorage.setItem('theme', newTheme);
-        }
+        try {
+            if (newTheme === 'system') localStorage.removeItem('theme');
+            else localStorage.setItem('theme', newTheme);
+        } catch { /* private mode: still applies for this visit */ }
     }, []);
 
     const toggleTheme = useCallback(() => {

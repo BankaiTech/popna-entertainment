@@ -130,7 +130,7 @@ const SuperAdminLayout = () => {
                             <p className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                                 {t('superAdmin.masterController', 'Master Controller')}
                             </p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                                 {username || roleBadgeLabel}
                             </p>
                         </div>

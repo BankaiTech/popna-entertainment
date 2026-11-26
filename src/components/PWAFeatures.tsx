@@ -27,7 +27,8 @@ export function PWAFeatures() {
   const { t } = useTranslation();
   // Not on the login page: on a phone the banner sits over the Login button. It shows after login.
   const path = useLocation().pathname;
-  const onLogin = path === '/login' || path === '/customer/login';
+  const cleanPath = path.replace(/\/+$/, '') || '/';
+  const onLogin = cleanPath === '/login' || cleanPath === '/customer/login';
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);

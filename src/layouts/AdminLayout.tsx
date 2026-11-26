@@ -210,7 +210,7 @@ const AdminLayout = () => {
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(group.labelKey)}
-                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
                   >
                     <span>{groupLabel}</span>
                     <ChevronDown
@@ -263,7 +263,7 @@ const AdminLayout = () => {
 
           {/* Sidebar footer */}
           <div className="shrink-0 px-3 py-3 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-[9px] text-gray-400 dark:text-gray-500 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">{t('layout.version', 'v1.0 • GST Ready')}</p>
           </div>
         </aside>
 
@@ -299,7 +299,7 @@ const AdminLayout = () => {
                 >
                   <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500')} />
                 </div>
-                <span className={cn('text-[9px] font-medium truncate', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500')}>
+                <span className={cn('text-[10px] font-medium truncate', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400')}>
                   {t(labelKey)}
                 </span>
               </Link>

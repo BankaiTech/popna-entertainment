@@ -64,7 +64,7 @@ const CustomerLogin = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-blue-50 to-white text-gray-900">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-blue-50 to-white text-gray-900 dark:from-slate-950 dark:to-slate-900 dark:text-slate-100">
       <header className="flex items-center justify-between px-4 sm:px-6 py-3">
         <Logo size="sm" />
         <LanguageSwitcher />
@@ -72,25 +72,25 @@ const CustomerLogin = () => {
 
       <main className="flex-1 flex items-start sm:items-center justify-center px-4 py-6">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-6 sm:p-8">
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm dark:shadow-black/30 p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-1">
               <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
                 <Tv className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight">{tr('Customer login')}</h1>
-                <p className="text-sm text-gray-500">{tr('Cable TV and internet customers')}</p>
+                <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">{tr('Customer login')}</h1>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{tr('Cable TV and internet customers')}</p>
               </div>
             </div>
 
-            <ul className="mt-4 mb-6 grid grid-cols-2 gap-2 text-xs text-gray-600">
-              <li className="flex items-center gap-1.5"><ReceiptText className="w-4 h-4 text-blue-600 shrink-0" />{tr('Bills and receipts')}</li>
-              <li className="flex items-center gap-1.5"><MessageSquareWarning className="w-4 h-4 text-amber-600 shrink-0" />{tr('Complaints')}</li>
+            <ul className="mt-4 mb-6 grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-slate-300">
+              <li className="flex items-center gap-1.5"><ReceiptText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />{tr('Bills and receipts')}</li>
+              <li className="flex items-center gap-1.5"><MessageSquareWarning className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />{tr('Complaints')}</li>
             </ul>
 
             <form onSubmit={submit} noValidate className={`space-y-5 ${shaking ? 'animate-shake' : ''}`}>
               {error && (
-                <div role="alert" className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                <div role="alert" className="flex items-start gap-2.5 p-3.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 rounded-xl text-sm text-red-700 dark:text-red-200">
                   <span className="shrink-0 mt-px">⚠</span>
                   {error}
                 </div>
@@ -107,7 +107,7 @@ const CustomerLogin = () => {
                     onChange={(e) => { setMobile(e.target.value); setError(''); }}
                     placeholder="98765 43210" className={inputClass} disabled={busy} autoComplete="tel-national" />
                 </div>
-                <p className="mt-1.5 text-xs text-gray-400">{tr('The mobile number you gave your cable operator.')}</p>
+                <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">{tr('The mobile number you gave your cable operator.')}</p>
               </div>
               <div>
                 <label htmlFor="cust-box" className="block text-sm font-semibold text-gray-700 mb-2">{tr('Box number (STB / VC no.)')}</label>
@@ -118,7 +118,7 @@ const CustomerLogin = () => {
                     placeholder={tr('Printed on the sticker under your set-top box')}
                     className={inputClass} disabled={busy} autoComplete="off" />
                 </div>
-                <p className="mt-1.5 text-xs text-gray-400">{tr('Internet customers: use the customer ID on your bill.')}</p>
+                <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">{tr('Internet customers: use the customer ID on your bill.')}</p>
               </div>
               <button type="submit" disabled={busy}
                 className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
@@ -129,15 +129,15 @@ const CustomerLogin = () => {
           </div>
 
           <Link to="/login"
-            className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 hover:border-blue-300 transition-colors">
+            className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
             <span className="flex items-center gap-3 min-w-0">
-              <Building2 className="w-5 h-5 text-gray-500 shrink-0" />
+              <Building2 className="w-5 h-5 text-gray-500 dark:text-slate-400 shrink-0" />
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-gray-900">{tr('Operator / staff login')}</span>
-                <span className="block text-xs text-gray-500">{tr('Cable operators, managers and collection staff')}</span>
+                <span className="block text-xs text-gray-600 dark:text-slate-400">{tr('Cable operators, managers and collection staff')}</span>
               </span>
             </span>
-            <ArrowRight className="w-4 h-4 text-gray-500 shrink-0" />
+            <ArrowRight className="w-4 h-4 text-gray-500 dark:text-slate-400 shrink-0" />
           </Link>
         </div>
       </main>

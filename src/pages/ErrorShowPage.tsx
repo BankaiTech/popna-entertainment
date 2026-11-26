@@ -44,7 +44,7 @@ export default function ErrorShowPage() {
 
   return (
     <div className="fixed inset-0 z-[100] min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+      <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div className="bg-red-600 text-white px-5 py-4 font-semibold text-lg">
           {t('errorPage.title', 'Something went wrong')}
         </div>
