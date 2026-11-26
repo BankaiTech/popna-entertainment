@@ -133,8 +133,18 @@ const AdminLayout = () => {
     }))
     .filter((group) => group.items.length > 0);
 
-  // Mobile bottom nav: top 5 from allowed modules (flatten sidebar order)
-  const bottomNavItems = filteredGroups.flatMap((g) => g.items).slice(0, 5);
+  // Mobile bottom nav: the 4 most used pages this person can open. Everything else stays in the side menu (☰).
+  // Field staff need Duty (check-in) close at hand; the office needs Customers and Complaints.
+  const BOTTOM_PRIORITY = role === 'employee'
+    ? ['/admin/dashboard', '/admin/collect', '/admin/duty', '/admin/complaints', '/admin/contacts']
+    : ['/admin/dashboard', '/admin/collect', '/admin/contacts', '/admin/complaints', '/admin/cutoff', '/admin/live-map'];
+  const allowedItems = filteredGroups.flatMap((g) => g.items);
+  const rank = (path: string) => { const i = BOTTOM_PRIORITY.indexOf(path); return i === -1 ? 99 : i; };
+  const bottomNavItems = allowedItems
+    .map((item, order) => ({ item, order }))
+    .sort((a, b) => rank(a.item.path) - rank(b.item.path) || a.order - b.order)
+    .slice(0, 4)
+    .map(({ item }) => item);
   const showPOSFAB = currentOrganization && (currentOrganization.industryType === 'retail' || currentOrganization.industryType === 'restaurant-cafe') && isModuleAllowed('pos');
 
   return (
@@ -280,26 +290,27 @@ const AdminLayout = () => {
 
       {/* ── Mobile Bottom Navigation (dynamic from template's allowed modules) ── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 shadow-lg shadow-black/10">
-        <div className="flex items-center justify-around px-1 py-2">
+        <div className={cn('grid px-0.5 pt-1.5', ['grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'][Math.max(bottomNavItems.length, 1) - 1])} style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}>
           {bottomNavItems.map(({ path, icon: Icon, labelKey }) => {
-            const isActive = location.pathname === path;
+            const isActive = location.pathname === path || location.pathname.startsWith(`${path}/`);
             return (
               <Link
                 key={path}
                 to={path}
-                className="flex flex-col items-center gap-0.5 min-w-0 relative px-2 py-1"
+                aria-current={isActive ? 'page' : undefined}
+                className="flex flex-col items-center gap-1 min-w-0 relative px-0.5 py-1"
               >
                 <div
                   className={cn(
-                    'w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200',
+                    'w-10 h-8 flex items-center justify-center rounded-xl transition-all duration-200',
                     isActive
                       ? 'bg-blue-600 shadow-lg shadow-blue-500/30 scale-110'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                   )}
                 >
-                  <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500')} />
+                  <Icon className={cn('w-5 h-5', isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400')} />
                 </div>
-                <span className={cn('text-[10px] font-medium truncate', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400')}>
+                <span className={cn('text-[10px] leading-tight font-medium truncate max-w-full', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400')}>
                   {t(labelKey)}
                 </span>
               </Link>
